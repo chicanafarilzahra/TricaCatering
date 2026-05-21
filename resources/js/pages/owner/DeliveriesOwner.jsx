@@ -1,0 +1,363 @@
+// resources/js/pages/owner/DeliveriesOwner.jsx
+
+import {
+    Truck,
+    Clock,
+    CheckCircle,
+    MapPin,
+} from "lucide-react";
+
+import OwnerLayout from "../../layouts/OwnerLayout";
+
+function MetricCard({
+    title,
+    value = "-",
+    icon,
+    color = "#60a5fa",
+}) {
+    return (
+        <div
+            style={{
+                background:
+                    "linear-gradient(145deg, rgba(15,23,42,0.95), rgba(30,41,59,0.95))",
+                border:
+                    "1px solid rgba(148,163,184,0.08)",
+                borderRadius: "20px",
+                padding: "20px 22px",
+                display: "flex",
+                justifyContent:
+                    "space-between",
+                alignItems: "center",
+                boxShadow:
+                    "0 12px 32px rgba(0,0,0,0.28)",
+            }}
+        >
+            <div>
+                <div
+                    style={{
+                        fontSize: "12px",
+                        color: "#94a3b8",
+                        fontWeight: "600",
+                        textTransform:
+                            "uppercase",
+                        marginBottom: "8px",
+                    }}
+                >
+                    {title}
+                </div>
+
+                <div
+                    style={{
+                        fontSize: "30px",
+                        fontWeight: "800",
+                        color: "white",
+                    }}
+                >
+                    {value}
+                </div>
+            </div>
+
+            <div
+                style={{
+                    width: "52px",
+                    height: "52px",
+                    borderRadius: "16px",
+                    background:
+                        "rgba(59,130,246,0.10)",
+                    border:
+                        "1px solid rgba(59,130,246,0.15)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent:
+                        "center",
+                    color,
+                }}
+            >
+                {icon}
+            </div>
+        </div>
+    );
+}
+
+function EmptyState({
+    title,
+    subtitle,
+    icon,
+}) {
+    return (
+        <div
+            style={{
+                minHeight: "300px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent:
+                    "center",
+                alignItems: "center",
+                textAlign: "center",
+            }}
+        >
+            <div
+                style={{
+                    width: "84px",
+                    height: "84px",
+                    borderRadius: "24px",
+                    background:
+                        "rgba(59,130,246,0.10)",
+                    border:
+                        "1px solid rgba(59,130,246,0.15)",
+                    display: "flex",
+                    alignItems:
+                        "center",
+                    justifyContent:
+                        "center",
+                    color: "#60a5fa",
+                    marginBottom: "24px",
+                }}
+            >
+                {icon}
+            </div>
+
+            <h3
+                style={{
+                    margin: 0,
+                    fontSize: "28px",
+                    fontWeight: "800",
+                    color: "white",
+                }}
+            >
+                {title}
+            </h3>
+
+            <p
+                style={{
+                    marginTop: "12px",
+                    color: "#94a3b8",
+                    maxWidth: "520px",
+                    lineHeight: "1.8",
+                }}
+            >
+                {subtitle}
+            </p>
+        </div>
+    );
+}
+
+export default function DeliveriesOwner() {
+    return (
+        <OwnerLayout>
+            {/* Header */}
+            <div
+                style={{
+                    marginBottom: "30px",
+                }}
+            >
+                <h1
+                    style={{
+                        margin: 0,
+                        fontSize: "34px",
+                        fontWeight: "800",
+                        color: "white",
+                    }}
+                >
+                    Deliveries
+                </h1>
+
+                <p
+                    style={{
+                        margin:
+                            "10px 0 0",
+                        color:
+                            "#94a3b8",
+                        fontSize:
+                            "14px",
+                        lineHeight:
+                            "1.8",
+                    }}
+                >
+                    Monitor delivery
+                    activities, courier
+                    performance, and
+                    shipment tracking
+                    in real-time.
+                </p>
+            </div>
+
+            {/* Metrics */}
+            <div
+                style={{
+                    display: "grid",
+                    gridTemplateColumns:
+                        "repeat(auto-fit, minmax(240px,1fr))",
+                    gap: "20px",
+                    marginBottom:
+                        "24px",
+                }}
+            >
+                <MetricCard
+                    title="Total Deliveries"
+                    value="-"
+                    icon={
+                        <Truck
+                            size={22}
+                        />
+                    }
+                    color="#22c55e"
+                />
+
+                <MetricCard
+                    title="In Progress"
+                    value="-"
+                    icon={
+                        <Clock
+                            size={22}
+                        />
+                    }
+                    color="#f59e0b"
+                />
+
+                <MetricCard
+                    title="Completed"
+                    value="-"
+                    icon={
+                        <CheckCircle
+                            size={22}
+                        />
+                    }
+                    color="#3b82f6"
+                />
+
+                <MetricCard
+                    title="Destinations"
+                    value="-"
+                    icon={
+                        <MapPin
+                            size={22}
+                        />
+                    }
+                    color="#8b5cf6"
+                />
+            </div>
+
+            {/* Delivery Tracking */}
+            <div
+                style={{
+                    background:
+                        "linear-gradient(145deg, rgba(15,23,42,0.95), rgba(30,41,59,0.95))",
+                    border:
+                        "1px solid rgba(148,163,184,0.08)",
+                    borderRadius:
+                        "24px",
+                    padding: "28px",
+                    boxShadow:
+                        "0 16px 40px rgba(0,0,0,0.30)",
+                    marginBottom:
+                        "24px",
+                }}
+            >
+                <div
+                    style={{
+                        marginBottom:
+                            "20px",
+                    }}
+                >
+                    <h2
+                        style={{
+                            margin: 0,
+                            fontSize:
+                                "22px",
+                            fontWeight:
+                                "700",
+                            color:
+                                "white",
+                        }}
+                    >
+                        Delivery Tracking
+                    </h2>
+
+                    <p
+                        style={{
+                            margin:
+                                "6px 0 0",
+                            color:
+                                "#94a3b8",
+                        }}
+                    >
+                        Real-time delivery
+                        monitoring and
+                        shipment status.
+                    </p>
+                </div>
+
+                <EmptyState
+                    title="No Deliveries Found"
+                    subtitle="Delivery tracking data and shipment information will appear here."
+                    icon={
+                        <Truck
+                            size={38}
+                        />
+                    }
+                />
+            </div>
+
+            {/* Courier Performance */}
+            <div
+                style={{
+                    background:
+                        "linear-gradient(145deg, rgba(15,23,42,0.95), rgba(30,41,59,0.95))",
+                    border:
+                        "1px solid rgba(148,163,184,0.08)",
+                    borderRadius:
+                        "24px",
+                    padding: "28px",
+                    boxShadow:
+                        "0 16px 40px rgba(0,0,0,0.30)",
+                }}
+            >
+                <div
+                    style={{
+                        marginBottom:
+                            "20px",
+                    }}
+                >
+                    <h2
+                        style={{
+                            margin: 0,
+                            fontSize:
+                                "22px",
+                            fontWeight:
+                                "700",
+                            color:
+                                "white",
+                        }}
+                    >
+                        Courier Performance
+                    </h2>
+
+                    <p
+                        style={{
+                            margin:
+                                "6px 0 0",
+                            color:
+                                "#94a3b8",
+                        }}
+                    >
+                        Analyze courier
+                        efficiency,
+                        punctuality, and
+                        delivery success.
+                    </p>
+                </div>
+
+                <EmptyState
+                    title="No Performance Data"
+                    subtitle="Courier performance analytics and reports will appear here."
+                    icon={
+                        <CheckCircle
+                            size={38}
+                        />
+                    }
+                />
+            </div>
+        </OwnerLayout>
+    );
+}
