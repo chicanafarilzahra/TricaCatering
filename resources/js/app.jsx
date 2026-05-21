@@ -1,6 +1,7 @@
 // resources/js/app.jsx
 
-import 'leaflet/dist/leaflet.css';
+import "leaflet/dist/leaflet.css";
+
 import React from "react";
 import ReactDOM from "react-dom/client";
 
@@ -8,10 +9,11 @@ import {
     HashRouter,
     Routes,
     Route,
+    Navigate,
 } from "react-router-dom";
 
 /* =========================
-   PAGES
+   ADMIN PAGES
 ========================= */
 
 import Dashboard from "./pages/Dashboard";
@@ -25,6 +27,10 @@ import Deliveries from "./pages/Deliveries";
 import Customers from "./pages/Customers";
 import Reports from "./pages/Reports";
 import Stocks from "./pages/Stocks";
+
+/* =========================
+   AUTH
+========================= */
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -62,12 +68,29 @@ import LaporanHarian from "./pages/Kurir/LaporanHarian";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
+
+    const token =
+        localStorage.getItem("token");
+
     return (
+
         <HashRouter>
+
             <Routes>
 
                 {/* =========================
-                    LOGIN DAN REGISTER
+                    AUTO REDIRECT
+                ========================= */}
+
+                <Route
+                    path="/"
+                    element={
+                        <Navigate to="/login" />
+                    }
+                />
+
+                {/* =========================
+                    LOGIN & REGISTER
                 ========================= */}
 
                 <Route
@@ -81,21 +104,17 @@ function App() {
                 />
 
                 {/* =========================
-                    DASHBOARD
+                    ADMIN
                 ========================= */}
 
                 <Route
-                    path="/"
+                    path="/dashboard"
                     element={
                         <ProtectedRoute>
                             <Dashboard />
                         </ProtectedRoute>
                     }
                 />
-
-                {/* =========================
-                    ADMIN
-                ========================= */}
 
                 <Route
                     path="/menus"
@@ -188,108 +207,108 @@ function App() {
                 />
 
                 {/* =========================
-   OWNER
-   (TIDAK ADA SPPG)
-========================= */}
+                    OWNER
+                ========================= */}
 
-<Route
-    path="/owner"
-    element={
-        <ProtectedRoute role="owner">
-            <DashboardOwner />
-        </ProtectedRoute>
-    }
-/>
+                <Route
+                    path="/owner"
+                    element={
+                        <ProtectedRoute role="owner">
+                            <DashboardOwner />
+                        </ProtectedRoute>
+                    }
+                />
 
-<Route
-    path="/owner/orders"
-    element={
-        <ProtectedRoute role="owner">
-            <OrdersOwner />
-        </ProtectedRoute>
-    }
-/>
+                <Route
+                    path="/owner/orders"
+                    element={
+                        <ProtectedRoute role="owner">
+                            <OrdersOwner />
+                        </ProtectedRoute>
+                    }
+                />
 
-<Route
-    path="/owner/customers"
-    element={
-        <ProtectedRoute role="owner">
-            <CustomersOwner />
-        </ProtectedRoute>
-    }
-/>
+                <Route
+                    path="/owner/customers"
+                    element={
+                        <ProtectedRoute role="owner">
+                            <CustomersOwner />
+                        </ProtectedRoute>
+                    }
+                />
 
-<Route
-    path="/owner/menus"
-    element={
-        <ProtectedRoute role="owner">
-            <MenusOwner />
-        </ProtectedRoute>
-    }
-/>
+                <Route
+                    path="/owner/menus"
+                    element={
+                        <ProtectedRoute role="owner">
+                            <MenusOwner />
+                        </ProtectedRoute>
+                    }
+                />
 
-<Route
-    path="/owner/packages"
-    element={
-        <ProtectedRoute role="owner">
-            <PackagesOwner />
-        </ProtectedRoute>
-    }
-/>
+                <Route
+                    path="/owner/packages"
+                    element={
+                        <ProtectedRoute role="owner">
+                            <PackagesOwner />
+                        </ProtectedRoute>
+                    }
+                />
 
-<Route
-    path="/owner/productions"
-    element={
-        <ProtectedRoute role="owner">
-            <ProductionsOwner />
-        </ProtectedRoute>
-    }
-/>
+                <Route
+                    path="/owner/productions"
+                    element={
+                        <ProtectedRoute role="owner">
+                            <ProductionsOwner />
+                        </ProtectedRoute>
+                    }
+                />
 
-<Route
-    path="/owner/stocks"
-    element={
-        <ProtectedRoute role="owner">
-            <StocksOwner />
-        </ProtectedRoute>
-    }
-/>
+                <Route
+                    path="/owner/stocks"
+                    element={
+                        <ProtectedRoute role="owner">
+                            <StocksOwner />
+                        </ProtectedRoute>
+                    }
+                />
 
-<Route
-    path="/owner/couriers"
-    element={
-        <ProtectedRoute role="owner">
-            <CouriersOwner />
-        </ProtectedRoute>
-    }
-/>
+                <Route
+                    path="/owner/couriers"
+                    element={
+                        <ProtectedRoute role="owner">
+                            <CouriersOwner />
+                        </ProtectedRoute>
+                    }
+                />
 
-<Route
-    path="/owner/deliveries"
-    element={
-        <ProtectedRoute role="owner">
-            <DeliveriesOwner />
-        </ProtectedRoute>
-    }
-/>
+                <Route
+                    path="/owner/deliveries"
+                    element={
+                        <ProtectedRoute role="owner">
+                            <DeliveriesOwner />
+                        </ProtectedRoute>
+                    }
+                />
 
-<Route
-    path="/owner/revenue"
-    element={
-        <ProtectedRoute role="owner">
-            <RevenueOwner />
-        </ProtectedRoute>
-    }
-/>
+                <Route
+                    path="/owner/revenue"
+                    element={
+                        <ProtectedRoute role="owner">
+                            <RevenueOwner />
+                        </ProtectedRoute>
+                    }
+                />
 
-<Route
-    path="/owner/reports"
-    element={
-        <ProtectedRoute role="owner">
-            <ReportsOwner />
-        </ProtectedRoute>
-    }
-/>
+                <Route
+                    path="/owner/reports"
+                    element={
+                        <ProtectedRoute role="owner">
+                            <ReportsOwner />
+                        </ProtectedRoute>
+                    }
+                />
+
                 {/* =========================
                     KURIR
                 ========================= */}
@@ -339,7 +358,19 @@ function App() {
                     }
                 />
 
+                {/* =========================
+                    404 REDIRECT
+                ========================= */}
+
+                <Route
+                    path="/"
+                    element={
+                        <Navigate to="/login" />
+                    }
+                />
+
             </Routes>
+
         </HashRouter>
     );
 }
@@ -349,7 +380,9 @@ const root = ReactDOM.createRoot(
 );
 
 root.render(
+
     <React.StrictMode>
         <App />
     </React.StrictMode>
+
 );
