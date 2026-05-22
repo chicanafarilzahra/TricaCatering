@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use Illuminate\Http\Request;
+use App\Models\DailyReport;
 
 /**
  * Controller untuk role Kurir
@@ -74,4 +75,35 @@ class KurirController extends Controller
 
         return response()->json($orders);
     }
+
+   public function storeLaporan(Request $request)
+{
+    $request->validate([
+        'customer' => 'required|string',
+        'pesanan' => 'required|string',
+        'quantity' => 'required|integer',
+        'waktu' => 'required',
+        'diterima' => 'required|boolean',
+        'alasan' => 'nullable|string',
+        'photo' => 'nullable|file',
+    ]);
+
+    $photoPath = null;
+    if ($request->hasFile('photo')) {
+        $photoPath = $request->file('photo')->store('photos', 'public');
+    }
+
+    $report = DailyReport::create([
+        'customer' => $request->customer,
+        'pesanan' => $request->pesanan,
+        'quantity' => $request->quantity,
+        'waktu' => $request->waktu,
+        'diterima' => $request->diterima,
+        'alasan' => $request->alasan,
+        'photo' => $photoPath,
+        'delivery_fee' => 50000,
+    ]);
+
+    return response()->json($report, 201);
+}
 }

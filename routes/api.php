@@ -161,31 +161,23 @@ Route::get(
 |--------------------------------------------------------------------------
 */
 
-Route::get(
-    'kurir/orders',
-    [KurirController::class, 'index']
-);
+// Daftar semua orders
+Route::get('kurir/orders', [KurirController::class, 'index']);
 
-Route::get(
-    'kurir/orders/{id}',
-    [KurirController::class, 'show']
-);
+// Detail order tertentu
+Route::get('kurir/orders/{id}', [KurirController::class, 'show']);
 
-Route::put(
-    'kurir/orders/{id}/update-status',
-    [KurirController::class, 'updateStatus']
-);
+// Update status order
+Route::put('kurir/orders/{id}/update-status', [KurirController::class, 'updateStatus']);
 
-Route::get(
-    'kurir/rute',
-    [KurirController::class, 'ruteHariIni']
-);
+// Rute kurir hari ini
+Route::get('kurir/rute', [KurirController::class, 'ruteHariIni']);
 
-Route::get(
-    'kurir/laporan',
-    [KurirController::class, 'laporan']
-);
+// Laporan kurir
+Route::get('kurir/laporan', [KurirController::class, 'laporan']);
 
+// Tambahkan route baru untuk menyimpan laporan harian
+Route::post('kurir/laporan', [KurirController::class, 'storeLaporan']);
 /*
 |--------------------------------------------------------------------------
 | KLIEN
