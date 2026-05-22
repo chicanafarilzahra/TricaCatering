@@ -272,7 +272,7 @@ export default function LandingPage() {
         Platform Digital
         Catering Modern
         untuk Bisnis , SPPG 
-        Delivery
+        & Delivery
       </h1>
 
       <p
@@ -324,23 +324,35 @@ export default function LandingPage() {
           <FaArrowRight />
         </Link>
 
-        <Link
-          to="/login"
-          style={{
-            padding: "18px 32px",
-            borderRadius: "18px",
-            background:
-              "rgba(255,255,255,0.07)",
-            border:
-              "1px solid rgba(255,255,255,0.08)",
-            color: "white",
-            textDecoration: "none",
-            fontWeight: "800",
-            backdropFilter: "blur(12px)",
-          }}
-        >
-          Lihat Menu
-        </Link>
+        {/* BUTTON HERO */}
+<button
+    onClick={() => {
+        const section =
+            document.getElementById(
+                "menus"
+            );
+
+        section?.scrollIntoView({
+            behavior: "smooth",
+        });
+    }}
+    style={{
+        padding: "18px 32px",
+        borderRadius: "18px",
+        background:
+            "rgba(255,255,255,0.07)",
+        border:
+            "1px solid rgba(255,255,255,0.08)",
+        color: "white",
+        textDecoration: "none",
+        fontWeight: "800",
+        backdropFilter: "blur(12px)",
+        transition: "0.2s",
+        cursor: "pointer",
+    }}
+>
+    Lihat Menu
+</button>
       </div>
     </div>
 
@@ -420,6 +432,7 @@ export default function LandingPage() {
 </section>
       {/* MENU SECTION */}
       <section
+        id="menus"
         className="container"
         style={{
           paddingBottom: "100px",
