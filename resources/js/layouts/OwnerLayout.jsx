@@ -1,98 +1,64 @@
-// resources/js/layouts/OwnerLayout.jsx
-
 import SidebarOwner from "../components/SidebarOwner";
 import NavbarOwner from "../components/NavbarOwner";
 
-export default function OwnerLayout({ children }) {
+export default function OwnerLayout({
+    children,
+}) {
     return (
         <div
             style={{
+                position: "fixed",
+                inset: 0,
                 display: "flex",
-                minHeight: "100vh",
-
-                /* Background sederhana, tidak terlalu ramai */
-                backgroundColor: "#0f172a",
+                overflow: "hidden",
+                background: "#071028",
             }}
         >
-            {/* =========================
-                SIDEBAR OWNER
-            ========================= */}
-            <SidebarOwner />
+            {/* SIDEBAR */}
+            <div
+                style={{
+                    width: "285px",
+                    height: "100%",
+                    flexShrink: 0,
+                }}
+            >
+                <SidebarOwner />
+            </div>
 
-            {/* =========================
-                MAIN CONTENT
-            ========================= */}
+            {/* MAIN */}
             <div
                 style={{
                     flex: 1,
-                    marginLeft: "285px",
-                    minHeight: "100vh",
+                    minWidth: 0,
+                    height: "100%",
                     display: "flex",
                     flexDirection: "column",
-
-                    /* Area konten sedikit lebih terang */
-                    backgroundColor: "#111827",
+                    overflow: "hidden",
+                    background: "#071028",
                 }}
             >
-                {/* =========================
-                    NAVBAR
-                ========================= */}
+                {/* NAVBAR */}
                 <div
                     style={{
-                        position: "sticky",
-                        top: 0,
-                        zIndex: 100,
-
-                        /* Clean glass effect */
-                        background:
-                            "rgba(17, 24, 39, 0.92)",
-                        backdropFilter: "blur(12px)",
-                        WebkitBackdropFilter:
-                            "blur(12px)",
-
-                        borderBottom:
-                            "1px solid rgba(148,163,184,0.08)",
+                        width: "100%",
+                        flexShrink: 0,
                     }}
                 >
                     <NavbarOwner />
                 </div>
 
-                {/* =========================
-                    PAGE CONTENT
-                ========================= */}
+                {/* CONTENT */}
                 <main
                     style={{
                         flex: 1,
-                        padding: "32px",
-                        boxSizing: "border-box",
+                        overflowY: "auto",
                         overflowX: "hidden",
+                        padding: "24px",
+                        background: "#071028",
+                        color: "#fff",
                     }}
                 >
-                    {/* Card wrapper agar konten terlihat premium */}
-                    <div
-                        style={{
-                            width: "100%",
-                            minHeight:
-                                "calc(100vh - 120px)",
-
-                            background:
-                                "rgba(15, 23, 42, 0.55)",
-
-                            border:
-                                "1px solid rgba(148,163,184,0.08)",
-
-                            borderRadius: "28px",
-
-                            padding: "32px",
-
-                            boxSizing: "border-box",
-
-                            boxShadow:
-                                "0 20px 60px rgba(0,0,0,0.25)",
-                        }}
-                    >
-                        {children}
-                    </div>
+                    {children}
                 </main>
             </div>
         </div>

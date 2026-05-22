@@ -2,21 +2,36 @@
 
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate, Link } from "react-router-dom";
+import {
+    useNavigate,
+    Link,
+} from "react-router-dom";
 
 export default function Register() {
     const navigate = useNavigate();
 
-    const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [passwordConfirmation, setPasswordConfirmation] =
+    const [name, setName] =
         useState("");
 
-    const [role, setRole] = useState("klien");
+    const [email, setEmail] =
+        useState("");
 
-    const [message, setMessage] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [password, setPassword] =
+        useState("");
+
+    const [
+        passwordConfirmation,
+        setPasswordConfirmation,
+    ] = useState("");
+
+    const [role, setRole] =
+        useState("klien");
+
+    const [message, setMessage] =
+        useState("");
+
+    const [loading, setLoading] =
+        useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -25,14 +40,18 @@ export default function Register() {
         setMessage("");
 
         try {
-            const res = await axios.post("/api/register", {
-                name,
-                email,
-                password,
-                password_confirmation:
-                    passwordConfirmation,
-                role,
-            });
+            const res =
+                await axios.post(
+                    "/api/register",
+                    {
+                        name,
+                        email,
+                        password,
+                        password_confirmation:
+                            passwordConfirmation,
+                        role,
+                    }
+                );
 
             localStorage.setItem(
                 "token",
@@ -41,10 +60,14 @@ export default function Register() {
 
             localStorage.setItem(
                 "user",
-                JSON.stringify(res.data.user)
+                JSON.stringify(
+                    res.data.user
+                )
             );
 
-            setMessage("Register berhasil!");
+            setMessage(
+                "Register berhasil!"
+            );
 
             switch (role) {
                 case "owner":
@@ -64,12 +87,15 @@ export default function Register() {
                     break;
 
                 default:
-                    navigate("/");
+                    navigate(
+                        "/dashboard"
+                    );
                     break;
             }
         } catch (err) {
             setMessage(
-                err.response?.data?.message ||
+                err.response?.data
+                    ?.message ||
                     "Register gagal"
             );
         } finally {
@@ -80,66 +106,120 @@ export default function Register() {
     return (
         <div
             style={{
-                minHeight: "100vh",
+                position: "fixed",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                overflowY: "auto",
+                overflowX: "hidden",
+
                 display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
+                justifyContent:
+                    "center",
+
+                alignItems:
+                    "flex-start",
+
                 background:
-                    "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
-                padding: "24px",
-                boxSizing: "border-box",
+                    "linear-gradient(135deg,#071028,#0f172a,#111827)",
+
+                padding:
+                    "40px 20px",
+
+                boxSizing:
+                    "border-box",
             }}
         >
             <div
                 style={{
                     width: "100%",
-                    maxWidth: "560px",
+                    maxWidth: "520px",
+
                     background:
-                        "rgba(255,255,255,0.98)",
-                    padding: "52px",
-                    borderRadius: "28px",
+                        "#182338",
+
+                    padding: "42px",
+
+                    borderRadius:
+                        "28px",
+
+                    border:
+                        "1px solid rgba(255,255,255,0.06)",
+
                     boxShadow:
-                        "0 30px 80px rgba(0,0,0,0.25)",
-                    boxSizing: "border-box",
+                        "0 20px 60px rgba(0,0,0,0.45)",
+
+                    boxSizing:
+                        "border-box",
+
+                    marginBottom:
+                        "40px",
                 }}
             >
-                {/* Logo */}
+                {/* LOGO */}
                 <div
                     style={{
                         display: "flex",
-                        justifyContent: "center",
-                        marginBottom: "24px",
+                        justifyContent:
+                            "center",
+
+                        marginBottom:
+                            "24px",
                     }}
                 >
                     <div
                         style={{
-                            width: "64px",
-                            height: "64px",
-                            borderRadius: "20px",
+                            width: "72px",
+                            height: "72px",
+
+                            borderRadius:
+                                "22px",
+
                             background:
-                                "linear-gradient(135deg,#6366f1,#8b5cf6)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: "white",
-                            fontSize: "24px",
-                            fontWeight: "800",
+                                "linear-gradient(135deg,#2563eb,#3b82f6)",
+
+                            display:
+                                "flex",
+
+                            alignItems:
+                                "center",
+
+                            justifyContent:
+                                "center",
+
+                            color:
+                                "white",
+
+                            fontSize:
+                                "38px",
+
+                            fontWeight:
+                                "800",
+
                             boxShadow:
-                                "0 20px 40px rgba(99,102,241,0.35)",
+                                "0 14px 40px rgba(37,99,235,0.45)",
                         }}
                     >
                         T
                     </div>
                 </div>
 
-                {/* Title */}
+                {/* TITLE */}
                 <h1
                     style={{
                         margin: 0,
-                        textAlign: "center",
-                        fontSize: "32px",
-                        fontWeight: "800",
-                        color: "#0f172a",
+
+                        textAlign:
+                            "center",
+
+                        fontSize:
+                            "38px",
+
+                        fontWeight:
+                            "800",
+
+                        color:
+                            "#ffffff",
                     }}
                 >
                     TriCa Catering
@@ -147,59 +227,81 @@ export default function Register() {
 
                 <p
                     style={{
-                        margin: "10px 0 32px",
-                        textAlign: "center",
-                        color: "#64748b",
-                        fontSize: "14px",
+                        margin:
+                            "10px 0 32px",
+
+                        textAlign:
+                            "center",
+
+                        color:
+                            "#94a3b8",
+
+                        fontSize:
+                            "15px",
                     }}
                 >
                     Create your account
                 </p>
 
-                {/* Message */}
+                {/* MESSAGE */}
                 {message && (
                     <div
                         style={{
-                            marginBottom: "18px",
-                            padding: "14px",
-                            borderRadius: "12px",
+                            marginBottom:
+                                "18px",
+
+                            padding:
+                                "14px",
+
+                            borderRadius:
+                                "12px",
+
                             background:
                                 message ===
                                 "Register berhasil!"
                                     ? "rgba(34,197,94,0.12)"
                                     : "rgba(239,68,68,0.12)",
+
                             color:
                                 message ===
                                 "Register berhasil!"
-                                    ? "#16a34a"
-                                    : "#dc2626",
-                            fontSize: "14px",
-                            textAlign: "center",
-                            fontWeight: "600",
+                                    ? "#22c55e"
+                                    : "#ef4444",
+
+                            fontSize:
+                                "14px",
+
+                            textAlign:
+                                "center",
+
+                            fontWeight:
+                                "600",
+
+                            border:
+                                "1px solid rgba(255,255,255,0.06)",
                         }}
                     >
                         {message}
                     </div>
                 )}
 
-                {/* Form */}
-                <form onSubmit={handleSubmit}>
-                    {/* Nama */}
+                {/* FORM */}
+                <form
+                    onSubmit={
+                        handleSubmit
+                    }
+                >
+                    {/* NAMA */}
                     <div
                         style={{
-                            marginBottom: "18px",
+                            marginBottom:
+                                "18px",
                         }}
                     >
                         <label
-                            style={{
-                                display: "block",
-                                marginBottom:
-                                    "8px",
-                                fontSize: "13px",
-                                fontWeight:
-                                    "600",
-                                color: "#334155",
-                            }}
+                            style={
+                                labelStyle
+                            }
                         >
                             Nama
                         </label>
@@ -208,32 +310,33 @@ export default function Register() {
                             type="text"
                             placeholder="Masukkan nama"
                             value={name}
-                            onChange={(e) =>
+                            onChange={(
+                                e
+                            ) =>
                                 setName(
-                                    e.target.value
+                                    e
+                                        .target
+                                        .value
                                 )
                             }
                             required
-                            style={inputStyle}
+                            style={
+                                inputStyle
+                            }
                         />
                     </div>
 
-                    {/* Email */}
+                    {/* EMAIL */}
                     <div
                         style={{
-                            marginBottom: "18px",
+                            marginBottom:
+                                "18px",
                         }}
                     >
                         <label
-                            style={{
-                                display: "block",
-                                marginBottom:
-                                    "8px",
-                                fontSize: "13px",
-                                fontWeight:
-                                    "600",
-                                color: "#334155",
-                            }}
+                            style={
+                                labelStyle
+                            }
                         >
                             Email
                         </label>
@@ -242,32 +345,33 @@ export default function Register() {
                             type="email"
                             placeholder="Enter your email"
                             value={email}
-                            onChange={(e) =>
+                            onChange={(
+                                e
+                            ) =>
                                 setEmail(
-                                    e.target.value
+                                    e
+                                        .target
+                                        .value
                                 )
                             }
                             required
-                            style={inputStyle}
+                            style={
+                                inputStyle
+                            }
                         />
                     </div>
 
-                    {/* Password */}
+                    {/* PASSWORD */}
                     <div
                         style={{
-                            marginBottom: "18px",
+                            marginBottom:
+                                "18px",
                         }}
                     >
                         <label
-                            style={{
-                                display: "block",
-                                marginBottom:
-                                    "8px",
-                                fontSize: "13px",
-                                fontWeight:
-                                    "600",
-                                color: "#334155",
-                            }}
+                            style={
+                                labelStyle
+                            }
                         >
                             Password
                         </label>
@@ -275,33 +379,36 @@ export default function Register() {
                         <input
                             type="password"
                             placeholder="Enter your password"
-                            value={password}
-                            onChange={(e) =>
+                            value={
+                                password
+                            }
+                            onChange={(
+                                e
+                            ) =>
                                 setPassword(
-                                    e.target.value
+                                    e
+                                        .target
+                                        .value
                                 )
                             }
                             required
-                            style={inputStyle}
+                            style={
+                                inputStyle
+                            }
                         />
                     </div>
 
-                    {/* Konfirmasi Password */}
+                    {/* CONFIRM PASSWORD */}
                     <div
                         style={{
-                            marginBottom: "18px",
+                            marginBottom:
+                                "18px",
                         }}
                     >
                         <label
-                            style={{
-                                display: "block",
-                                marginBottom:
-                                    "8px",
-                                fontSize: "13px",
-                                fontWeight:
-                                    "600",
-                                color: "#334155",
-                            }}
+                            style={
+                                labelStyle
+                            }
                         >
                             Konfirmasi Password
                         </label>
@@ -312,44 +419,51 @@ export default function Register() {
                             value={
                                 passwordConfirmation
                             }
-                            onChange={(e) =>
+                            onChange={(
+                                e
+                            ) =>
                                 setPasswordConfirmation(
-                                    e.target.value
+                                    e
+                                        .target
+                                        .value
                                 )
                             }
                             required
-                            style={inputStyle}
+                            style={
+                                inputStyle
+                            }
                         />
                     </div>
 
-                    {/* Role */}
+                    {/* ROLE */}
                     <div
                         style={{
-                            marginBottom: "24px",
+                            marginBottom:
+                                "24px",
                         }}
                     >
                         <label
-                            style={{
-                                display: "block",
-                                marginBottom:
-                                    "8px",
-                                fontSize: "13px",
-                                fontWeight:
-                                    "600",
-                                color: "#334155",
-                            }}
+                            style={
+                                labelStyle
+                            }
                         >
                             Role
                         </label>
 
                         <select
                             value={role}
-                            onChange={(e) =>
+                            onChange={(
+                                e
+                            ) =>
                                 setRole(
-                                    e.target.value
+                                    e
+                                        .target
+                                        .value
                                 )
                             }
-                            style={inputStyle}
+                            style={
+                                inputStyle
+                            }
                         >
                             <option value="owner">
                                 Owner
@@ -364,34 +478,53 @@ export default function Register() {
                             </option>
 
                             <option value="operator_sppg">
-                                Operator SPPG
+                                Operator
+                                SPPG
                             </option>
                         </select>
                     </div>
 
-                    {/* Button */}
+                    {/* BUTTON */}
                     <button
                         type="submit"
-                        disabled={loading}
+                        disabled={
+                            loading
+                        }
                         style={{
                             width: "100%",
+
                             height: "58px",
-                            border: "none",
+
+                            border:
+                                "none",
+
                             borderRadius:
                                 "14px",
+
                             background:
-                                "linear-gradient(135deg,#6366f1,#8b5cf6)",
-                            color: "white",
-                            fontWeight: "700",
-                            fontSize: "20px",
-                            cursor: loading
-                                ? "not-allowed"
-                                : "pointer",
-                            opacity: loading
-                                ? 0.7
-                                : 1,
+                                "linear-gradient(135deg,#2563eb,#3b82f6)",
+
+                            color:
+                                "white",
+
+                            fontWeight:
+                                "700",
+
+                            fontSize:
+                                "15px",
+
+                            cursor:
+                                loading
+                                    ? "not-allowed"
+                                    : "pointer",
+
+                            opacity:
+                                loading
+                                    ? 0.7
+                                    : 1,
+
                             boxShadow:
-                                "0 14px 30px rgba(99,102,241,0.35)",
+                                "0 12px 30px rgba(37,99,235,0.35)",
                         }}
                     >
                         {loading
@@ -400,40 +533,70 @@ export default function Register() {
                     </button>
                 </form>
 
-                {/* Footer */}
-                <p
+                {/* FOOTER */}
+                <div
                     style={{
-                        textAlign: "center",
-                        marginTop: "24px",
-                        color: "#64748b",
-                        fontSize: "14px",
+                        marginTop:
+                            "24px",
+
+                        textAlign:
+                            "center",
+
+                        fontSize:
+                            "14px",
+
+                        color:
+                            "#94a3b8",
                     }}
                 >
                     Sudah punya akun?{" "}
                     <Link
                         to="/login"
                         style={{
-                            color: "#6366f1",
-                            fontWeight: "700",
-                            textDecoration: "none",
+                            color:
+                                "#60a5fa",
+
+                            textDecoration:
+                                "none",
+
+                            fontWeight:
+                                "700",
                         }}
                     >
                         Login
                     </Link>
-                </p>
+                </div>
             </div>
         </div>
     );
 }
 
+const labelStyle = {
+    display: "block",
+    marginBottom: "8px",
+    fontSize: "13px",
+    fontWeight: "600",
+    color: "#cbd5e1",
+};
+
 const inputStyle = {
     width: "100%",
-    height: "52px",
-    border: "1px solid #cbd5e1",
+    height: "56px",
+
+    border:
+        "1px solid rgba(255,255,255,0.08)",
+
     borderRadius: "14px",
+
     padding: "0 16px",
+
     fontSize: "14px",
+
     outline: "none",
+
+    background: "#0f172a",
+
+    color: "#ffffff",
+
     boxSizing: "border-box",
-    background: "#fff",
 };

@@ -16,17 +16,13 @@ return new class extends Migration
 
         $table->text('description')->nullable();
 
+        $table->string('name');
+        $table->text('description')->nullable();
         $table->integer('price');
-
         $table->string('category');
-
         $table->string('image')->nullable();
-
         $table->integer('stock')->default(0);
-
         $table->boolean('is_active')->default(true);
-
-        $table->timestamps();
     });
 }
     public function down(): void

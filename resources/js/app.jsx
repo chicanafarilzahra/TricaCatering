@@ -34,6 +34,7 @@ import Stocks from "./pages/Stocks";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import LandingPage from "./pages/LandingPage";
 
 /* =========================
    OWNER PAGES
@@ -81,12 +82,9 @@ function App() {
                 {/* =========================
                     AUTO REDIRECT
                 ========================= */}
-
                 <Route
                     path="/"
-                    element={
-                        <Navigate to="/login" />
-                    }
+                    element={<LandingPage />}
                 />
 
                 {/* =========================
@@ -364,11 +362,8 @@ function App() {
 
                 <Route
                     path="/"
-                    element={
-                        <Navigate to="/login" />
-                    }
+                    element={<LandingPage />}
                 />
-
             </Routes>
 
         </HashRouter>

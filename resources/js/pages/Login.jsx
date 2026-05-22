@@ -36,13 +36,11 @@ export default function Login() {
                     }
                 );
 
-            // TOKEN
             localStorage.setItem(
                 "token",
                 response.data.token
             );
 
-            // USER
             localStorage.setItem(
                 "user",
                 JSON.stringify(
@@ -50,7 +48,6 @@ export default function Login() {
                 )
             );
 
-            // ROLE
             const role =
                 response.data.user?.role?.toLowerCase();
 
@@ -60,7 +57,7 @@ export default function Login() {
                     break;
 
                 case "admin":
-                    navigate("/");
+                    navigate("/dashboard");
                     break;
 
                 case "kurir":
@@ -76,7 +73,7 @@ export default function Login() {
                     break;
 
                 default:
-                    navigate("/");
+                    navigate("/dashboard");
                     break;
             }
         } catch (error) {
@@ -90,7 +87,6 @@ export default function Login() {
         }
     }
 
-    // LOGIN GOOGLE
     const handleGoogleLogin = () => {
         window.location.href =
             "/api/auth/google/redirect";
@@ -99,380 +95,505 @@ export default function Login() {
     return (
         <div
             style={{
-                width: "100%",
-                minHeight: "100vh",
-                margin: 0,
-                display: "flex",
-                justifyContent:
-                    "center",
-                alignItems: "center",
+                position: "fixed",
+                inset: 0,
+
                 background:
-                    "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
-                padding: "24px",
-                overflow: "hidden",
-                boxSizing:
-                    "border-box",
+                    "linear-gradient(135deg,#071028,#0f172a,#111827)",
+
+                overflowY: "auto",
+                overflowX: "hidden",
             }}
         >
             <div
                 style={{
+                    minHeight: "100vh",
                     width: "100%",
-                    maxWidth: "560px",
-                    background:
-                        "rgba(255,255,255,0.98)",
-                    padding: "52px",
-                    borderRadius:
-                        "28px",
-                    boxShadow:
-                        "0 30px 80px rgba(0,0,0,0.25)",
+
+                    display: "flex",
+                    justifyContent:
+                        "center",
+
+                    alignItems:
+                        "flex-start",
+
+                    padding:
+                        "40px 20px",
+
                     boxSizing:
                         "border-box",
                 }}
             >
-                {/* LOGO */}
                 <div
-                    style={{
-                        display: "flex",
-                        justifyContent:
-                            "center",
-                        marginBottom:
-                            "24px",
-                    }}
-                >
-                    <div
-                        style={{
-                            width: "64px",
-                            height: "64px",
-                            borderRadius:
-                                "20px",
-                            background:
-                                "linear-gradient(135deg,#6366f1,#8b5cf6)",
-                            display:
-                                "flex",
-                            alignItems:
-                                "center",
-                            justifyContent:
-                                "center",
-                            color: "white",
-                            fontSize:
-                                "36px",
-                            fontWeight:
-                                "800",
-                            boxShadow:
-                                "0 20px 40px rgba(99,102,241,0.35)",
-                        }}
-                    >
-                        T
-                    </div>
-                </div>
-
-                {/* TITLE */}
-                <h1
-                    style={{
-                        margin: 0,
-                        textAlign:
-                            "center",
-                        fontSize:
-                            "32px",
-                        fontWeight:
-                            "800",
-                        color:
-                            "#0f172a",
-                    }}
-                >
-                    TriCa Catering
-                </h1>
-
-                <p
-                    style={{
-                        margin:
-                            "10px 0 32px",
-                        textAlign:
-                            "center",
-                        color:
-                            "#64748b",
-                        fontSize:
-                            "14px",
-                    }}
-                >
-                    Sign in to your
-                    account
-                </p>
-
-                {/* GOOGLE LOGIN */}
-                <button
-                    type="button"
-                    onClick={
-                        handleGoogleLogin
-                    }
                     style={{
                         width: "100%",
-                        height: "52px",
-                        border:
-                            "1px solid #dbe2ea",
-                        borderRadius:
-                            "14px",
+                        maxWidth: "520px",
+
                         background:
-                            "#ffffff",
-                        color:
-                            "#0f172a",
-                        fontWeight:
-                            "600",
-                        fontSize:
-                            "14px",
-                        cursor:
-                            "pointer",
-                        display: "flex",
-                        alignItems:
-                            "center",
-                        justifyContent:
-                            "center",
-                        gap: "10px",
+                            "#182338",
+
+                        padding: "42px",
+
+                        borderRadius:
+                            "28px",
+
+                        border:
+                            "1px solid rgba(255,255,255,0.06)",
+
+                        boxShadow:
+                            "0 20px 60px rgba(0,0,0,0.45)",
+
+                        boxSizing:
+                            "border-box",
+
+                        marginTop:
+                            "20px",
+
                         marginBottom:
-                            "24px",
-                        transition:
-                            "0.2s",
+                            "20px",
                     }}
                 >
-                    <FcGoogle
-                        size={22}
-                    />
-                    Login with Google
-                </button>
-
-                {/* DIVIDER */}
-                <div
-                    style={{
-                        display: "flex",
-                        alignItems:
-                            "center",
-                        gap: "12px",
-                        marginBottom:
-                            "24px",
-                    }}
-                >
+                    {/* LOGO */}
                     <div
                         style={{
-                            flex: 1,
-                            height: "1px",
-                            background:
-                                "#e2e8f0",
-                        }}
-                    />
+                            display: "flex",
+                            justifyContent:
+                                "center",
 
-                    <span
-                        style={{
-                            fontSize:
-                                "12px",
-                            color:
-                                "#94a3b8",
-                            fontWeight:
-                                "600",
-                        }}
-                    >
-                        OR
-                    </span>
-
-                    <div
-                        style={{
-                            flex: 1,
-                            height: "1px",
-                            background:
-                                "#e2e8f0",
-                        }}
-                    />
-                </div>
-
-                {/* FORM */}
-                <form
-                    onSubmit={
-                        handleLogin
-                    }
-                >
-                    {/* EMAIL */}
-                    <div
-                        style={{
-                            marginBottom:
-                                "18px",
-                        }}
-                    >
-                        <label
-                            style={{
-                                display:
-                                    "block",
-                                marginBottom:
-                                    "8px",
-                                fontSize:
-                                    "13px",
-                                fontWeight:
-                                    "600",
-                                color:
-                                    "#334155",
-                            }}
-                        >
-                            Email
-                        </label>
-
-                        <input
-                            type="email"
-                            placeholder="Enter your email"
-                            value={email}
-                            onChange={(
-                                e
-                            ) =>
-                                setEmail(
-                                    e
-                                        .target
-                                        .value
-                                )
-                            }
-                            required
-                            style={{
-                                width:
-                                    "100%",
-                                height:
-                                    "52px",
-                                border:
-                                    "1px solid #cbd5e1",
-                                borderRadius:
-                                    "14px",
-                                padding:
-                                    "0 16px",
-                                fontSize:
-                                    "14px",
-                                outline:
-                                    "none",
-                                boxSizing:
-                                    "border-box",
-                            }}
-                        />
-                    </div>
-
-                    {/* PASSWORD */}
-                    <div
-                        style={{
                             marginBottom:
                                 "24px",
                         }}
                     >
-                        <label
+                        <div
                             style={{
+                                width: "72px",
+                                height:
+                                    "72px",
+
+                                borderRadius:
+                                    "22px",
+
+                                background:
+                                    "linear-gradient(135deg,#2563eb,#3b82f6)",
+
                                 display:
-                                    "block",
-                                marginBottom:
-                                    "8px",
-                                fontSize:
-                                    "13px",
-                                fontWeight:
-                                    "600",
+                                    "flex",
+
+                                alignItems:
+                                    "center",
+
+                                justifyContent:
+                                    "center",
+
                                 color:
-                                    "#334155",
+                                    "#ffffff",
+
+                                fontSize:
+                                    "38px",
+
+                                fontWeight:
+                                    "800",
+
+                                boxShadow:
+                                    "0 14px 40px rgba(37,99,235,0.45)",
                             }}
                         >
-                            Password
-                        </label>
+                            T
+                        </div>
+                    </div>
 
-                        <input
-                            type="password"
-                            placeholder="Enter your password"
-                            value={
-                                password
-                            }
-                            onChange={(
-                                e
-                            ) =>
-                                setPassword(
-                                    e
-                                        .target
-                                        .value
-                                )
-                            }
-                            required
+                    {/* TITLE */}
+                    <h1
+                        style={{
+                            margin: 0,
+
+                            textAlign:
+                                "center",
+
+                            fontSize:
+                                "38px",
+
+                            fontWeight:
+                                "800",
+
+                            color:
+                                "#ffffff",
+                        }}
+                    >
+                        TriCa Catering
+                    </h1>
+
+                    <p
+                        style={{
+                            margin:
+                                "10px 0 32px",
+
+                            textAlign:
+                                "center",
+
+                            color:
+                                "#94a3b8",
+
+                            fontSize:
+                                "15px",
+                        }}
+                    >
+                        Sign in to your
+                        account
+                    </p>
+
+                    {/* GOOGLE LOGIN */}
+                    <button
+                        type="button"
+                        onClick={
+                            handleGoogleLogin
+                        }
+                        style={{
+                            width: "100%",
+                            height: "56px",
+
+                            border:
+                                "1px solid rgba(255,255,255,0.08)",
+
+                            borderRadius:
+                                "14px",
+
+                            background:
+                                "#0f172a",
+
+                            color:
+                                "#ffffff",
+
+                            fontWeight:
+                                "600",
+
+                            fontSize:
+                                "14px",
+
+                            cursor:
+                                "pointer",
+
+                            display:
+                                "flex",
+
+                            alignItems:
+                                "center",
+
+                            justifyContent:
+                                "center",
+
+                            gap: "10px",
+
+                            marginBottom:
+                                "24px",
+                        }}
+                    >
+                        <FcGoogle
+                            size={22}
+                        />
+                        Login with
+                        Google
+                    </button>
+
+                    {/* DIVIDER */}
+                    <div
+                        style={{
+                            display: "flex",
+
+                            alignItems:
+                                "center",
+
+                            gap: "12px",
+
+                            marginBottom:
+                                "24px",
+                        }}
+                    >
+                        <div
                             style={{
-                                width:
-                                    "100%",
+                                flex: 1,
                                 height:
-                                    "52px",
-                                border:
-                                    "1px solid #cbd5e1",
-                                borderRadius:
-                                    "14px",
-                                padding:
-                                    "0 16px",
+                                    "1px",
+
+                                background:
+                                    "rgba(255,255,255,0.08)",
+                            }}
+                        />
+
+                        <span
+                            style={{
                                 fontSize:
-                                    "14px",
-                                outline:
-                                    "none",
-                                boxSizing:
-                                    "border-box",
+                                    "12px",
+
+                                color:
+                                    "#94a3b8",
+
+                                fontWeight:
+                                    "600",
+                            }}
+                        >
+                            OR
+                        </span>
+
+                        <div
+                            style={{
+                                flex: 1,
+                                height:
+                                    "1px",
+
+                                background:
+                                    "rgba(255,255,255,0.08)",
                             }}
                         />
                     </div>
 
-                    {/* BUTTON LOGIN */}
-                    <button
-                        type="submit"
-                        disabled={
-                            loading
+                    {/* FORM */}
+                    <form
+                        onSubmit={
+                            handleLogin
                         }
+                    >
+                        {/* EMAIL */}
+                        <div
+                            style={{
+                                marginBottom:
+                                    "18px",
+                            }}
+                        >
+                            <label
+                                style={{
+                                    display:
+                                        "block",
+
+                                    marginBottom:
+                                        "8px",
+
+                                    fontSize:
+                                        "13px",
+
+                                    fontWeight:
+                                        "600",
+
+                                    color:
+                                        "#cbd5e1",
+                                }}
+                            >
+                                Email
+                            </label>
+
+                            <input
+                                type="email"
+                                placeholder="Enter your email"
+                                value={
+                                    email
+                                }
+                                onChange={(
+                                    e
+                                ) =>
+                                    setEmail(
+                                        e
+                                            .target
+                                            .value
+                                    )
+                                }
+                                required
+                                style={{
+                                    width:
+                                        "100%",
+
+                                    height:
+                                        "56px",
+
+                                    border:
+                                        "1px solid rgba(255,255,255,0.08)",
+
+                                    borderRadius:
+                                        "14px",
+
+                                    padding:
+                                        "0 16px",
+
+                                    fontSize:
+                                        "14px",
+
+                                    outline:
+                                        "none",
+
+                                    background:
+                                        "#0f172a",
+
+                                    color:
+                                        "#ffffff",
+
+                                    boxSizing:
+                                        "border-box",
+                                }}
+                            />
+                        </div>
+
+                        {/* PASSWORD */}
+                        <div
+                            style={{
+                                marginBottom:
+                                    "24px",
+                            }}
+                        >
+                            <label
+                                style={{
+                                    display:
+                                        "block",
+
+                                    marginBottom:
+                                        "8px",
+
+                                    fontSize:
+                                        "13px",
+
+                                    fontWeight:
+                                        "600",
+
+                                    color:
+                                        "#cbd5e1",
+                                }}
+                            >
+                                Password
+                            </label>
+
+                            <input
+                                type="password"
+                                placeholder="Enter your password"
+                                value={
+                                    password
+                                }
+                                onChange={(
+                                    e
+                                ) =>
+                                    setPassword(
+                                        e
+                                            .target
+                                            .value
+                                    )
+                                }
+                                required
+                                style={{
+                                    width:
+                                        "100%",
+
+                                    height:
+                                        "56px",
+
+                                    border:
+                                        "1px solid rgba(255,255,255,0.08)",
+
+                                    borderRadius:
+                                        "14px",
+
+                                    padding:
+                                        "0 16px",
+
+                                    fontSize:
+                                        "14px",
+
+                                    outline:
+                                        "none",
+
+                                    background:
+                                        "#0f172a",
+
+                                    color:
+                                        "#ffffff",
+
+                                    boxSizing:
+                                        "border-box",
+                                }}
+                            />
+                        </div>
+
+                        {/* BUTTON LOGIN */}
+                        <button
+                            type="submit"
+                            disabled={
+                                loading
+                            }
+                            style={{
+                                width:
+                                    "100%",
+
+                                height:
+                                    "58px",
+
+                                border:
+                                    "none",
+
+                                borderRadius:
+                                    "14px",
+
+                                background:
+                                    "linear-gradient(135deg,#2563eb,#3b82f6)",
+
+                                color:
+                                    "#ffffff",
+
+                                fontWeight:
+                                    "700",
+
+                                fontSize:
+                                    "15px",
+
+                                cursor:
+                                    loading
+                                        ? "not-allowed"
+                                        : "pointer",
+
+                                opacity:
+                                    loading
+                                        ? 0.7
+                                        : 1,
+
+                                boxShadow:
+                                    "0 12px 30px rgba(37,99,235,0.35)",
+                            }}
+                        >
+                            {loading
+                                ? "Signing In..."
+                                : "Login"}
+                        </button>
+                    </form>
+
+                    {/* REGISTER */}
+                    <div
                         style={{
-                            width: "100%",
-                            height: "58px",
-                            border: "none",
-                            borderRadius:
-                                "14px",
-                            background:
-                                "linear-gradient(135deg,#6366f1,#8b5cf6)",
-                            color: "white",
-                            fontWeight:
-                                "700",
+                            marginTop:
+                                "24px",
+
+                            textAlign:
+                                "center",
+
                             fontSize:
                                 "14px",
-                            cursor:
-                                loading
-                                    ? "not-allowed"
-                                    : "pointer",
-                            opacity:
-                                loading
-                                    ? 0.7
-                                    : 1,
-                            boxShadow:
-                                "0 14px 30px rgba(99,102,241,0.35)",
-                        }}
-                    >
-                        {loading
-                            ? "Signing In..."
-                            : "Login"}
-                    </button>
-                </form>
 
-                {/* REGISTER */}
-                <div
-                    style={{
-                        marginTop: "24px",
-                        textAlign:
-                            "center",
-                        fontSize:
-                            "14px",
-                        color:
-                            "#64748b",
-                    }}
-                >
-                    Don't have an
-                    account?{" "}
-                    <Link
-                        to="/register"
-                        style={{
                             color:
-                                "#6366f1",
-                            textDecoration:
-                                "none",
-                            fontWeight:
-                                "700",
+                                "#94a3b8",
                         }}
                     >
-                        Register
-                    </Link>
+                        Don't have an
+                        account?{" "}
+                        <Link
+                            to="/register"
+                            style={{
+                                color:
+                                    "#60a5fa",
+
+                                textDecoration:
+                                    "none",
+
+                                fontWeight:
+                                    "700",
+                            }}
+                        >
+                            Register
+                        </Link>
+                    </div>
                 </div>
             </div>
         </div>

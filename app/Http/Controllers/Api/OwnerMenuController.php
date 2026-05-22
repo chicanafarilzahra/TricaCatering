@@ -3,99 +3,139 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Menu;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\Request;
 
 class OwnerMenuController extends Controller
 {
     public function index()
     {
-        return Menu::latest()->get();
+        return response()->json(
+            Menu::latest()->get()
+        );
     }
 
-    public function store(Request $request)
+   public function store(Request $request)
+{
+    $request->validate([
+
+        'name' => 'required',
+
+        'description' => 'nullable',
+
+        'price' => 'required',
+
+        'category' => 'required',
+
+        'stock' => 'required',
+
+        'image' => 'nullable|image|mimes:jpg,jpeg,png,webp',
+
+    ]);
+
+    $imagePath = null;
+
+    // upload image
+    if ($request->hasFile('image')) {
+
+        $imagePath = $request
+            ->file('image')
+            ->store('menus', 'public');
+    }
+
+    $menu = Menu::create([
+
+        'name' => $request->name,
+
+        'description' => $request->description,
+
+        'price' => $request->price,
+
+        'category' => $request->category,
+
+        'stock' => $request->stock,
+
+        'image' => $imagePath,
+
+        'is_active' => true,
+
+    ]);
+
+    return response()->json([
+
+        'message' => 'Menu berhasil ditambahkan',
+
+        'data' => $menu
+
+    ]);
+}
+    public function show($id)
     {
-        $request->validate([
-            'name' => 'required',
-            'price' => 'required|numeric',
-            'description' => 'nullable',
-            'image' => 'nullable|image',
-        ]);
-
-        $imagePath = null;
-
-        if ($request->hasFile('image')) {
-
-            $imagePath = $request
-                ->file('image')
-                ->store('menus', 'public');
-        }
-
-        $menu = Menu::create([
-            'name' => $request->name,
-            'price' => $request->price,
-            'description' => $request->description,
-            'image' => $imagePath,
-        ]);
-
-        return response()->json([
-            'message' => 'Menu created',
-            'data' => $menu
-        ]);
+        return Menu::findOrFail($id);
     }
 
     public function update(Request $request, $id)
-    {
-        $menu = Menu::findOrFail($id);
+{
+    $menu = Menu::findOrFail($id);
 
-        $request->validate([
-            'name' => 'required',
-            'price' => 'required|numeric',
-            'description' => 'nullable',
-            'image' => 'nullable|image',
-        ]);
+    $request->validate([
 
-        $imagePath = $menu->image;
+        'name' => 'required',
 
-        if ($request->hasFile('image')) {
+        'description' => 'nullable',
 
-            if ($menu->image) {
-                Storage::disk('public')
-                    ->delete($menu->image);
-            }
+        'price' => 'required',
 
-            $imagePath = $request
-                ->file('image')
-                ->store('menus', 'public');
-        }
+        'category' => 'required',
 
-        $menu->update([
-            'name' => $request->name,
-            'price' => $request->price,
-            'description' => $request->description,
-            'image' => $imagePath,
-        ]);
+        'stock' => 'required',
 
-        return response()->json([
-            'message' => 'Menu updated',
-            'data' => $menu
-        ]);
+        'image' => 'nullable|image|mimes:jpg,jpeg,png,webp',
+
+    ]);
+
+    $imagePath = $menu->image;
+
+    if ($request->hasFile('image')) {
+
+        $imagePath = $request
+            ->file('image')
+            ->store('menus', 'public');
     }
 
+    $menu->update([
+
+        'name' => $request->name,
+
+        'description' => $request->description,
+
+        'price' => $request->price,
+
+        'category' => $request->category,
+
+        'stock' => $request->stock,
+
+        'image' => $imagePath,
+
+    ]);
+
+    return response()->json([
+
+        'message' => 'Menu berhasil diupdate',
+
+        'data' => $menu
+
+    ]);
+}
     public function destroy($id)
     {
-        $menu = Menu::findOrFail($id);
-
-        if ($menu->image) {
-            Storage::disk('public')
-                ->delete($menu->image);
-        }
-
-        $menu->delete();
+        Menu::destroy($id);
 
         return response()->json([
-            'message' => 'Menu deleted'
+
+            'message' =>
+                'Menu berhasil dihapus'
+
         ]);
     }
 }

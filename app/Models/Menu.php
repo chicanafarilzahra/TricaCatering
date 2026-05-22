@@ -8,8 +8,11 @@ class Menu extends Model
 {
     protected $fillable = [
         'name',
-        'price',
         'description',
+        'price',
+        'category',
+        'stock',
         'image',
+        'is_active',
     ];
 }

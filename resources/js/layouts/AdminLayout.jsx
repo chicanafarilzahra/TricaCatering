@@ -1,50 +1,66 @@
-// resources/js/layouts/AdminLayout.jsx
-
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
-import AppBackground from "../components/AppBackground";
 
 export default function AdminLayout({
     children,
 }) {
-
     return (
-
-        <AppBackground>
-
+        <div
+            style={{
+                position: "fixed",
+                inset: 0,
+                display: "flex",
+                overflow: "hidden",
+                background: "#071028",
+            }}
+        >
+            {/* SIDEBAR */}
             <div
                 style={{
-                    display: "flex",
+                    width: "285px",
+                    height: "100%",
+                    flexShrink: 0,
                 }}
             >
-
                 <Sidebar />
-
-                <div
-                    style={{
-
-                        marginLeft: "270px",
-
-                        flex: 1,
-
-                        minHeight: "100vh",
-                    }}
-                >
-
-                    <Navbar />
-
-                    <div
-                        style={{
-                            padding: "34px",
-                        }}
-                    >
-                        {children}
-                    </div>
-
-                </div>
-
             </div>
 
-        </AppBackground>
+            {/* MAIN */}
+            <div
+                style={{
+                    flex: 1,
+                    minWidth: 0,
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    overflow: "hidden",
+                    background: "#071028",
+                }}
+            >
+                {/* NAVBAR */}
+                <div
+                    style={{
+                        width: "100%",
+                        flexShrink: 0,
+                    }}
+                >
+                    <Navbar />
+                </div>
+
+                {/* CONTENT */}
+                <main
+                    style={{
+                        flex: 1,
+                        overflowY: "auto",
+                        overflowX: "hidden",
+                        padding: "24px",
+                        background: "#071028",
+                        color: "#fff",
+                    }}
+                >
+                    {children}
+                </main>
+            </div>
+        </div>
     );
 }
