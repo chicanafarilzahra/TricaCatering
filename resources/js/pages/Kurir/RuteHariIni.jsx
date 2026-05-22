@@ -72,35 +72,37 @@ export default function RuteHariIni({ onLogout }) {
             <StatCard title="Kurir Aktif" value={locations.length} icon={<FaClock />} />
           </div>
 
-          {/* MAP */}
-          <div style={{ background: "#182338", borderRadius: "18px", padding: "20px", boxShadow: "0 8px 25px rgba(0,0,0,0.25)", overflow: "hidden" }}>
+        {/* MAP */}
+            <div style={{ background: "#182338", borderRadius: "18px", padding: "20px", boxShadow: "0 8px 25px rgba(0,0,0,0.25)", overflow: "hidden" }}>
             <h3 style={{ marginTop: 0, marginBottom: "18px", fontSize: "22px", fontWeight: "700", color: "#ffffff" }}>Maps Rute Pengiriman</h3>
 
-            {locations.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>
-                Tidak ada rute pengiriman hari ini.
-              </div>
-            ) : (
-              <div style={{ width: "100%", height: "350px", borderRadius: "16px", overflow: "hidden" }}>
-                <MapContainer center={[locations[0].lat, locations[0].lng]} zoom={13} style={{ width: "100%", height: "100%" }}>
-                  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap" />
-                  {locations.map((loc) => (
+            <div style={{ width: "100%", height: "350px", borderRadius: "16px", overflow: "hidden" }}>
+                <MapContainer
+                center={locations.length > 0 ? [locations[0].lat, locations[0].lng] : [-6.200000, 106.816666]} // default Jakarta
+                zoom={locations.length > 0 ? 13 : 12}
+                style={{ width: "100%", height: "100%" }}
+                >
+                <TileLayer
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution="&copy; OpenStreetMap contributors"
+                />
+
+                {locations.length > 0 && locations.map((loc) => (
                     <Marker key={loc.order_id} position={[loc.lat, loc.lng]}>
-                      <Popup>
+                    <Popup>
                         <div style={{ minWidth: "180px" }}>
-                          <h3 style={{ margin: "0 0 8px 0", color: "#17306a" }}>Tujuan</h3>
-                          <p style={{ margin: 0, fontSize: "14px" }}>{loc.address}</p>
+                        <h3 style={{ margin: "0 0 8px 0", color: "#17306a" }}>Tujuan</h3>
+                        <p style={{ margin: 0, fontSize: "14px" }}>{loc.address}</p>
                         </div>
-                      </Popup>
+                    </Popup>
                     </Marker>
-                  ))}
+                ))}
                 </MapContainer>
-              </div>
-            )}
+            </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
   );
 }
 
