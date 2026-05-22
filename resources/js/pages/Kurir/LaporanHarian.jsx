@@ -24,7 +24,7 @@ export default function LaporanHarian({ onLogout }) {
 
   const fetchLaporan = async () => {
     try {
-      const res = await axios.get("/api/kurir/laporan");
+      const res = await axios.get("/api/kurir/laporan_harian");
       setOrders(res.data);
     } catch (err) {
       console.error(err);
@@ -49,15 +49,20 @@ export default function LaporanHarian({ onLogout }) {
   const handleSubmit = async () => {
     try {
       const fd = new FormData();
-      fd.append("customer", formData.customer);
-      fd.append("pesanan", formData.pesanan);
-      fd.append("quantity", formData.quantity);
-      fd.append("waktu", formData.waktu);
-      fd.append("diterima", formData.diterima);
-      fd.append("alasan", formData.alasan);
-      if (formData.foto) fd.append("photo", formData.foto);
+        fd.append("customer", formData.customer);
+        fd.append("pesanan", formData.pesanan);
+        fd.append("quantity", formData.quantity);
+        fd.append("waktu", formData.waktu);
 
-      await axios.post("/api/kurir/laporan", fd, {
+        fd.append("diterima", formData.diterima ? 1 : 0);
+
+        fd.append("alasan", formData.alasan);
+
+        if (formData.foto) {
+          fd.append("photo", formData.foto);
+        }
+
+      await axios.post("/api/kurir/laporan_harian", fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -74,10 +79,25 @@ export default function LaporanHarian({ onLogout }) {
 
       fetchLaporan();
     } catch (err) {
-      console.error(err);
-      alert("Gagal menyimpan laporan");
-    }
+  console.error(err);
+
+  alert(
+    err.response?.data?.message ||
+    JSON.stringify(err.response?.data) ||
+    "Gagal menyimpan laporan"
+  );
+}
   };
+
+  useEffect(() => {
+  const style = document.createElement("style");
+  style.innerHTML = hideScrollbarStyle;
+  document.head.appendChild(style);
+
+  return () => {
+    document.head.removeChild(style);
+  };
+}, []);
 
   return (
     <div style={{ position: "fixed", inset: 0, display: "flex", overflow: "hidden", background: "#071028" }}>
@@ -115,7 +135,20 @@ export default function LaporanHarian({ onLogout }) {
 
           {showForm && (
             <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "20px" }}>
-              <div style={{ width: "100%", maxWidth: "520px", background: "#182338", borderRadius: "24px", padding: "26px", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
+              <div
+                style={{
+                  width: "100%",
+                  maxWidth: "520px",
+                  maxHeight: "90vh",
+                  overflowY: "auto",
+                  scrollbarWidth: "none",
+                  msOverflowStyle: "none",
+                  background: "#182338",
+                  borderRadius: "24px",
+                  padding: "26px",
+                  boxShadow: "0 20px 60px rgba(0,0,0,0.4)",
+                }}
+              >
                 <h2 style={{ marginTop: 0, marginBottom: "22px", color: "#ffffff", fontSize: "28px", fontWeight: "800" }}>Tambah Laporan</h2>
 
                 <FormField label="Nama Customer" name="customer" value={formData.customer} onChange={handleChange} />
@@ -156,7 +189,13 @@ export default function LaporanHarian({ onLogout }) {
           )}
 
           <div style={{ background: "#182338", borderRadius: "18px", padding: "20px", boxShadow: "0 8px 25px rgba(0,0,0,0.25)", overflow: "hidden" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                tableLayout: "fixed",
+              }}
+            >
               <thead>
                 <tr style={{ background: "rgba(255,255,255,0.05)" }}>
                   <th style={thStyle}>Foto</th>
@@ -172,8 +211,32 @@ export default function LaporanHarian({ onLogout }) {
                 {orders.map(o => (
                   <tr key={o.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                     <td style={tdStyle}>
-                      <img src={o.photo || "https://via.placeholder.com/70x70.png?text=Foto"} alt="foto" style={{ width: "70px", height: "70px", borderRadius: "14px", objectFit: "cover" }} />
-                    </td>
+                <div
+                  style={{
+                    width: "70px",
+                    height: "70px",
+                    borderRadius: "14px",
+                    overflow: "hidden",
+                    flexShrink: 0,
+                    border: "1px solid rgba(255,255,255,0.08)",
+                  }}
+                >
+                  <img
+                    src={
+                      o.photo
+                        ? `/storage/${o.photo}`
+                        : "https://via.placeholder.com/70x70.png?text=Foto"
+                    }
+                    alt="foto"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      display: "block",
+                    }}
+                  />
+                </div>
+              </td>
                     <td style={tdStyle}>{o.customer}</td>
                     <td style={tdStyle}>{o.pesanan}</td>
                     <td style={tdStyle}>{o.waktu}</td>
@@ -214,3 +277,8 @@ const thStyle = { padding: "14px 10px", textAlign: "left", color: "#cbd5e1", fon
 const tdStyle = { padding: "16px 10px", fontSize: "14px", color: "#f8fafc" };
 const labelStyle = { display: "block", marginBottom: "8px", color: "#cbd5e1", fontSize: "14px", fontWeight: "600" };
 const inputStyle = { width: "100%", height: "48px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.08)", background: "#0f172a", color: "#ffffff", padding: "0 14px", outline: "none", fontSize: "14px", boxSizing: "border-box" };
+const hideScrollbarStyle = `
+  ::-webkit-scrollbar {
+    display: none;
+  }
+`;

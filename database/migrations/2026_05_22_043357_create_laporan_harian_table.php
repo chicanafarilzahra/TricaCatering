@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-    Schema::create('laporan_harians', function (Blueprint $table) {
+    Schema::create('laporan_harian', function (Blueprint $table) {
     $table->id();
     $table->string('customer');
     $table->string('pesanan');

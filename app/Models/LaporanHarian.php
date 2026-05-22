@@ -11,7 +11,7 @@ class LaporanHarian extends Model
 
     protected $table = 'laporan_harian';
 
-    protected $fillable = [
+        protected $fillable = [
         'customer',
         'pesanan',
         'quantity',
@@ -19,5 +19,6 @@ class LaporanHarian extends Model
         'diterima',
         'alasan',
         'photo',
+        'delivery_fee',
     ];
 }
