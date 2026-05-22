@@ -13,6 +13,7 @@ use App\Http\Controllers\PackageController;
 use App\Http\Controllers\OrderController;
 
 use App\Http\Controllers\KurirController;
+use App\Http\Controllers\LaporanHarianController;
 use App\Http\Controllers\KlienController;
 
 use App\Http\Controllers\Api\OwnerMenuController;
@@ -181,10 +182,8 @@ Route::get(
     [KurirController::class, 'ruteHariIni']
 );
 
-Route::get(
-    'kurir/laporan',
-    [KurirController::class, 'laporan']
-);
+Route::get('/kurir/laporan_harian', [LaporanHarianController::class, 'index']);
+Route::post('/kurir/laporan_harian', [LaporanHarianController::class, 'store']);
 
 /*
 |--------------------------------------------------------------------------

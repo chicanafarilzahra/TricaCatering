@@ -1,20 +1,19 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Models\LaporanHarian;
-use Illuminate\Http\Request;
 
-class KurirController extends Controller
+use Illuminate\Http\Request;
+use App\Models\LaporanHarian;
+
+class LaporanHarianController extends Controller
 {
-    // Ambil semua laporan harian
-    public function laporan()
+    public function index()
     {
-        $laporan = LaporanHarian::orderBy('created_at','desc')->get();
-        return response()->json($laporan);
+        // ambil semua laporan harian
+        return response()->json(LaporanHarian::latest()->get());
     }
 
-    // Simpan laporan harian
-    public function storeLaporan(Request $request)
+    public function store(Request $request)
     {
         $request->validate([
             'customer' => 'required|string',
@@ -23,12 +22,12 @@ class KurirController extends Controller
             'waktu' => 'required',
             'diterima' => 'required|boolean',
             'alasan' => 'nullable|string',
-            'photo' => 'nullable|file|image|max:2048',
+            'photo' => 'nullable|file',
         ]);
 
         $photoPath = null;
         if ($request->hasFile('photo')) {
-            $photoPath = $request->file('photo')->store('laporan', 'public');
+            $photoPath = $request->file('photo')->store('photos', 'public');
         }
 
         $laporan = LaporanHarian::create([
@@ -39,7 +38,6 @@ class KurirController extends Controller
             'diterima' => $request->diterima,
             'alasan' => $request->alasan,
             'photo' => $photoPath,
-            'delivery_fee' => 50000,
         ]);
 
         return response()->json($laporan, 201);
