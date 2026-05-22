@@ -7,55 +7,33 @@ export default function AdminLayout({
     return (
         <div
             style={{
-                position: "fixed",
-                inset: 0,
                 display: "flex",
+                minHeight: "100vh",
+                background:
+                    "linear-gradient(180deg,#020617,#071028)",
                 overflow: "hidden",
-                background: "#071028",
             }}
         >
-            {/* SIDEBAR */}
-            <div
-                style={{
-                    width: "285px",
-                    height: "100%",
-                    flexShrink: 0,
-                }}
-            >
-                <Sidebar />
-            </div>
+            <Sidebar />
 
-            {/* MAIN */}
             <div
                 style={{
                     flex: 1,
+                    marginLeft: "270px",
                     minWidth: 0,
-                    height: "100%",
                     display: "flex",
                     flexDirection: "column",
-                    overflow: "hidden",
-                    background: "#071028",
                 }}
             >
-                {/* NAVBAR */}
-                <div
-                    style={{
-                        width: "100%",
-                        flexShrink: 0,
-                    }}
-                >
-                    <Navbar />
-                </div>
+                <Navbar />
 
-                {/* CONTENT */}
                 <main
                     style={{
                         flex: 1,
+                        padding: "28px",
                         overflowY: "auto",
                         overflowX: "hidden",
-                        padding: "24px",
-                        background: "#071028",
-                        color: "#fff",
+                        color: "white",
                     }}
                 >
                     {children}
