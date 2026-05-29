@@ -116,7 +116,7 @@ export default function HomeKlien() {
                             }}
                         >
                             Selamat Datang,{" "}
-                            {user?.name || "Klien"} 👋
+                            {user?.name || "Klien"}
                         </h1>
 
                         <p
@@ -128,10 +128,11 @@ export default function HomeKlien() {
                                 lineHeight: 1.6,
                             }}
                         >
-                            Kelola pesanan catering harian
-                            Anda dengan mudah. Pantau status
-                            pengiriman dan histori pesanan
-                            langsung dari dashboard.
+                            Pesan catering harian dengan mudah
+                            langsung dari dashboard klien.
+                            Pantau status pesanan, proses
+                            pengiriman, dan riwayat transaksi
+                            secara real-time dalam satu tempat.
                         </p>
                     </div>
 
