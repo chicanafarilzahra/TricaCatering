@@ -522,7 +522,7 @@ export default function LandingPage() {
 
           ) : menus.length > 0 ? (
 
-            menus.map((menu) => (
+            menus.slice(0, 6).map((menu) => (
 
               <div
                 key={menu.id}

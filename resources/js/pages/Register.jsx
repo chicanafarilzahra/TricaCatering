@@ -27,6 +27,12 @@ export default function Register() {
     const [role, setRole] =
         useState("klien");
 
+    // TAMBAHAN
+    const [
+        alamatCatering,
+        setAlamatCatering,
+    ] = useState("");
+
     const [message, setMessage] =
         useState("");
 
@@ -50,6 +56,12 @@ export default function Register() {
                         password_confirmation:
                             passwordConfirmation,
                         role,
+
+                        // TAMBAHAN
+                        alamat_catering:
+                            role === "owner"
+                                ? alamatCatering
+                                : null,
                     }
                 );
 
@@ -314,8 +326,7 @@ export default function Register() {
                                 e
                             ) =>
                                 setName(
-                                    e
-                                        .target
+                                    e.target
                                         .value
                                 )
                             }
@@ -349,8 +360,7 @@ export default function Register() {
                                 e
                             ) =>
                                 setEmail(
-                                    e
-                                        .target
+                                    e.target
                                         .value
                                 )
                             }
@@ -386,8 +396,7 @@ export default function Register() {
                                 e
                             ) =>
                                 setPassword(
-                                    e
-                                        .target
+                                    e.target
                                         .value
                                 )
                             }
@@ -423,8 +432,7 @@ export default function Register() {
                                 e
                             ) =>
                                 setPasswordConfirmation(
-                                    e
-                                        .target
+                                    e.target
                                         .value
                                 )
                             }
@@ -439,7 +447,7 @@ export default function Register() {
                     <div
                         style={{
                             marginBottom:
-                                "24px",
+                                "18px",
                         }}
                     >
                         <label
@@ -456,8 +464,7 @@ export default function Register() {
                                 e
                             ) =>
                                 setRole(
-                                    e
-                                        .target
+                                    e.target
                                         .value
                                 )
                             }
@@ -483,6 +490,77 @@ export default function Register() {
                             </option>
                         </select>
                     </div>
+
+                    {/* TAMBAHAN ALAMAT CATERING */}
+                    {role ===
+                        "owner" && (
+                        <div
+                            style={{
+                                marginBottom:
+                                    "24px",
+                            }}
+                        >
+                            <label
+                                style={
+                                    labelStyle
+                                }
+                            >
+                                Alamat
+                                Catering
+                            </label>
+
+                            <textarea
+                                placeholder="Masukkan alamat catering"
+                                value={
+                                    alamatCatering
+                                }
+                                onChange={(
+                                    e
+                                ) =>
+                                    setAlamatCatering(
+                                        e
+                                            .target
+                                            .value
+                                    )
+                                }
+                                required
+                                style={{
+                                    width:
+                                        "100%",
+
+                                    minHeight:
+                                        "120px",
+
+                                    border:
+                                        "1px solid rgba(255,255,255,0.08)",
+
+                                    borderRadius:
+                                        "14px",
+
+                                    padding:
+                                        "16px",
+
+                                    fontSize:
+                                        "14px",
+
+                                    outline:
+                                        "none",
+
+                                    background:
+                                        "#0f172a",
+
+                                    color:
+                                        "#ffffff",
+
+                                    boxSizing:
+                                        "border-box",
+
+                                    resize:
+                                        "vertical",
+                                }}
+                            />
+                        </div>
+                    )}
 
                     {/* BUTTON */}
                     <button
