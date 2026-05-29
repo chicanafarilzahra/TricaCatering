@@ -46,6 +46,22 @@ export default function SidebarOwner() {
                 "sidebar-owner-scroll"
             );
 
+        // kalau baru login / pertama buka
+        // sidebar tetap di atas
+        if (
+            location.pathname === "/owner" &&
+            sidebarRef.current
+        ) {
+            sidebarRef.current.scrollTop = 0;
+
+            sessionStorage.removeItem(
+                "sidebar-owner-scroll"
+            );
+
+            return;
+        }
+
+        // restore scroll kalau pindah menu
         if (
             sidebarRef.current &&
             savedScroll
@@ -53,7 +69,7 @@ export default function SidebarOwner() {
             sidebarRef.current.scrollTop =
                 parseInt(savedScroll, 10);
         }
-    }, []);
+    }, [location.pathname]);
 
     /* =========================
        SAVE SCROLL POSITION
@@ -91,7 +107,8 @@ export default function SidebarOwner() {
             "sidebar-owner-scroll"
         );
 
-        navigate("/login");
+        // logout langsung ke landing page
+        navigate("/");
     };
 
     /* =========================
@@ -421,7 +438,6 @@ export default function SidebarOwner() {
                                     "26px",
                             }}
                         >
-                            {/* TITLE */}
                             <div
                                 style={{
                                     padding:
@@ -449,7 +465,6 @@ export default function SidebarOwner() {
                                 {group.title}
                             </div>
 
-                            {/* ITEMS */}
                             <div
                                 style={{
                                     display:

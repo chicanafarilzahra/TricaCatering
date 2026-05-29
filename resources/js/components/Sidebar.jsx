@@ -12,6 +12,7 @@ import {
     ClipboardList,
     FileBarChart2,
     LogOut,
+    ChevronRight,
 } from "lucide-react";
 
 import {
@@ -28,6 +29,17 @@ export default function Sidebar() {
     const user = JSON.parse(
         localStorage.getItem("user")
     );
+
+    /* =========================
+       LOGOUT
+    ========================= */
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+
+        localStorage.removeItem("user");
+
+        navigate("/");
+    };
 
     const menus = [
         {
@@ -393,9 +405,23 @@ export default function Sidebar() {
                                                         item.icon
                                                     }
 
-                                                    {
-                                                        item.label
-                                                    }
+                                                    <span
+                                                        style={{
+                                                            flex: 1,
+                                                        }}
+                                                    >
+                                                        {
+                                                            item.label
+                                                        }
+                                                    </span>
+
+                                                    {active && (
+                                                        <ChevronRight
+                                                            size={
+                                                                16
+                                                            }
+                                                        />
+                                                    )}
                                                 </div>
                                             </NavLink>
                                         );
@@ -409,17 +435,7 @@ export default function Sidebar() {
 
             {/* LOGOUT */}
             <button
-                onClick={() => {
-                    localStorage.removeItem(
-                        "token"
-                    );
-
-                    localStorage.removeItem(
-                        "user"
-                    );
-
-                    navigate("/login");
-                }}
+                onClick={handleLogout}
                 onMouseEnter={(e) => {
                     e.currentTarget.style.transform =
                         "translateY(-2px)";
@@ -431,7 +447,7 @@ export default function Sidebar() {
                         "linear-gradient(135deg,#ef4444,#dc2626)";
 
                     e.currentTarget.style.color =
-                        "#ffffff";
+                        "#fff";
                 }}
                 onMouseLeave={(e) => {
                     e.currentTarget.style.transform =
@@ -447,13 +463,12 @@ export default function Sidebar() {
                         "#fca5a5";
                 }}
                 style={{
-                    height: "58px",
-                    width: "100%",
+                    height: "56px",
                     border:
                         "1px solid rgba(239,68,68,0.20)",
+                    borderRadius: "18px",
                     background:
                         "rgba(239,68,68,0.10)",
-                    borderRadius: "18px",
                     color: "#fca5a5",
                     display: "flex",
                     alignItems: "center",
@@ -467,27 +482,24 @@ export default function Sidebar() {
                         "blur(12px)",
                     transition:
                         "all 0.25s ease",
-                    marginTop: "20px",
-                    letterSpacing:
-                        "0.3px",
+                    width: "100%",
+                    letterSpacing: "0.3px",
                 }}
             >
                 <div
                     style={{
-                        width: "36px",
-                        height: "36px",
-                        borderRadius:
-                            "12px",
+                        width: "34px",
+                        height: "34px",
+                        borderRadius: "12px",
                         background:
                             "rgba(255,255,255,0.10)",
                         display: "flex",
-                        alignItems:
-                            "center",
+                        alignItems: "center",
                         justifyContent:
                             "center",
                     }}
                 >
-                    <LogOut size={18} />
+                    <LogOut size={20} />
                 </div>
 
                 Logout

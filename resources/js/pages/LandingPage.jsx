@@ -1,6 +1,6 @@
 // resources/js/pages/LandingPage.jsx
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import {
@@ -15,6 +15,30 @@ import {
 } from "react-icons/fa";
 
 export default function LandingPage() {
+
+  // =========================
+  // MENU STATE
+  // =========================
+  const [menus, setMenus] = useState([]);
+  const [loadingMenu, setLoadingMenu] =
+    useState(true);
+
+  // =========================
+  // GET MENU OWNER
+  // =========================
+  useEffect(() => {
+    fetch("/api/menus")
+      .then((res) => res.json())
+      .then((data) => {
+        setMenus(data);
+        setLoadingMenu(false);
+      })
+      .catch((err) => {
+        console.log(err);
+        setLoadingMenu(false);
+      });
+  }, []);
+
   return (
     <div
       style={{
@@ -324,7 +348,6 @@ export default function LandingPage() {
           <FaArrowRight />
         </Link>
 
-        {/* BUTTON HERO */}
 <button
     onClick={() => {
         const section =
@@ -430,7 +453,8 @@ export default function LandingPage() {
     </div>
   </div>
 </section>
-      {/* MENU SECTION */}
+
+            {/* MENU SECTION */}
       <section
         id="menus"
         className="container"
@@ -483,75 +507,116 @@ export default function LandingPage() {
           </Link>
         </div>
 
+        {/* MENU GRID */}
         <div className="menu-grid">
-          {[1, 2, 3, 4, 5, 6].map(
-            (item) => (
+
+          {loadingMenu ? (
+
+            <h3
+              style={{
+                color: "#94a3b8",
+              }}
+            >
+              Loading menu...
+            </h3>
+
+          ) : menus.length > 0 ? (
+
+            menus.map((menu) => (
+
               <div
-                key={item}
+                key={menu.id}
                 className="glass floating-card"
                 style={{
                   borderRadius: "24px",
                   overflow: "hidden",
                 }}
               >
-                <div
-                  style={{
-                    height: "180px",
-                    background:
-                      "linear-gradient(135deg,#1e293b,#0f172a)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent:
-                      "center",
-                    color: "#64748b",
-                    fontWeight: "700",
-                  }}
-                >
-                  Image Menu
-                </div>
 
+                {/* IMAGE */}
+                <img
+                  src={
+                    menu.image
+                      ? `/storage/${menu.image}`
+                      : "https://via.placeholder.com/500x300?text=Menu+Catering"
+                  }
+                  alt={menu.nama_menu}
+                  style={{
+                    width: "100%",
+                    height: "220px",
+                    objectFit: "cover",
+                  }}
+                />
+
+                {/* CONTENT */}
                 <div
                   style={{
                     padding: "20px",
                   }}
                 >
-                  <div
-                    style={{
-                      height: "16px",
-                      width: "70%",
-                      borderRadius: "8px",
-                      background:
-                        "rgba(255,255,255,0.08)",
-                      marginBottom: "14px",
-                    }}
-                  />
 
-                  <div
+                  {/* NAMA MENU */}
+                  <h3
                     style={{
-                      height: "12px",
-                      width: "100%",
-                      borderRadius: "8px",
-                      background:
-                        "rgba(255,255,255,0.05)",
-                      marginBottom: "10px",
+                      fontSize: "22px",
+                      marginBottom: "12px",
+                      fontWeight: "800",
                     }}
-                  />
+                  >
+                    {menu.nama_menu ||
+                      "Menu Catering"}
+                  </h3>
 
-                  <div
+                  {/* DESKRIPSI */}
+                  <p
                     style={{
-                      height: "12px",
-                      width: "80%",
-                      borderRadius: "8px",
-                      background:
-                        "rgba(255,255,255,0.05)",
+                      color: "#94a3b8",
+                      lineHeight: "1.7",
                       marginBottom: "22px",
+                      minHeight: "48px",
                     }}
-                  />
+                  >
+                    {menu.deskripsi ||
+                      "Menu catering tersedia"}
+                  </p>
+
+                  {/* BUTTON ONLY */}
+                  <Link
+                    to="/login"
+                    style={{
+                      width: "100%",
+                      padding: "14px 18px",
+                      borderRadius: "14px",
+                      background:
+                        "linear-gradient(135deg,#2563eb,#3b82f6)",
+                      color: "white",
+                      textDecoration: "none",
+                      fontWeight: "800",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    Pesan
+                  </Link>
 
                 </div>
               </div>
-            )
+
+            ))
+
+          ) : (
+
+            <h3
+              style={{
+                color: "#94a3b8",
+              }}
+            >
+              Belum ada menu tersedia
+            </h3>
+
           )}
+
         </div>
       </section>
 
