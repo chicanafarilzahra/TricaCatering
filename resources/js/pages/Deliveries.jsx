@@ -10,33 +10,99 @@ import {
     ArrowUpRight,
 } from "lucide-react";
 
+import {
+    useMemo,
+    useRef,
+    useState,
+} from "react";
+
 import AdminLayout from "../layouts/AdminLayout";
 
 export default function Deliveries() {
+    const deliveryListRef =
+        useRef(null);
+
+    const [search, setSearch] =
+        useState("");
+
+    const [statusFilter, setStatusFilter] =
+        useState("All");
+
+    // TANPA DATA DUMMY
+    const deliveries = [];
+
+    const filteredDeliveries =
+        useMemo(() => {
+            return deliveries.filter(
+                (delivery) => {
+                    const matchSearch =
+                        delivery.orderCode
+                            ?.toLowerCase()
+                            .includes(
+                                search.toLowerCase()
+                            ) ||
+                        delivery.customer
+                            ?.toLowerCase()
+                            .includes(
+                                search.toLowerCase()
+                            ) ||
+                        delivery.courier
+                            ?.toLowerCase()
+                            .includes(
+                                search.toLowerCase()
+                            );
+
+                    const matchStatus =
+                        statusFilter ===
+                            "All" ||
+                        delivery.status ===
+                            statusFilter;
+
+                    return (
+                        matchSearch &&
+                        matchStatus
+                    );
+                }
+            );
+        }, [search, statusFilter]);
+
     const stats = [
         {
             title: "Total Deliveries",
-            value: "-",
-            icon: <Truck size={22} />,
+            value:
+                deliveries.length,
+            icon: (
+                <Truck size={22} />
+            ),
             color: "#3b82f6",
             bg: "rgba(59,130,246,0.12)",
         },
 
         {
             title: "On Delivery",
-            value: "-",
-            icon: <Clock3 size={22} />,
+            value:
+                deliveries.filter(
+                    (d) =>
+                        d.status ===
+                        "On Delivery"
+                ).length,
+            icon: (
+                <Clock3 size={22} />
+            ),
             color: "#f59e0b",
             bg: "rgba(245,158,11,0.12)",
         },
 
         {
             title: "Delivered",
-            value: "-",
+            value:
+                deliveries.filter(
+                    (d) =>
+                        d.status ===
+                        "Delivered"
+                ).length,
             icon: (
-                <CheckCircle2
-                    size={22}
-                />
+                <CheckCircle2 size={22} />
             ),
             color: "#10b981",
             bg: "rgba(16,185,129,0.12)",
@@ -44,11 +110,14 @@ export default function Deliveries() {
 
         {
             title: "Completed",
-            value: "-",
+            value:
+                deliveries.filter(
+                    (d) =>
+                        d.status ===
+                        "Completed"
+                ).length,
             icon: (
-                <PackageCheck
-                    size={22}
-                />
+                <PackageCheck size={22} />
             ),
             color: "#8b5cf6",
             bg: "rgba(139,92,246,0.12)",
@@ -61,42 +130,56 @@ export default function Deliveries() {
             <div
                 style={{
                     width: "100%",
-                    borderRadius: "32px",
+                    borderRadius:
+                        "32px",
                     padding: "38px",
                     background:
                         "linear-gradient(135deg,#0f172a 0%,#111827 45%,#1e293b 100%)",
                     border:
                         "1px solid rgba(255,255,255,0.06)",
-                    position: "relative",
-                    overflow: "hidden",
-                    marginBottom: "30px",
-                    boxSizing: "border-box",
+                    position:
+                        "relative",
+                    overflow:
+                        "hidden",
+                    marginBottom:
+                        "30px",
+                    boxSizing:
+                        "border-box",
                 }}
             >
                 {/* GLOW */}
                 <div
                     style={{
-                        position: "absolute",
+                        position:
+                            "absolute",
                         top: "-120px",
-                        right: "-80px",
+                        right:
+                            "-80px",
                         width: "260px",
-                        height: "260px",
-                        borderRadius: "999px",
+                        height:
+                            "260px",
+                        borderRadius:
+                            "999px",
                         background:
                             "rgba(59,130,246,0.16)",
-                        filter: "blur(100px)",
+                        filter:
+                            "blur(100px)",
                     }}
                 />
 
                 <div
                     style={{
-                        position: "relative",
+                        position:
+                            "relative",
                         zIndex: 2,
-                        display: "flex",
+                        display:
+                            "flex",
                         justifyContent:
                             "space-between",
-                        alignItems: "center",
-                        flexWrap: "wrap",
+                        alignItems:
+                            "center",
+                        flexWrap:
+                            "wrap",
                         gap: "24px",
                     }}
                 >
@@ -129,13 +212,15 @@ export default function Deliveries() {
                             <Truck
                                 size={15}
                             />
-                            Delivery Tracking
+                            Delivery
+                            Tracking
                         </div>
 
                         <h1
                             style={{
                                 margin: 0,
-                                color: "white",
+                                color:
+                                    "white",
                                 fontSize:
                                     "42px",
                                 fontWeight:
@@ -146,7 +231,8 @@ export default function Deliveries() {
                                     "-1px",
                             }}
                         >
-                            Delivery Overview
+                            Delivery
+                            Overview
                         </h1>
 
                         <p
@@ -163,32 +249,50 @@ export default function Deliveries() {
                                     "720px",
                             }}
                         >
-                            Pantau seluruh
+                            Pantau
+                            seluruh
                             aktivitas
                             pengiriman
-                            catering secara
-                            realtime dengan
-                            dashboard modern
-                            yang clean,
-                            elegant, dan
+                            catering
+                            secara
+                            realtime
+                            dengan
+                            dashboard
+                            modern yang
+                            clean,
+                            elegant,
+                            dan
                             profesional.
                         </p>
                     </div>
 
+                    {/* BUTTON */}
                     <button
+                        onClick={() => {
+                            deliveryListRef.current?.scrollIntoView(
+                                {
+                                    behavior:
+                                        "smooth",
+                                }
+                            );
+                        }}
                         style={{
-                            height: "56px",
+                            height:
+                                "56px",
                             padding:
                                 "0 24px",
-                            border: "none",
+                            border:
+                                "none",
                             borderRadius:
                                 "16px",
                             background:
                                 "linear-gradient(135deg,#2563eb,#3b82f6)",
-                            color: "white",
+                            color:
+                                "white",
                             fontWeight:
                                 "700",
-                            display: "flex",
+                            display:
+                                "flex",
                             alignItems:
                                 "center",
                             gap: "10px",
@@ -213,7 +317,8 @@ export default function Deliveries() {
                     gridTemplateColumns:
                         "repeat(4,minmax(0,1fr))",
                     gap: "22px",
-                    marginBottom: "30px",
+                    marginBottom:
+                        "30px",
                 }}
             >
                 {stats.map(
@@ -283,7 +388,9 @@ export default function Deliveries() {
                                             "18px",
                                     }}
                                 >
-                                    {item.icon}
+                                    {
+                                        item.icon
+                                    }
                                 </div>
 
                                 <div
@@ -323,6 +430,7 @@ export default function Deliveries() {
 
             {/* TABLE */}
             <div
+                ref={deliveryListRef}
                 style={{
                     background:
                         "linear-gradient(180deg,#111827 0%,#0f172a 100%)",
@@ -331,7 +439,8 @@ export default function Deliveries() {
                     borderRadius:
                         "30px",
                     padding: "30px",
-                    overflow: "hidden",
+                    overflow:
+                        "hidden",
                 }}
             >
                 {/* HEADER */}
@@ -342,7 +451,8 @@ export default function Deliveries() {
                             "space-between",
                         alignItems:
                             "center",
-                        flexWrap: "wrap",
+                        flexWrap:
+                            "wrap",
                         gap: "18px",
                         marginBottom:
                             "28px",
@@ -360,7 +470,8 @@ export default function Deliveries() {
                                     "700",
                             }}
                         >
-                            Delivery List
+                            Delivery
+                            List
                         </h2>
 
                         <p
@@ -374,14 +485,16 @@ export default function Deliveries() {
                             }}
                         >
                             Delivery and
-                            shipment data
+                            shipment
+                            data
                         </p>
                     </div>
 
                     {/* ACTION */}
                     <div
                         style={{
-                            display: "flex",
+                            display:
+                                "flex",
                             alignItems:
                                 "center",
                             gap: "12px",
@@ -392,7 +505,8 @@ export default function Deliveries() {
                         {/* SEARCH */}
                         <div
                             style={{
-                                height: "50px",
+                                height:
+                                    "50px",
                                 minWidth:
                                     "250px",
                                 border:
@@ -417,6 +531,18 @@ export default function Deliveries() {
 
                             <input
                                 type="text"
+                                value={
+                                    search
+                                }
+                                onChange={(
+                                    e
+                                ) =>
+                                    setSearch(
+                                        e
+                                            .target
+                                            .value
+                                    )
+                                }
                                 placeholder="Search deliveries..."
                                 style={{
                                     flex: 1,
@@ -435,9 +561,22 @@ export default function Deliveries() {
                         </div>
 
                         {/* FILTER */}
-                        <button
+                        <select
+                            value={
+                                statusFilter
+                            }
+                            onChange={(
+                                e
+                            ) =>
+                                setStatusFilter(
+                                    e
+                                        .target
+                                        .value
+                                )
+                            }
                             style={{
-                                height: "50px",
+                                height:
+                                    "50px",
                                 padding:
                                     "0 20px",
                                 border:
@@ -448,22 +587,54 @@ export default function Deliveries() {
                                     "rgba(255,255,255,0.04)",
                                 color:
                                     "white",
-                                display:
-                                    "flex",
-                                alignItems:
-                                    "center",
-                                gap: "10px",
                                 fontWeight:
                                     "600",
                                 cursor:
                                     "pointer",
+                                outline:
+                                    "none",
                             }}
                         >
-                            <Filter
-                                size={18}
-                            />
-                            Filter
-                        </button>
+                            <option
+                                value="All"
+                                style={{
+                                    color:
+                                        "black",
+                                }}
+                            >
+                                All
+                            </option>
+
+                            <option
+                                value="On Delivery"
+                                style={{
+                                    color:
+                                        "black",
+                                }}
+                            >
+                                On Delivery
+                            </option>
+
+                            <option
+                                value="Delivered"
+                                style={{
+                                    color:
+                                        "black",
+                                }}
+                            >
+                                Delivered
+                            </option>
+
+                            <option
+                                value="Completed"
+                                style={{
+                                    color:
+                                        "black",
+                                }}
+                            >
+                                Completed
+                            </option>
+                        </select>
                     </div>
                 </div>
 
@@ -526,26 +697,139 @@ export default function Deliveries() {
                         </thead>
 
                         <tbody>
-                            <tr>
-                                <td
-                                    colSpan={
-                                        5
-                                    }
-                                    style={{
-                                        padding:
-                                            "80px 20px",
-                                        textAlign:
-                                            "center",
-                                        color:
-                                            "#64748b",
-                                        fontSize:
-                                            "15px",
-                                    }}
-                                >
-                                    Belum ada
-                                    data delivery
-                                </td>
-                            </tr>
+                            {filteredDeliveries.length >
+                            0 ? (
+                                filteredDeliveries.map(
+                                    (
+                                        delivery,
+                                        index
+                                    ) => (
+                                        <tr
+                                            key={
+                                                index
+                                            }
+                                            style={{
+                                                borderBottom:
+                                                    "1px solid rgba(255,255,255,0.05)",
+                                            }}
+                                        >
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "20px",
+                                                    color:
+                                                        "white",
+                                                }}
+                                            >
+                                                {
+                                                    delivery.orderCode
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "20px",
+                                                    color:
+                                                        "#cbd5e1",
+                                                }}
+                                            >
+                                                {
+                                                    delivery.customer
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "20px",
+                                                    color:
+                                                        "#cbd5e1",
+                                                }}
+                                            >
+                                                {
+                                                    delivery.courier
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "20px",
+                                                    color:
+                                                        "#cbd5e1",
+                                                }}
+                                            >
+                                                {
+                                                    delivery.date
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "20px",
+                                                }}
+                                            >
+                                                <span
+                                                    style={{
+                                                        padding:
+                                                            "8px 14px",
+                                                        borderRadius:
+                                                            "999px",
+                                                        fontSize:
+                                                            "12px",
+                                                        fontWeight:
+                                                            "700",
+                                                        background:
+                                                            delivery.status ===
+                                                            "Completed"
+                                                                ? "rgba(139,92,246,0.15)"
+                                                                : delivery.status ===
+                                                                  "Delivered"
+                                                                ? "rgba(16,185,129,0.15)"
+                                                                : "rgba(245,158,11,0.15)",
+                                                        color:
+                                                            delivery.status ===
+                                                            "Completed"
+                                                                ? "#8b5cf6"
+                                                                : delivery.status ===
+                                                                  "Delivered"
+                                                                ? "#10b981"
+                                                                : "#f59e0b",
+                                                    }}
+                                                >
+                                                    {
+                                                        delivery.status
+                                                    }
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    )
+                                )
+                            ) : (
+                                <tr>
+                                    <td
+                                        colSpan={
+                                            5
+                                        }
+                                        style={{
+                                            padding:
+                                                "80px 20px",
+                                            textAlign:
+                                                "center",
+                                            color:
+                                                "#64748b",
+                                            fontSize:
+                                                "15px",
+                                        }}
+                                    >
+                                        Belum ada
+                                        data
+                                        delivery
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>

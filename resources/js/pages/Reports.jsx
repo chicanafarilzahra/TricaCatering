@@ -11,13 +11,138 @@ import {
     ArrowUpRight,
 } from "lucide-react";
 
+import {
+    useMemo,
+    useRef,
+    useState,
+} from "react";
+
 import AdminLayout from "../layouts/AdminLayout";
 
 export default function Reports() {
+    const reportListRef =
+        useRef(null);
+
+    const [search, setSearch] =
+        useState("");
+
+    const [filter, setFilter] =
+        useState("All");
+
+    // TANPA DATA DUMMY
+    const reports = [];
+
+    const filteredReports =
+        useMemo(() => {
+            return reports.filter(
+                (report) => {
+                    const matchSearch =
+                        report.name
+                            ?.toLowerCase()
+                            .includes(
+                                search.toLowerCase()
+                            ) ||
+                        report.createdBy
+                            ?.toLowerCase()
+                            .includes(
+                                search.toLowerCase()
+                            );
+
+                    const matchFilter =
+                        filter ===
+                            "All" ||
+                        report.status ===
+                            filter;
+
+                    return (
+                        matchSearch &&
+                        matchFilter
+                    );
+                }
+            );
+        }, [search, filter]);
+
+    const handleExport =
+        () => {
+            if (
+                filteredReports.length ===
+                0
+            ) {
+                alert(
+                    "Belum ada report untuk di export"
+                );
+                return;
+            }
+
+            const headers =
+                [
+                    "Report Name",
+                    "Period",
+                    "Created By",
+                    "Created At",
+                    "Status",
+                ];
+
+            const rows =
+                filteredReports.map(
+                    (report) => [
+                        report.name,
+                        report.period,
+                        report.createdBy,
+                        report.createdAt,
+                        report.status,
+                    ]
+                );
+
+            const csvContent =
+                [
+                    headers.join(","),
+                    ...rows.map(
+                        (row) =>
+                            row.join(",")
+                    ),
+                ].join("\n");
+
+            const blob =
+                new Blob(
+                    [csvContent],
+                    {
+                        type: "text/csv;charset=utf-8;",
+                    }
+                );
+
+            const url =
+                URL.createObjectURL(
+                    blob
+                );
+
+            const link =
+                document.createElement(
+                    "a"
+                );
+
+            link.href = url;
+
+            link.setAttribute(
+                "download",
+                "reports.csv"
+            );
+
+            document.body.appendChild(
+                link
+            );
+
+            link.click();
+
+            document.body.removeChild(
+                link
+            );
+        };
+
     const stats = [
         {
             title: "Total Reports",
-            value: "-",
+            value: reports.length,
             icon: (
                 <FileBarChart2 size={22} />
             ),
@@ -27,7 +152,12 @@ export default function Reports() {
 
         {
             title: "Revenue Reports",
-            value: "-",
+            value:
+                reports.filter(
+                    (r) =>
+                        r.type ===
+                        "Revenue"
+                ).length,
             icon: (
                 <Wallet size={22} />
             ),
@@ -37,7 +167,12 @@ export default function Reports() {
 
         {
             title: "Order Reports",
-            value: "-",
+            value:
+                reports.filter(
+                    (r) =>
+                        r.type ===
+                        "Order"
+                ).length,
             icon: (
                 <ShoppingCart size={22} />
             ),
@@ -47,7 +182,7 @@ export default function Reports() {
 
         {
             title: "Growth",
-            value: "-",
+            value: "0%",
             icon: (
                 <TrendingUp size={22} />
             ),
@@ -62,42 +197,56 @@ export default function Reports() {
             <div
                 style={{
                     width: "100%",
-                    borderRadius: "32px",
+                    borderRadius:
+                        "32px",
                     padding: "38px",
                     background:
                         "linear-gradient(135deg,#0f172a 0%,#111827 45%,#1e293b 100%)",
                     border:
                         "1px solid rgba(255,255,255,0.06)",
-                    position: "relative",
-                    overflow: "hidden",
-                    marginBottom: "30px",
-                    boxSizing: "border-box",
+                    position:
+                        "relative",
+                    overflow:
+                        "hidden",
+                    marginBottom:
+                        "30px",
+                    boxSizing:
+                        "border-box",
                 }}
             >
                 {/* GLOW */}
                 <div
                     style={{
-                        position: "absolute",
+                        position:
+                            "absolute",
                         top: "-120px",
-                        right: "-80px",
+                        right:
+                            "-80px",
                         width: "260px",
-                        height: "260px",
-                        borderRadius: "999px",
+                        height:
+                            "260px",
+                        borderRadius:
+                            "999px",
                         background:
                             "rgba(59,130,246,0.16)",
-                        filter: "blur(100px)",
+                        filter:
+                            "blur(100px)",
                     }}
                 />
 
                 <div
                     style={{
-                        position: "relative",
+                        position:
+                            "relative",
                         zIndex: 2,
-                        display: "flex",
+                        display:
+                            "flex",
                         justifyContent:
                             "space-between",
-                        alignItems: "center",
-                        flexWrap: "wrap",
+                        alignItems:
+                            "center",
+                        flexWrap:
+                            "wrap",
                         gap: "24px",
                     }}
                 >
@@ -130,13 +279,15 @@ export default function Reports() {
                             <FileBarChart2
                                 size={15}
                             />
-                            Business Reports
+                            Business
+                            Reports
                         </div>
 
                         <h1
                             style={{
                                 margin: 0,
-                                color: "white",
+                                color:
+                                    "white",
                                 fontSize:
                                     "42px",
                                 fontWeight:
@@ -165,34 +316,48 @@ export default function Reports() {
                                     "720px",
                             }}
                         >
-                            Lihat seluruh
-                            laporan bisnis,
+                            Lihat
+                            seluruh
+                            laporan
+                            bisnis,
                             operasional,
-                            revenue,
                             customer,
-                            dan aktivitas
-                            catering dalam
-                            satu dashboard
-                            modern yang
-                            clean dan
-                            elegant.
+                            dan
+                            aktivitas
+                            catering
+                            dalam satu
+                            dashboard
+                            modern.
                         </p>
                     </div>
 
+                    {/* BUTTON */}
                     <button
+                        onClick={() => {
+                            reportListRef.current?.scrollIntoView(
+                                {
+                                    behavior:
+                                        "smooth",
+                                }
+                            );
+                        }}
                         style={{
-                            height: "56px",
+                            height:
+                                "56px",
                             padding:
                                 "0 24px",
-                            border: "none",
+                            border:
+                                "none",
                             borderRadius:
                                 "16px",
                             background:
                                 "linear-gradient(135deg,#2563eb,#3b82f6)",
-                            color: "white",
+                            color:
+                                "white",
                             fontWeight:
                                 "700",
-                            display: "flex",
+                            display:
+                                "flex",
                             alignItems:
                                 "center",
                             gap: "10px",
@@ -202,7 +367,7 @@ export default function Reports() {
                                 "0 12px 30px rgba(37,99,235,0.35)",
                         }}
                     >
-                        Export Reports
+                        View Reports
                         <ArrowUpRight
                             size={18}
                         />
@@ -217,7 +382,8 @@ export default function Reports() {
                     gridTemplateColumns:
                         "repeat(4,minmax(0,1fr))",
                     gap: "22px",
-                    marginBottom: "30px",
+                    marginBottom:
+                        "30px",
                 }}
             >
                 {stats.map(
@@ -237,7 +403,6 @@ export default function Reports() {
                                     "relative",
                                 overflow:
                                     "hidden",
-                                minWidth: 0,
                             }}
                         >
                             <div
@@ -287,7 +452,9 @@ export default function Reports() {
                                             "18px",
                                     }}
                                 >
-                                    {item.icon}
+                                    {
+                                        item.icon
+                                    }
                                 </div>
 
                                 <div
@@ -327,6 +494,7 @@ export default function Reports() {
 
             {/* TABLE */}
             <div
+                ref={reportListRef}
                 style={{
                     background:
                         "linear-gradient(180deg,#111827 0%,#0f172a 100%)",
@@ -335,7 +503,8 @@ export default function Reports() {
                     borderRadius:
                         "30px",
                     padding: "30px",
-                    overflow: "hidden",
+                    overflow:
+                        "hidden",
                 }}
             >
                 {/* HEADER */}
@@ -346,7 +515,8 @@ export default function Reports() {
                             "space-between",
                         alignItems:
                             "center",
-                        flexWrap: "wrap",
+                        flexWrap:
+                            "wrap",
                         gap: "18px",
                         marginBottom:
                             "28px",
@@ -387,7 +557,8 @@ export default function Reports() {
                     {/* ACTION */}
                     <div
                         style={{
-                            display: "flex",
+                            display:
+                                "flex",
                             alignItems:
                                 "center",
                             gap: "12px",
@@ -398,7 +569,8 @@ export default function Reports() {
                         {/* SEARCH */}
                         <div
                             style={{
-                                height: "50px",
+                                height:
+                                    "50px",
                                 minWidth:
                                     "250px",
                                 border:
@@ -423,6 +595,18 @@ export default function Reports() {
 
                             <input
                                 type="text"
+                                value={
+                                    search
+                                }
+                                onChange={(
+                                    e
+                                ) =>
+                                    setSearch(
+                                        e
+                                            .target
+                                            .value
+                                    )
+                                }
                                 placeholder="Search reports..."
                                 style={{
                                     flex: 1,
@@ -441,9 +625,22 @@ export default function Reports() {
                         </div>
 
                         {/* FILTER */}
-                        <button
+                        <select
+                            value={
+                                filter
+                            }
+                            onChange={(
+                                e
+                            ) =>
+                                setFilter(
+                                    e
+                                        .target
+                                        .value
+                                )
+                            }
                             style={{
-                                height: "50px",
+                                height:
+                                    "50px",
                                 padding:
                                     "0 20px",
                                 border:
@@ -454,35 +651,63 @@ export default function Reports() {
                                     "rgba(255,255,255,0.04)",
                                 color:
                                     "white",
-                                display:
-                                    "flex",
-                                alignItems:
-                                    "center",
-                                gap: "10px",
                                 fontWeight:
                                     "600",
+                                outline:
+                                    "none",
                                 cursor:
                                     "pointer",
                             }}
                         >
-                            <Filter
-                                size={18}
-                            />
-                            Filter
-                        </button>
+                            <option
+                                value="All"
+                                style={{
+                                    color:
+                                        "black",
+                                }}
+                            >
+                                All
+                            </option>
+
+                            <option
+                                value="Completed"
+                                style={{
+                                    color:
+                                        "black",
+                                }}
+                            >
+                                Completed
+                            </option>
+
+                            <option
+                                value="Pending"
+                                style={{
+                                    color:
+                                        "black",
+                                }}
+                            >
+                                Pending
+                            </option>
+                        </select>
 
                         {/* EXPORT */}
                         <button
+                            onClick={
+                                handleExport
+                            }
                             style={{
-                                height: "50px",
+                                height:
+                                    "50px",
                                 padding:
                                     "0 20px",
-                                border: "none",
+                                border:
+                                    "none",
                                 borderRadius:
                                     "16px",
                                 background:
                                     "linear-gradient(135deg,#2563eb,#3b82f6)",
-                                color: "white",
+                                color:
+                                    "white",
                                 display:
                                     "flex",
                                 alignItems:
@@ -563,31 +788,133 @@ export default function Reports() {
                         </thead>
 
                         <tbody>
-                            <tr>
-                                <td
-                                    colSpan={
-                                        5
-                                    }
-                                    style={{
-                                        padding:
-                                            "80px 20px",
-                                        textAlign:
-                                            "center",
-                                        color:
-                                            "#64748b",
-                                        fontSize:
-                                            "15px",
-                                    }}
-                                >
-                                    Belum ada
-                                    laporan
-                                    tersedia
-                                </td>
-                            </tr>
+                            {filteredReports.length >
+                            0 ? (
+                                filteredReports.map(
+                                    (
+                                        report,
+                                        index
+                                    ) => (
+                                        <tr
+                                            key={
+                                                index
+                                            }
+                                        >
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "20px",
+                                                    color:
+                                                        "white",
+                                                }}
+                                            >
+                                                {
+                                                    report.name
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "20px",
+                                                    color:
+                                                        "#cbd5e1",
+                                                }}
+                                            >
+                                                {
+                                                    report.period
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "20px",
+                                                    color:
+                                                        "#cbd5e1",
+                                                }}
+                                            >
+                                                {
+                                                    report.createdBy
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "20px",
+                                                    color:
+                                                        "#cbd5e1",
+                                                }}
+                                            >
+                                                {
+                                                    report.createdAt
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "20px",
+                                                }}
+                                            >
+                                                <span
+                                                    style={{
+                                                        padding:
+                                                            "8px 14px",
+                                                        borderRadius:
+                                                            "999px",
+                                                        fontSize:
+                                                            "12px",
+                                                        fontWeight:
+                                                            "700",
+                                                        background:
+                                                            report.status ===
+                                                            "Completed"
+                                                                ? "rgba(16,185,129,0.15)"
+                                                                : "rgba(245,158,11,0.15)",
+                                                        color:
+                                                            report.status ===
+                                                            "Completed"
+                                                                ? "#10b981"
+                                                                : "#f59e0b",
+                                                    }}
+                                                >
+                                                    {
+                                                        report.status
+                                                    }
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    )
+                                )
+                            ) : (
+                                <tr>
+                                    <td
+                                        colSpan={
+                                            5
+                                        }
+                                        style={{
+                                            padding:
+                                                "80px 20px",
+                                            textAlign:
+                                                "center",
+                                            color:
+                                                "#64748b",
+                                            fontSize:
+                                                "15px",
+                                        }}
+                                    >
+                                        Belum ada
+                                        laporan
+                                        tersedia
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
             </div>
         </AdminLayout>
     );
-}
+}   

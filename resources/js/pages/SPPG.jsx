@@ -10,13 +10,67 @@ import {
     ArrowUpRight,
 } from "lucide-react";
 
+import {
+    useMemo,
+    useRef,
+    useState,
+} from "react";
+
 import AdminLayout from "../layouts/AdminLayout";
 
 export default function SPPG() {
+    const activityRef = useRef(null);
+
+    const [search, setSearch] =
+        useState("");
+
+    const [showFilter, setShowFilter] =
+        useState(false);
+
+    const [statusFilter, setStatusFilter] =
+        useState("All");
+
+    const sppgData = [];
+
+    const filteredData = useMemo(() => {
+        let data = [...sppgData];
+
+        if (showFilter) {
+            data = data.filter((item) =>
+                statusFilter === "All"
+                    ? true
+                    : item.status ===
+                      statusFilter
+            );
+        }
+
+        if (search) {
+            data = data.filter((item) =>
+                [
+                    item.school,
+                    item.package,
+                    item.status,
+                ]
+                    .join(" ")
+                    .toLowerCase()
+                    .includes(
+                        search.toLowerCase()
+                    )
+            );
+        }
+
+        return data;
+    }, [
+        search,
+        sppgData,
+        showFilter,
+        statusFilter,
+    ]);
+
     const stats = [
         {
             title: "Schools",
-            value: "-",
+            value: sppgData.length,
             icon: <School size={22} />,
             color: "#3b82f6",
             bg: "rgba(59,130,246,0.12)",
@@ -24,7 +78,7 @@ export default function SPPG() {
 
         {
             title: "Packages",
-            value: "-",
+            value: sppgData.length,
             icon: <Package size={22} />,
             color: "#8b5cf6",
             bg: "rgba(139,92,246,0.12)",
@@ -32,7 +86,11 @@ export default function SPPG() {
 
         {
             title: "Deliveries",
-            value: "-",
+            value: sppgData.filter(
+                (item) =>
+                    item.status ===
+                    "On Delivery"
+            ).length,
             icon: <Truck size={22} />,
             color: "#10b981",
             bg: "rgba(16,185,129,0.12)",
@@ -40,7 +98,11 @@ export default function SPPG() {
 
         {
             title: "Completed",
-            value: "-",
+            value: sppgData.filter(
+                (item) =>
+                    item.status ===
+                    "Completed"
+            ).length,
             icon: (
                 <CheckCircle2 size={22} />
             ),
@@ -48,6 +110,38 @@ export default function SPPG() {
             bg: "rgba(245,158,11,0.12)",
         },
     ];
+
+    const getStatusStyle = (status) => {
+        switch (status) {
+            case "Completed":
+                return {
+                    background:
+                        "rgba(16,185,129,0.14)",
+                    color: "#34d399",
+                };
+
+            case "On Delivery":
+                return {
+                    background:
+                        "rgba(59,130,246,0.14)",
+                    color: "#60a5fa",
+                };
+
+            case "Pending":
+                return {
+                    background:
+                        "rgba(245,158,11,0.14)",
+                    color: "#fbbf24",
+                };
+
+            default:
+                return {
+                    background:
+                        "rgba(148,163,184,0.14)",
+                    color: "#cbd5e1",
+                };
+        }
+    };
 
     return (
         <AdminLayout>
@@ -170,6 +264,14 @@ export default function SPPG() {
                     </div>
 
                     <button
+                        onClick={() => {
+                            activityRef.current?.scrollIntoView(
+                                {
+                                    behavior:
+                                        "smooth",
+                                }
+                            );
+                        }}
                         style={{
                             height: "56px",
                             padding:
@@ -317,6 +419,7 @@ export default function SPPG() {
 
             {/* TABLE */}
             <div
+                ref={activityRef}
                 style={{
                     background:
                         "linear-gradient(180deg,#111827 0%,#0f172a 100%)",
@@ -412,6 +515,16 @@ export default function SPPG() {
 
                             <input
                                 type="text"
+                                value={search}
+                                onChange={(
+                                    e
+                                ) =>
+                                    setSearch(
+                                        e
+                                            .target
+                                            .value
+                                    )
+                                }
                                 placeholder="Search activity..."
                                 style={{
                                     flex: 1,
@@ -430,35 +543,134 @@ export default function SPPG() {
                         </div>
 
                         {/* FILTER */}
-                        <button
+                        <div
                             style={{
-                                height: "50px",
-                                padding:
-                                    "0 20px",
-                                border:
-                                    "1px solid rgba(255,255,255,0.06)",
-                                borderRadius:
-                                    "16px",
-                                background:
-                                    "rgba(255,255,255,0.04)",
-                                color:
-                                    "white",
                                 display:
                                     "flex",
                                 alignItems:
                                     "center",
                                 gap: "10px",
-                                fontWeight:
-                                    "600",
-                                cursor:
-                                    "pointer",
+                                flexWrap:
+                                    "wrap",
                             }}
                         >
-                            <Filter
-                                size={18}
-                            />
-                            Filter
-                        </button>
+                            <button
+                                onClick={() =>
+                                    setShowFilter(
+                                        !showFilter
+                                    )
+                                }
+                                style={{
+                                    height:
+                                        "50px",
+                                    padding:
+                                        "0 20px",
+                                    border:
+                                        "1px solid rgba(255,255,255,0.06)",
+                                    borderRadius:
+                                        "16px",
+                                    background:
+                                        showFilter
+                                            ? "linear-gradient(135deg,#2563eb,#3b82f6)"
+                                            : "rgba(255,255,255,0.04)",
+                                    color:
+                                        "white",
+                                    display:
+                                        "flex",
+                                    alignItems:
+                                        "center",
+                                    gap: "10px",
+                                    fontWeight:
+                                        "600",
+                                    cursor:
+                                        "pointer",
+                                }}
+                            >
+                                <Filter
+                                    size={18}
+                                />
+                                {showFilter
+                                    ? "Filter Active"
+                                    : "Filter"}
+                            </button>
+
+                            {showFilter && (
+                                <select
+                                    value={
+                                        statusFilter
+                                    }
+                                    onChange={(
+                                        e
+                                    ) =>
+                                        setStatusFilter(
+                                            e
+                                                .target
+                                                .value
+                                        )
+                                    }
+                                    style={{
+                                        height:
+                                            "50px",
+                                        border:
+                                            "1px solid rgba(255,255,255,0.06)",
+                                        background:
+                                            "rgba(255,255,255,0.04)",
+                                        borderRadius:
+                                            "16px",
+                                        padding:
+                                            "0 16px",
+                                        color:
+                                            "white",
+                                        outline:
+                                            "none",
+                                        cursor:
+                                            "pointer",
+                                    }}
+                                >
+                                    <option
+                                        value="All"
+                                        style={{
+                                            color:
+                                                "black",
+                                        }}
+                                    >
+                                        All
+                                        Status
+                                    </option>
+
+                                    <option
+                                        value="Completed"
+                                        style={{
+                                            color:
+                                                "black",
+                                        }}
+                                    >
+                                        Completed
+                                    </option>
+
+                                    <option
+                                        value="On Delivery"
+                                        style={{
+                                            color:
+                                                "black",
+                                        }}
+                                    >
+                                        On
+                                        Delivery
+                                    </option>
+
+                                    <option
+                                        value="Pending"
+                                        style={{
+                                            color:
+                                                "black",
+                                        }}
+                                    >
+                                        Pending
+                                    </option>
+                                </select>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -521,26 +733,129 @@ export default function SPPG() {
                         </thead>
 
                         <tbody>
-                            <tr>
-                                <td
-                                    colSpan={
-                                        5
-                                    }
-                                    style={{
-                                        padding:
-                                            "80px 20px",
-                                        textAlign:
-                                            "center",
-                                        color:
-                                            "#64748b",
-                                        fontSize:
-                                            "15px",
-                                    }}
-                                >
-                                    Belum ada
-                                    data SPPG
-                                </td>
-                            </tr>
+                            {filteredData
+                                .length >
+                            0 ? (
+                                filteredData.map(
+                                    (
+                                        item,
+                                        index
+                                    ) => (
+                                        <tr
+                                            key={
+                                                index
+                                            }
+                                            style={{
+                                                borderBottom:
+                                                    "1px solid rgba(255,255,255,0.05)",
+                                            }}
+                                        >
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "18px 20px",
+                                                    color:
+                                                        "white",
+                                                }}
+                                            >
+                                                {
+                                                    item.school
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "18px 20px",
+                                                    color:
+                                                        "#cbd5e1",
+                                                }}
+                                            >
+                                                {
+                                                    item.package
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "18px 20px",
+                                                    color:
+                                                        "#cbd5e1",
+                                                }}
+                                            >
+                                                {
+                                                    item.totalMeals
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "18px 20px",
+                                                    color:
+                                                        "#cbd5e1",
+                                                }}
+                                            >
+                                                {
+                                                    item.deliveryDate
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "18px 20px",
+                                                }}
+                                            >
+                                                <span
+                                                    style={{
+                                                        padding:
+                                                            "8px 14px",
+                                                        borderRadius:
+                                                            "999px",
+                                                        fontSize:
+                                                            "12px",
+                                                        fontWeight:
+                                                            "700",
+                                                        ...getStatusStyle(
+                                                            item.status
+                                                        ),
+                                                    }}
+                                                >
+                                                    {
+                                                        item.status
+                                                    }
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    )
+                                )
+                            ) : (
+                                <tr>
+                                    <td
+                                        colSpan={
+                                            5
+                                        }
+                                        style={{
+                                            padding:
+                                                "80px 20px",
+                                            textAlign:
+                                                "center",
+                                            color:
+                                                "#64748b",
+                                            fontSize:
+                                                "15px",
+                                        }}
+                                    >
+                                        {search
+                                            ? `Tidak ada hasil untuk "${search}"`
+                                            : showFilter
+                                            ? "Tidak ada data sesuai filter"
+                                            : "Belum ada data SPPG"}
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>

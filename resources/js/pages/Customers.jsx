@@ -10,52 +10,127 @@ import {
     ArrowUpRight,
 } from "lucide-react";
 
+import {
+    useMemo,
+    useRef,
+    useState,
+} from "react";
+
 import AdminLayout from "../layouts/AdminLayout";
 
 export default function Customers() {
-    const stats = [
-        {
-            title: "Total Customers",
-            value: "-",
-            icon: <Users size={22} />,
-            color: "#3b82f6",
-            bg: "rgba(59,130,246,0.12)",
-        },
+    const customerListRef =
+        useRef(null);
 
-        {
-            title: "Active Customers",
-            value: "-",
-            icon: (
-                <UserCheck
-                    size={22}
-                />
-            ),
-            color: "#10b981",
-            bg: "rgba(16,185,129,0.12)",
-        },
+    const [search, setSearch] =
+        useState("");
 
-        {
-            title: "Total Orders",
-            value: "-",
-            icon: (
-                <ShoppingCart
-                    size={22}
-                />
-            ),
-            color: "#f59e0b",
-            bg: "rgba(245,158,11,0.12)",
-        },
+    const [statusFilter, setStatusFilter] =
+        useState("All");
 
-        {
-            title: "Revenue",
-            value: "-",
-            icon: (
-                <Wallet size={22} />
-            ),
-            color: "#8b5cf6",
-            bg: "rgba(139,92,246,0.12)",
-        },
+    const customers = [
+        
     ];
+
+    const filteredCustomers =
+        useMemo(() => {
+            return customers.filter(
+                (customer) => {
+                    const matchSearch =
+                        customer.name
+                            .toLowerCase()
+                            .includes(
+                                search.toLowerCase()
+                            ) ||
+                        customer.email
+                            .toLowerCase()
+                            .includes(
+                                search.toLowerCase()
+                            ) ||
+                        customer.phone.includes(
+                            search
+                        );
+
+                    const matchStatus =
+                        statusFilter ===
+                            "All" ||
+                        customer.status ===
+                            statusFilter;
+
+                    return (
+                        matchSearch &&
+                        matchStatus
+                    );
+                }
+            );
+        }, [search, statusFilter]);
+
+    const stats = [
+    {
+        title: "Total Customers",
+        value: customers.length,
+        icon: <Users size={22} />,
+        color: "#3b82f6",
+        bg: "rgba(59,130,246,0.12)",
+    },
+
+    {
+        title: "Active Customers",
+        value: customers.filter(
+            (c) =>
+                c.status ===
+                "Active"
+        ).length,
+        icon: (
+            <UserCheck
+                size={22}
+            />
+        ),
+        color: "#10b981",
+        bg: "rgba(16,185,129,0.12)",
+    },
+
+    {
+        title: "Total Orders",
+        value: customers.reduce(
+            (
+                total,
+                customer
+            ) =>
+                total +
+                customer.orders,
+            0
+        ),
+        icon: (
+            <ShoppingCart
+                size={22}
+            />
+        ),
+        color: "#f59e0b",
+        bg: "rgba(245,158,11,0.12)",
+    },
+
+    {
+        title: "Revenue",
+        value: customers.length
+            ? customers.reduce(
+                  (
+                      total,
+                      customer
+                  ) =>
+                      total +
+                      (customer.revenue ||
+                          0),
+                  0
+              )
+            : 0,
+        icon: (
+            <Wallet size={22} />
+        ),
+        color: "#8b5cf6",
+        bg: "rgba(139,92,246,0.12)",
+    },
+];
 
     return (
         <AdminLayout>
@@ -71,34 +146,43 @@ export default function Customers() {
                         "1px solid rgba(255,255,255,0.06)",
                     position: "relative",
                     overflow: "hidden",
-                    marginBottom: "30px",
-                    boxSizing: "border-box",
+                    marginBottom:
+                        "30px",
+                    boxSizing:
+                        "border-box",
                 }}
             >
                 {/* GLOW */}
                 <div
                     style={{
-                        position: "absolute",
+                        position:
+                            "absolute",
                         top: "-120px",
                         right: "-80px",
                         width: "260px",
-                        height: "260px",
-                        borderRadius: "999px",
+                        height:
+                            "260px",
+                        borderRadius:
+                            "999px",
                         background:
                             "rgba(59,130,246,0.16)",
-                        filter: "blur(100px)",
+                        filter:
+                            "blur(100px)",
                     }}
                 />
 
                 <div
                     style={{
-                        position: "relative",
+                        position:
+                            "relative",
                         zIndex: 2,
                         display: "flex",
                         justifyContent:
                             "space-between",
-                        alignItems: "center",
-                        flexWrap: "wrap",
+                        alignItems:
+                            "center",
+                        flexWrap:
+                            "wrap",
                         gap: "24px",
                     }}
                 >
@@ -131,13 +215,15 @@ export default function Customers() {
                             <Users
                                 size={15}
                             />
-                            Customer Overview
+                            Customer
+                            Overview
                         </div>
 
                         <h1
                             style={{
                                 margin: 0,
-                                color: "white",
+                                color:
+                                    "white",
                                 fontSize:
                                     "42px",
                                 fontWeight:
@@ -165,33 +251,51 @@ export default function Customers() {
                                     "720px",
                             }}
                         >
-                            Pantau seluruh
-                            data customer,
+                            Pantau
+                            seluruh
+                            data
+                            customer,
                             aktivitas
-                            pemesanan, dan
-                            performa layanan
-                            catering dalam
-                            satu dashboard
+                            pemesanan,
+                            dan
+                            performa
+                            layanan
+                            catering
+                            dalam satu
+                            dashboard
                             modern yang
                             clean dan
                             elegant.
                         </p>
                     </div>
 
+                    {/* VIEW REPORTS */}
                     <button
+                        onClick={() => {
+                            customerListRef.current?.scrollIntoView(
+                                {
+                                    behavior:
+                                        "smooth",
+                                }
+                            );
+                        }}
                         style={{
-                            height: "56px",
+                            height:
+                                "56px",
                             padding:
                                 "0 24px",
-                            border: "none",
+                            border:
+                                "none",
                             borderRadius:
                                 "16px",
                             background:
                                 "linear-gradient(135deg,#2563eb,#3b82f6)",
-                            color: "white",
+                            color:
+                                "white",
                             fontWeight:
                                 "700",
-                            display: "flex",
+                            display:
+                                "flex",
                             alignItems:
                                 "center",
                             gap: "10px",
@@ -216,7 +320,8 @@ export default function Customers() {
                     gridTemplateColumns:
                         "repeat(4,minmax(0,1fr))",
                     gap: "22px",
-                    marginBottom: "30px",
+                    marginBottom:
+                        "30px",
                 }}
             >
                 {stats.map(
@@ -236,7 +341,6 @@ export default function Customers() {
                                     "relative",
                                 overflow:
                                     "hidden",
-                                minWidth: 0,
                             }}
                         >
                             <div
@@ -286,7 +390,9 @@ export default function Customers() {
                                             "18px",
                                     }}
                                 >
-                                    {item.icon}
+                                    {
+                                        item.icon
+                                    }
                                 </div>
 
                                 <div
@@ -305,19 +411,17 @@ export default function Customers() {
                                 </div>
 
                                 <div
-                                    style={{
-                                        color:
-                                            "white",
-                                        fontSize:
-                                            "34px",
-                                        fontWeight:
-                                            "800",
-                                    }}
-                                >
-                                    {
-                                        item.value
-                                    }
-                                </div>
+    style={{
+        color: "white",
+        fontSize: "34px",
+        fontWeight: "800",
+    }}
+>
+    {item.title ===
+    "Revenue"
+        ? `Rp ${item.value.toLocaleString()}`
+        : item.value}
+</div>
                             </div>
                         </div>
                     )
@@ -326,6 +430,9 @@ export default function Customers() {
 
             {/* TABLE */}
             <div
+                ref={
+                    customerListRef
+                }
                 style={{
                     background:
                         "linear-gradient(180deg,#111827 0%,#0f172a 100%)",
@@ -334,7 +441,8 @@ export default function Customers() {
                     borderRadius:
                         "30px",
                     padding: "30px",
-                    overflow: "hidden",
+                    overflow:
+                        "hidden",
                 }}
             >
                 {/* HEADER */}
@@ -345,7 +453,8 @@ export default function Customers() {
                             "space-between",
                         alignItems:
                             "center",
-                        flexWrap: "wrap",
+                        flexWrap:
+                            "wrap",
                         gap: "18px",
                         marginBottom:
                             "28px",
@@ -363,7 +472,8 @@ export default function Customers() {
                                     "700",
                             }}
                         >
-                            Customer List
+                            Customer
+                            Details
                         </h2>
 
                         <p
@@ -385,7 +495,8 @@ export default function Customers() {
                     {/* ACTION */}
                     <div
                         style={{
-                            display: "flex",
+                            display:
+                                "flex",
                             alignItems:
                                 "center",
                             gap: "12px",
@@ -396,7 +507,8 @@ export default function Customers() {
                         {/* SEARCH */}
                         <div
                             style={{
-                                height: "50px",
+                                height:
+                                    "50px",
                                 minWidth:
                                     "250px",
                                 border:
@@ -421,6 +533,18 @@ export default function Customers() {
 
                             <input
                                 type="text"
+                                value={
+                                    search
+                                }
+                                onChange={(
+                                    e
+                                ) =>
+                                    setSearch(
+                                        e
+                                            .target
+                                            .value
+                                    )
+                                }
                                 placeholder="Search customers..."
                                 style={{
                                     flex: 1,
@@ -439,9 +563,22 @@ export default function Customers() {
                         </div>
 
                         {/* FILTER */}
-                        <button
+                        <select
+                            value={
+                                statusFilter
+                            }
+                            onChange={(
+                                e
+                            ) =>
+                                setStatusFilter(
+                                    e
+                                        .target
+                                        .value
+                                )
+                            }
                             style={{
-                                height: "50px",
+                                height:
+                                    "50px",
                                 padding:
                                     "0 20px",
                                 border:
@@ -452,22 +589,54 @@ export default function Customers() {
                                     "rgba(255,255,255,0.04)",
                                 color:
                                     "white",
-                                display:
-                                    "flex",
-                                alignItems:
-                                    "center",
-                                gap: "10px",
                                 fontWeight:
                                     "600",
                                 cursor:
                                     "pointer",
+                                outline:
+                                    "none",
                             }}
                         >
-                            <Filter
-                                size={18}
-                            />
-                            Filter
-                        </button>
+                            <option
+                                value="All"
+                                style={{
+                                    color:
+                                        "black",
+                                }}
+                            >
+                                All
+                            </option>
+
+                            <option
+                                value="Active"
+                                style={{
+                                    color:
+                                        "black",
+                                }}
+                            >
+                                Active
+                            </option>
+
+                            <option
+                                value="Inactive"
+                                style={{
+                                    color:
+                                        "black",
+                                }}
+                            >
+                                Inactive
+                            </option>
+
+                            <option
+                                value="Pending"
+                                style={{
+                                    color:
+                                        "black",
+                                }}
+                            >
+                                Pending
+                            </option>
+                        </select>
                     </div>
                 </div>
 
@@ -530,26 +699,139 @@ export default function Customers() {
                         </thead>
 
                         <tbody>
-                            <tr>
-                                <td
-                                    colSpan={
-                                        5
-                                    }
-                                    style={{
-                                        padding:
-                                            "80px 20px",
-                                        textAlign:
-                                            "center",
-                                        color:
-                                            "#64748b",
-                                        fontSize:
-                                            "15px",
-                                    }}
-                                >
-                                    Belum ada
-                                    data customer
-                                </td>
-                            </tr>
+                            {filteredCustomers.length >
+                            0 ? (
+                                filteredCustomers.map(
+                                    (
+                                        customer,
+                                        index
+                                    ) => (
+                                        <tr
+                                            key={
+                                                index
+                                            }
+                                            style={{
+                                                borderBottom:
+                                                    "1px solid rgba(255,255,255,0.05)",
+                                            }}
+                                        >
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "20px",
+                                                    color:
+                                                        "white",
+                                                }}
+                                            >
+                                                {
+                                                    customer.name
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "20px",
+                                                    color:
+                                                        "#cbd5e1",
+                                                }}
+                                            >
+                                                {
+                                                    customer.email
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "20px",
+                                                    color:
+                                                        "#cbd5e1",
+                                                }}
+                                            >
+                                                {
+                                                    customer.phone
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "20px",
+                                                    color:
+                                                        "#cbd5e1",
+                                                }}
+                                            >
+                                                {
+                                                    customer.orders
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "20px",
+                                                }}
+                                            >
+                                                <span
+                                                    style={{
+                                                        padding:
+                                                            "8px 14px",
+                                                        borderRadius:
+                                                            "999px",
+                                                        fontSize:
+                                                            "12px",
+                                                        fontWeight:
+                                                            "700",
+                                                        background:
+                                                            customer.status ===
+                                                            "Active"
+                                                                ? "rgba(16,185,129,0.15)"
+                                                                : customer.status ===
+                                                                  "Pending"
+                                                                ? "rgba(245,158,11,0.15)"
+                                                                : "rgba(239,68,68,0.15)",
+                                                        color:
+                                                            customer.status ===
+                                                            "Active"
+                                                                ? "#10b981"
+                                                                : customer.status ===
+                                                                  "Pending"
+                                                                ? "#f59e0b"
+                                                                : "#ef4444",
+                                                    }}
+                                                >
+                                                    {
+                                                        customer.status
+                                                    }
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    )
+                                )
+                            ) : (
+                                <tr>
+                                    <td
+                                        colSpan={
+                                            5
+                                        }
+                                        style={{
+                                            padding:
+                                                "80px 20px",
+                                            textAlign:
+                                                "center",
+                                            color:
+                                                "#64748b",
+                                            fontSize:
+                                                "15px",
+                                        }}
+                                    >
+                                        Customer
+                                        tidak
+                                        ditemukan
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>

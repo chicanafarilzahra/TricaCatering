@@ -15,14 +15,46 @@ import {
 import {
     NavLink,
     useLocation,
+    useNavigate,
 } from "react-router-dom";
+
+import { useEffect, useRef } from "react";
 
 export default function Sidebar() {
     const location = useLocation();
 
+    const navigate = useNavigate();
+
+    const sidebarRef = useRef(null);
+
     const user = JSON.parse(
         localStorage.getItem("user")
     );
+
+    /* SAVE SCROLL POSITION */
+    useEffect(() => {
+        const savedScroll =
+            sessionStorage.getItem(
+                "sidebar-scroll"
+            );
+
+        if (
+            sidebarRef.current &&
+            savedScroll
+        ) {
+            sidebarRef.current.scrollTop =
+                parseInt(savedScroll);
+        }
+    }, []);
+
+    const handleScroll = () => {
+        if (sidebarRef.current) {
+            sessionStorage.setItem(
+                "sidebar-scroll",
+                sidebarRef.current.scrollTop
+            );
+        }
+    };
 
     const menus = [
         {
@@ -126,6 +158,8 @@ export default function Sidebar() {
 
     return (
         <div
+            ref={sidebarRef}
+            onScroll={handleScroll}
             style={{
                 width: "270px",
                 height: "100vh",
@@ -184,7 +218,8 @@ export default function Sidebar() {
                                 color: "#fff",
                                 fontWeight: "800",
                                 fontSize: "20px",
-                                letterSpacing: "-0.5px",
+                                letterSpacing:
+                                    "-0.5px",
                             }}
                         >
                             TriCa Catering
@@ -212,7 +247,8 @@ export default function Sidebar() {
                         borderRadius: "22px",
                         padding: "16px",
                         marginBottom: "32px",
-                        backdropFilter: "blur(14px)",
+                        backdropFilter:
+                            "blur(14px)",
                     }}
                 >
                     <div
@@ -226,12 +262,15 @@ export default function Sidebar() {
                             style={{
                                 width: "48px",
                                 height: "48px",
-                                borderRadius: "16px",
+                                borderRadius:
+                                    "16px",
                                 background:
                                     "linear-gradient(135deg,#06b6d4,#3b82f6)",
                                 display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
+                                alignItems:
+                                    "center",
+                                justifyContent:
+                                    "center",
                                 color: "#fff",
                                 fontWeight: "700",
                                 fontSize: "16px",
@@ -241,128 +280,160 @@ export default function Sidebar() {
                         >
                             {user?.name
                                 ?.charAt(0)
-                                ?.toUpperCase()}
+                                ?.toUpperCase() ||
+                                "A"}
                         </div>
 
                         <div>
                             <div
                                 style={{
                                     color: "#fff",
-                                    fontWeight: "600",
-                                    fontSize: "15px",
+                                    fontWeight:
+                                        "600",
+                                    fontSize:
+                                        "15px",
                                 }}
                             >
-                                {user?.name}
+                                {user?.name ||
+                                    "Admin"}
                             </div>
 
                             <div
                                 style={{
-                                    color: "#94a3b8",
-                                    fontSize: "12px",
-                                    marginTop: "4px",
+                                    color:
+                                        "#94a3b8",
+                                    fontSize:
+                                        "12px",
+                                    marginTop:
+                                        "4px",
                                     textTransform:
                                         "capitalize",
                                 }}
                             >
-                                {user?.role}
+                                {user?.role ||
+                                    "admin"}
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* MENUS */}
-                {menus.map((group, index) => (
-                    <div
-                        key={index}
-                        style={{
-                            marginBottom: "30px",
-                        }}
-                    >
-                        {/* TITLE */}
+                {menus.map(
+                    (group, index) => (
                         <div
+                            key={index}
                             style={{
-                                color: "#475569",
-                                fontSize: "11px",
-                                fontWeight: "700",
-                                padding: "0 14px",
-                                marginBottom: "12px",
-                                letterSpacing: "1px",
+                                marginBottom:
+                                    "30px",
                             }}
                         >
-                            {group.title}
-                        </div>
+                            {/* TITLE */}
+                            <div
+                                style={{
+                                    color:
+                                        "#475569",
+                                    fontSize:
+                                        "11px",
+                                    fontWeight:
+                                        "700",
+                                    padding:
+                                        "0 14px",
+                                    marginBottom:
+                                        "12px",
+                                    letterSpacing:
+                                        "1px",
+                                }}
+                            >
+                                {group.title}
+                            </div>
 
-                        {/* ITEMS */}
-                        <div
-                            style={{
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: "6px",
-                            }}
-                        >
-                            {group.items.map(
-                                (item, i) => {
-                                    const active =
-                                        location.pathname ===
-                                        item.path;
+                            {/* ITEMS */}
+                            <div
+                                style={{
+                                    display:
+                                        "flex",
+                                    flexDirection:
+                                        "column",
+                                    gap: "6px",
+                                }}
+                            >
+                                {group.items.map(
+                                    (
+                                        item,
+                                        i
+                                    ) => {
+                                        const active =
+                                            location.pathname ===
+                                            item.path;
 
-                                    return (
-                                        <NavLink
-                                            key={i}
-                                            to={item.path}
-                                            style={{
-                                                textDecoration:
-                                                    "none",
-                                            }}
-                                        >
-                                            <div
+                                        return (
+                                            <NavLink
+                                                key={
+                                                    i
+                                                }
+                                                to={
+                                                    item.path
+                                                }
                                                 style={{
-                                                    height: "52px",
-                                                    display:
-                                                        "flex",
-                                                    alignItems:
-                                                        "center",
-                                                    gap: "14px",
-                                                    padding:
-                                                        "0 16px",
-                                                    borderRadius:
-                                                        "16px",
-                                                    background:
-                                                        active
-                                                            ? "linear-gradient(135deg,#06b6d4,#3b82f6)"
-                                                            : "transparent",
-                                                    color:
-                                                        active
-                                                            ? "#fff"
-                                                            : "#94a3b8",
-                                                    border:
-                                                        active
-                                                            ? "1px solid rgba(255,255,255,0.08)"
-                                                            : "1px solid transparent",
-                                                    fontWeight:
-                                                        active
-                                                            ? "600"
-                                                            : "500",
-                                                    fontSize:
-                                                        "14px",
-                                                    transition:
-                                                        "all 0.2s ease",
-                                                    boxShadow:
-                                                        active
-                                                            ? "0 10px 28px rgba(6,182,212,0.30)"
-                                                            : "none",
+                                                    textDecoration:
+                                                        "none",
                                                 }}
                                             >
-                                                {item.icon}
-                                                {item.label}
-                                            </div>
-                                        </NavLink>
-                                    );
-                                }
-                            )}
+                                                <div
+                                                    style={{
+                                                        height:
+                                                            "52px",
+                                                        display:
+                                                            "flex",
+                                                        alignItems:
+                                                            "center",
+                                                        gap: "14px",
+                                                        padding:
+                                                            "0 16px",
+                                                        borderRadius:
+                                                            "16px",
+                                                        background:
+                                                            active
+                                                                ? "linear-gradient(135deg,#06b6d4,#3b82f6)"
+                                                                : "transparent",
+                                                        color:
+                                                            active
+                                                                ? "#fff"
+                                                                : "#94a3b8",
+                                                        border:
+                                                            active
+                                                                ? "1px solid rgba(255,255,255,0.08)"
+                                                                : "1px solid transparent",
+                                                        fontWeight:
+                                                            active
+                                                                ? "600"
+                                                                : "500",
+                                                        fontSize:
+                                                            "14px",
+                                                        transition:
+                                                            "all 0.2s ease",
+                                                        boxShadow:
+                                                            active
+                                                                ? "0 10px 28px rgba(6,182,212,0.30)"
+                                                                : "none",
+                                                    }}
+                                                >
+                                                    {
+                                                        item.icon
+                                                    }
+
+                                                    {
+                                                        item.label
+                                                    }
+                                                </div>
+                                            </NavLink>
+                                        );
+                                    }
+                                )}
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    )
+                )}
             </div>
 
             {/* LOGOUT */}
@@ -376,8 +447,9 @@ export default function Sidebar() {
                         "user"
                     );
 
-                    window.location.href =
-                        "/#/login";
+                    navigate(
+                        "/login"
+                    );
                 }}
                 style={{
                     height: "54px",
@@ -389,13 +461,16 @@ export default function Sidebar() {
                     color: "#e2e8f0",
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "center",
+                    justifyContent:
+                        "center",
                     gap: "12px",
                     cursor: "pointer",
                     fontSize: "14px",
                     fontWeight: "600",
-                    backdropFilter: "blur(10px)",
+                    backdropFilter:
+                        "blur(10px)",
                     transition: "0.2s",
+                    marginTop: "20px",
                 }}
             >
                 <LogOut size={18} />

@@ -6,17 +6,67 @@ import {
     Package,
     CheckCircle2,
     Search,
-    Filter,
     ArrowUpRight,
 } from "lucide-react";
+
+import {
+    useMemo,
+    useRef,
+    useState,
+} from "react";
 
 import AdminLayout from "../layouts/AdminLayout";
 
 export default function Stocks() {
+    const stockRef = useRef(null);
+
+    const [search, setSearch] =
+        useState("");
+
+    const [statusFilter, setStatusFilter] =
+        useState("All");
+
+    const stocks = [];
+
+    const filteredStocks =
+        useMemo(() => {
+            return stocks.filter(
+                (item) => {
+                    const matchSearch =
+                        item.ingredient
+                            ?.toLowerCase()
+                            .includes(
+                                search.toLowerCase()
+                            ) ||
+                        item.category
+                            ?.toLowerCase()
+                            .includes(
+                                search.toLowerCase()
+                            ) ||
+                        item.unit
+                            ?.toLowerCase()
+                            .includes(
+                                search.toLowerCase()
+                            );
+
+                    const matchStatus =
+                        statusFilter ===
+                            "All" ||
+                        item.status ===
+                            statusFilter;
+
+                    return (
+                        matchSearch &&
+                        matchStatus
+                    );
+                }
+            );
+        }, [stocks, search, statusFilter]);
+
     const stats = [
         {
             title: "Total Items",
-            value: "-",
+            value: stocks.length,
             icon: <Boxes size={22} />,
             color: "#3b82f6",
             bg: "rgba(59,130,246,0.12)",
@@ -24,7 +74,12 @@ export default function Stocks() {
 
         {
             title: "Low Stock",
-            value: "-",
+            value:
+                stocks.filter(
+                    (item) =>
+                        item.status ===
+                        "Low Stock"
+                ).length,
             icon: (
                 <AlertTriangle
                     size={22}
@@ -36,7 +91,12 @@ export default function Stocks() {
 
         {
             title: "Available",
-            value: "-",
+            value:
+                stocks.filter(
+                    (item) =>
+                        item.status ===
+                        "Available"
+                ).length,
             icon: <Package size={22} />,
             color: "#8b5cf6",
             bg: "rgba(139,92,246,0.12)",
@@ -44,7 +104,12 @@ export default function Stocks() {
 
         {
             title: "In Stock",
-            value: "-",
+            value:
+                stocks.filter(
+                    (item) =>
+                        item.status ===
+                        "In Stock"
+                ).length,
             icon: (
                 <CheckCircle2
                     size={22}
@@ -70,33 +135,40 @@ export default function Stocks() {
                     position: "relative",
                     overflow: "hidden",
                     marginBottom: "30px",
-                    boxSizing: "border-box",
+                    boxSizing:
+                        "border-box",
                 }}
             >
                 {/* GLOW */}
                 <div
                     style={{
-                        position: "absolute",
+                        position:
+                            "absolute",
                         top: "-120px",
                         right: "-80px",
                         width: "260px",
                         height: "260px",
-                        borderRadius: "999px",
+                        borderRadius:
+                            "999px",
                         background:
                             "rgba(59,130,246,0.16)",
-                        filter: "blur(100px)",
+                        filter:
+                            "blur(100px)",
                     }}
                 />
 
                 <div
                     style={{
-                        position: "relative",
+                        position:
+                            "relative",
                         zIndex: 2,
                         display: "flex",
                         justifyContent:
                             "space-between",
-                        alignItems: "center",
-                        flexWrap: "wrap",
+                        alignItems:
+                            "center",
+                        flexWrap:
+                            "wrap",
                         gap: "24px",
                     }}
                 >
@@ -135,7 +207,8 @@ export default function Stocks() {
                         <h1
                             style={{
                                 margin: 0,
-                                color: "white",
+                                color:
+                                    "white",
                                 fontSize:
                                     "42px",
                                 fontWeight:
@@ -146,7 +219,8 @@ export default function Stocks() {
                                     "-1px",
                             }}
                         >
-                            Inventory Stocks
+                            Inventory
+                            Stocks
                         </h1>
 
                         <p
@@ -163,19 +237,32 @@ export default function Stocks() {
                                     "720px",
                             }}
                         >
-                            Pantau seluruh
-                            stok bahan dan
+                            Pantau
+                            seluruh stok
+                            bahan dan
                             inventory
-                            catering secara
-                            realtime dalam
-                            dashboard modern
-                            dengan tampilan
+                            catering
+                            secara
+                            realtime
+                            dalam
+                            dashboard
+                            modern dengan
+                            tampilan
                             clean dan
                             elegant.
                         </p>
                     </div>
 
+                    {/* BUTTON */}
                     <button
+                        onClick={() => {
+                            stockRef.current?.scrollIntoView(
+                                {
+                                    behavior:
+                                        "smooth",
+                                }
+                            );
+                        }}
                         style={{
                             height: "56px",
                             padding:
@@ -283,7 +370,9 @@ export default function Stocks() {
                                             "18px",
                                     }}
                                 >
-                                    {item.icon}
+                                    {
+                                        item.icon
+                                    }
                                 </div>
 
                                 <div
@@ -323,6 +412,7 @@ export default function Stocks() {
 
             {/* TABLE */}
             <div
+                ref={stockRef}
                 style={{
                     background:
                         "linear-gradient(180deg,#111827 0%,#0f172a 100%)",
@@ -342,7 +432,8 @@ export default function Stocks() {
                             "space-between",
                         alignItems:
                             "center",
-                        flexWrap: "wrap",
+                        flexWrap:
+                            "wrap",
                         gap: "18px",
                         marginBottom:
                             "28px",
@@ -360,7 +451,8 @@ export default function Stocks() {
                                     "700",
                             }}
                         >
-                            Stock Inventory
+                            Stock
+                            Inventory
                         </h2>
 
                         <p
@@ -383,7 +475,8 @@ export default function Stocks() {
                     {/* ACTION */}
                     <div
                         style={{
-                            display: "flex",
+                            display:
+                                "flex",
                             alignItems:
                                 "center",
                             gap: "12px",
@@ -394,7 +487,8 @@ export default function Stocks() {
                         {/* SEARCH */}
                         <div
                             style={{
-                                height: "50px",
+                                height:
+                                    "50px",
                                 minWidth:
                                     "250px",
                                 border:
@@ -419,6 +513,18 @@ export default function Stocks() {
 
                             <input
                                 type="text"
+                                value={
+                                    search
+                                }
+                                onChange={(
+                                    e
+                                ) =>
+                                    setSearch(
+                                        e
+                                            .target
+                                            .value
+                                    )
+                                }
                                 placeholder="Search stocks..."
                                 style={{
                                     flex: 1,
@@ -437,9 +543,22 @@ export default function Stocks() {
                         </div>
 
                         {/* FILTER */}
-                        <button
+                        <select
+                            value={
+                                statusFilter
+                            }
+                            onChange={(
+                                e
+                            ) =>
+                                setStatusFilter(
+                                    e
+                                        .target
+                                        .value
+                                )
+                            }
                             style={{
-                                height: "50px",
+                                height:
+                                    "50px",
                                 padding:
                                     "0 20px",
                                 border:
@@ -450,22 +569,54 @@ export default function Stocks() {
                                     "rgba(255,255,255,0.04)",
                                 color:
                                     "white",
-                                display:
-                                    "flex",
-                                alignItems:
-                                    "center",
-                                gap: "10px",
                                 fontWeight:
                                     "600",
                                 cursor:
                                     "pointer",
+                                outline:
+                                    "none",
                             }}
                         >
-                            <Filter
-                                size={18}
-                            />
-                            Filter
-                        </button>
+                            <option
+                                value="All"
+                                style={{
+                                    color:
+                                        "black",
+                                }}
+                            >
+                                All
+                            </option>
+
+                            <option
+                                value="Available"
+                                style={{
+                                    color:
+                                        "black",
+                                }}
+                            >
+                                Available
+                            </option>
+
+                            <option
+                                value="In Stock"
+                                style={{
+                                    color:
+                                        "black",
+                                }}
+                            >
+                                In Stock
+                            </option>
+
+                            <option
+                                value="Low Stock"
+                                style={{
+                                    color:
+                                        "black",
+                                }}
+                            >
+                                Low Stock
+                            </option>
+                        </select>
                     </div>
                 </div>
 
@@ -528,26 +679,138 @@ export default function Stocks() {
                         </thead>
 
                         <tbody>
-                            <tr>
-                                <td
-                                    colSpan={
-                                        5
-                                    }
-                                    style={{
-                                        padding:
-                                            "80px 20px",
-                                        textAlign:
-                                            "center",
-                                        color:
-                                            "#64748b",
-                                        fontSize:
-                                            "15px",
-                                    }}
-                                >
-                                    Belum ada
-                                    data stock
-                                </td>
-                            </tr>
+                            {filteredStocks.length >
+                            0 ? (
+                                filteredStocks.map(
+                                    (
+                                        item,
+                                        index
+                                    ) => (
+                                        <tr
+                                            key={
+                                                index
+                                            }
+                                            style={{
+                                                borderBottom:
+                                                    "1px solid rgba(255,255,255,0.05)",
+                                            }}
+                                        >
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "20px",
+                                                    color:
+                                                        "white",
+                                                }}
+                                            >
+                                                {
+                                                    item.ingredient
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "20px",
+                                                    color:
+                                                        "#cbd5e1",
+                                                }}
+                                            >
+                                                {
+                                                    item.category
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "20px",
+                                                    color:
+                                                        "#cbd5e1",
+                                                }}
+                                            >
+                                                {
+                                                    item.quantity
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "20px",
+                                                    color:
+                                                        "#cbd5e1",
+                                                }}
+                                            >
+                                                {
+                                                    item.unit
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "20px",
+                                                }}
+                                            >
+                                                <span
+                                                    style={{
+                                                        padding:
+                                                            "8px 14px",
+                                                        borderRadius:
+                                                            "999px",
+                                                        fontSize:
+                                                            "12px",
+                                                        fontWeight:
+                                                            "700",
+                                                        background:
+                                                            item.status ===
+                                                            "Available"
+                                                                ? "rgba(16,185,129,0.15)"
+                                                                : item.status ===
+                                                                  "Low Stock"
+                                                                ? "rgba(245,158,11,0.15)"
+                                                                : "rgba(139,92,246,0.15)",
+                                                        color:
+                                                            item.status ===
+                                                            "Available"
+                                                                ? "#10b981"
+                                                                : item.status ===
+                                                                  "Low Stock"
+                                                                ? "#f59e0b"
+                                                                : "#8b5cf6",
+                                                    }}
+                                                >
+                                                    {
+                                                        item.status
+                                                    }
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    )
+                                )
+                            ) : (
+                                <tr>
+                                    <td
+                                        colSpan={
+                                            5
+                                        }
+                                        style={{
+                                            padding:
+                                                "80px 20px",
+                                            textAlign:
+                                                "center",
+                                            color:
+                                                "#64748b",
+                                            fontSize:
+                                                "15px",
+                                        }}
+                                    >
+                                        Stock tidak
+                                        ditemukan
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>

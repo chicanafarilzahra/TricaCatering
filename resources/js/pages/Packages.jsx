@@ -10,39 +10,158 @@ import {
     Eye,
 } from "lucide-react";
 
+import {
+    useMemo,
+    useRef,
+    useState,
+} from "react";
+
 import AdminLayout from "../layouts/AdminLayout";
 
 export default function Packages() {
+    const tableRef = useRef(null);
+
+    const [search, setSearch] =
+        useState("");
+
+    const [filterOpen, setFilterOpen] =
+        useState(false);
+
+    const [activeFilter, setActiveFilter] =
+        useState("All Packages");
+
+    // DATA DARI API / DATABASE
+    const packages = [];
+
+    // FILTER SEARCH
+    const filteredPackages =
+        useMemo(() => {
+            return packages.filter(
+                (item) => {
+                    const keyword =
+                        search.toLowerCase();
+
+                    const matchSearch =
+                        item.name
+                            ?.toLowerCase()
+                            .includes(
+                                keyword
+                            ) ||
+                        item.category
+                            ?.toLowerCase()
+                            .includes(
+                                keyword
+                            ) ||
+                        item.status
+                            ?.toLowerCase()
+                            .includes(
+                                keyword
+                            );
+
+                    let matchFilter =
+                        true;
+
+                    if (
+                        activeFilter ===
+                        "Premium"
+                    ) {
+                        matchFilter =
+                            item.category ===
+                            "Premium";
+                    }
+
+                    if (
+                        activeFilter ===
+                        "Standard"
+                    ) {
+                        matchFilter =
+                            item.category ===
+                            "Standard";
+                    }
+
+                    if (
+                        activeFilter ===
+                        "Available"
+                    ) {
+                        matchFilter =
+                            item.status ===
+                            "Available";
+                    }
+
+                    return (
+                        matchSearch &&
+                        matchFilter
+                    );
+                }
+            );
+        }, [
+            packages,
+            search,
+            activeFilter,
+        ]);
+
+    // STATS DINAMIS
     const stats = [
         {
             title: "Total Packages",
-            value: "-",
-            icon: <Package size={22} />,
+            value: packages.length,
+            icon: (
+                <Package size={22} />
+            ),
             color: "#3b82f6",
             bg: "rgba(59,130,246,0.12)",
         },
 
         {
             title: "Premium Packages",
-            value: "-",
-            icon: <Layers3 size={22} />,
+            value: packages.filter(
+                (item) =>
+                    item.category ===
+                    "Premium"
+            ).length,
+            icon: (
+                <Layers3 size={22} />
+            ),
             color: "#8b5cf6",
             bg: "rgba(139,92,246,0.12)",
         },
 
         {
             title: "Revenue",
-            value: "-",
-            icon: <Wallet size={22} />,
+            value: `Rp ${packages
+                .reduce(
+                    (
+                        total,
+                        item
+                    ) =>
+                        total +
+                        Number(
+                            item.price ||
+                                0
+                        ),
+                    0
+                )
+                .toLocaleString(
+                    "id-ID"
+                )}`,
+            icon: (
+                <Wallet size={22} />
+            ),
             color: "#10b981",
             bg: "rgba(16,185,129,0.12)",
         },
 
         {
             title: "Available",
-            value: "-",
+            value: packages.filter(
+                (item) =>
+                    item.status ===
+                    "Available"
+            ).length,
             icon: (
-                <BadgeCheck size={22} />
+                <BadgeCheck
+                    size={22}
+                />
             ),
             color: "#f59e0b",
             bg: "rgba(245,158,11,0.12)",
@@ -55,42 +174,54 @@ export default function Packages() {
             <div
                 style={{
                     width: "100%",
-                    borderRadius: "32px",
+                    borderRadius:
+                        "32px",
                     padding: "38px",
                     background:
                         "linear-gradient(135deg,#0f172a 0%,#111827 45%,#1e293b 100%)",
                     border:
                         "1px solid rgba(255,255,255,0.06)",
-                    position: "relative",
-                    overflow: "hidden",
-                    marginBottom: "30px",
-                    boxSizing: "border-box",
+                    position:
+                        "relative",
+                    overflow:
+                        "hidden",
+                    marginBottom:
+                        "30px",
+                    boxSizing:
+                        "border-box",
                 }}
             >
-                {/* GLOW */}
                 <div
                     style={{
-                        position: "absolute",
+                        position:
+                            "absolute",
                         top: "-120px",
                         right: "-80px",
                         width: "260px",
-                        height: "260px",
-                        borderRadius: "999px",
+                        height:
+                            "260px",
+                        borderRadius:
+                            "999px",
                         background:
                             "rgba(59,130,246,0.16)",
-                        filter: "blur(100px)",
+                        filter:
+                            "blur(100px)",
                     }}
                 />
 
                 <div
                     style={{
-                        position: "relative",
+                        position:
+                            "relative",
                         zIndex: 2,
-                        display: "flex",
+                        display:
+                            "flex",
                         justifyContent:
                             "space-between",
-                        alignItems: "center",
-                        flexWrap: "wrap",
+                        alignItems:
+                            "center",
+                        flexWrap:
+                            "wrap",
                         gap: "24px",
                     }}
                 >
@@ -120,22 +251,24 @@ export default function Packages() {
                                     "20px",
                             }}
                         >
-                            <Package size={15} />
-                            Catering Packages
+                            <Package
+                                size={
+                                    15
+                                }
+                            />
+                            Catering
+                            Packages
                         </div>
 
                         <h1
                             style={{
                                 margin: 0,
-                                color: "white",
+                                color:
+                                    "white",
                                 fontSize:
                                     "42px",
                                 fontWeight:
                                     "800",
-                                lineHeight:
-                                    1.2,
-                                letterSpacing:
-                                    "-1px",
                             }}
                         >
                             Package
@@ -156,32 +289,44 @@ export default function Packages() {
                                     "720px",
                             }}
                         >
-                            Lihat seluruh
-                            paket catering
-                            dengan tampilan
-                            dashboard modern,
-                            elegant, dan
-                            clean untuk
-                            memantau data
-                            paket secara
+                            Lihat
+                            seluruh
+                            paket
+                            catering
+                            dengan
+                            tampilan
+                            dashboard
+                            modern dan
                             realtime.
                         </p>
                     </div>
 
                     <button
+                        onClick={() => {
+                            tableRef.current?.scrollIntoView(
+                                {
+                                    behavior:
+                                        "smooth",
+                                }
+                            );
+                        }}
                         style={{
-                            height: "56px",
+                            height:
+                                "56px",
                             padding:
                                 "0 24px",
-                            border: "none",
+                            border:
+                                "none",
                             borderRadius:
                                 "16px",
                             background:
                                 "linear-gradient(135deg,#2563eb,#3b82f6)",
-                            color: "white",
+                            color:
+                                "white",
                             fontWeight:
                                 "700",
-                            display: "flex",
+                            display:
+                                "flex",
                             alignItems:
                                 "center",
                             gap: "10px",
@@ -191,8 +336,11 @@ export default function Packages() {
                                 "0 12px 30px rgba(37,99,235,0.35)",
                         }}
                     >
-                        <Eye size={18} />
-                        View Details
+                        <Eye
+                            size={18}
+                        />
+                        View
+                        Details
                     </button>
                 </div>
             </div>
@@ -204,13 +352,19 @@ export default function Packages() {
                     gridTemplateColumns:
                         "repeat(4,minmax(0,1fr))",
                     gap: "22px",
-                    marginBottom: "30px",
+                    marginBottom:
+                        "30px",
                 }}
             >
                 {stats.map(
-                    (item, index) => (
+                    (
+                        item,
+                        index
+                    ) => (
                         <div
-                            key={index}
+                            key={
+                                index
+                            }
                             style={{
                                 background:
                                     "linear-gradient(180deg,#111827 0%,#0f172a 100%)",
@@ -224,7 +378,6 @@ export default function Packages() {
                                     "relative",
                                 overflow:
                                     "hidden",
-                                minWidth: 0,
                             }}
                         >
                             <div
@@ -274,7 +427,9 @@ export default function Packages() {
                                             "18px",
                                     }}
                                 >
-                                    {item.icon}
+                                    {
+                                        item.icon
+                                    }
                                 </div>
 
                                 <div
@@ -314,6 +469,7 @@ export default function Packages() {
 
             {/* TABLE */}
             <div
+                ref={tableRef}
                 style={{
                     background:
                         "linear-gradient(180deg,#111827 0%,#0f172a 100%)",
@@ -322,7 +478,8 @@ export default function Packages() {
                     borderRadius:
                         "30px",
                     padding: "30px",
-                    overflow: "hidden",
+                    overflow:
+                        "hidden",
                 }}
             >
                 {/* HEADER */}
@@ -333,7 +490,8 @@ export default function Packages() {
                             "space-between",
                         alignItems:
                             "center",
-                        flexWrap: "wrap",
+                        flexWrap:
+                            "wrap",
                         gap: "18px",
                         marginBottom:
                             "28px",
@@ -351,7 +509,8 @@ export default function Packages() {
                                     "700",
                             }}
                         >
-                            Package List
+                            Package
+                            List
                         </h2>
 
                         <p
@@ -364,7 +523,8 @@ export default function Packages() {
                                     "14px",
                             }}
                         >
-                            Catering package
+                            Catering
+                            package
                             information
                         </p>
                     </div>
@@ -372,18 +532,22 @@ export default function Packages() {
                     {/* ACTION */}
                     <div
                         style={{
-                            display: "flex",
+                            display:
+                                "flex",
                             alignItems:
                                 "center",
                             gap: "12px",
                             flexWrap:
                                 "wrap",
+                            position:
+                                "relative",
                         }}
                     >
                         {/* SEARCH */}
                         <div
                             style={{
-                                height: "50px",
+                                height:
+                                    "50px",
                                 minWidth:
                                     "250px",
                                 border:
@@ -408,6 +572,18 @@ export default function Packages() {
 
                             <input
                                 type="text"
+                                value={
+                                    search
+                                }
+                                onChange={(
+                                    e
+                                ) =>
+                                    setSearch(
+                                        e
+                                            .target
+                                            .value
+                                    )
+                                }
                                 placeholder="Search packages..."
                                 style={{
                                     flex: 1,
@@ -419,16 +595,20 @@ export default function Packages() {
                                         "none",
                                     color:
                                         "white",
-                                    fontSize:
-                                        "14px",
                                 }}
                             />
                         </div>
 
                         {/* FILTER */}
                         <button
+                            onClick={() =>
+                                setFilterOpen(
+                                    !filterOpen
+                                )
+                            }
                             style={{
-                                height: "50px",
+                                height:
+                                    "50px",
                                 padding:
                                     "0 20px",
                                 border:
@@ -436,7 +616,9 @@ export default function Packages() {
                                 borderRadius:
                                     "16px",
                                 background:
-                                    "rgba(255,255,255,0.04)",
+                                    filterOpen
+                                        ? "#2563eb"
+                                        : "rgba(255,255,255,0.04)",
                                 color:
                                     "white",
                                 display:
@@ -453,8 +635,87 @@ export default function Packages() {
                             <Filter
                                 size={18}
                             />
-                            Filter
+                            {
+                                activeFilter
+                            }
                         </button>
+
+                        {/* DROPDOWN */}
+                        {filterOpen && (
+                            <div
+                                style={{
+                                    position:
+                                        "absolute",
+                                    top: "62px",
+                                    right: 0,
+                                    width:
+                                        "220px",
+                                    background:
+                                        "#0f172a",
+                                    border:
+                                        "1px solid rgba(255,255,255,0.08)",
+                                    borderRadius:
+                                        "18px",
+                                    padding:
+                                        "14px",
+                                    zIndex: 10,
+                                }}
+                            >
+                                {[
+                                    "All Packages",
+                                    "Premium",
+                                    "Standard",
+                                    "Available",
+                                ].map(
+                                    (
+                                        item,
+                                        index
+                                    ) => (
+                                        <button
+                                            key={
+                                                index
+                                            }
+                                            onClick={() => {
+                                                setActiveFilter(
+                                                    item
+                                                );
+
+                                                setFilterOpen(
+                                                    false
+                                                );
+                                            }}
+                                            style={{
+                                                width:
+                                                    "100%",
+                                                height:
+                                                    "44px",
+                                                border:
+                                                    "none",
+                                                borderRadius:
+                                                    "12px",
+                                                background:
+                                                    activeFilter ===
+                                                    item
+                                                        ? "#2563eb"
+                                                        : "transparent",
+                                                color:
+                                                    "white",
+                                                textAlign:
+                                                    "left",
+                                                padding:
+                                                    "0 14px",
+                                                cursor:
+                                                    "pointer",
+                                            }}
+                                        >
+                                            {
+                                                item
+                                            }
+                                        </button>
+                                    )
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -517,26 +778,142 @@ export default function Packages() {
                         </thead>
 
                         <tbody>
-                            <tr>
-                                <td
-                                    colSpan={
-                                        5
-                                    }
-                                    style={{
-                                        padding:
-                                            "80px 20px",
-                                        textAlign:
-                                            "center",
-                                        color:
-                                            "#64748b",
-                                        fontSize:
-                                            "15px",
-                                    }}
-                                >
-                                    Belum ada
-                                    data package
-                                </td>
-                            </tr>
+                            {filteredPackages.length >
+                            0 ? (
+                                filteredPackages.map(
+                                    (
+                                        item,
+                                        index
+                                    ) => (
+                                        <tr
+                                            key={
+                                                index
+                                            }
+                                        >
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "18px 20px",
+                                                    color:
+                                                        "white",
+                                                    borderBottom:
+                                                        "1px solid rgba(255,255,255,0.04)",
+                                                }}
+                                            >
+                                                {
+                                                    item.name
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "18px 20px",
+                                                    color:
+                                                        "#cbd5e1",
+                                                    borderBottom:
+                                                        "1px solid rgba(255,255,255,0.04)",
+                                                }}
+                                            >
+                                                {
+                                                    item.menus
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "18px 20px",
+                                                    color:
+                                                        "#cbd5e1",
+                                                    borderBottom:
+                                                        "1px solid rgba(255,255,255,0.04)",
+                                                }}
+                                            >
+                                                Rp{" "}
+                                                {Number(
+                                                    item.price
+                                                ).toLocaleString(
+                                                    "id-ID"
+                                                )}
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "18px 20px",
+                                                    color:
+                                                        "#cbd5e1",
+                                                    borderBottom:
+                                                        "1px solid rgba(255,255,255,0.04)",
+                                                }}
+                                            >
+                                                {
+                                                    item.category
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "18px 20px",
+                                                    borderBottom:
+                                                        "1px solid rgba(255,255,255,0.04)",
+                                                }}
+                                            >
+                                                <span
+                                                    style={{
+                                                        padding:
+                                                            "8px 14px",
+                                                        borderRadius:
+                                                            "999px",
+                                                        fontSize:
+                                                            "12px",
+                                                        fontWeight:
+                                                            "700",
+                                                        background:
+                                                            item.status ===
+                                                            "Available"
+                                                                ? "rgba(16,185,129,0.12)"
+                                                                : "rgba(245,158,11,0.12)",
+                                                        color:
+                                                            item.status ===
+                                                            "Available"
+                                                                ? "#10b981"
+                                                                : "#f59e0b",
+                                                    }}
+                                                >
+                                                    {
+                                                        item.status
+                                                    }
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    )
+                                )
+                            ) : (
+                                <tr>
+                                    <td
+                                        colSpan={
+                                            5
+                                        }
+                                        style={{
+                                            padding:
+                                                "80px 20px",
+                                            textAlign:
+                                                "center",
+                                            color:
+                                                "#64748b",
+                                            fontSize:
+                                                "15px",
+                                        }}
+                                    >
+                                        {search
+                                            ? `Tidak ada hasil untuk "${search}"`
+                                            : "Belum ada data package"}
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>

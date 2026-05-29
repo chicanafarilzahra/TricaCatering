@@ -8,11 +8,16 @@ import {
     Search,
     Filter,
     Eye,
+    ArrowUpRight,
 } from "lucide-react";
+
+import { useNavigate } from "react-router-dom";
 
 import AdminLayout from "../layouts/AdminLayout";
 
 export default function Menus() {
+    const navigate = useNavigate();
+
     const stats = [
         {
             title: "Total Menus",
@@ -170,26 +175,29 @@ export default function Menus() {
                             admin.
                         </p>
                     </div>
-
                     <button
+                        onClick={() => {
+                            document
+                                .getElementById(
+                                    "menu-list"
+                                )
+                                ?.scrollIntoView({
+                                    behavior: "smooth",
+                                });
+                        }}
                         style={{
                             height: "56px",
-                            padding:
-                                "0 24px",
+                            padding: "0 24px",
                             border: "none",
-                            borderRadius:
-                                "16px",
+                            borderRadius: "16px",
                             background:
                                 "linear-gradient(135deg,#2563eb,#3b82f6)",
                             color: "white",
-                            fontWeight:
-                                "700",
+                            fontWeight: "700",
                             display: "flex",
-                            alignItems:
-                                "center",
+                            alignItems: "center",
                             gap: "10px",
-                            cursor:
-                                "pointer",
+                            cursor: "pointer",
                             boxShadow:
                                 "0 12px 30px rgba(37,99,235,0.35)",
                         }}
@@ -205,7 +213,7 @@ export default function Menus() {
                 style={{
                     display: "grid",
                     gridTemplateColumns:
-                        "repeat(4,minmax(0,1fr))",
+                        "repeat(auto-fit,minmax(240px,1fr))",
                     gap: "22px",
                     marginBottom: "30px",
                 }}
@@ -315,19 +323,20 @@ export default function Menus() {
                 )}
             </div>
 
-            {/* TABLE */}
-            <div
-                style={{
-                    background:
-                        "linear-gradient(180deg,#111827 0%,#0f172a 100%)",
-                    border:
-                        "1px solid rgba(255,255,255,0.06)",
-                    borderRadius:
-                        "30px",
-                    padding: "30px",
-                    overflow: "hidden",
-                }}
-            >
+           {/* TABLE */}
+<div
+    id="menu-list"
+    style={{
+        background:
+            "linear-gradient(180deg,#111827 0%,#0f172a 100%)",
+        border:
+            "1px solid rgba(255,255,255,0.06)",
+        borderRadius:
+            "30px",
+        padding: "30px",
+        overflow: "hidden",
+    }}
+>
                 {/* HEADER */}
                 <div
                     style={{
@@ -431,6 +440,11 @@ export default function Menus() {
 
                         {/* FILTER */}
                         <button
+                            onClick={() =>
+                                alert(
+                                    "Filter menu feature coming soon"
+                                )
+                            }
                             style={{
                                 height: "50px",
                                 padding:
@@ -487,6 +501,7 @@ export default function Menus() {
                                     "Price",
                                     "Stock",
                                     "Status",
+                                    "Action",
                                 ].map(
                                     (
                                         item,
@@ -524,7 +539,7 @@ export default function Menus() {
                             <tr>
                                 <td
                                     colSpan={
-                                        5
+                                        6
                                     }
                                     style={{
                                         padding:
@@ -537,8 +552,29 @@ export default function Menus() {
                                             "15px",
                                     }}
                                 >
-                                    Belum ada
-                                    data menu
+                                    <div
+                                        style={{
+                                            display:
+                                                "flex",
+                                            flexDirection:
+                                                "column",
+                                            alignItems:
+                                                "center",
+                                            gap: "16px",
+                                        }}
+                                    >
+                                        <UtensilsCrossed
+                                            size={
+                                                42
+                                            }
+                                            color="#475569"
+                                        />
+
+                                        <div>
+                                            Belum ada
+                                            data menu
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>
