@@ -8,20 +8,91 @@ import {
     Search,
     Filter,
     Eye,
-    ArrowUpRight,
 } from "lucide-react";
 
-import { useNavigate } from "react-router-dom";
+import {
+    useMemo,
+    useState,
+} from "react";
 
 import AdminLayout from "../layouts/AdminLayout";
 
 export default function Menus() {
-    const navigate = useNavigate();
+    const [search, setSearch] =
+        useState("");
+
+    const [filterOpen, setFilterOpen] =
+        useState(false);
+
+    const [selectedCategory, setSelectedCategory] =
+        useState("All");
+
+    // DATA DARI API / BACKEND
+    const menus = [];
+
+    // FILTER DATA
+    const filteredMenus = useMemo(() => {
+        return menus.filter((item) => {
+            const keyword =
+                search.toLowerCase();
+
+            const matchSearch =
+                item.name
+                    ?.toLowerCase()
+                    .includes(keyword) ||
+                item.category
+                    ?.toLowerCase()
+                    .includes(keyword) ||
+                item.status
+                    ?.toLowerCase()
+                    .includes(keyword);
+
+            const matchCategory =
+                selectedCategory ===
+                    "All" ||
+                item.category ===
+                    selectedCategory;
+
+            return (
+                matchSearch &&
+                matchCategory
+            );
+        });
+    }, [
+        menus,
+        search,
+        selectedCategory,
+    ]);
+
+    // STATS
+    const totalMenus =
+        menus.length;
+
+    const foodMenus =
+        menus.filter(
+            (item) =>
+                item.category ===
+                "Food"
+        ).length;
+
+    const drinkMenus =
+        menus.filter(
+            (item) =>
+                item.category ===
+                "Drink"
+        ).length;
+
+    const availableMenus =
+        menus.filter(
+            (item) =>
+                item.status ===
+                "Available"
+        ).length;
 
     const stats = [
         {
             title: "Total Menus",
-            value: "-",
+            value: totalMenus,
             icon: (
                 <UtensilsCrossed size={22} />
             ),
@@ -31,7 +102,7 @@ export default function Menus() {
 
         {
             title: "Food Menus",
-            value: "-",
+            value: foodMenus,
             icon: <Soup size={22} />,
             color: "#10b981",
             bg: "rgba(16,185,129,0.12)",
@@ -39,7 +110,7 @@ export default function Menus() {
 
         {
             title: "Drink Menus",
-            value: "-",
+            value: drinkMenus,
             icon: <Coffee size={22} />,
             color: "#8b5cf6",
             bg: "rgba(139,92,246,0.12)",
@@ -47,7 +118,7 @@ export default function Menus() {
 
         {
             title: "Available",
-            value: "-",
+            value: availableMenus,
             icon: (
                 <BadgeCheck size={22} />
             ),
@@ -55,6 +126,33 @@ export default function Menus() {
             bg: "rgba(245,158,11,0.12)",
         },
     ];
+
+    const getStatusStyle = (
+        status
+    ) => {
+        switch (status) {
+            case "Available":
+                return {
+                    background:
+                        "rgba(16,185,129,0.15)",
+                    color: "#34d399",
+                };
+
+            case "Out of Stock":
+                return {
+                    background:
+                        "rgba(239,68,68,0.15)",
+                    color: "#f87171",
+                };
+
+            default:
+                return {
+                    background:
+                        "rgba(148,163,184,0.15)",
+                    color: "#cbd5e1",
+                };
+        }
+    };
 
     return (
         <AdminLayout>
@@ -74,7 +172,6 @@ export default function Menus() {
                     boxSizing: "border-box",
                 }}
             >
-                {/* GLOW */}
                 <div
                     style={{
                         position: "absolute",
@@ -175,29 +272,38 @@ export default function Menus() {
                             admin.
                         </p>
                     </div>
+
                     <button
                         onClick={() => {
                             document
                                 .getElementById(
                                     "menu-list"
                                 )
-                                ?.scrollIntoView({
-                                    behavior: "smooth",
-                                });
+                                ?.scrollIntoView(
+                                    {
+                                        behavior:
+                                            "smooth",
+                                    }
+                                );
                         }}
                         style={{
                             height: "56px",
-                            padding: "0 24px",
+                            padding:
+                                "0 24px",
                             border: "none",
-                            borderRadius: "16px",
+                            borderRadius:
+                                "16px",
                             background:
                                 "linear-gradient(135deg,#2563eb,#3b82f6)",
                             color: "white",
-                            fontWeight: "700",
+                            fontWeight:
+                                "700",
                             display: "flex",
-                            alignItems: "center",
+                            alignItems:
+                                "center",
                             gap: "10px",
-                            cursor: "pointer",
+                            cursor:
+                                "pointer",
                             boxShadow:
                                 "0 12px 30px rgba(37,99,235,0.35)",
                         }}
@@ -235,7 +341,6 @@ export default function Menus() {
                                     "relative",
                                 overflow:
                                     "hidden",
-                                minWidth: 0,
                             }}
                         >
                             <div
@@ -323,20 +428,20 @@ export default function Menus() {
                 )}
             </div>
 
-           {/* TABLE */}
-<div
-    id="menu-list"
-    style={{
-        background:
-            "linear-gradient(180deg,#111827 0%,#0f172a 100%)",
-        border:
-            "1px solid rgba(255,255,255,0.06)",
-        borderRadius:
-            "30px",
-        padding: "30px",
-        overflow: "hidden",
-    }}
->
+            {/* TABLE */}
+            <div
+                id="menu-list"
+                style={{
+                    background:
+                        "linear-gradient(180deg,#111827 0%,#0f172a 100%)",
+                    border:
+                        "1px solid rgba(255,255,255,0.06)",
+                    borderRadius:
+                        "30px",
+                    padding: "30px",
+                    overflow: "hidden",
+                }}
+            >
                 {/* HEADER */}
                 <div
                     style={{
@@ -391,6 +496,8 @@ export default function Menus() {
                             gap: "12px",
                             flexWrap:
                                 "wrap",
+                            position:
+                                "relative",
                         }}
                     >
                         {/* SEARCH */}
@@ -421,6 +528,18 @@ export default function Menus() {
 
                             <input
                                 type="text"
+                                value={
+                                    search
+                                }
+                                onChange={(
+                                    e
+                                ) =>
+                                    setSearch(
+                                        e
+                                            .target
+                                            .value
+                                    )
+                                }
                                 placeholder="Search menus..."
                                 style={{
                                     flex: 1,
@@ -441,8 +560,8 @@ export default function Menus() {
                         {/* FILTER */}
                         <button
                             onClick={() =>
-                                alert(
-                                    "Filter menu feature coming soon"
+                                setFilterOpen(
+                                    !filterOpen
                                 )
                             }
                             style={{
@@ -454,7 +573,9 @@ export default function Menus() {
                                 borderRadius:
                                     "16px",
                                 background:
-                                    "rgba(255,255,255,0.04)",
+                                    filterOpen
+                                        ? "#2563eb"
+                                        : "rgba(255,255,255,0.04)",
                                 color:
                                     "white",
                                 display:
@@ -473,6 +594,86 @@ export default function Menus() {
                             />
                             Filter
                         </button>
+
+                        {/* FILTER MENU */}
+                        {filterOpen && (
+                            <div
+                                style={{
+                                    position:
+                                        "absolute",
+                                    top: "62px",
+                                    right: 0,
+                                    width:
+                                        "220px",
+                                    background:
+                                        "#0f172a",
+                                    border:
+                                        "1px solid rgba(255,255,255,0.08)",
+                                    borderRadius:
+                                        "18px",
+                                    padding:
+                                        "14px",
+                                    zIndex: 10,
+                                    boxShadow:
+                                        "0 20px 40px rgba(0,0,0,0.35)",
+                                }}
+                            >
+                                {[
+                                    "All",
+                                    "Food",
+                                    "Drink",
+                                ].map(
+                                    (
+                                        item,
+                                        index
+                                    ) => (
+                                        <button
+                                            key={
+                                                index
+                                            }
+                                            onClick={() => {
+                                                setSelectedCategory(
+                                                    item
+                                                );
+
+                                                setFilterOpen(
+                                                    false
+                                                );
+                                            }}
+                                            style={{
+                                                width:
+                                                    "100%",
+                                                height:
+                                                    "44px",
+                                                border:
+                                                    "none",
+                                                borderRadius:
+                                                    "12px",
+                                                background:
+                                                    selectedCategory ===
+                                                    item
+                                                        ? "rgba(59,130,246,0.15)"
+                                                        : "transparent",
+                                                color:
+                                                    "#e2e8f0",
+                                                textAlign:
+                                                    "left",
+                                                padding:
+                                                    "0 14px",
+                                                cursor:
+                                                    "pointer",
+                                                marginBottom:
+                                                    "4px",
+                                            }}
+                                        >
+                                            {
+                                                item
+                                            }
+                                        </button>
+                                    )
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -501,7 +702,6 @@ export default function Menus() {
                                     "Price",
                                     "Stock",
                                     "Status",
-                                    "Action",
                                 ].map(
                                     (
                                         item,
@@ -536,47 +736,135 @@ export default function Menus() {
                         </thead>
 
                         <tbody>
-                            <tr>
-                                <td
-                                    colSpan={
-                                        6
-                                    }
-                                    style={{
-                                        padding:
-                                            "80px 20px",
-                                        textAlign:
-                                            "center",
-                                        color:
-                                            "#64748b",
-                                        fontSize:
-                                            "15px",
-                                    }}
-                                >
-                                    <div
+                            {filteredMenus.length >
+                            0 ? (
+                                filteredMenus.map(
+                                    (
+                                        menu,
+                                        index
+                                    ) => (
+                                        <tr
+                                            key={
+                                                index
+                                            }
+                                            style={{
+                                                borderBottom:
+                                                    "1px solid rgba(255,255,255,0.04)",
+                                            }}
+                                        >
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "18px 20px",
+                                                    color:
+                                                        "white",
+                                                    fontWeight:
+                                                        "600",
+                                                }}
+                                            >
+                                                {
+                                                    menu.name
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "18px 20px",
+                                                    color:
+                                                        "#cbd5e1",
+                                                }}
+                                            >
+                                                {
+                                                    menu.category
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "18px 20px",
+                                                    color:
+                                                        "white",
+                                                }}
+                                            >
+                                                Rp{" "}
+                                                {Number(
+                                                    menu.price ||
+                                                        0
+                                                ).toLocaleString(
+                                                    "id-ID"
+                                                )}
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "18px 20px",
+                                                    color:
+                                                        "#cbd5e1",
+                                                }}
+                                            >
+                                                {
+                                                    menu.stock
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "18px 20px",
+                                                }}
+                                            >
+                                                <span
+                                                    style={{
+                                                        padding:
+                                                            "8px 14px",
+                                                        borderRadius:
+                                                            "999px",
+                                                        fontSize:
+                                                            "12px",
+                                                        fontWeight:
+                                                            "700",
+                                                        ...getStatusStyle(
+                                                            menu.status
+                                                        ),
+                                                    }}
+                                                >
+                                                    {
+                                                        menu.status
+                                                    }
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    )
+                                )
+                            ) : (
+                                <tr>
+                                    <td
+                                        colSpan={
+                                            5
+                                        }
                                         style={{
-                                            display:
-                                                "flex",
-                                            flexDirection:
-                                                "column",
-                                            alignItems:
+                                            padding:
+                                                "80px 20px",
+                                            textAlign:
                                                 "center",
-                                            gap: "16px",
+                                            color:
+                                                "#64748b",
+                                            fontSize:
+                                                "15px",
                                         }}
                                     >
-                                        <UtensilsCrossed
-                                            size={
-                                                42
-                                            }
-                                            color="#475569"
-                                        />
-
-                                        <div>
-                                            Belum ada
-                                            data menu
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
+                                        {search
+                                            ? `Tidak ada hasil untuk "${search}"`
+                                            : selectedCategory !==
+                                              "All"
+                                            ? `Tidak ada menu kategori "${selectedCategory}"`
+                                            : "Belum ada data menu"}
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>

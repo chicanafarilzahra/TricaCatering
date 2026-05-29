@@ -96,51 +96,51 @@ export default function Orders() {
             0
         );
 
-    const stats = [
-        {
-            title: "Total Orders",
-            value: totalOrders,
-            icon: (
-                <ShoppingCart size={22} />
-            ),
-            color: "#3b82f6",
-            bg: "rgba(59,130,246,0.12)",
-        },
+   const stats = [
+    {
+        title: "Total Orders",
+        value: totalOrders || 0,
+        icon: (
+            <ShoppingCart size={22} />
+        ),
+        color: "#3b82f6",
+        bg: "rgba(59,130,246,0.12)",
+    },
 
-        {
-            title: "Pending Orders",
-            value: pendingOrders,
-            icon: (
-                <Clock3 size={22} />
-            ),
-            color: "#f59e0b",
-            bg: "rgba(245,158,11,0.12)",
-        },
+    {
+        title: "Pending Orders",
+        value: pendingOrders || 0,
+        icon: (
+            <Clock3 size={22} />
+        ),
+        color: "#f59e0b",
+        bg: "rgba(245,158,11,0.12)",
+    },
 
-        {
-            title: "Completed",
-            value: completedOrders,
-            icon: (
-                <CheckCircle2 size={22} />
-            ),
-            color: "#10b981",
-            bg: "rgba(16,185,129,0.12)",
-        },
+    {
+        title: "Completed",
+        value: completedOrders || 0,
+        icon: (
+            <CheckCircle2 size={22} />
+        ),
+        color: "#10b981",
+        bg: "rgba(16,185,129,0.12)",
+    },
 
-        {
-            title: "Revenue",
-            value:
-                "Rp " +
-                revenue.toLocaleString(
-                    "id-ID"
-                ),
-            icon: (
-                <Wallet size={22} />
+    {
+        title: "Revenue",
+        value:
+            "Rp " +
+            (revenue || 0).toLocaleString(
+                "id-ID"
             ),
-            color: "#8b5cf6",
-            bg: "rgba(139,92,246,0.12)",
-        },
-    ];
+        icon: (
+            <Wallet size={22} />
+        ),
+        color: "#8b5cf6",
+        bg: "rgba(139,92,246,0.12)",
+    },
+];
 
     const getStatusStyle = (
         status

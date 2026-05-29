@@ -11,13 +11,56 @@ import {
     ArrowUpRight,
 } from "lucide-react";
 
+import { useNavigate } from "react-router-dom";
+
 import AdminLayout from "../layouts/AdminLayout";
 
 export default function Dashboard() {
+    const navigate = useNavigate();
+
+    // DATA DARI API/BACKEND
+    const orders = [];
+    const customers = [];
+    const deliveries = [];
+    const packages = [];
+
+    // STATS
+    const totalOrders =
+        orders.length;
+
+    const totalCustomers =
+        customers.length;
+
+    const totalDeliveries =
+        deliveries.length;
+
+    const totalPackages =
+        packages.length;
+
+    const revenue =
+        orders.reduce(
+            (total, item) =>
+                total +
+                Number(
+                    item.total || 0
+                ),
+            0
+        );
+
+    const pendingOrders =
+        orders.filter(
+            (item) =>
+                item.status ===
+                "Pending"
+        ).length;
+
+    const recentOrders =
+        orders.slice(0, 5);
+
     const stats = [
         {
             title: "Total Orders",
-            value: "-",
+            value: totalOrders,
             icon: (
                 <ShoppingCart size={22} />
             ),
@@ -27,7 +70,7 @@ export default function Dashboard() {
 
         {
             title: "Customers",
-            value: "-",
+            value: totalCustomers,
             icon: (
                 <Users size={22} />
             ),
@@ -37,7 +80,7 @@ export default function Dashboard() {
 
         {
             title: "Deliveries",
-            value: "-",
+            value: totalDeliveries,
             icon: (
                 <Truck size={22} />
             ),
@@ -47,7 +90,7 @@ export default function Dashboard() {
 
         {
             title: "Packages",
-            value: "-",
+            value: totalPackages,
             icon: (
                 <Package size={22} />
             ),
@@ -259,7 +302,7 @@ export default function Dashboard() {
                 style={{
                     display: "grid",
                     gridTemplateColumns:
-                        "repeat(4,minmax(0,1fr))",
+                        "repeat(auto-fit,minmax(240px,1fr))",
                     gap: "22px",
                     marginBottom: "30px",
                 }}
@@ -433,6 +476,11 @@ export default function Dashboard() {
                         </div>
 
                         <button
+                            onClick={() =>
+                                navigate(
+                                    "/orders"
+                                )
+                            }
                             style={{
                                 height:
                                     "46px",
@@ -450,32 +498,126 @@ export default function Dashboard() {
                                     "600",
                                 cursor:
                                     "pointer",
+                                display:
+                                    "flex",
+                                alignItems:
+                                    "center",
+                                gap: "8px",
                             }}
                         >
                             View All
+                            <ArrowUpRight
+                                size={16}
+                            />
                         </button>
                     </div>
 
-                    <div
-                        style={{
-                            width: "100%",
-                            borderRadius:
-                                "22px",
-                            border:
-                                "1px dashed rgba(255,255,255,0.08)",
-                            padding:
-                                "60px 20px",
-                            textAlign:
-                                "center",
-                            color:
-                                "#64748b",
-                            fontSize:
-                                "15px",
-                        }}
-                    >
-                        Belum ada data
-                        orders
-                    </div>
+                    {recentOrders.length >
+                    0 ? (
+                        <div
+                            style={{
+                                display:
+                                    "flex",
+                                flexDirection:
+                                    "column",
+                                gap: "14px",
+                            }}
+                        >
+                            {recentOrders.map(
+                                (
+                                    order,
+                                    index
+                                ) => (
+                                    <div
+                                        key={
+                                            index
+                                        }
+                                        style={{
+                                            padding:
+                                                "18px",
+                                            border:
+                                                "1px solid rgba(255,255,255,0.06)",
+                                            borderRadius:
+                                                "18px",
+                                            display:
+                                                "flex",
+                                            justifyContent:
+                                                "space-between",
+                                            alignItems:
+                                                "center",
+                                        }}
+                                    >
+                                        <div>
+                                            <div
+                                                style={{
+                                                    color:
+                                                        "white",
+                                                    fontWeight:
+                                                        "700",
+                                                    marginBottom:
+                                                        "6px",
+                                                }}
+                                            >
+                                                {
+                                                    order.customer_name
+                                                }
+                                            </div>
+
+                                            <div
+                                                style={{
+                                                    color:
+                                                        "#94a3b8",
+                                                    fontSize:
+                                                        "14px",
+                                                }}
+                                            >
+                                                {
+                                                    order.package_name
+                                                }
+                                            </div>
+                                        </div>
+
+                                        <div
+                                            style={{
+                                                color:
+                                                    "white",
+                                                fontWeight:
+                                                    "700",
+                                            }}
+                                        >
+                                            Rp{" "}
+                                            {Number(
+                                                order.total
+                                            ).toLocaleString(
+                                                "id-ID"
+                                            )}
+                                        </div>
+                                    </div>
+                                )
+                            )}
+                        </div>
+                    ) : (
+                        <div
+                            style={{
+                                width: "100%",
+                                borderRadius:
+                                    "22px",
+                                border:
+                                    "1px dashed rgba(255,255,255,0.08)",
+                                padding:
+                                    "60px 20px",
+                                textAlign:
+                                    "center",
+                                color:
+                                    "#64748b",
+                                fontSize:
+                                    "15px",
+                            }}
+                        >
+                            Belum ada data
+                            orders
+                        </div>
+                    )}
                 </div>
 
                 {/* RIGHT SIDE */}
@@ -534,7 +676,10 @@ export default function Dashboard() {
                                             "800",
                                     }}
                                 >
-                                    -
+                                    Rp{" "}
+                                    {revenue.toLocaleString(
+                                        "id-ID"
+                                    )}
                                 </div>
                             </div>
 
@@ -614,7 +759,9 @@ export default function Dashboard() {
                                             "800",
                                     }}
                                 >
-                                    -
+                                    {
+                                        pendingOrders
+                                    }
                                 </div>
                             </div>
 
