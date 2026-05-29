@@ -1062,26 +1062,8 @@ export default function PesanMakan() {
                                                             1
                                                         )} KM
                                                     </span>
-                                                </div><div
-                                                    style={{
-                                                        marginBottom:
-                                                            "14px",
-                                                    }}
-                                                >
-                                                    Jarak Rute Jalan :
-                                                    {" "}
-                                                    <span
-                                                        style={{
-                                                            color:
-                                                                "#60a5fa",
-                                                        }}
-                                                    >
-                                                        {distanceKm.toFixed(
-                                                            1
-                                                        )} KM
-                                                    </span>
                                                 </div>
-
+                                                
                                                 <div
                                                     style={{
                                                         marginBottom:
