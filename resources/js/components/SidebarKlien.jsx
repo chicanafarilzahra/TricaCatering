@@ -21,8 +21,10 @@ export default function SidebarKlien() {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
 
-        navigate("/login");
+        // redirect ke landing page
+        navigate("/");
 
+        // refresh halaman
         window.location.reload();
     };
 
@@ -176,6 +178,15 @@ export default function SidebarKlien() {
                         cursor: "pointer",
                         boxShadow:
                             "0 10px 25px rgba(239,68,68,0.25)",
+                        transition: "0.25s",
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.transform =
+                            "translateY(-2px)";
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.transform =
+                            "translateY(0px)";
                     }}
                 >
                     <div
