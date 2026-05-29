@@ -1,45 +1,56 @@
 import React, { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import L from "leaflet";
 import axios from "axios";
-import Sidebar from "../../components/Sidebar";
-import Navbar from "../../components/Navbar";
 
-const markerIcon = new L.Icon({
-    iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-    iconSize: [25,41],
-    iconAnchor: [12,41],
-});
+import SidebarKlien from "../../components/SidebarKlien";
+import NavbarKlien from "../../components/NavbarKlien";
 
-export default function Tracking({ orderId }) {
-    const [order, setOrder] = useState(null);
+export default function Tracking() {
+  const [orders, setOrders] = useState([]);
 
-    useEffect(() => {
-        axios.get(`/api/klien/orders/${orderId}`, { withCredentials: true })
-            .then(res => setOrder(res.data))
-            .catch(err => console.error(err));
-    }, [orderId]);
+  useEffect(() => {
+    axios
+      .get("/api/klien/lacak") // endpoint API tracking pengiriman
+      .then((res) => setOrders(res.data))
+      .catch((err) => console.error(err));
+  }, []);
 
-    if (!order) return <div>Loading...</div>;
-
-    return (
-        <div className="flex">
-            <Sidebar role="klien" />
-            <div className="flex-1">
-                <Navbar role="klien" />
-                <div className="p-4">
-                    <h1>Tracking Pesanan</h1>
-                    <MapContainer center={[order.lat, order.lng]} zoom={13} style={{height:"500px", width:"100%"}}>
-                        <TileLayer
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                            attribution="&copy; OpenStreetMap"
-                        />
-                        <Marker position={[order.lat, order.lng]} icon={markerIcon}>
-                            <Popup>{order.order.delivery_address}</Popup>
-                        </Marker>
-                    </MapContainer>
-                </div>
-            </div>
+  return (
+    <div style={{ display: "flex", height: "100vh", background: "#0f172a" }}>
+      <SidebarKlien />
+      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        <NavbarKlien title="Tracking Pengiriman" />
+        <div style={{ padding: "24px", overflowY: "auto" }}>
+          <h2 style={{ color: "#ffffff", marginBottom: "16px" }}>
+            Status Pengiriman
+          </h2>
+          {orders.length === 0 ? (
+            <p style={{ color: "#94a3b8" }}>Tidak ada pengiriman aktif.</p>
+          ) : (
+            <table style={{ width: "100%", color: "#ffffff", borderCollapse: "collapse" }}>
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Pesanan</th>
+                  <th>Status</th>
+                  <th>Kurir</th>
+                  <th>Estimasi Tiba</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((o, idx) => (
+                  <tr key={o.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+                    <td>{idx + 1}</td>
+                    <td>{o.menu?.name} ({o.quantity})</td>
+                    <td>{o.status}</td>
+                    <td>{o.courier?.name}</td>
+                    <td>{o.delivery_time}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
-    );
+      </div>
+    </div>
+  );
 }

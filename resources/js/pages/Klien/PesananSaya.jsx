@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import Sidebar from "../../components/Sidebar";
-import Navbar from "../../components/Navbar";
+import SidebarKlien from "../../components/SidebarKlien";
+import NavbarKlien from "../../components/NavbarKlien";
 
 export default function PesananSaya() {
   const [orders, setOrders] = useState([]);

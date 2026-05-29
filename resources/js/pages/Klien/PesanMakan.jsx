@@ -1,56 +1,47 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import Sidebar from "../../components/Sidebar";
-import Navbar from "../../components/Navbar";
+
+import SidebarKlien from "../../components/SidebarKlien";
+import NavbarKlien from "../../components/NavbarKlien";
 
 export default function PesanMakan() {
-    const [menus, setMenus] = useState([]);
-    const [menuId, setMenuId] = useState("");
-    const [quantity, setQuantity] = useState(1);
-    const [address, setAddress] = useState("");
+  const [menus, setMenus] = useState([]);
 
-    useEffect(() => {
-        axios.get("/api/menus", { withCredentials: true })
-            .then(res => setMenus(res.data))
-            .catch(err => console.error(err));
-    }, []);
+  useEffect(() => {
+    axios
+      .get("/api/klien/menus") // endpoint API untuk daftar menu
+      .then((res) => setMenus(res.data))
+      .catch((err) => console.error(err));
+  }, []);
 
-    const handleSubmit = e => {
-        e.preventDefault();
-        axios.post("/api/klien/orders", {
-            menu_id: menuId,
-            quantity,
-            delivery_address: address
-        }, { withCredentials: true })
-        .then(res => {
-            alert("Pesanan berhasil dibuat!");
-            setMenuId("");
-            setQuantity(1);
-            setAddress("");
-        })
-        .catch(err => alert("Gagal membuat pesanan!"));
-    };
-
-    return (
-        <div className="flex">
-            <Sidebar role="klien" />
-            <div className="flex-1">
-                <Navbar role="klien" />
-                <div className="p-4">
-                    <h1>Pesan Makan</h1>
-                    <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-                        <select value={menuId} onChange={e => setMenuId(e.target.value)} required>
-                            <option value="">Pilih Menu</option>
-                            {menus.map(menu => (
-                                <option key={menu.id} value={menu.id}>{menu.name}</option>
-                            ))}
-                        </select>
-                        <input type="number" value={quantity} min="1" onChange={e => setQuantity(e.target.value)} required />
-                        <input type="text" value={address} onChange={e => setAddress(e.target.value)} placeholder="Alamat" required />
-                        <button type="submit">Pesan</button>
-                    </form>
-                </div>
-            </div>
+  return (
+    <div style={{ display: "flex", height: "100vh", background: "#0f172a" }}>
+      <SidebarKlien />
+      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        <NavbarKlien title="Pesan Makanan" />
+        <div style={{ padding: "24px", overflowY: "auto" }}>
+          <h2 style={{ color: "#ffffff", marginBottom: "16px" }}>
+            Daftar Menu
+          </h2>
+          <div style={{ display: "grid", gap: "16px", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))" }}>
+            {menus.map((menu) => (
+              <div
+                key={menu.id}
+                style={{
+                  background: "#182338",
+                  borderRadius: "16px",
+                  padding: "16px",
+                  color: "#ffffff",
+                }}
+              >
+                <h3>{menu.name}</h3>
+                <p>{menu.description}</p>
+                <p>Rp {menu.price.toLocaleString()}</p>
+              </div>
+            ))}
+          </div>
         </div>
-    );
+      </div>
+    </div>
+  );
 }

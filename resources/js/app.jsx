@@ -63,6 +63,17 @@ import RuteHariIni from "./pages/Kurir/RuteHariIni";
 import LaporanHarian from "./pages/Kurir/LaporanHarian";
 
 /* =========================
+   KLIEN
+========================= */
+
+import HomeKlien from "./pages/Klien/Home";
+import PesananSaya from "./pages/Klien/PesananSaya";
+import PesanMakan from "./pages/Klien/PesanMakan";
+import Tracking from "./pages/Klien/Tracking";
+import InvoiceKlien from "./pages/Klien/InvoiceKlien";
+import UlasanKlien from "./pages/Klien/UlasanKlien";
+
+/* =========================
    COMPONENTS
 ========================= */
 
@@ -357,6 +368,64 @@ function App() {
                 />
 
                 {/* =========================
+                    KLIEN
+                ========================= */}
+
+                <Route
+                    path="/klien"
+                    element={
+                        <ProtectedRoute role="klien">
+                            <HomeKlien />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/klien/pesanan"
+                    element={
+                        <ProtectedRoute role="klien">
+                            <PesananSaya />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/klien/pesan-makan"
+                    element={
+                        <ProtectedRoute role="klien">
+                            <PesanMakan />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/klien/tracking"
+                    element={
+                        <ProtectedRoute role="klien">
+                            <Tracking />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/klien/invoice"
+                    element={
+                        <ProtectedRoute role="klien">
+                            <InvoiceKlien />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/klien/ulasan"
+                    element={
+                        <ProtectedRoute role="klien">
+                            <UlasanKlien />
+                        </ProtectedRoute>
+                    }
+                />
+
+                {/* =========================
                     404 REDIRECT
                 ========================= */}
 
@@ -370,14 +439,16 @@ function App() {
     );
 }
 
-const root = ReactDOM.createRoot(
-    document.getElementById("root")
-);
+const container =
+    document.getElementById("root");
 
-root.render(
+if (!window.__root) {
+    window.__root =
+        ReactDOM.createRoot(container);
+}
 
+window.__root.render(
     <React.StrictMode>
         <App />
     </React.StrictMode>
-
 );

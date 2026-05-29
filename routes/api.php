@@ -191,17 +191,30 @@ Route::post('/kurir/laporan_harian', [LaporanHarianController::class, 'store']);
 |--------------------------------------------------------------------------
 */
 
-Route::middleware([
-    'auth:sanctum',
-    'klien'
-])->group(function () {
+Route::get(
+    'klien/home',
+    [KlienController::class, 'home']
+);
 
-    Route::apiResource(
-        'klien/orders',
-        KlienController::class
-    );
+Route::get(
+    'klien/pesanan',
+    [KlienController::class, 'pesananSaya']
+);
 
-});
+Route::get(
+    'klien/lacak-pengiriman',
+    [KlienController::class, 'lacakPengiriman']
+);
+
+Route::get(
+    'klien/invoice',
+    [KlienController::class, 'invoice']
+);
+
+Route::get(
+    'klien/ulasan',
+    [KlienController::class, 'ulasan']
+);
 
 /*
 |--------------------------------------------------------------------------

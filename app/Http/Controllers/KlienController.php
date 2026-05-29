@@ -2,62 +2,113 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Order;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Order;
 use Illuminate\Support\Facades\Auth;
 
-/**
- * @method void middleware(string $name)
- */
 class KlienController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth');
-        $this->middleware('klien'); // role klien
-    }
-
-    public function index()
+    /**
+     * DASHBOARD HOME KLIEN
+     */
+    public function home()
     {
         $user = Auth::user();
-        $orders = Order::with('menu','kurir')
+
+        $orders = Order::with([
+            'menu',
+            'courier',
+        ])
             ->where('client_id', $user->id)
+            ->latest()
+            ->get();
+
+        $pesananAktif = $orders
+            ->whereIn('status', [
+                'pending',
+                'confirmed',
+                'on_delivery'
+            ])->count();
+
+        $estimasiTiba = optional(
+            $orders->first()
+        )->delivery_time;
+
+        return response()->json([
+            'user' => $user,
+
+            'summary' => [
+                'pesanan_aktif' => $pesananAktif,
+                'estimasi_tiba' => $estimasiTiba ?? '-',
+                'sisa_langganan' => 22,
+            ],
+
+            'orders' => $orders,
+        ]);
+    }
+
+    /**
+     * PESANAN SAYA
+     */
+    public function pesananSaya()
+    {
+        $orders = Order::with([
+            'menu',
+            'courier',
+        ])
+            ->where('client_id', Auth::id())
+            ->latest()
             ->get();
 
         return response()->json($orders);
     }
 
-    public function store(Request $request)
+    /**
+     * TRACKING PENGIRIMAN
+     */
+    public function lacakPengiriman()
     {
-        $request->validate([
-            'menu_id'=>'required|exists:menus,id',
-            'quantity'=>'required|integer|min:1',
-            'delivery_address'=>'required|string'
-        ]);
+        $orders = Order::with([
+            'courier',
+            'menu',
+        ])
+            ->where('client_id', Auth::id())
+            ->whereIn('status', [
+                'on_delivery',
+                'delivered'
+            ])
+            ->latest()
+            ->get();
 
-        $order = Order::create([
-            'client_id'=>Auth::id(),
-            'menu_id'=>$request->menu_id,
-            'quantity'=>$request->quantity,
-            'delivery_address'=>$request->delivery_address,
-            'status'=>'pending'
-        ]);
-
-        return response()->json($order);
+        return response()->json($orders);
     }
 
-    public function show(Order $order)
+    /**
+     * INVOICE
+     */
+    public function invoice()
+    {
+        $orders = Order::with('menu')
+            ->where('client_id', Auth::id())
+            ->latest()
+            ->get();
+
+        $totalTagihan = $orders->sum('total_price');
+
+        return response()->json([
+            'total_tagihan' => $totalTagihan,
+            'data' => $orders,
+        ]);
+    }
+
+    /**
+     * ULASAN & KOMPLAIN
+     */
+    public function ulasan()
     {
         return response()->json([
-            'order'=>$order->load('menu','kurir'),
-            'lat'=>-7.765,
-            'lng'=>112.936
+            'message' => 'Halaman ulasan klien',
         ]);
-    }
-
-    public function update(Request $request, Order $order)
-    {
-        $order->update($request->only(['quantity','delivery_address']));
-        return response()->json($order);
     }
 }
