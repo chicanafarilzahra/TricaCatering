@@ -1,7 +1,7 @@
 // resources/js/components/SidebarKlien.jsx
 
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import {
     FaHome,
@@ -10,119 +10,188 @@ import {
     FaMapMarkerAlt,
     FaFileInvoiceDollar,
     FaCommentDots,
+    FaSignOutAlt,
 } from "react-icons/fa";
 
 export default function SidebarKlien() {
     const current = window.location.hash;
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+
+        navigate("/login");
+
+        window.location.reload();
+    };
 
     return (
         <div
             style={{
-                width: "335px",
+                width: "270px",
                 minHeight: "100vh",
                 background:
                     "linear-gradient(180deg,#020817 0%,#081633 55%,#0b1736 100%)",
-                borderRight: "1px solid rgba(255,255,255,0.05)",
+                borderRight:
+                    "1px solid rgba(255,255,255,0.05)",
                 display: "flex",
                 flexDirection: "column",
-                justifyContent: "flex-start",
+                justifyContent: "space-between",
                 flexShrink: 0,
                 position: "sticky",
                 top: 0,
                 overflow: "hidden",
             }}
         >
-            {/* LOGO */}
+            {/* TOP */}
+            <div>
+                {/* LOGO */}
+                <div
+                    style={{
+                        padding: "28px 22px 24px",
+                        borderBottom:
+                            "1px solid rgba(255,255,255,0.05)",
+                    }}
+                >
+                    <h1
+                        style={{
+                            margin: 0,
+                            fontSize: "24px",
+                            fontWeight: "800",
+                            color: "#ffffff",
+                            lineHeight: 1.1,
+                            letterSpacing: "-1px",
+                        }}
+                    >
+                        TricaCatering
+                    </h1>
+
+                    <p
+                        style={{
+                            marginTop: "8px",
+                            color: "#94a3b8",
+                            fontSize: "14px",
+                            fontWeight: "500",
+                        }}
+                    >
+                        Klien Panel
+                    </p>
+                </div>
+
+                {/* MENU */}
+                <div
+                    style={{
+                        padding: "16px 14px",
+                    }}
+                >
+                    <MenuItem
+                        to="/klien"
+                        icon={<FaHome />}
+                        title="Beranda"
+                        active={
+                            current === "#/klien" ||
+                            current === "#/klien/"
+                        }
+                    />
+
+                    <MenuItem
+                        to="/klien/pesan"
+                        icon={<FaUtensils />}
+                        title="Pesan Makan"
+                        active={
+                            current === "#/klien/pesan" ||
+                            current === "#/klien/pesan/"
+                        }
+                    />
+
+                    <MenuItem
+                        to="/klien/pesanan"
+                        icon={<FaClipboardList />}
+                        title="Pesanan Saya"
+                        active={
+                            current === "#/klien/pesanan" ||
+                            current === "#/klien/pesanan/"
+                        }
+                    />
+
+                    <MenuItem
+                        to="/klien/lacak-pengiriman"
+                        icon={<FaMapMarkerAlt />}
+                        title="Lacak Pengiriman"
+                        active={
+                            current ===
+                                "#/klien/lacak-pengiriman" ||
+                            current ===
+                                "#/klien/lacak-pengiriman/"
+                        }
+                    />
+
+                    <MenuItem
+                        to="/klien/invoice"
+                        icon={<FaFileInvoiceDollar />}
+                        title="Invoice & Tagihan"
+                        active={
+                            current === "#/klien/invoice" ||
+                            current === "#/klien/invoice/"
+                        }
+                    />
+
+                    <MenuItem
+                        to="/klien/ulasan"
+                        icon={<FaCommentDots />}
+                        title="Ulasan & Komplain"
+                        active={
+                            current === "#/klien/ulasan" ||
+                            current === "#/klien/ulasan/"
+                        }
+                    />
+                </div>
+            </div>
+
+            {/* LOGOUT */}
             <div
                 style={{
-                    padding: "42px 28px 34px",
-                    borderBottom:
+                    padding: "16px 14px",
+                    borderTop:
                         "1px solid rgba(255,255,255,0.05)",
                 }}
             >
-                <h1
+                <button
+                    onClick={handleLogout}
                     style={{
-                        margin: 0,
-                        fontSize: "34px",
-                        fontWeight: "800",
+                        width: "100%",
+                        height: "52px",
+                        border: "none",
+                        borderRadius: "16px",
+                        background:
+                            "linear-gradient(90deg,#dc2626,#ef4444)",
                         color: "#ffffff",
-                        lineHeight: 1.1,
-                        letterSpacing: "-1px",
+                        fontSize: "15px",
+                        fontWeight: "700",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                        padding: "0 18px",
+                        cursor: "pointer",
+                        boxShadow:
+                            "0 10px 25px rgba(239,68,68,0.25)",
                     }}
                 >
-                    TricaCatering
-                </h1>
+                    <div
+                        style={{
+                            fontSize: "17px",
+                            width: "22px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                        }}
+                    >
+                        <FaSignOutAlt />
+                    </div>
 
-                <p
-                    style={{
-                        marginTop: "10px",
-                        color: "#94a3b8",
-                        fontSize: "17px",
-                        fontWeight: "500",
-                    }}
-                >
-                    Klien Panel
-                </p>
-            </div>
-
-            {/* MENU */}
-            <div
-                style={{
-                    padding: "22px 18px",
-                }}
-            >
-                <MenuItem
-                    to="/klien"
-                    icon={<FaHome />}
-                    title="Beranda"
-                    active={
-                        current === "#/klien" ||
-                        current === "#/klien/"
-                    }
-                />
-
-               <MenuItem
-                to="/klien/pesan"
-                icon={<FaUtensils />}
-                title="Pesan Makan"
-                active={
-                  current === "#/klien/pesan" ||
-                  current === "#/klien/pesan/"
-                }
-              />
-
-              <MenuItem
-                to="/klien/pesanan"
-                icon={<FaClipboardList />}
-                title="Pesanan Saya"
-                active={
-                  current === "#/klien/pesanan" ||
-                  current === "#/klien/pesanan/"
-                }
-              />
-
-                <MenuItem
-                    to="/klien/lacak-pengiriman"
-                    icon={<FaMapMarkerAlt />}
-                    title="Lacak Pengiriman"
-                    active={current.includes(
-                        "/klien/lacak-pengiriman"
-                    )}
-                />
-
-                <MenuItem
-                    to="/klien/invoice"
-                    icon={<FaFileInvoiceDollar />}
-                    title="Invoice & Tagihan"
-                    active={current.includes("/klien/invoice")}
-                />
-
-                <MenuItem
-                    to="/klien/ulasan"
-                    icon={<FaCommentDots />}
-                    title="Ulasan & Komplain"
-                    active={current.includes("/klien/ulasan")}
-                />
+                    Logout
+                </button>
             </div>
         </div>
     );
@@ -146,10 +215,10 @@ function MenuItem({
                     width: "100%",
                     display: "flex",
                     alignItems: "center",
-                    gap: "16px",
-                    padding: "18px 22px",
-                    borderRadius: "22px",
-                    marginBottom: "14px",
+                    gap: "12px",
+                    padding: "14px 16px",
+                    borderRadius: "16px",
+                    marginBottom: "10px",
                     cursor: "pointer",
                     boxSizing: "border-box",
                     transition: "0.25s ease",
@@ -157,17 +226,17 @@ function MenuItem({
                         ? "linear-gradient(90deg,#1d4ed8,#2563eb)"
                         : "transparent",
                     color: "#ffffff",
-                    fontSize: "18px",
+                    fontSize: "15px",
                     fontWeight: active ? "700" : "600",
                     boxShadow: active
-                        ? "0 10px 30px rgba(37,99,235,0.35)"
+                        ? "0 10px 25px rgba(37,99,235,0.25)"
                         : "none",
                 }}
             >
                 <div
                     style={{
-                        fontSize: "20px",
-                        width: "24px",
+                        fontSize: "17px",
+                        width: "22px",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",

@@ -83,25 +83,25 @@ export default function HomeKlien() {
 
                 {/* CONTENT */}
                 <div
+                    className="hide-scrollbar"
                     style={{
                         flex: 1,
                         overflowY: "auto",
                         overflowX: "hidden",
-                        padding: "32px",
+                        padding: "22px",
                         boxSizing: "border-box",
                         scrollbarWidth: "none",
                         msOverflowStyle: "none",
                     }}
-                    className="hide-scrollbar"
                 >
                     {/* HERO */}
                     <div
                         style={{
                             background:
                                 "linear-gradient(135deg,#17306a 0%,#1f3f8b 100%)",
-                            borderRadius: "30px",
-                            padding: "38px",
-                            marginBottom: "30px",
+                            borderRadius: "22px",
+                            padding: "28px",
+                            marginBottom: "22px",
                             border:
                                 "1px solid rgba(255,255,255,0.05)",
                             color: "#fff",
@@ -110,7 +110,7 @@ export default function HomeKlien() {
                         <h1
                             style={{
                                 margin: 0,
-                                fontSize: "54px",
+                                fontSize: "36px",
                                 fontWeight: "800",
                                 lineHeight: 1.2,
                             }}
@@ -121,18 +121,17 @@ export default function HomeKlien() {
 
                         <p
                             style={{
-                                marginTop: "16px",
+                                marginTop: "12px",
                                 color: "rgba(255,255,255,0.75)",
-                                fontSize: "18px",
-                                maxWidth: "760px",
-                                lineHeight: 1.7,
+                                fontSize: "15px",
+                                maxWidth: "700px",
+                                lineHeight: 1.6,
                             }}
                         >
                             Kelola pesanan catering harian
                             Anda dengan mudah. Pantau status
-                            pengiriman, invoice, dan histori
-                            pesanan langsung dari dashboard
-                            ini.
+                            pengiriman dan histori pesanan
+                            langsung dari dashboard.
                         </p>
                     </div>
 
@@ -141,9 +140,9 @@ export default function HomeKlien() {
                         style={{
                             display: "grid",
                             gridTemplateColumns:
-                                "repeat(auto-fit,minmax(260px,1fr))",
-                            gap: "24px",
-                            marginBottom: "32px",
+                                "repeat(auto-fit,minmax(220px,1fr))",
+                            gap: "18px",
+                            marginBottom: "24px",
                         }}
                     >
                         <StatCard
@@ -165,34 +164,32 @@ export default function HomeKlien() {
                         />
                     </div>
 
-                    {/* STATUS PESANAN */}
+                    {/* STATUS */}
                     <div
                         style={{
                             background: "#182338",
-                            borderRadius: "28px",
+                            borderRadius: "22px",
                             overflow: "hidden",
                             border:
                                 "1px solid rgba(255,255,255,0.05)",
-                            marginBottom: "20px",
                         }}
                     >
                         <div
                             style={{
-                                padding: "26px 30px",
+                                padding: "20px 24px",
                                 borderBottom:
                                     "1px solid rgba(255,255,255,0.05)",
-                                fontSize: "28px",
+                                fontSize: "22px",
                                 fontWeight: "700",
                                 color: "#fff",
                             }}
                         >
-                            🚚 Status Pesanan Hari Ini
+                            🚚 Status Pesanan
                         </div>
 
                         <div
                             style={{
-                                padding:
-                                    "10px 30px 28px",
+                                padding: "6px 24px 20px",
                             }}
                         >
                             <TimelineItem
@@ -206,7 +203,7 @@ export default function HomeKlien() {
                                     latestOrder?.status !==
                                     "pending"
                                 }
-                                title="Pesanan diproses dapur"
+                                title="Pesanan diproses"
                                 subtitle="Makanan sedang disiapkan"
                             />
 
@@ -228,7 +225,6 @@ export default function HomeKlien() {
                 </div>
             </div>
 
-            {/* HIDE SCROLLBAR */}
             <style>
                 {`
                     .hide-scrollbar::-webkit-scrollbar {
@@ -251,8 +247,8 @@ function StatCard({
         <div
             style={{
                 background: "#182338",
-                borderRadius: "26px",
-                padding: "30px",
+                borderRadius: "20px",
+                padding: "22px",
                 border:
                     "1px solid rgba(255,255,255,0.05)",
                 color: "#fff",
@@ -260,17 +256,17 @@ function StatCard({
         >
             <div
                 style={{
-                    width: "74px",
-                    height: "74px",
-                    borderRadius: "22px",
+                    width: "58px",
+                    height: "58px",
+                    borderRadius: "18px",
                     background:
                         "rgba(59,130,246,0.18)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     color: "#3b82f6",
-                    fontSize: "30px",
-                    marginBottom: "22px",
+                    fontSize: "24px",
+                    marginBottom: "18px",
                 }}
             >
                 {icon}
@@ -278,9 +274,9 @@ function StatCard({
 
             <div
                 style={{
-                    fontSize: "16px",
+                    fontSize: "14px",
                     color: "#94a3b8",
-                    marginBottom: "12px",
+                    marginBottom: "8px",
                 }}
             >
                 {title}
@@ -288,7 +284,7 @@ function StatCard({
 
             <div
                 style={{
-                    fontSize: "44px",
+                    fontSize: "32px",
                     fontWeight: "800",
                     color: "#fff",
                 }}
@@ -309,16 +305,16 @@ function TimelineItem({
         <div
             style={{
                 display: "flex",
-                gap: "20px",
-                padding: "24px 0",
+                gap: "16px",
+                padding: "18px 0",
                 borderBottom:
                     "1px solid rgba(255,255,255,0.05)",
             }}
         >
             <div
                 style={{
-                    width: "56px",
-                    height: "56px",
+                    width: "46px",
+                    height: "46px",
                     borderRadius: "50%",
                     background: active
                         ? "linear-gradient(135deg,#2563eb,#3b82f6)"
@@ -333,7 +329,7 @@ function TimelineItem({
                     justifyContent: "center",
                     flexShrink: 0,
                     color: "#fff",
-                    fontSize: "20px",
+                    fontSize: "16px",
                 }}
             >
                 {active ? (
@@ -346,9 +342,9 @@ function TimelineItem({
             <div style={{ flex: 1 }}>
                 <div
                     style={{
-                        fontSize: "20px",
+                        fontSize: "17px",
                         fontWeight: "700",
-                        marginBottom: "6px",
+                        marginBottom: "4px",
                         color: "#fff",
                     }}
                 >
@@ -357,7 +353,7 @@ function TimelineItem({
 
                 <div
                     style={{
-                        fontSize: "15px",
+                        fontSize: "13px",
                         color: "#94a3b8",
                     }}
                 >
@@ -368,12 +364,12 @@ function TimelineItem({
                     <div
                         style={{
                             width: "100%",
-                            height: "8px",
+                            height: "7px",
                             background:
                                 "rgba(255,255,255,0.08)",
                             borderRadius: "999px",
                             overflow: "hidden",
-                            marginTop: "18px",
+                            marginTop: "14px",
                         }}
                     >
                         <div
