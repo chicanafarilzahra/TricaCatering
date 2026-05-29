@@ -1,32 +1,45 @@
 // resources/js/pages/Klien/PesanMakan.jsx
 
-import React, { useMemo, useState } from "react";
+import React, {
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
+
 import {
     FaArrowLeft,
-    FaShoppingCart,
+    FaClock,
     FaMapMarkerAlt,
-    FaInfoCircle,
+    FaMotorcycle,
+    FaShoppingCart,
     FaUtensils,
-    FaUser,
+    FaUserTie,
 } from "react-icons/fa";
+
+import SidebarKlien from "../../components/SidebarKlien";
+import NavbarKlien from "../../components/NavbarKlien";
 
 import {
     MapContainer,
     TileLayer,
     Marker,
     Popup,
+    Polyline,
+    useMap,
 } from "react-leaflet";
+
+import "leaflet-routing-machine";
+import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
 
 import "leaflet/dist/leaflet.css";
 
 import L from "leaflet";
 
-import SidebarKlien from "../../components/SidebarKlien";
-import NavbarKlien from "../../components/NavbarKlien";
-
-/* =========================================================
-   FIX MARKER LEAFLET
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| FIX MARKER LEAFLET
+|--------------------------------------------------------------------------
+*/
 
 delete L.Icon.Default.prototype._getIconUrl;
 
@@ -39,64 +52,98 @@ L.Icon.Default.mergeOptions({
         "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
-/* =========================================================
-   DUMMY DATA
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| DUMMY DATA
+|--------------------------------------------------------------------------
+*/
 
 const cateringTypes = [
     {
         id: "harian",
         title: "Catering Harian",
-        desc: "Menu makan harian sehat dan praktis",
+        description:
+            "Catering harian untuk makan siang dan makan malam dengan sistem langganan harian.",
     },
     {
         id: "insidentil",
         title: "Catering Insidentil",
-        desc: "Pesanan catering untuk acara tertentu",
+        description:
+            "Catering khusus acara seperti ulang tahun, rapat, gathering, dan pernikahan.",
     },
 ];
 
-const harianMenus = [
-    {
-        id: 1,
-        name: "Nasi Ayam Crispy",
-        owner: "Dapur Bu Siska",
-        price: 28000,
-        image: "https://images.unsplash.com/photo-1512058564366-18510be2db19?q=80&w=1200&auto=format&fit=crop",
-        description:
-            "Nasi hangat dengan ayam crispy gurih, sambal, lalapan, dan sayur segar.",
-    },
-    {
-        id: 2,
-        name: "Nasi Rendang Padang",
-        owner: "RM Padang Minang",
-        price: 32000,
-        image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1200&auto=format&fit=crop",
-        description:
-            "Rendang sapi empuk khas Padang lengkap dengan sambal dan sayur.",
-    },
-];
+const dummyMenus = {
+    harian: [
+        {
+            id: 1,
+            name: "Nasi Ayam Geprek",
+            price: 28000,
+            owner: "Dapur Nusantara",
+            ownerAddress:
+                "Jl. Raya Darmo No. 88 Surabaya",
+            detail:
+                "Nasi hangat, ayam geprek crispy, sambal bawang pedas, lalapan segar dan kerupuk.",
+            image:
+                "https://images.unsplash.com/photo-1512058564366-18510be2db19?q=80&w=1200&auto=format&fit=crop",
+            cateringLat: -7.284905,
+            cateringLng: 112.739792,
+        },
 
-const insidentilMenus = [
-    {
-        id: 11,
-        name: "Ayam Bakar Madu",
-        owner: "Dapur Nusantara",
-        price: 35000,
-        image: "https://images.unsplash.com/photo-1527477396000-e27163b481c2?q=80&w=1200&auto=format&fit=crop",
-        description:
-            "Ayam bakar madu dengan bumbu rempah spesial dan aroma bakaran khas.",
-    },
-    {
-        id: 12,
-        name: "Sate Ayam",
-        owner: "Sate Pak Joko",
-        price: 30000,
-        image: "https://images.unsplash.com/photo-1559847844-5315695dadae?q=80&w=1200&auto=format&fit=crop",
-        description:
-            "Sate ayam empuk lengkap dengan bumbu kacang dan lontong.",
-    },
-];
+        {
+            id: 2,
+            name: "Nasi Rawon",
+            price: 32000,
+            owner: "Catering Bu Rina",
+            ownerAddress:
+                "Jl. Ahmad Yani No. 12 Surabaya",
+            detail:
+                "Rawon khas Surabaya dengan daging empuk, telur asin dan sambal.",
+            image:
+                "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1200&auto=format&fit=crop",
+            cateringLat: -7.3101,
+            cateringLng: 112.729,
+        },
+    ],
+
+    insidentil: [
+        {
+            id: 3,
+            name: "Sate Ayam",
+            price: 45000,
+            owner: "Sate Nusantara",
+            ownerAddress:
+                "Jl. Ketintang No. 45 Surabaya",
+            detail:
+                "Sate ayam bumbu kacang premium lengkap dengan lontong dan acar.",
+            image:
+                "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=1200&auto=format&fit=crop",
+            cateringLat: -7.3005,
+            cateringLng: 112.715,
+        },
+
+        {
+            id: 4,
+            name: "Bakso Premium",
+            price: 30000,
+            owner: "Bakso Sultan",
+            ownerAddress:
+                "Jl. Wonokromo No. 90 Surabaya",
+            detail:
+                "Bakso premium isi daging jumbo dengan kuah kaldu sapi spesial.",
+            image:
+                "https://images.unsplash.com/photo-1547592180-85f173990554?q=80&w=1200&auto=format&fit=crop",
+            cateringLat: -7.2952,
+            cateringLng: 112.736,
+        },
+    ],
+};
+
+/*
+|--------------------------------------------------------------------------
+| COMPONENT
+|--------------------------------------------------------------------------
+*/
 
 export default function PesanMakan() {
     const [selectedType, setSelectedType] =
@@ -105,87 +152,196 @@ export default function PesanMakan() {
     const [selectedMenu, setSelectedMenu] =
         useState(null);
 
-    const [showDetail, setShowDetail] =
-        useState(false);
+    const [clientLocation, setClientLocation] =
+        useState(null);
 
-    const [alamat, setAlamat] = useState("");
+    const [distanceKm, setDistanceKm] =
+        useState(0);
+
+    const [durationMinute, setDurationMinute] =
+        useState(0);
+    
+    const [routeCoords, setRouteCoords] =
+    useState([]);
 
     const [form, setForm] = useState({
         nama: "",
+        alamat: "",
         jumlah: "",
         durasi: "",
         tanggal: "",
-        event: "",
+        tema: "",
         catatan: "",
     });
 
-    const menus =
-        selectedType === "harian"
-            ? harianMenus
-            : insidentilMenus;
+    /*
+    |--------------------------------------------------------------------------
+    | GEOCODING ALAMAT
+    |--------------------------------------------------------------------------
+    */
 
-    /* =========================================================
-       LOKASI & ONGKIR DUMMY
-    ========================================================= */
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (!form.alamat) return;
 
-    const cateringLocation = {
-        lat: -7.2575,
-        lng: 112.7521,
-    };
-
-    const clientLocation = alamat
-        ? {
-              lat: -7.267,
-              lng: 112.744,
-          }
-        : cateringLocation;
-
-    const distanceKm = alamat ? 5 : 0;
-
-    const ongkir = distanceKm * 10000;
-
-    /* =========================================================
-       TOTAL
-    ========================================================= */
-
-    const subtotal = useMemo(() => {
-        if (!selectedMenu) return 0;
-
-        if (selectedType === "harian") {
-            if (
-                !form.jumlah ||
-                !form.durasi
+            fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+                    form.alamat
+                )}`
             )
-                return 0;
+                .then((res) => res.json())
+                .then((data) => {
+                    if (data && data[0]) {
+                        const lat = parseFloat(
+                            data[0].lat
+                        );
 
-            return (
-                selectedMenu.price *
-                Number(form.jumlah) *
-                Number(form.durasi)
-            );
-        }
+                        const lng = parseFloat(
+                            data[0].lon
+                        );
 
-        if (!form.jumlah) return 0;
+                        setClientLocation({
+                            lat,
+                            lng,
+                        });
+                    }
+                });
+        }, 1000);
 
-        return (
+        return () => clearTimeout(timer);
+    }, [form.alamat]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | HITUNG JARAK
+    |--------------------------------------------------------------------------
+    */
+
+    useEffect(() => {
+    if (
+        !clientLocation ||
+        !selectedMenu
+    )
+        return;
+
+    const start =
+        `${selectedMenu.cateringLng},${selectedMenu.cateringLat}`;
+
+    const end =
+        `${clientLocation.lng},${clientLocation.lat}`;
+
+    fetch(
+        `https://router.project-osrm.org/route/v1/driving/${start};${end}?overview=full&geometries=geojson`
+    )
+        .then((res) => res.json())
+        .then((data) => {
+            if (
+                data.routes &&
+                data.routes.length > 0
+            ) {
+                const route =
+                    data.routes[0];
+
+                const distance =
+                    route.distance / 1000;
+
+                const duration =
+                    route.duration / 60;
+
+                setDistanceKm(distance);
+
+                setDurationMinute(
+                    Math.round(duration)
+                );
+
+                const coords =
+                    route.geometry.coordinates.map(
+                        (item) => [
+                            item[1],
+                            item[0],
+                        ]
+                    );
+
+                setRouteCoords(coords);
+            }
+        });
+}, [clientLocation, selectedMenu]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | BIAYA KURIR
+    |--------------------------------------------------------------------------
+    */
+
+    const courierFee = useMemo(() => {
+        if (!distanceKm) return 0;
+
+        return Math.ceil(distanceKm) * 10000;
+    }, [distanceKm]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | TOTAL HARIAN
+    |--------------------------------------------------------------------------
+    */
+
+    const totalHarian = useMemo(() => {
+        if (
+            !selectedMenu ||
+            !form.jumlah ||
+            !form.durasi
+        )
+            return 0;
+
+        const subtotal =
             selectedMenu.price *
-            Number(form.jumlah)
-        );
-    }, [form, selectedMenu, selectedType]);
+            Number(form.jumlah) *
+            Number(form.durasi);
 
-    const total =
-        selectedType === "harian"
-            ? subtotal +
-              ongkir *
-                  Number(form.durasi || 0)
-            : subtotal + ongkir;
+        const courier =
+            courierFee *
+            Number(form.durasi);
+
+        return subtotal + courier;
+    }, [
+        selectedMenu,
+        form.jumlah,
+        form.durasi,
+        courierFee,
+    ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | TOTAL INSIDENTIL
+    |--------------------------------------------------------------------------
+    */
+
+    const totalInsidentil = useMemo(() => {
+        if (
+            !selectedMenu ||
+            !form.jumlah
+        )
+            return 0;
+
+        const subtotal =
+            selectedMenu.price *
+            Number(form.jumlah);
+
+        return subtotal + courierFee;
+    }, [
+        selectedMenu,
+        form.jumlah,
+        courierFee,
+    ]);
 
     const dp =
-        selectedType === "insidentil"
-            ? total * 0.5
-            : 0;
+        totalInsidentil * 0.5;
 
-    /* ========================================================= */
+    /*
+    |--------------------------------------------------------------------------
+    | RENDER
+    |--------------------------------------------------------------------------
+    */
 
     return (
         <div
@@ -195,7 +351,8 @@ export default function PesanMakan() {
                 display: "flex",
                 overflow: "hidden",
                 background: "#071028",
-                fontFamily: "Times New Roman",
+                fontFamily:
+                    '"Times New Roman", serif',
                 fontWeight: "700",
             }}
         >
@@ -216,7 +373,7 @@ export default function PesanMakan() {
                     style={{
                         flex: 1,
                         overflowY: "auto",
-                        padding: "24px",
+                        padding: "22px",
                     }}
                 >
                     {/* ================================================= */}
@@ -228,20 +385,36 @@ export default function PesanMakan() {
                             <h1
                                 style={{
                                     color: "#fff",
-                                    fontSize: "38px",
+                                    fontSize: "36px",
                                     marginBottom:
-                                        "24px",
+                                        "8px",
                                 }}
                             >
                                 Pilih Tipe Catering
                             </h1>
 
+                            <p
+                                style={{
+                                    color:
+                                        "#94a3b8",
+                                    marginBottom:
+                                        "24px",
+                                    fontSize:
+                                        "16px",
+                                }}
+                            >
+                                Pilih jenis
+                                catering sesuai
+                                kebutuhan Anda
+                            </p>
+
                             <div
                                 style={{
-                                    display: "grid",
+                                    display:
+                                        "grid",
                                     gridTemplateColumns:
                                         "repeat(auto-fit,minmax(320px,1fr))",
-                                    gap: "24px",
+                                    gap: "22px",
                                 }}
                             >
                                 {cateringTypes.map(
@@ -254,30 +427,46 @@ export default function PesanMakan() {
                                                 background:
                                                     "#182338",
                                                 borderRadius:
-                                                    "24px",
+                                                    "26px",
                                                 padding:
                                                     "28px",
                                                 border:
                                                     "1px solid rgba(255,255,255,0.05)",
                                             }}
                                         >
-                                            <FaUtensils
+                                            <div
                                                 style={{
+                                                    width:
+                                                        "70px",
+                                                    height:
+                                                        "70px",
+                                                    borderRadius:
+                                                        "20px",
+                                                    background:
+                                                        "rgba(37,99,235,0.15)",
+                                                    display:
+                                                        "flex",
+                                                    alignItems:
+                                                        "center",
+                                                    justifyContent:
+                                                        "center",
                                                     color:
                                                         "#60a5fa",
                                                     fontSize:
-                                                        "46px",
+                                                        "28px",
                                                     marginBottom:
-                                                        "18px",
+                                                        "22px",
                                                 }}
-                                            />
+                                            >
+                                                <FaUtensils />
+                                            </div>
 
                                             <h2
                                                 style={{
                                                     color:
                                                         "#fff",
                                                     fontSize:
-                                                        "30px",
+                                                        "28px",
                                                     marginBottom:
                                                         "12px",
                                                 }}
@@ -291,13 +480,13 @@ export default function PesanMakan() {
                                                 style={{
                                                     color:
                                                         "#94a3b8",
+                                                    lineHeight: 1.7,
                                                     fontSize:
-                                                        "16px",
-                                                    lineHeight: 1.8,
+                                                        "15px",
                                                 }}
                                             >
                                                 {
-                                                    item.desc
+                                                    item.description
                                                 }
                                             </p>
 
@@ -312,18 +501,18 @@ export default function PesanMakan() {
                                                         "100%",
                                                     height:
                                                         "54px",
-                                                    marginTop:
-                                                        "24px",
                                                     border:
                                                         "none",
                                                     borderRadius:
                                                         "16px",
+                                                    marginTop:
+                                                        "22px",
                                                     background:
                                                         "linear-gradient(90deg,#2563eb,#3b82f6)",
                                                     color:
                                                         "#fff",
                                                     fontSize:
-                                                        "17px",
+                                                        "16px",
                                                     cursor:
                                                         "pointer",
                                                     fontWeight:
@@ -331,6 +520,7 @@ export default function PesanMakan() {
                                                 }}
                                             >
                                                 Pilih
+                                                Catering
                                             </button>
                                         </div>
                                     )
@@ -353,7 +543,7 @@ export default function PesanMakan() {
                                         )
                                     }
                                     style={
-                                        backButton
+                                        backStyle
                                     }
                                 >
                                     <FaArrowLeft />
@@ -365,16 +555,12 @@ export default function PesanMakan() {
                                         color:
                                             "#fff",
                                         fontSize:
-                                            "38px",
+                                            "34px",
                                         marginBottom:
                                             "24px",
                                     }}
                                 >
-                                    Menu{" "}
-                                    {selectedType ===
-                                    "harian"
-                                        ? "Catering Harian"
-                                        : "Catering Insidentil"}
+                                    Menu Catering
                                 </h1>
 
                                 <div
@@ -382,11 +568,13 @@ export default function PesanMakan() {
                                         display:
                                             "grid",
                                         gridTemplateColumns:
-                                            "repeat(auto-fill,minmax(320px,1fr))",
-                                        gap: "24px",
+                                            "repeat(auto-fit,minmax(300px,1fr))",
+                                        gap: "22px",
                                     }}
                                 >
-                                    {menus.map(
+                                    {dummyMenus[
+                                        selectedType
+                                    ].map(
                                         (
                                             menu
                                         ) => (
@@ -407,14 +595,12 @@ export default function PesanMakan() {
                                                     src={
                                                         menu.image
                                                     }
-                                                    alt={
-                                                        menu.name
-                                                    }
+                                                    alt=""
                                                     style={{
                                                         width:
                                                             "100%",
                                                         height:
-                                                            "220px",
+                                                            "210px",
                                                         objectFit:
                                                             "cover",
                                                     }}
@@ -431,9 +617,9 @@ export default function PesanMakan() {
                                                             color:
                                                                 "#fff",
                                                             fontSize:
-                                                                "26px",
+                                                                "24px",
                                                             marginBottom:
-                                                                "10px",
+                                                                "14px",
                                                         }}
                                                     >
                                                         {
@@ -444,26 +630,11 @@ export default function PesanMakan() {
                                                     <div
                                                         style={{
                                                             color:
-                                                                "#94a3b8",
-                                                            marginBottom:
-                                                                "10px",
-                                                        }}
-                                                    >
-                                                        Owner:
-                                                        {" "}
-                                                        {
-                                                            menu.owner
-                                                        }
-                                                    </div>
-
-                                                    <div
-                                                        style={{
-                                                            color:
                                                                 "#22c55e",
                                                             fontSize:
                                                                 "28px",
                                                             marginBottom:
-                                                                "20px",
+                                                                "18px",
                                                         }}
                                                     >
                                                         Rp{" "}
@@ -480,37 +651,16 @@ export default function PesanMakan() {
                                                         }}
                                                     >
                                                         <button
-                                                            onClick={() => {
+                                                            onClick={() =>
                                                                 setSelectedMenu(
                                                                     menu
-                                                                );
-                                                                setShowDetail(
-                                                                    true
-                                                                );
-                                                            }}
+                                                                )
+                                                            }
                                                             style={
-                                                                detailBtn
+                                                                primaryButton
                                                             }
                                                         >
-                                                            <FaInfoCircle />
                                                             Detail
-                                                        </button>
-
-                                                        <button
-                                                            onClick={() => {
-                                                                setSelectedMenu(
-                                                                    menu
-                                                                );
-                                                                setShowDetail(
-                                                                    false
-                                                                );
-                                                            }}
-                                                            style={
-                                                                pesanBtn
-                                                            }
-                                                        >
-                                                            <FaShoppingCart />
-                                                            Pesan
                                                         </button>
                                                     </div>
                                                 </div>
@@ -522,177 +672,59 @@ export default function PesanMakan() {
                         )}
 
                     {/* ================================================= */}
-                    {/* DETAIL */}
+                    {/* DETAIL + FORM */}
                     {/* ================================================= */}
 
-                    {selectedMenu &&
-                        showDetail && (
-                            <>
-                                <button
-                                    onClick={() =>
-                                        setSelectedMenu(
-                                            null
-                                        )
-                                    }
-                                    style={
-                                        backButton
-                                    }
-                                >
-                                    <FaArrowLeft />
-                                    Kembali
-                                </button>
+                    {selectedMenu && (
+                        <div
+                            style={{
+                                maxWidth:
+                                    "1100px",
+                                margin:
+                                    "0 auto",
+                            }}
+                        >
+                            <button
+                                onClick={() =>
+                                    setSelectedMenu(
+                                        null
+                                    )
+                                }
+                                style={
+                                    backStyle
+                                }
+                            >
+                                <FaArrowLeft />
+                                Kembali
+                            </button>
 
-                                <div
+                            <div
+                                style={{
+                                    background:
+                                        "#182338",
+                                    borderRadius:
+                                        "28px",
+                                    overflow:
+                                        "hidden",
+                                }}
+                            >
+                                <img
+                                    src={
+                                        selectedMenu.image
+                                    }
+                                    alt=""
                                     style={{
-                                        background:
-                                            "#182338",
-                                        borderRadius:
-                                            "28px",
-                                        overflow:
-                                            "hidden",
+                                        width:
+                                            "100%",
+                                        height:
+                                            "320px",
+                                        objectFit:
+                                            "cover",
                                     }}
-                                >
-                                    <img
-                                        src={
-                                            selectedMenu.image
-                                        }
-                                        alt={
-                                            selectedMenu.name
-                                        }
-                                        style={{
-                                            width:
-                                                "100%",
-                                            height:
-                                                "340px",
-                                            objectFit:
-                                                "cover",
-                                        }}
-                                    />
-
-                                    <div
-                                        style={{
-                                            padding:
-                                                "28px",
-                                        }}
-                                    >
-                                        <h1
-                                            style={{
-                                                color:
-                                                    "#fff",
-                                                fontSize:
-                                                    "42px",
-                                                marginBottom:
-                                                    "16px",
-                                            }}
-                                        >
-                                            {
-                                                selectedMenu.name
-                                            }
-                                        </h1>
-
-                                        <div
-                                            style={{
-                                                color:
-                                                    "#94a3b8",
-                                                marginBottom:
-                                                    "18px",
-                                                display:
-                                                    "flex",
-                                                alignItems:
-                                                    "center",
-                                                gap: "10px",
-                                            }}
-                                        >
-                                            <FaUser />
-                                            Owner:
-                                            {" "}
-                                            {
-                                                selectedMenu.owner
-                                            }
-                                        </div>
-
-                                        <p
-                                            style={{
-                                                color:
-                                                    "#cbd5e1",
-                                                fontSize:
-                                                    "17px",
-                                                lineHeight: 1.9,
-                                            }}
-                                        >
-                                            {
-                                                selectedMenu.description
-                                            }
-                                        </p>
-
-                                        <div
-                                            style={{
-                                                marginTop:
-                                                    "24px",
-                                                color:
-                                                    "#22c55e",
-                                                fontSize:
-                                                    "34px",
-                                            }}
-                                        >
-                                            Rp{" "}
-                                            {selectedMenu.price.toLocaleString(
-                                                "id-ID"
-                                            )}
-                                        </div>
-
-                                        <button
-                                            onClick={() =>
-                                                setShowDetail(
-                                                    false
-                                                )
-                                            }
-                                            style={{
-                                                ...pesanBtn,
-                                                marginTop:
-                                                    "28px",
-                                                width:
-                                                    "100%",
-                                                height:
-                                                    "58px",
-                                            }}
-                                        >
-                                            <FaShoppingCart />
-                                            Pesan
-                                            Sekarang
-                                        </button>
-                                    </div>
-                                </div>
-                            </>
-                        )}
-
-                    {/* ================================================= */}
-                    {/* FORM */}
-                    {/* ================================================= */}
-
-                    {selectedMenu &&
-                        !showDetail && (
-                            <>
-                                <button
-                                    onClick={() =>
-                                        setSelectedMenu(
-                                            null
-                                        )
-                                    }
-                                    style={
-                                        backButton
-                                    }
-                                >
-                                    <FaArrowLeft />
-                                    Kembali
-                                </button>
+                                />
 
                                 <div
                                     style={{
-                                        background:
-                                            "#182338",
-                                        borderRadius:
-                                            "28px",
                                         padding:
                                             "30px",
                                     }}
@@ -704,313 +736,459 @@ export default function PesanMakan() {
                                             fontSize:
                                                 "38px",
                                             marginBottom:
-                                                "24px",
+                                                "18px",
                                         }}
                                     >
-                                        {selectedType ===
-                                        "harian"
-                                            ? "Detail Pesanan Harian"
-                                            : "Detail Event"}
+                                        {
+                                            selectedMenu.name
+                                        }
                                     </h1>
 
-                                    <Input
-                                        label="Nama Pemesan"
-                                        value={
-                                            form.nama
-                                        }
-                                        onChange={(
-                                            e
-                                        ) =>
-                                            setForm(
-                                                {
-                                                    ...form,
-                                                    nama: e
-                                                        .target
-                                                        .value,
-                                                }
-                                            )
-                                        }
-                                    />
-
-                                    <div
+                                    <p
                                         style={{
-                                            height:
-                                                "18px",
-                                        }}
-                                    />
-
-                                    <Input
-                                        label="Alamat"
-                                        icon={
-                                            <FaMapMarkerAlt />
-                                        }
-                                        value={
-                                            alamat
-                                        }
-                                        onChange={(
-                                            e
-                                        ) =>
-                                            setAlamat(
-                                                e
-                                                    .target
-                                                    .value
-                                            )
-                                        }
-                                    />
-
-                                    <div
-                                        style={{
-                                            height:
-                                                "18px",
-                                        }}
-                                    />
-
-                                    <div
-                                        style={{
-                                            height:
-                                                "320px",
-                                            borderRadius:
-                                                "22px",
-                                            overflow:
-                                                "hidden",
+                                            color:
+                                                "#cbd5e1",
+                                            lineHeight: 1.8,
+                                            marginBottom:
+                                                "20px",
                                         }}
                                     >
-                                        <MapContainer
-                                            center={[
-                                                clientLocation.lat,
-                                                clientLocation.lng,
-                                            ]}
-                                            zoom={
-                                                13
-                                            }
-                                            style={{
-                                                width:
-                                                    "100%",
-                                                height:
-                                                    "100%",
-                                            }}
-                                        >
-                                            <TileLayer
-                                                attribution='&copy; OpenStreetMap'
-                                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                            />
+                                        {
+                                            selectedMenu.detail
+                                        }
+                                    </p>
 
-                                            <Marker
-                                                position={[
-                                                    clientLocation.lat,
-                                                    clientLocation.lng,
-                                                ]}
-                                            >
-                                                <Popup>
-                                                    Lokasi
-                                                    Client
-                                                </Popup>
-                                            </Marker>
-                                        </MapContainer>
+                                    <div
+                                        style={{
+                                            color:
+                                                "#94a3b8",
+                                            marginBottom:
+                                                "12px",
+                                            display:
+                                                "flex",
+                                            gap: "10px",
+                                            alignItems:
+                                                "center",
+                                        }}
+                                    >
+                                        <FaUserTie />
+                                        Owner :{" "}
+                                        {
+                                            selectedMenu.owner
+                                        }
                                     </div>
 
                                     <div
                                         style={{
-                                            height:
-                                                "18px",
+                                            color:
+                                                "#94a3b8",
+                                            marginBottom:
+                                                "28px",
+                                            display:
+                                                "flex",
+                                            gap: "10px",
+                                            alignItems:
+                                                "center",
                                         }}
-                                    />
-
-                                    <Input
-                                        label="Jumlah Porsi"
-                                        type="number"
-                                        value={
-                                            form.jumlah
+                                    >
+                                        <FaMapMarkerAlt />
+                                        {
+                                            selectedMenu.ownerAddress
                                         }
-                                        onChange={(
-                                            e
-                                        ) =>
-                                            setForm(
-                                                {
-                                                    ...form,
-                                                    jumlah:
-                                                        e
+                                    </div>
+
+                                    {/* FORM */}
+                                    <div
+                                        style={{
+                                            display:
+                                                "grid",
+                                            gap: "18px",
+                                        }}
+                                    >
+                                        <Input
+                                            label="Nama Pemesan"
+                                            value={
+                                                form.nama
+                                            }
+                                            onChange={(
+                                                e
+                                            ) =>
+                                                setForm(
+                                                    {
+                                                        ...form,
+                                                        nama: e
                                                             .target
                                                             .value,
-                                                }
-                                            )
-                                        }
-                                    />
-
-                                    {selectedType ===
-                                    "harian" ? (
-                                        <>
-                                            <div
-                                                style={{
-                                                    height:
-                                                        "18px",
-                                                }}
-                                            />
-
-                                            <Input
-                                                label="Durasi Langganan"
-                                                type="number"
-                                                value={
-                                                    form.durasi
-                                                }
-                                                onChange={(
-                                                    e
-                                                ) =>
-                                                    setForm(
-                                                        {
-                                                            ...form,
-                                                            durasi:
-                                                                e
-                                                                    .target
-                                                                    .value,
-                                                        }
-                                                    )
-                                                }
-                                            />
-                                        </>
-                                    ) : (
-                                        <>
-                                            <div
-                                                style={{
-                                                    height:
-                                                        "18px",
-                                                }}
-                                            />
-
-                                            <Input
-                                                label="Tanggal Event"
-                                                type="date"
-                                                value={
-                                                    form.tanggal
-                                                }
-                                                onChange={(
-                                                    e
-                                                ) =>
-                                                    setForm(
-                                                        {
-                                                            ...form,
-                                                            tanggal:
-                                                                e
-                                                                    .target
-                                                                    .value,
-                                                        }
-                                                    )
-                                                }
-                                            />
-
-                                            <div
-                                                style={{
-                                                    height:
-                                                        "18px",
-                                                }}
-                                            />
-
-                                            <Input
-                                                label="Nama / Tema Event"
-                                                value={
-                                                    form.event
-                                                }
-                                                onChange={(
-                                                    e
-                                                ) =>
-                                                    setForm(
-                                                        {
-                                                            ...form,
-                                                            event:
-                                                                e
-                                                                    .target
-                                                                    .value,
-                                                        }
-                                                    )
-                                                }
-                                            />
-                                        </>
-                                    )}
-
-                                    <div
-                                        style={{
-                                            marginTop:
-                                                "26px",
-                                            background:
-                                                "#0f172a",
-                                            borderRadius:
-                                                "24px",
-                                            padding:
-                                                "24px",
-                                        }}
-                                    >
-                                        <Row
-                                            title="Harga per porsi"
-                                            value={`Rp ${selectedMenu.price.toLocaleString(
-                                                "id-ID"
-                                            )}`}
-                                        />
-
-                                        <Row
-                                            title="Subtotal makanan"
-                                            value={`Rp ${subtotal.toLocaleString(
-                                                "id-ID"
-                                            )}`}
-                                        />
-
-                                        <Row
-                                            title="Biaya kurir"
-                                            value={`Rp ${ongkir.toLocaleString(
-                                                "id-ID"
-                                            )}`}
-                                        />
-
-                                        <Row
-                                            title="TOTAL"
-                                            value={`Rp ${total.toLocaleString(
-                                                "id-ID"
-                                            )}`}
-                                            big
+                                                    }
+                                                )
+                                            }
                                         />
 
                                         {selectedType ===
-                                            "insidentil" && (
-                                            <Row
-                                                title="DP 50%"
-                                                value={`Rp ${dp.toLocaleString(
-                                                    "id-ID"
-                                                )}`}
-                                            />
+                                        "harian" ? (
+                                            <>
+                                                <Input
+                                                    label="Jumlah Porsi"
+                                                    type="number"
+                                                    value={
+                                                        form.jumlah
+                                                    }
+                                                    onChange={(
+                                                        e
+                                                    ) =>
+                                                        setForm(
+                                                            {
+                                                                ...form,
+                                                                jumlah:
+                                                                    e
+                                                                        .target
+                                                                        .value,
+                                                            }
+                                                        )
+                                                    }
+                                                />
+
+                                                <Input
+                                                    label="Durasi Langganan"
+                                                    type="number"
+                                                    value={
+                                                        form.durasi
+                                                    }
+                                                    onChange={(
+                                                        e
+                                                    ) =>
+                                                        setForm(
+                                                            {
+                                                                ...form,
+                                                                durasi:
+                                                                    e
+                                                                        .target
+                                                                        .value,
+                                                            }
+                                                        )
+                                                    }
+                                                />
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Input
+                                                    label="Tanggal Event"
+                                                    type="date"
+                                                    value={
+                                                        form.tanggal
+                                                    }
+                                                    onChange={(
+                                                        e
+                                                    ) =>
+                                                        setForm(
+                                                            {
+                                                                ...form,
+                                                                tanggal:
+                                                                    e
+                                                                        .target
+                                                                        .value,
+                                                            }
+                                                        )
+                                                    }
+                                                />
+
+                                                <Input
+                                                    label="Jumlah Porsi"
+                                                    type="number"
+                                                    value={
+                                                        form.jumlah
+                                                    }
+                                                    onChange={(
+                                                        e
+                                                    ) =>
+                                                        setForm(
+                                                            {
+                                                                ...form,
+                                                                jumlah:
+                                                                    e
+                                                                        .target
+                                                                        .value,
+                                                            }
+                                                        )
+                                                    }
+                                                />
+
+                                                <Input
+                                                    label="Tema Event"
+                                                    value={
+                                                        form.tema
+                                                    }
+                                                    onChange={(
+                                                        e
+                                                    ) =>
+                                                        setForm(
+                                                            {
+                                                                ...form,
+                                                                tema: e
+                                                                    .target
+                                                                    .value,
+                                                            }
+                                                        )
+                                                    }
+                                                />
+                                            </>
                                         )}
-                                    </div>
 
-                                    <button
-                                        style={{
-                                            width:
-                                                "100%",
-                                            height:
-                                                "58px",
-                                            border:
-                                                "none",
-                                            borderRadius:
-                                                "18px",
-                                            marginTop:
-                                                "26px",
-                                            background:
-                                                "linear-gradient(90deg,#2563eb,#3b82f6)",
-                                            color:
-                                                "#fff",
-                                            fontSize:
-                                                "18px",
-                                            cursor:
-                                                "pointer",
-                                            fontWeight:
-                                                "700",
-                                        }}
-                                    >
-                                        {selectedType ===
-                                        "harian"
-                                            ? "Kirim Pesanan Harian"
-                                            : "Ajukan Pesanan Insidentil"}
-                                    </button>
+                                        <Input
+                                            label="Alamat Pengiriman"
+                                            value={
+                                                form.alamat
+                                            }
+                                            onChange={(
+                                                e
+                                            ) =>
+                                                setForm(
+                                                    {
+                                                        ...form,
+                                                        alamat:
+                                                            e
+                                                                .target
+                                                                .value,
+                                                    }
+                                                )
+                                            }
+                                        />
+
+                                        {/* MAP */}
+                                        {clientLocation && (
+                                            <div
+                                                style={{
+                                                    overflow:
+                                                        "hidden",
+                                                    borderRadius:
+                                                        "24px",
+                                                }}
+                                            >
+                                                <MapContainer
+                                                    center={[
+                                                        selectedMenu.cateringLat,
+                                                        selectedMenu.cateringLng,
+                                                    ]}
+                                                    zoom={
+                                                        12
+                                                    }
+                                                    style={{
+                                                        height:
+                                                            "400px",
+                                                        width:
+                                                            "100%",
+                                                    }}
+                                                >
+                                                    <TileLayer
+                                                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                                    />
+
+                                                    <Marker
+                                                        position={[
+                                                            selectedMenu.cateringLat,
+                                                            selectedMenu.cateringLng,
+                                                        ]}
+                                                    >
+                                                        <Popup>
+                                                            Lokasi
+                                                            Catering
+                                                        </Popup>
+                                                    </Marker>
+
+                                                    <Marker
+                                                        position={[
+                                                            clientLocation.lat,
+                                                            clientLocation.lng,
+                                                        ]}
+                                                    >
+                                                        <Popup>
+                                                            Lokasi
+                                                            Klien
+                                                        </Popup>
+                                                    </Marker>
+
+                                                    {routeCoords.length > 0 && (
+                                                            <Polyline
+                                                                positions={routeCoords}
+                                                                pathOptions={{
+                                                                    color: "#2563eb",
+                                                                    weight: 6,
+                                                                }}
+                                                            />
+                                                        )}
+
+                                                    <MapFly
+                                                        lat={
+                                                            clientLocation.lat
+                                                        }
+                                                        lng={
+                                                            clientLocation.lng
+                                                        }
+                                                    />
+                                                </MapContainer>
+                                            </div>
+                                        )}
+
+                                        {/* INFO */}
+                                        {distanceKm >
+                                            0 && (
+                                            <div
+                                                style={{
+                                                    background:
+                                                        "#0f172a",
+                                                    padding:
+                                                        "24px",
+                                                    borderRadius:
+                                                        "22px",
+                                                    color:
+                                                        "#fff",
+                                                }}
+                                            >
+                                                <div
+                                                    style={{
+                                                        marginBottom:
+                                                            "14px",
+                                                    }}
+                                                >
+                                                    Jarak Rute Jalan :
+                                                    {" "}
+                                                    <span
+                                                        style={{
+                                                            color:
+                                                                "#60a5fa",
+                                                        }}
+                                                    >
+                                                        {distanceKm.toFixed(
+                                                            1
+                                                        )} KM
+                                                    </span>
+                                                </div>
+                                                
+                                                <div
+                                                    style={{
+                                                        marginBottom:
+                                                            "14px",
+                                                    }}
+                                                >
+                                                    Estimasi
+                                                    Tiba :
+                                                    {" "}
+                                                    <span
+                                                        style={{
+                                                            color:
+                                                                "#60a5fa",
+                                                        }}
+                                                    >
+                                                        {
+                                                            durationMinute
+                                                        }{" "}
+                                                        Menit
+                                                    </span>
+                                                </div>
+
+                                                <div
+                                                    style={{
+                                                        marginBottom:
+                                                            "14px",
+                                                    }}
+                                                >
+                                                    Biaya
+                                                    Kurir :
+                                                    {" "}
+                                                    <span
+                                                        style={{
+                                                            color:
+                                                                "#22c55e",
+                                                        }}
+                                                    >
+                                                        Rp{" "}
+                                                        {courierFee.toLocaleString(
+                                                            "id-ID"
+                                                        )}
+                                                    </span>
+                                                </div>
+
+                                                <div
+                                                    style={{
+                                                        fontSize:
+                                                            "28px",
+                                                        color:
+                                                            "#fff",
+                                                    }}
+                                                >
+                                                    TOTAL
+                                                    :
+                                                    {" "}
+                                                    <span
+                                                        style={{
+                                                            color:
+                                                                "#22c55e",
+                                                        }}
+                                                    >
+                                                        Rp{" "}
+                                                        {(
+                                                            selectedType ===
+                                                            "harian"
+                                                                ? totalHarian
+                                                                : totalInsidentil
+                                                        ).toLocaleString(
+                                                            "id-ID"
+                                                        )}
+                                                    </span>
+                                                </div>
+
+                                                {selectedType ===
+                                                    "insidentil" && (
+                                                    <div
+                                                        style={{
+                                                            marginTop:
+                                                                "16px",
+                                                            color:
+                                                                "#fbbf24",
+                                                        }}
+                                                    >
+                                                        DP
+                                                        50%
+                                                        :
+                                                        Rp{" "}
+                                                        {dp.toLocaleString(
+                                                            "id-ID"
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        <button
+                                            style={{
+                                                height:
+                                                    "58px",
+                                                border:
+                                                    "none",
+                                                borderRadius:
+                                                    "18px",
+                                                background:
+                                                    "linear-gradient(90deg,#2563eb,#3b82f6)",
+                                                color:
+                                                    "#fff",
+                                                fontSize:
+                                                    "16px",
+                                                cursor:
+                                                    "pointer",
+                                            }}
+                                        >
+                                            <FaShoppingCart />
+                                            {"  "}
+                                            {selectedType ===
+                                            "harian"
+                                                ? "Kirim Pesanan Harian"
+                                                : "Ajukan Pesanan Insidentil"}
+                                        </button>
+                                    </div>
                                 </div>
-                            </>
-                        )}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -1020,7 +1198,7 @@ export default function PesanMakan() {
                         margin:0;
                         padding:0;
                         box-sizing:border-box;
-                        font-family:Times New Roman;
+                        font-family:'Times New Roman',serif;
                         font-weight:700;
                     }
 
@@ -1032,149 +1210,102 @@ export default function PesanMakan() {
                     .hide-scrollbar::-webkit-scrollbar{
                         display:none;
                     }
-
-                    .leaflet-control-attribution{
-                        display:none;
-                    }
                 `}
             </style>
         </div>
     );
 }
 
-/* ========================================================= */
+/*
+|--------------------------------------------------------------------------
+| INPUT
+|--------------------------------------------------------------------------
+*/
 
 function Input({
     label,
-    icon,
     ...props
 }) {
     return (
         <div>
-            <div
+            <label
                 style={{
-                    color: "#fff",
+                    display: "block",
                     marginBottom: "10px",
-                    fontSize: "17px",
+                    color: "#fff",
+                    fontSize: "16px",
                 }}
             >
                 {label}
-            </div>
+            </label>
 
-            <div
+            <input
+                {...props}
                 style={{
-                    position: "relative",
+                    width: "100%",
+                    height: "58px",
+                    borderRadius: "18px",
+                    border:
+                        "1px solid rgba(255,255,255,0.05)",
+                    background: "#0f172a",
+                    padding: "0 18px",
+                    color: "#fff",
+                    outline: "none",
+                    fontSize: "15px",
                 }}
-            >
-                {icon && (
-                    <div
-                        style={{
-                            position:
-                                "absolute",
-                            left: "16px",
-                            top: "50%",
-                            transform:
-                                "translateY(-50%)",
-                            color:
-                                "#94a3b8",
-                        }}
-                    >
-                        {icon}
-                    </div>
-                )}
-
-                <input
-                    {...props}
-                    style={{
-                        width: "100%",
-                        height: "58px",
-                        borderRadius:
-                            "18px",
-                        border:
-                            "1px solid rgba(255,255,255,0.05)",
-                        background:
-                            "#0f172a",
-                        color: "#fff",
-                        padding: icon
-                            ? "0 18px 0 48px"
-                            : "0 18px",
-                        outline: "none",
-                        fontSize: "15px",
-                    }}
-                />
-            </div>
+            />
         </div>
     );
 }
 
-function Row({
-    title,
-    value,
-    big,
+/*
+|--------------------------------------------------------------------------
+| MAP FLY
+|--------------------------------------------------------------------------
+*/
+
+function MapFly({
+    lat,
+    lng,
 }) {
-    return (
-        <div
-            style={{
-                display: "flex",
-                justifyContent:
-                    "space-between",
-                marginBottom: "16px",
-                color: "#fff",
-                fontSize: big
-                    ? "28px"
-                    : "18px",
-            }}
-        >
-            <span>{title}</span>
-            <span>{value}</span>
-        </div>
-    );
+    const map = useMap();
+
+    useEffect(() => {
+        map.flyTo([lat, lng], 13);
+    }, [lat, lng]);
+
+    return null;
 }
 
-/* ========================================================= */
+/*
+|--------------------------------------------------------------------------
+| STYLE
+|--------------------------------------------------------------------------
+*/
 
-const backButton = {
-    height: "48px",
-    padding: "0 18px",
-    border: "none",
-    borderRadius: "14px",
-    background: "rgba(255,255,255,0.08)",
-    color: "#fff",
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    cursor: "pointer",
-    marginBottom: "24px",
-    fontSize: "15px",
-};
-
-const detailBtn = {
+const primaryButton = {
     flex: 1,
-    height: "48px",
-    border: "none",
-    borderRadius: "14px",
-    background: "rgba(255,255,255,0.08)",
-    color: "#fff",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "10px",
-    fontSize: "15px",
-};
-
-const pesanBtn = {
-    flex: 1,
-    height: "48px",
+    height: "50px",
     border: "none",
     borderRadius: "14px",
     background:
         "linear-gradient(90deg,#2563eb,#3b82f6)",
     color: "#fff",
     cursor: "pointer",
+    fontSize: "15px",
+};
+
+const backStyle = {
+    height: "48px",
+    border: "none",
+    padding: "0 18px",
+    borderRadius: "14px",
+    background:
+        "rgba(255,255,255,0.08)",
+    color: "#fff",
     display: "flex",
     alignItems: "center",
-    justifyContent: "center",
     gap: "10px",
-    fontSize: "15px",
+    cursor: "pointer",
+    marginBottom: "24px",
 };
