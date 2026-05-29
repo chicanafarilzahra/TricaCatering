@@ -192,7 +192,7 @@ Route::post('/kurir/laporan_harian', [LaporanHarianController::class, 'store']);
 */
 
 Route::get(
-    'klien/home',
+    'klien',
     [KlienController::class, 'home']
 );
 
@@ -214,6 +214,11 @@ Route::get(
 Route::get(
     'klien/ulasan',
     [KlienController::class, 'ulasan']
+);
+
+Route::get(
+    'klien/pesan',
+    [KlienController::class, 'PesanMakan']
 );
 
 /*

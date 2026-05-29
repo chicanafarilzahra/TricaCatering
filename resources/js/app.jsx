@@ -368,63 +368,63 @@ function App() {
                 />
 
                 {/* =========================
-                    KLIEN
-                ========================= */}
+                        KLIEN
+                    ========================= */}
 
-                <Route
-                    path="/klien"
-                    element={
-                        <ProtectedRoute role="klien">
-                            <HomeKlien />
-                        </ProtectedRoute>
-                    }
-                />
+                    <Route
+                        path="/klien"
+                        element={
+                            <ProtectedRoute role="klien">
+                                <HomeKlien />
+                            </ProtectedRoute>
+                        }
+                    />
 
-                <Route
-                    path="/klien/pesanan"
-                    element={
-                        <ProtectedRoute role="klien">
-                            <PesananSaya />
-                        </ProtectedRoute>
-                    }
-                />
+                    <Route
+                        path="/klien/pesan"
+                        element={
+                            <ProtectedRoute role="klien">
+                                <PesanMakan />
+                            </ProtectedRoute>
+                        }
+                    />
 
-                <Route
-                    path="/klien/pesan-makan"
-                    element={
-                        <ProtectedRoute role="klien">
-                            <PesanMakan />
-                        </ProtectedRoute>
-                    }
-                />
+                    <Route
+                        path="/klien/pesanan"
+                        element={
+                            <ProtectedRoute role="klien">
+                                <PesananSaya />
+                            </ProtectedRoute>
+                        }
+                    />
 
-                <Route
-                    path="/klien/tracking"
-                    element={
-                        <ProtectedRoute role="klien">
-                            <Tracking />
-                        </ProtectedRoute>
-                    }
-                />
+                    <Route
+                        path="/klien/lacak-pengiriman"
+                        element={
+                            <ProtectedRoute role="klien">
+                                <Tracking />
+                            </ProtectedRoute>
+                        }
+                    />
 
-                <Route
-                    path="/klien/invoice"
-                    element={
-                        <ProtectedRoute role="klien">
-                            <InvoiceKlien />
-                        </ProtectedRoute>
-                    }
-                />
+                    <Route
+                        path="/klien/invoice"
+                        element={
+                            <ProtectedRoute role="klien">
+                                <InvoiceKlien />
+                            </ProtectedRoute>
+                        }
+                    />
 
-                <Route
-                    path="/klien/ulasan"
-                    element={
-                        <ProtectedRoute role="klien">
-                            <UlasanKlien />
-                        </ProtectedRoute>
-                    }
-                />
-
+                    <Route
+                        path="/klien/ulasan"
+                        element={
+                            <ProtectedRoute role="klien">
+                                <UlasanKlien />
+                            </ProtectedRoute>
+                        }
+                    />
+                    
                 {/* =========================
                     404 REDIRECT
                 ========================= */}
