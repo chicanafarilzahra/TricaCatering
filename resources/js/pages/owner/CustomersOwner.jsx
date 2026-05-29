@@ -9,7 +9,7 @@ import OwnerLayout from "../../layouts/OwnerLayout";
 
 function MetricCard({
     title,
-    value = "-",
+    value = 0,
     icon,
     color = "#60a5fa",
 }) {
@@ -213,38 +213,6 @@ export default function CustomersOwner() {
                         dashboard.
                     </p>
                 </div>
-
-                {/* Optional Button */}
-                <button
-                    style={{
-                        height: "44px",
-                        padding:
-                            "0 18px",
-                        border:
-                            "1px solid rgba(59,130,246,0.18)",
-                        borderRadius:
-                            "12px",
-                        background:
-                            "rgba(59,130,246,0.10)",
-                        color:
-                            "#93c5fd",
-                        display: "flex",
-                        alignItems:
-                            "center",
-                        gap: "8px",
-                        fontSize:
-                            "13px",
-                        fontWeight:
-                            "600",
-                        cursor:
-                            "pointer",
-                    }}
-                >
-                    <UserPlus
-                        size={16}
-                    />
-                    Add Customer
-                </button>
             </div>
 
             {/* Metrics */}
@@ -260,7 +228,7 @@ export default function CustomersOwner() {
             >
                 <MetricCard
                     title="Total Customers"
-                    value="-"
+                    value={0}
                     icon={
                         <Users
                             size={22}
@@ -270,7 +238,7 @@ export default function CustomersOwner() {
 
                 <MetricCard
                     title="New This Month"
-                    value="-"
+                    value={0}
                     icon={
                         <UserPlus
                             size={22}
@@ -280,7 +248,7 @@ export default function CustomersOwner() {
 
                 <MetricCard
                     title="Active Accounts"
-                    value="-"
+                    value={0}
                     icon={
                         <Users
                             size={22}

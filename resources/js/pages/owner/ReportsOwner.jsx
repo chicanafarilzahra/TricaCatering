@@ -13,7 +13,7 @@ import OwnerLayout from "../../layouts/OwnerLayout";
 
 function MetricCard({
     title,
-    value = "-",
+    value = 0,
     icon,
     color = "#60a5fa",
 }) {
@@ -27,7 +27,8 @@ function MetricCard({
                 borderRadius: "22px",
                 padding: "22px",
                 display: "flex",
-                justifyContent: "space-between",
+                justifyContent:
+                    "space-between",
                 alignItems: "center",
                 boxShadow:
                     "0 14px 36px rgba(0,0,0,0.30)",
@@ -39,9 +40,12 @@ function MetricCard({
                         fontSize: "12px",
                         color: "#94a3b8",
                         fontWeight: "600",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.7px",
-                        marginBottom: "10px",
+                        textTransform:
+                            "uppercase",
+                        letterSpacing:
+                            "0.7px",
+                        marginBottom:
+                            "10px",
                     }}
                 >
                     {title}
@@ -67,7 +71,8 @@ function MetricCard({
                     border: `1px solid ${color}25`,
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "center",
+                    justifyContent:
+                        "center",
                     color,
                 }}
             >
@@ -101,21 +106,25 @@ function SectionCard({
                     display: "flex",
                     alignItems: "center",
                     gap: "14px",
-                    marginBottom: "24px",
+                    marginBottom:
+                        "24px",
                 }}
             >
                 <div
                     style={{
                         width: "48px",
                         height: "48px",
-                        borderRadius: "16px",
+                        borderRadius:
+                            "16px",
                         background:
                             "rgba(59,130,246,0.10)",
                         border:
                             "1px solid rgba(59,130,246,0.18)",
                         display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        alignItems:
+                            "center",
+                        justifyContent:
+                            "center",
                         color: "#60a5fa",
                     }}
                 >
@@ -126,9 +135,12 @@ function SectionCard({
                     <h3
                         style={{
                             margin: 0,
-                            fontSize: "20px",
-                            fontWeight: "700",
-                            color: "white",
+                            fontSize:
+                                "20px",
+                            fontWeight:
+                                "700",
+                            color:
+                                "white",
                         }}
                     >
                         {title}
@@ -136,9 +148,12 @@ function SectionCard({
 
                     <p
                         style={{
-                            margin: "6px 0 0",
-                            color: "#94a3b8",
-                            fontSize: "14px",
+                            margin:
+                                "6px 0 0",
+                            color:
+                                "#94a3b8",
+                            fontSize:
+                                "14px",
                         }}
                     >
                         {subtitle}
@@ -161,9 +176,12 @@ function EmptyAnalytics({
             style={{
                 minHeight: "260px",
                 display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                alignItems: "center",
+                flexDirection:
+                    "column",
+                justifyContent:
+                    "center",
+                alignItems:
+                    "center",
                 textAlign: "center",
                 padding: "20px",
             }}
@@ -172,16 +190,20 @@ function EmptyAnalytics({
                 style={{
                     width: "82px",
                     height: "82px",
-                    borderRadius: "22px",
+                    borderRadius:
+                        "22px",
                     background:
                         "rgba(59,130,246,0.10)",
                     border:
                         "1px solid rgba(59,130,246,0.15)",
                     display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    alignItems:
+                        "center",
+                    justifyContent:
+                        "center",
                     color: "#60a5fa",
-                    marginBottom: "22px",
+                    marginBottom:
+                        "22px",
                 }}
             >
                 {icon}
@@ -242,9 +264,12 @@ export default function ReportsOwner() {
                         maxWidth: "700px",
                     }}
                 >
-                    Comprehensive overview of sales,
-                    revenue, package performance,
-                    and operational analytics.
+                    Comprehensive
+                    overview of sales,
+                    revenue, package
+                    performance, and
+                    operational
+                    analytics.
                 </p>
             </div>
 
@@ -255,39 +280,46 @@ export default function ReportsOwner() {
                     gridTemplateColumns:
                         "repeat(auto-fit, minmax(240px, 1fr))",
                     gap: "20px",
-                    marginBottom: "28px",
+                    marginBottom:
+                        "28px",
                 }}
             >
                 <MetricCard
                     title="Monthly Revenue"
-                    value="Rp -"
+                    value="Rp 0"
                     icon={
-                        <DollarSign size={22} />
+                        <DollarSign
+                            size={22}
+                        />
                     }
                     color="#22c55e"
                 />
 
                 <MetricCard
                     title="Growth Rate"
-                    value="- %"
+                    value="0 %"
                     icon={
-                        <TrendingUp size={22} />
+                        <TrendingUp
+                            size={22}
+                        />
                     }
                     color="#3b82f6"
                 />
 
                 <MetricCard
                     title="Total Orders"
-                    value="-"
+                    value={0}
                     icon={
-                        <ShoppingCart size={22} />
+                        <ShoppingCart
+                            size={22}
+                        />
                     }
                     color="#f59e0b"
                 />
 
                 <MetricCard
                     title="Reports Generated"
-                    value="-"
+                    value={0}
                     icon={
                         <FileBarChart2
                             size={22}
@@ -311,7 +343,9 @@ export default function ReportsOwner() {
                     title="Sales Report"
                     subtitle="Detailed sales analytics and order trends"
                     icon={
-                        <BarChart3 size={22} />
+                        <BarChart3
+                            size={22}
+                        />
                     }
                 >
                     <EmptyAnalytics
@@ -330,7 +364,9 @@ export default function ReportsOwner() {
                     title="Revenue Analysis"
                     subtitle="Monthly and yearly revenue summary"
                     icon={
-                        <DollarSign size={22} />
+                        <DollarSign
+                            size={22}
+                        />
                     }
                 >
                     <EmptyAnalytics
@@ -349,14 +385,18 @@ export default function ReportsOwner() {
                     title="Best Selling Packages"
                     subtitle="Most ordered catering packages"
                     icon={
-                        <Package size={22} />
+                        <Package
+                            size={22}
+                        />
                     }
                 >
                     <EmptyAnalytics
                         title="No Package Data"
                         subtitle="Popular catering packages and order rankings will appear here after customer purchases."
                         icon={
-                            <Package size={36} />
+                            <Package
+                                size={36}
+                            />
                         }
                     />
                 </SectionCard>

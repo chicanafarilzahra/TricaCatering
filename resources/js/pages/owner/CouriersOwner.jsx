@@ -1,5 +1,8 @@
 // resources/js/pages/owner/CouriersOwner.jsx
 
+import { useEffect, useState } from "react";
+import axios from "axios";
+
 import {
     Truck,
     Users,
@@ -11,7 +14,7 @@ import OwnerLayout from "../../layouts/OwnerLayout";
 
 function MetricCard({
     title,
-    value = "-",
+    value = 0,
     icon,
     color = "#60a5fa",
 }) {
@@ -149,6 +152,29 @@ function EmptyState({
 }
 
 export default function CouriersOwner() {
+
+    const [couriers, setCouriers] =
+        useState([]);
+
+    useEffect(() => {
+        fetchCouriers();
+    }, []);
+
+    const fetchCouriers = async () => {
+        try {
+            const res =
+                await axios.get(
+                    "/api/owner/couriers"
+                );
+
+            setCouriers(
+                res.data || []
+            );
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
     return (
         <OwnerLayout>
             {/* Header */}
@@ -204,7 +230,9 @@ export default function CouriersOwner() {
             >
                 <MetricCard
                     title="Total Couriers"
-                    value="-"
+                    value={
+                        couriers.length
+                    }
                     icon={
                         <Users size={22} />
                     }
@@ -213,7 +241,13 @@ export default function CouriersOwner() {
 
                 <MetricCard
                     title="Active Couriers"
-                    value="-"
+                    value={
+                        couriers.filter(
+                            (c) =>
+                                c.status ===
+                                "active"
+                        ).length
+                    }
                     icon={
                         <Truck size={22} />
                     }
@@ -222,7 +256,20 @@ export default function CouriersOwner() {
 
                 <MetricCard
                     title="On-Time Deliveries"
-                    value="-"
+                    value={
+                        couriers.reduce(
+                            (
+                                total,
+                                c
+                            ) =>
+                                total +
+                                Number(
+                                    c.completed ||
+                                        0
+                                ),
+                            0
+                        )
+                    }
                     icon={
                         <CheckCircle
                             size={22}
@@ -233,7 +280,20 @@ export default function CouriersOwner() {
 
                 <MetricCard
                     title="Pending Deliveries"
-                    value="-"
+                    value={
+                        couriers.reduce(
+                            (
+                                total,
+                                c
+                            ) =>
+                                total +
+                                Number(
+                                    c.active_deliveries ||
+                                        0
+                                ),
+                            0
+                        )
+                    }
                     icon={
                         <Clock size={22} />
                     }
@@ -277,22 +337,6 @@ export default function CouriersOwner() {
                     >
                         Courier Performance
                     </h2>
-
-                    <p
-                        style={{
-                            margin:
-                                "6px 0 0",
-                            color:
-                                "#94a3b8",
-                            fontSize:
-                                "14px",
-                        }}
-                    >
-                        Overview of all
-                        couriers and
-                        their delivery
-                        performance.
-                    </p>
                 </div>
 
                 <table
@@ -350,82 +394,104 @@ export default function CouriersOwner() {
                     </thead>
 
                     <tbody>
-                        {/* Backend Data Here */}
+                        {couriers.map(
+                            (
+                                courier
+                            ) => (
+                                <tr
+                                    key={
+                                        courier.id
+                                    }
+                                >
+                                    <td
+                                        style={{
+                                            padding:
+                                                "16px",
+                                            color:
+                                                "white",
+                                        }}
+                                    >
+                                        {
+                                            courier.name
+                                        }
+                                    </td>
+
+                                    <td
+                                        style={{
+                                            padding:
+                                                "16px",
+                                            color:
+                                                "#cbd5e1",
+                                        }}
+                                    >
+                                        {
+                                            courier.phone
+                                        }
+                                    </td>
+
+                                    <td
+                                        style={{
+                                            padding:
+                                                "16px",
+                                            color:
+                                                "#cbd5e1",
+                                        }}
+                                    >
+                                        {
+                                            courier.active_deliveries
+                                        }
+                                    </td>
+
+                                    <td
+                                        style={{
+                                            padding:
+                                                "16px",
+                                            color:
+                                                "#cbd5e1",
+                                        }}
+                                    >
+                                        {
+                                            courier.completed
+                                        }
+                                    </td>
+
+                                    <td
+                                        style={{
+                                            padding:
+                                                "16px",
+                                            color:
+                                                courier.status ===
+                                                "active"
+                                                    ? "#22c55e"
+                                                    : "#f59e0b",
+                                            fontWeight:
+                                                "700",
+                                        }}
+                                    >
+                                        {
+                                            courier.status
+                                        }
+                                    </td>
+                                </tr>
+                            )
+                        )}
                     </tbody>
                 </table>
 
-                <EmptyState
-                    title="No Couriers Found"
-                    subtitle="Courier performance data will appear here once operational data has been recorded."
-                    icon={
-                        <Truck
-                            size={38}
-                        />
-                    }
-                />
-            </div>
-
-            {/* Insights */}
-            <div
-                style={{
-                    background:
-                        "linear-gradient(145deg, rgba(15,23,42,0.95), rgba(30,41,59,0.95))",
-                    border:
-                        "1px solid rgba(148,163,184,0.08)",
-                    borderRadius:
-                        "24px",
-                    padding: "28px",
-                    boxShadow:
-                        "0 16px 40px rgba(0,0,0,0.30)",
-                }}
-            >
-                <div
-                    style={{
-                        marginBottom:
-                            "22px",
-                    }}
-                >
-                    <h2
-                        style={{
-                            margin: 0,
-                            fontSize:
-                                "22px",
-                            fontWeight:
-                                "700",
-                            color:
-                                "white",
-                        }}
-                    >
-                        Performance Insights
-                    </h2>
-
-                    <p
-                        style={{
-                            margin:
-                                "6px 0 0",
-                            color:
-                                "#94a3b8",
-                            fontSize:
-                                "14px",
-                        }}
-                    >
-                        Delivery
-                        efficiency,
-                        punctuality,
-                        and courier
-                        analytics.
-                    </p>
-                </div>
-
-                <EmptyState
-                    title="No Insights Available"
-                    subtitle="Courier analytics and performance insights will appear here."
-                    icon={
-                        <CheckCircle
-                            size={38}
-                        />
-                    }
-                />
+                {couriers.length ===
+                    0 && (
+                    <EmptyState
+                        title="No Couriers Found"
+                        subtitle="Courier performance data will appear here once operational data has been recorded."
+                        icon={
+                            <Truck
+                                size={
+                                    38
+                                }
+                            />
+                        }
+                    />
+                )}
             </div>
         </OwnerLayout>
     );

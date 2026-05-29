@@ -18,6 +18,7 @@ import {
 import {
     NavLink,
     useLocation,
+    useNavigate,
 } from "react-router-dom";
 
 import {
@@ -28,6 +29,8 @@ import {
 export default function SidebarOwner() {
     const location = useLocation();
 
+    const navigate = useNavigate();
+
     const user = JSON.parse(
         localStorage.getItem("user") || "{}"
     );
@@ -35,7 +38,7 @@ export default function SidebarOwner() {
     const sidebarRef = useRef(null);
 
     /* =========================
-       RESTORE SCROLL
+       RESTORE SCROLL POSITION
     ========================= */
     useEffect(() => {
         const savedScroll =
@@ -48,14 +51,26 @@ export default function SidebarOwner() {
             savedScroll
         ) {
             sidebarRef.current.scrollTop =
-                parseInt(savedScroll);
+                parseInt(savedScroll, 10);
         }
     }, []);
 
     /* =========================
-       SAVE SCROLL
+       SAVE SCROLL POSITION
     ========================= */
     const handleScroll = () => {
+        if (sidebarRef.current) {
+            sessionStorage.setItem(
+                "sidebar-owner-scroll",
+                sidebarRef.current.scrollTop
+            );
+        }
+    };
+
+    /* =========================
+       HANDLE MENU CLICK
+    ========================= */
+    const handleMenuClick = () => {
         if (sidebarRef.current) {
             sessionStorage.setItem(
                 "sidebar-owner-scroll",
@@ -69,9 +84,14 @@ export default function SidebarOwner() {
     ========================= */
     const handleLogout = () => {
         localStorage.removeItem("token");
+
         localStorage.removeItem("user");
 
-        window.location.href = "/#/login";
+        sessionStorage.removeItem(
+            "sidebar-owner-scroll"
+        );
+
+        navigate("/login");
     };
 
     /* =========================
@@ -202,6 +222,7 @@ export default function SidebarOwner() {
                 left: 0,
                 zIndex: 999,
                 overflowY: "auto",
+                overflowX: "hidden",
                 boxSizing: "border-box",
                 padding: "24px 18px",
 
@@ -211,7 +232,7 @@ export default function SidebarOwner() {
                     "space-between",
 
                 background:
-                    "linear-gradient(180deg, #020617 0%, #0f172a 55%, #111827 100%)",
+                    "linear-gradient(180deg,#020617 0%,#0f172a 55%,#111827 100%)",
 
                 borderRight:
                     "1px solid rgba(148,163,184,0.08)",
@@ -309,6 +330,9 @@ export default function SidebarOwner() {
                         padding: "18px",
 
                         marginBottom: "30px",
+
+                        backdropFilter:
+                            "blur(12px)",
                     }}
                 >
                     <div
@@ -455,6 +479,9 @@ export default function SidebarOwner() {
                                                 to={
                                                     item.path
                                                 }
+                                                onClick={
+                                                    handleMenuClick
+                                                }
                                                 style={{
                                                     textDecoration:
                                                         "none",
@@ -496,6 +523,11 @@ export default function SidebarOwner() {
 
                                                         fontSize:
                                                             "14px",
+
+                                                        border:
+                                                            active
+                                                                ? "1px solid rgba(255,255,255,0.08)"
+                                                                : "1px solid transparent",
 
                                                         boxShadow:
                                                             active
@@ -541,18 +573,44 @@ export default function SidebarOwner() {
             {/* LOGOUT */}
             <button
                 onClick={handleLogout}
+                onMouseEnter={(e) => {
+                    e.currentTarget.style.transform =
+                        "translateY(-2px)";
+
+                    e.currentTarget.style.boxShadow =
+                        "0 14px 30px rgba(239,68,68,0.28)";
+
+                    e.currentTarget.style.background =
+                        "linear-gradient(135deg,#ef4444,#dc2626)";
+
+                    e.currentTarget.style.color =
+                        "#fff";
+                }}
+                onMouseLeave={(e) => {
+                    e.currentTarget.style.transform =
+                        "translateY(0px)";
+
+                    e.currentTarget.style.boxShadow =
+                        "none";
+
+                    e.currentTarget.style.background =
+                        "rgba(239,68,68,0.10)";
+
+                    e.currentTarget.style.color =
+                        "#fca5a5";
+                }}
                 style={{
-                    height: "54px",
+                    height: "56px",
 
                     border:
-                        "1px solid rgba(148,163,184,0.08)",
+                        "1px solid rgba(239,68,68,0.20)",
 
                     borderRadius: "18px",
 
                     background:
-                        "rgba(15,23,42,0.85)",
+                        "rgba(239,68,68,0.10)",
 
-                    color: "#e2e8f0",
+                    color: "#fca5a5",
 
                     display: "flex",
 
@@ -561,7 +619,7 @@ export default function SidebarOwner() {
                     justifyContent:
                         "center",
 
-                    gap: "10px",
+                    gap: "12px",
 
                     cursor: "pointer",
 
@@ -569,14 +627,39 @@ export default function SidebarOwner() {
 
                     fontWeight: "700",
 
-                    boxShadow:
-                        "0 10px 30px rgba(0,0,0,0.25)",
+                    backdropFilter:
+                        "blur(12px)",
 
                     transition:
                         "all 0.25s ease",
+
+                    marginTop: "20px",
+
+                    width: "100%",
+
+                    letterSpacing: "0.3px",
                 }}
             >
-                <LogOut size={18} />
+                <div
+                    style={{
+                        width: "34px",
+                        height: "34px",
+                        borderRadius: "12px",
+
+                        background:
+                            "rgba(255,255,255,0.10)",
+
+                        display: "flex",
+
+                        alignItems: "center",
+
+                        justifyContent:
+                            "center",
+                    }}
+                >
+                    <LogOut size={20} />
+                </div>
+
                 Logout
             </button>
         </aside>

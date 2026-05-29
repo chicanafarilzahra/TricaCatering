@@ -9,7 +9,7 @@ import OwnerLayout from "../../layouts/OwnerLayout";
 
 function MetricCard({
     title,
-    value = "-",
+    value = "0",
     icon,
     color = "#60a5fa",
 }) {
@@ -123,26 +123,8 @@ function EmptyState() {
                     color: "white",
                 }}
             >
-                No Orders Yet
+                No Orders
             </h3>
-
-            <p
-                style={{
-                    margin:
-                        "12px 0 0",
-                    maxWidth: "520px",
-                    color: "#94a3b8",
-                    fontSize: "15px",
-                    lineHeight: "1.8",
-                }}
-            >
-                Customer orders will
-                appear here
-                automatically after
-                transactions are
-                created in the
-                system.
-            </p>
         </div>
     );
 }
@@ -166,26 +148,6 @@ export default function OrdersOwner() {
                 >
                     Orders
                 </h1>
-
-                <p
-                    style={{
-                        margin:
-                            "10px 0 0",
-                        color:
-                            "#94a3b8",
-                        fontSize:
-                            "14px",
-                        lineHeight:
-                            "1.8",
-                        maxWidth:
-                            "650px",
-                    }}
-                >
-                    Monitor all customer
-                    orders and track
-                    order status across
-                    the business.
-                </p>
             </div>
 
             {/* Metrics */}
@@ -201,7 +163,7 @@ export default function OrdersOwner() {
             >
                 <MetricCard
                     title="Total Orders"
-                    value="-"
+                    value="0"
                     icon={
                         <ShoppingCart
                             size={22}
@@ -211,7 +173,7 @@ export default function OrdersOwner() {
 
                 <MetricCard
                     title="Pending Orders"
-                    value="-"
+                    value="0"
                     icon={
                         <Clock
                             size={22}
@@ -222,7 +184,7 @@ export default function OrdersOwner() {
 
                 <MetricCard
                     title="Completed"
-                    value="-"
+                    value="0"
                     icon={
                         <CheckCircle2
                             size={22}
@@ -233,7 +195,7 @@ export default function OrdersOwner() {
 
                 <MetricCard
                     title="Cancelled"
-                    value="-"
+                    value="0"
                     icon={
                         <XCircle
                             size={22}
@@ -276,22 +238,6 @@ export default function OrdersOwner() {
                     >
                         Order Management
                     </h2>
-
-                    <p
-                        style={{
-                            margin:
-                                "6px 0 0",
-                            color:
-                                "#94a3b8",
-                            fontSize:
-                                "14px",
-                        }}
-                    >
-                        Customer order
-                        history and
-                        transaction
-                        records.
-                    </p>
                 </div>
 
                 <EmptyState />

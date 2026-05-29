@@ -1,5 +1,8 @@
 // resources/js/pages/Owner/ProductionsOwner.jsx
 
+import { useEffect, useState } from "react";
+import axios from "axios";
+
 import {
     Factory,
     ClipboardList,
@@ -11,7 +14,7 @@ import OwnerLayout from "../../layouts/OwnerLayout";
 
 function MetricCard({
     title,
-    value = "-",
+    value = 0,
     icon,
     color = "#60a5fa",
 }) {
@@ -149,6 +152,27 @@ function EmptyState() {
 }
 
 export default function ProductionsOwner() {
+
+    const [productions, setProductions] =
+        useState([]);
+
+    useEffect(() => {
+        fetchProductions();
+    }, []);
+
+    const fetchProductions = async () => {
+        try {
+            const res =
+                await axios.get(
+                    "/api/owner/productions"
+                );
+
+            setProductions(res.data);
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
     return (
         <OwnerLayout>
             {/* Header */}
@@ -202,7 +226,9 @@ export default function ProductionsOwner() {
             >
                 <MetricCard
                     title="Total Productions"
-                    value="-"
+                    value={
+                        productions.length
+                    }
                     icon={
                         <Factory
                             size={22}
@@ -212,7 +238,15 @@ export default function ProductionsOwner() {
 
                 <MetricCard
                     title="Scheduled"
-                    value="-"
+                    value={
+                        productions.filter(
+                            (
+                                item
+                            ) =>
+                                item.status ===
+                                "scheduled"
+                        ).length
+                    }
                     icon={
                         <ClipboardList
                             size={22}
@@ -223,7 +257,15 @@ export default function ProductionsOwner() {
 
                 <MetricCard
                     title="Completed"
-                    value="-"
+                    value={
+                        productions.filter(
+                            (
+                                item
+                            ) =>
+                                item.status ===
+                                "completed"
+                        ).length
+                    }
                     icon={
                         <CheckCircle2
                             size={22}
@@ -234,7 +276,15 @@ export default function ProductionsOwner() {
 
                 <MetricCard
                     title="In Progress"
-                    value="-"
+                    value={
+                        productions.filter(
+                            (
+                                item
+                            ) =>
+                                item.status ===
+                                "progress"
+                        ).length
+                    }
                     icon={
                         <Clock
                             size={22}
@@ -295,7 +345,27 @@ export default function ProductionsOwner() {
                     </p>
                 </div>
 
-                <EmptyState />
+                {productions.length ===
+                0 ? (
+                    <EmptyState />
+                ) : (
+                    <div
+                        style={{
+                            color: "white",
+                            fontSize:
+                                "16px",
+                            fontWeight:
+                                "600",
+                        }}
+                    >
+                        Total production
+                        data:
+                        {" "}
+                        {
+                            productions.length
+                        }
+                    </div>
+                )}
             </div>
         </OwnerLayout>
     );

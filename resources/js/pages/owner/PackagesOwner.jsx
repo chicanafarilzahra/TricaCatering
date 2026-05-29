@@ -1,5 +1,8 @@
 // resources/js/pages/Owner/PackagesOwner.jsx
 
+import { useEffect, useState } from "react";
+import axios from "axios";
+
 import {
     Package,
     Layers3,
@@ -11,7 +14,7 @@ import OwnerLayout from "../../layouts/OwnerLayout";
 
 function MetricCard({
     title,
-    value = "-",
+    value = 0,
     icon,
     color = "#60a5fa",
 }) {
@@ -149,6 +152,27 @@ function EmptyState() {
 }
 
 export default function PackagesOwner() {
+
+    const [packages, setPackages] =
+        useState([]);
+
+    useEffect(() => {
+        fetchPackages();
+    }, []);
+
+    const fetchPackages = async () => {
+        try {
+            const res =
+                await axios.get(
+                    "/api/owner/packages"
+                );
+
+            setPackages(res.data);
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
     return (
         <OwnerLayout>
             {/* Header */}
@@ -202,7 +226,7 @@ export default function PackagesOwner() {
             >
                 <MetricCard
                     title="Total Packages"
-                    value="-"
+                    value={packages.length}
                     icon={
                         <Package
                             size={22}
@@ -212,7 +236,18 @@ export default function PackagesOwner() {
 
                 <MetricCard
                     title="Package Categories"
-                    value="-"
+                    value={
+                        [
+                            ...new Set(
+                                packages.map(
+                                    (
+                                        item
+                                    ) =>
+                                        item.category
+                                )
+                            ),
+                        ].length
+                    }
                     icon={
                         <Layers3
                             size={22}
@@ -223,7 +258,15 @@ export default function PackagesOwner() {
 
                 <MetricCard
                     title="Active Packages"
-                    value="-"
+                    value={
+                        packages.filter(
+                            (
+                                item
+                            ) =>
+                                item.status ===
+                                "active"
+                        ).length
+                    }
                     icon={
                         <CheckCircle2
                             size={22}
@@ -234,7 +277,15 @@ export default function PackagesOwner() {
 
                 <MetricCard
                     title="Archived"
-                    value="-"
+                    value={
+                        packages.filter(
+                            (
+                                item
+                            ) =>
+                                item.status ===
+                                "archived"
+                        ).length
+                    }
                     icon={
                         <Archive
                             size={22}
@@ -294,7 +345,19 @@ export default function PackagesOwner() {
                     </p>
                 </div>
 
-                <EmptyState />
+                {packages.length === 0 ? (
+                    <EmptyState />
+                ) : (
+                    <div
+                        style={{
+                            color: "white",
+                        }}
+                    >
+                        Total package:
+                        {" "}
+                        {packages.length}
+                    </div>
+                )}
             </div>
         </OwnerLayout>
     );

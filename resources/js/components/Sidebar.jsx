@@ -1,3 +1,5 @@
+// resources/js/components/Sidebar.jsx
+
 import {
     LayoutDashboard,
     ShoppingCart,
@@ -18,43 +20,14 @@ import {
     useNavigate,
 } from "react-router-dom";
 
-import { useEffect, useRef } from "react";
-
 export default function Sidebar() {
     const location = useLocation();
 
     const navigate = useNavigate();
 
-    const sidebarRef = useRef(null);
-
     const user = JSON.parse(
         localStorage.getItem("user")
     );
-
-    /* SAVE SCROLL POSITION */
-    useEffect(() => {
-        const savedScroll =
-            sessionStorage.getItem(
-                "sidebar-scroll"
-            );
-
-        if (
-            sidebarRef.current &&
-            savedScroll
-        ) {
-            sidebarRef.current.scrollTop =
-                parseInt(savedScroll);
-        }
-    }, []);
-
-    const handleScroll = () => {
-        if (sidebarRef.current) {
-            sessionStorage.setItem(
-                "sidebar-scroll",
-                sidebarRef.current.scrollTop
-            );
-        }
-    };
 
     const menus = [
         {
@@ -158,8 +131,6 @@ export default function Sidebar() {
 
     return (
         <div
-            ref={sidebarRef}
-            onScroll={handleScroll}
             style={{
                 width: "270px",
                 height: "100vh",
@@ -447,18 +418,43 @@ export default function Sidebar() {
                         "user"
                     );
 
-                    navigate(
-                        "/login"
-                    );
+                    navigate("/login");
+                }}
+                onMouseEnter={(e) => {
+                    e.currentTarget.style.transform =
+                        "translateY(-2px)";
+
+                    e.currentTarget.style.boxShadow =
+                        "0 14px 30px rgba(239,68,68,0.28)";
+
+                    e.currentTarget.style.background =
+                        "linear-gradient(135deg,#ef4444,#dc2626)";
+
+                    e.currentTarget.style.color =
+                        "#ffffff";
+                }}
+                onMouseLeave={(e) => {
+                    e.currentTarget.style.transform =
+                        "translateY(0px)";
+
+                    e.currentTarget.style.boxShadow =
+                        "none";
+
+                    e.currentTarget.style.background =
+                        "rgba(239,68,68,0.10)";
+
+                    e.currentTarget.style.color =
+                        "#fca5a5";
                 }}
                 style={{
-                    height: "54px",
+                    height: "58px",
+                    width: "100%",
                     border:
-                        "1px solid rgba(255,255,255,0.06)",
+                        "1px solid rgba(239,68,68,0.20)",
                     background:
-                        "rgba(255,255,255,0.04)",
-                    borderRadius: "16px",
-                    color: "#e2e8f0",
+                        "rgba(239,68,68,0.10)",
+                    borderRadius: "18px",
+                    color: "#fca5a5",
                     display: "flex",
                     alignItems: "center",
                     justifyContent:
@@ -466,14 +462,34 @@ export default function Sidebar() {
                     gap: "12px",
                     cursor: "pointer",
                     fontSize: "14px",
-                    fontWeight: "600",
+                    fontWeight: "700",
                     backdropFilter:
-                        "blur(10px)",
-                    transition: "0.2s",
+                        "blur(12px)",
+                    transition:
+                        "all 0.25s ease",
                     marginTop: "20px",
+                    letterSpacing:
+                        "0.3px",
                 }}
             >
-                <LogOut size={18} />
+                <div
+                    style={{
+                        width: "36px",
+                        height: "36px",
+                        borderRadius:
+                            "12px",
+                        background:
+                            "rgba(255,255,255,0.10)",
+                        display: "flex",
+                        alignItems:
+                            "center",
+                        justifyContent:
+                            "center",
+                    }}
+                >
+                    <LogOut size={18} />
+                </div>
+
                 Logout
             </button>
         </div>

@@ -1,5 +1,8 @@
 // resources/js/pages/owner/DeliveriesOwner.jsx
 
+import { useEffect, useState } from "react";
+import axios from "axios";
+
 import {
     Truck,
     Clock,
@@ -11,7 +14,7 @@ import OwnerLayout from "../../layouts/OwnerLayout";
 
 function MetricCard({
     title,
-    value = "-",
+    value = 0,
     icon,
     color = "#60a5fa",
 }) {
@@ -143,8 +146,32 @@ function EmptyState({
 }
 
 export default function DeliveriesOwner() {
+
+    const [deliveries, setDeliveries] =
+        useState([]);
+
+    useEffect(() => {
+        fetchDeliveries();
+    }, []);
+
+    const fetchDeliveries = async () => {
+        try {
+            const res =
+                await axios.get(
+                    "/api/owner/deliveries"
+                );
+
+            setDeliveries(
+                res.data || []
+            );
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
     return (
         <OwnerLayout>
+
             {/* Header */}
             <div
                 style={{
@@ -195,7 +222,9 @@ export default function DeliveriesOwner() {
             >
                 <MetricCard
                     title="Total Deliveries"
-                    value="-"
+                    value={
+                        deliveries.length
+                    }
                     icon={
                         <Truck
                             size={22}
@@ -206,7 +235,15 @@ export default function DeliveriesOwner() {
 
                 <MetricCard
                     title="In Progress"
-                    value="-"
+                    value={
+                        deliveries.filter(
+                            (
+                                item
+                            ) =>
+                                item.status ===
+                                "progress"
+                        ).length
+                    }
                     icon={
                         <Clock
                             size={22}
@@ -217,7 +254,15 @@ export default function DeliveriesOwner() {
 
                 <MetricCard
                     title="Completed"
-                    value="-"
+                    value={
+                        deliveries.filter(
+                            (
+                                item
+                            ) =>
+                                item.status ===
+                                "completed"
+                        ).length
+                    }
                     icon={
                         <CheckCircle
                             size={22}
@@ -228,7 +273,18 @@ export default function DeliveriesOwner() {
 
                 <MetricCard
                     title="Destinations"
-                    value="-"
+                    value={
+                        [
+                            ...new Set(
+                                deliveries.map(
+                                    (
+                                        item
+                                    ) =>
+                                        item.destination
+                                )
+                            ),
+                        ].length
+                    }
                     icon={
                         <MapPin
                             size={22}
@@ -252,6 +308,7 @@ export default function DeliveriesOwner() {
                         "0 16px 40px rgba(0,0,0,0.30)",
                     marginBottom:
                         "24px",
+                    overflowX: "auto",
                 }}
             >
                 <div
@@ -288,15 +345,143 @@ export default function DeliveriesOwner() {
                     </p>
                 </div>
 
-                <EmptyState
-                    title="No Deliveries Found"
-                    subtitle="Delivery tracking data and shipment information will appear here."
-                    icon={
-                        <Truck
-                            size={38}
-                        />
-                    }
-                />
+                {deliveries.length >
+                0 ? (
+                    <table
+                        style={{
+                            width: "100%",
+                            borderCollapse:
+                                "collapse",
+                            minWidth:
+                                "900px",
+                        }}
+                    >
+                        <thead>
+                            <tr
+                                style={{
+                                    background:
+                                        "rgba(255,255,255,0.04)",
+                                }}
+                            >
+                                {[
+                                    "Customer",
+                                    "Courier",
+                                    "Destination",
+                                    "Status",
+                                ].map(
+                                    (
+                                        item
+                                    ) => (
+                                        <th
+                                            key={
+                                                item
+                                            }
+                                            style={{
+                                                padding:
+                                                    "16px",
+                                                textAlign:
+                                                    "left",
+                                                color:
+                                                    "#cbd5e1",
+                                                fontSize:
+                                                    "13px",
+                                                fontWeight:
+                                                    "600",
+                                            }}
+                                        >
+                                            {
+                                                item
+                                            }
+                                        </th>
+                                    )
+                                )}
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {deliveries.map(
+                                (
+                                    item
+                                ) => (
+                                    <tr
+                                        key={
+                                            item.id
+                                        }
+                                    >
+                                        <td
+                                            style={{
+                                                padding:
+                                                    "16px",
+                                                color:
+                                                    "white",
+                                            }}
+                                        >
+                                            {
+                                                item.customer_name
+                                            }
+                                        </td>
+
+                                        <td
+                                            style={{
+                                                padding:
+                                                    "16px",
+                                                color:
+                                                    "#cbd5e1",
+                                            }}
+                                        >
+                                            {
+                                                item.courier_name
+                                            }
+                                        </td>
+
+                                        <td
+                                            style={{
+                                                padding:
+                                                    "16px",
+                                                color:
+                                                    "#cbd5e1",
+                                            }}
+                                        >
+                                            {
+                                                item.destination
+                                            }
+                                        </td>
+
+                                        <td
+                                            style={{
+                                                padding:
+                                                    "16px",
+                                                color:
+                                                    item.status ===
+                                                    "completed"
+                                                        ? "#22c55e"
+                                                        : "#f59e0b",
+                                                fontWeight:
+                                                    "700",
+                                            }}
+                                        >
+                                            {
+                                                item.status
+                                            }
+                                        </td>
+                                    </tr>
+                                )
+                            )}
+                        </tbody>
+                    </table>
+                ) : (
+                    <EmptyState
+                        title="No Deliveries Found"
+                        subtitle="Delivery tracking data and shipment information will appear here."
+                        icon={
+                            <Truck
+                                size={
+                                    38
+                                }
+                            />
+                        }
+                    />
+                )}
             </div>
 
             {/* Courier Performance */}
@@ -348,15 +533,16 @@ export default function DeliveriesOwner() {
                     </p>
                 </div>
 
-                <EmptyState
-                    title="No Performance Data"
-                    subtitle="Courier performance analytics and reports will appear here."
-                    icon={
-                        <CheckCircle
-                            size={38}
-                        />
-                    }
-                />
+                <div
+                    style={{
+                        color: "#94a3b8",
+                        fontSize: "14px",
+                    }}
+                >
+                    Total delivery data:
+                    {" "}
+                    {deliveries.length}
+                </div>
             </div>
         </OwnerLayout>
     );

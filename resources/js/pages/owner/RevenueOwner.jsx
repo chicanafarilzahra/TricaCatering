@@ -11,7 +11,7 @@ import OwnerLayout from "../../layouts/OwnerLayout";
 
 function MetricCard({
     title,
-    value = "-",
+    value = 0,
     icon,
     color = "#60a5fa",
 }) {
@@ -42,7 +42,8 @@ function MetricCard({
                             "uppercase",
                         letterSpacing:
                             "0.7px",
-                        marginBottom: "10px",
+                        marginBottom:
+                            "10px",
                     }}
                 >
                     {title}
@@ -148,10 +149,12 @@ function EmptyState({
             style={{
                 minHeight: "280px",
                 display: "flex",
-                flexDirection: "column",
+                flexDirection:
+                    "column",
                 justifyContent:
                     "center",
-                alignItems: "center",
+                alignItems:
+                    "center",
                 textAlign: "center",
                 padding: "20px",
             }}
@@ -160,7 +163,8 @@ function EmptyState({
                 style={{
                     width: "86px",
                     height: "86px",
-                    borderRadius: "24px",
+                    borderRadius:
+                        "24px",
                     background:
                         "rgba(59,130,246,0.10)",
                     border:
@@ -171,7 +175,8 @@ function EmptyState({
                     justifyContent:
                         "center",
                     color: "#60a5fa",
-                    marginBottom: "24px",
+                    marginBottom:
+                        "24px",
                 }}
             >
                 {icon}
@@ -259,7 +264,7 @@ export default function RevenueOwner() {
             >
                 <MetricCard
                     title="Today's Revenue"
-                    value="Rp -"
+                    value="Rp 0"
                     icon={
                         <DollarSign
                             size={24}
@@ -270,7 +275,7 @@ export default function RevenueOwner() {
 
                 <MetricCard
                     title="This Month"
-                    value="Rp -"
+                    value="Rp 0"
                     icon={
                         <Calendar
                             size={24}
@@ -281,7 +286,7 @@ export default function RevenueOwner() {
 
                 <MetricCard
                     title="Growth"
-                    value="- %"
+                    value="0 %"
                     icon={
                         <TrendingUp
                             size={24}
@@ -292,7 +297,7 @@ export default function RevenueOwner() {
 
                 <MetricCard
                     title="Net Profit"
-                    value="Rp -"
+                    value="Rp 0"
                     icon={
                         <Wallet
                             size={24}

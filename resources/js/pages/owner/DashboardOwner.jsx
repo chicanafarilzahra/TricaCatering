@@ -17,10 +17,9 @@ import OwnerLayout from "../../layouts/OwnerLayout";
 ========================================= */
 function StatCard({
     title,
-    value = "-",
+    value = 0,
     icon,
     color,
-    subtitle,
 }) {
     return (
         <div
@@ -85,8 +84,8 @@ function StatCard({
 
                     <div
                         style={{
-                            marginTop: "10px",
-                            fontSize: "28px",
+                            marginTop: "12px",
+                            fontSize: "30px",
                             fontWeight: "800",
                             color: "white",
                             lineHeight: 1,
@@ -94,23 +93,6 @@ function StatCard({
                     >
                         {value}
                     </div>
-
-                    {subtitle && (
-                        <div
-                            style={{
-                                marginTop:
-                                    "8px",
-                                fontSize:
-                                    "12px",
-                                color:
-                                    "#64748b",
-                                lineHeight:
-                                    "1.5",
-                            }}
-                        >
-                            {subtitle}
-                        </div>
-                    )}
                 </div>
 
                 {/* Icon */}
@@ -144,7 +126,6 @@ function StatCard({
 ========================================= */
 function AnalyticsCard({
     title,
-    subtitle,
     icon,
     children,
 }) {
@@ -173,34 +154,17 @@ function AnalyticsCard({
                     marginBottom: "24px",
                 }}
             >
-                <div>
-                    <h3
-                        style={{
-                            margin: 0,
-                            fontSize: "20px",
-                            fontWeight:
-                                "700",
-                            color: "white",
-                        }}
-                    >
-                        {title}
-                    </h3>
-
-                    <p
-                        style={{
-                            margin:
-                                "6px 0 0",
-                            fontSize:
-                                "13px",
-                            color:
-                                "#94a3b8",
-                            lineHeight:
-                                "1.6",
-                        }}
-                    >
-                        {subtitle}
-                    </p>
-                </div>
+                <h3
+                    style={{
+                        margin: 0,
+                        fontSize: "20px",
+                        fontWeight:
+                            "700",
+                        color: "white",
+                    }}
+                >
+                    {title}
+                </h3>
 
                 <div
                     style={{
@@ -226,76 +190,6 @@ function AnalyticsCard({
             </div>
 
             {children}
-        </div>
-    );
-}
-
-/* =========================================
-   EMPTY STATE
-========================================= */
-function EmptyState({
-    title,
-    description,
-}) {
-    return (
-        <div
-            style={{
-                minHeight: "220px",
-                display: "flex",
-                flexDirection:
-                    "column",
-                justifyContent:
-                    "center",
-                alignItems:
-                    "center",
-                textAlign: "center",
-                padding: "10px",
-            }}
-        >
-            <div
-                style={{
-                    width: "72px",
-                    height: "72px",
-                    borderRadius: "22px",
-                    background:
-                        "rgba(59,130,246,0.08)",
-                    border:
-                        "1px solid rgba(59,130,246,0.12)",
-                    display: "flex",
-                    alignItems:
-                        "center",
-                    justifyContent:
-                        "center",
-                    color: "#60a5fa",
-                    marginBottom: "20px",
-                }}
-            >
-                <BarChart3 size={30} />
-            </div>
-
-            <h4
-                style={{
-                    margin: 0,
-                    fontSize: "24px",
-                    fontWeight: "700",
-                    color: "white",
-                }}
-            >
-                {title}
-            </h4>
-
-            <p
-                style={{
-                    margin:
-                        "10px 0 0",
-                    fontSize: "14px",
-                    color: "#94a3b8",
-                    maxWidth: "420px",
-                    lineHeight: 1.7,
-                }}
-            >
-                {description}
-            </p>
         </div>
     );
 }
@@ -339,26 +233,6 @@ export default function DashboardOwner() {
                         >
                             Business Overview
                         </h1>
-
-                        <p
-                            style={{
-                                margin:
-                                    "10px 0 0",
-                                fontSize:
-                                    "15px",
-                                color:
-                                    "#94a3b8",
-                                maxWidth:
-                                    "680px",
-                                lineHeight:
-                                    "1.7",
-                            }}
-                        >
-                            Monitor sales, customers,
-                            operations, and revenue
-                            performance in one
-                            executive dashboard.
-                        </p>
                     </div>
 
                     <div
@@ -403,8 +277,7 @@ export default function DashboardOwner() {
             >
                 <StatCard
                     title="Total Orders"
-                    value="-"
-                    subtitle="All customer orders"
+                    value={0}
                     icon={
                         <ShoppingCart
                             size={22}
@@ -415,8 +288,7 @@ export default function DashboardOwner() {
 
                 <StatCard
                     title="Customers"
-                    value="-"
-                    subtitle="Registered clients"
+                    value={0}
                     icon={
                         <Users size={22} />
                     }
@@ -425,8 +297,7 @@ export default function DashboardOwner() {
 
                 <StatCard
                     title="Packages"
-                    value="-"
-                    subtitle="Available packages"
+                    value={0}
                     icon={
                         <Package
                             size={22}
@@ -437,8 +308,7 @@ export default function DashboardOwner() {
 
                 <StatCard
                     title="Revenue"
-                    value="Rp -"
-                    subtitle="Total business income"
+                    value="Rp 0"
                     icon={
                         <DollarSign
                             size={22}
@@ -460,22 +330,34 @@ export default function DashboardOwner() {
             >
                 <AnalyticsCard
                     title="Revenue Analytics"
-                    subtitle="Monthly and annual business performance"
                     icon={
                         <TrendingUp
                             size={22}
                         />
                     }
                 >
-                    <EmptyState
-                        title="No Revenue Data"
-                        description="Revenue data will appear automatically after transactions are recorded."
-                    />
+                    <div
+                        style={{
+                            height: "260px",
+                            display: "flex",
+                            alignItems:
+                                "center",
+                            justifyContent:
+                                "center",
+                            color: "#64748b",
+                            fontSize: "16px",
+                            borderRadius:
+                                "18px",
+                            border:
+                                "1px dashed rgba(255,255,255,0.08)",
+                        }}
+                    >
+                        0 Revenue Data
+                    </div>
                 </AnalyticsCard>
 
                 <AnalyticsCard
                     title="Quick Insights"
-                    subtitle="Executive summary"
                     icon={
                         <ArrowUpRight
                             size={20}
@@ -490,10 +372,10 @@ export default function DashboardOwner() {
                         }}
                     >
                         {[
-                            "Order growth tracking",
-                            "Customer activity",
-                            "Operational status",
-                            "Profit analysis",
+                            "Order Growth",
+                            "Customer Activity",
+                            "Operational Status",
+                            "Profit Analysis",
                         ].map(
                             (
                                 item,
@@ -531,17 +413,44 @@ export default function DashboardOwner() {
             {/* TRANSACTIONS */}
             <AnalyticsCard
                 title="Latest Transactions"
-                subtitle="Recent customer orders and payments"
                 icon={
                     <ShoppingCart
                         size={20}
                     />
                 }
             >
-                <EmptyState
-                    title="No Transactions Yet"
-                    description="Recent transactions will be displayed here after customers place orders."
-                />
+                <div
+                    style={{
+                        height: "240px",
+                        display: "flex",
+                        flexDirection:
+                            "column",
+                        alignItems:
+                            "center",
+                        justifyContent:
+                            "center",
+                        borderRadius:
+                            "18px",
+                        border:
+                            "1px dashed rgba(255,255,255,0.08)",
+                        color: "#64748b",
+                        gap: "14px",
+                    }}
+                >
+                    <BarChart3
+                        size={34}
+                    />
+
+                    <div
+                        style={{
+                            fontSize: "16px",
+                            fontWeight:
+                                "600",
+                        }}
+                    >
+                        0 Transactions
+                    </div>
+                </div>
             </AnalyticsCard>
         </OwnerLayout>
     );

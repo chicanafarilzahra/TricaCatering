@@ -1,5 +1,8 @@
 // resources/js/pages/owner/StocksOwner.jsx
 
+import { useEffect, useState } from "react";
+import axios from "axios";
+
 import {
     Boxes,
     AlertTriangle,
@@ -11,7 +14,7 @@ import OwnerLayout from "../../layouts/OwnerLayout";
 
 function MetricCard({
     title,
-    value = "-",
+    value = 0,
     icon,
     color = "#60a5fa",
 }) {
@@ -149,6 +152,27 @@ function EmptyState({
 }
 
 export default function StocksOwner() {
+
+    const [stocks, setStocks] =
+        useState([]);
+
+    useEffect(() => {
+        fetchStocks();
+    }, []);
+
+    const fetchStocks = async () => {
+        try {
+            const res =
+                await axios.get(
+                    "/api/owner/stocks"
+                );
+
+            setStocks(res.data);
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
     return (
         <OwnerLayout>
             {/* Header */}
@@ -204,7 +228,9 @@ export default function StocksOwner() {
             >
                 <MetricCard
                     title="Total Items"
-                    value="-"
+                    value={
+                        stocks.length
+                    }
                     icon={
                         <Boxes size={22} />
                     }
@@ -213,7 +239,23 @@ export default function StocksOwner() {
 
                 <MetricCard
                     title="Low Stock"
-                    value="-"
+                    value={
+                        stocks.filter(
+                            (
+                                item
+                            ) =>
+                                Number(
+                                    item.stock
+                                ) > 0 &&
+                                Number(
+                                    item.stock
+                                ) <=
+                                    Number(
+                                        item.minimum_stock ||
+                                            5
+                                    )
+                        ).length
+                    }
                     icon={
                         <AlertTriangle
                             size={22}
@@ -224,7 +266,16 @@ export default function StocksOwner() {
 
                 <MetricCard
                     title="Out of Stock"
-                    value="-"
+                    value={
+                        stocks.filter(
+                            (
+                                item
+                            ) =>
+                                Number(
+                                    item.stock
+                                ) === 0
+                        ).length
+                    }
                     icon={
                         <TrendingDown
                             size={22}
@@ -235,7 +286,16 @@ export default function StocksOwner() {
 
                 <MetricCard
                     title="Available Items"
-                    value="-"
+                    value={
+                        stocks.filter(
+                            (
+                                item
+                            ) =>
+                                Number(
+                                    item.stock
+                                ) > 0
+                        ).length
+                    }
                     icon={
                         <PackageCheck
                             size={22}
@@ -298,74 +358,208 @@ export default function StocksOwner() {
                     </p>
                 </div>
 
-                <table
-                    style={{
-                        width: "100%",
-                        borderCollapse:
-                            "collapse",
-                        minWidth:
-                            "900px",
-                    }}
-                >
-                    <thead>
-                        <tr
-                            style={{
-                                background:
-                                    "rgba(255,255,255,0.04)",
-                            }}
-                        >
-                            {[
-                                "Item Name",
-                                "Category",
-                                "Stock",
-                                "Minimum Stock",
-                                "Status",
-                            ].map(
+                {stocks.length ===
+                0 ? (
+                    <EmptyState
+                        title="No Stock Data"
+                        subtitle="Inventory information will appear here once stock data has been recorded."
+                        icon={
+                            <Boxes
+                                size={38}
+                            />
+                        }
+                    />
+                ) : (
+                    <table
+                        style={{
+                            width: "100%",
+                            borderCollapse:
+                                "collapse",
+                            minWidth:
+                                "900px",
+                        }}
+                    >
+                        <thead>
+                            <tr
+                                style={{
+                                    background:
+                                        "rgba(255,255,255,0.04)",
+                                }}
+                            >
+                                {[
+                                    "Item Name",
+                                    "Category",
+                                    "Stock",
+                                    "Minimum Stock",
+                                    "Status",
+                                ].map(
+                                    (
+                                        item
+                                    ) => (
+                                        <th
+                                            key={
+                                                item
+                                            }
+                                            style={{
+                                                padding:
+                                                    "16px",
+                                                textAlign:
+                                                    "left",
+                                                color:
+                                                    "#cbd5e1",
+                                                fontSize:
+                                                    "13px",
+                                                fontWeight:
+                                                    "600",
+                                                borderBottom:
+                                                    "1px solid rgba(255,255,255,0.06)",
+                                            }}
+                                        >
+                                            {
+                                                item
+                                            }
+                                        </th>
+                                    )
+                                )}
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {stocks.map(
                                 (
                                     item
-                                ) => (
-                                    <th
-                                        key={
-                                            item
-                                        }
-                                        style={{
-                                            padding:
-                                                "16px",
-                                            textAlign:
-                                                "left",
-                                            color:
-                                                "#cbd5e1",
-                                            fontSize:
-                                                "13px",
-                                            fontWeight:
-                                                "600",
-                                            borderBottom:
-                                                "1px solid rgba(255,255,255,0.06)",
-                                        }}
-                                    >
-                                        {
-                                            item
-                                        }
-                                    </th>
-                                )
+                                ) => {
+                                    const stock =
+                                        Number(
+                                            item.stock
+                                        );
+
+                                    const min =
+                                        Number(
+                                            item.minimum_stock ||
+                                                5
+                                        );
+
+                                    let status =
+                                        "Available";
+
+                                    let color =
+                                        "#22c55e";
+
+                                    if (
+                                        stock ===
+                                        0
+                                    ) {
+                                        status =
+                                            "Out of Stock";
+
+                                        color =
+                                            "#ef4444";
+                                    } else if (
+                                        stock <=
+                                        min
+                                    ) {
+                                        status =
+                                            "Low Stock";
+
+                                        color =
+                                            "#f59e0b";
+                                    }
+
+                                    return (
+                                        <tr
+                                            key={
+                                                item.id
+                                            }
+                                            style={{
+                                                borderBottom:
+                                                    "1px solid rgba(255,255,255,0.05)",
+                                            }}
+                                        >
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "16px",
+                                                    color:
+                                                        "white",
+                                                }}
+                                            >
+                                                {
+                                                    item.name
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "16px",
+                                                    color:
+                                                        "#cbd5e1",
+                                                }}
+                                            >
+                                                {item.category ||
+                                                    "-"}
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "16px",
+                                                    color:
+                                                        "white",
+                                                    fontWeight:
+                                                        "700",
+                                                }}
+                                            >
+                                                {
+                                                    item.stock
+                                                }
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "16px",
+                                                    color:
+                                                        "#cbd5e1",
+                                                }}
+                                            >
+                                                {min}
+                                            </td>
+
+                                            <td
+                                                style={{
+                                                    padding:
+                                                        "16px",
+                                                }}
+                                            >
+                                                <span
+                                                    style={{
+                                                        padding:
+                                                            "6px 12px",
+                                                        borderRadius:
+                                                            "999px",
+                                                        background: `${color}20`,
+                                                        border: `1px solid ${color}40`,
+                                                        color,
+                                                        fontSize:
+                                                            "12px",
+                                                        fontWeight:
+                                                            "700",
+                                                    }}
+                                                >
+                                                    {
+                                                        status
+                                                    }
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    );
+                                }
                             )}
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {/* Backend Data Here */}
-                    </tbody>
-                </table>
-
-                <EmptyState
-                    title="No Stock Data"
-                    subtitle="Inventory information will appear here once stock data has been recorded."
-                    icon={
-                        <Boxes
-                            size={38}
-                        />
-                    }
-                />
+                        </tbody>
+                    </table>
+                )}
             </div>
 
             {/* Insights */}
@@ -418,15 +612,78 @@ export default function StocksOwner() {
                     </p>
                 </div>
 
-                <EmptyState
-                    title="No Insights Available"
-                    subtitle="Stock analytics and inventory alerts will appear here."
-                    icon={
-                        <AlertTriangle
-                            size={38}
-                        />
-                    }
-                />
+                {stocks.length ===
+                0 ? (
+                    <EmptyState
+                        title="No Insights Available"
+                        subtitle="Stock analytics and inventory alerts will appear here."
+                        icon={
+                            <AlertTriangle
+                                size={38}
+                            />
+                        }
+                    />
+                ) : (
+                    <div
+                        style={{
+                            display: "flex",
+                            flexDirection:
+                                "column",
+                            gap: "14px",
+                        }}
+                    >
+                        {stocks
+                            .filter(
+                                (
+                                    item
+                                ) =>
+                                    Number(
+                                        item.stock
+                                    ) <=
+                                    Number(
+                                        item.minimum_stock ||
+                                            5
+                                    )
+                            )
+                            .map(
+                                (
+                                    item
+                                ) => (
+                                    <div
+                                        key={
+                                            item.id
+                                        }
+                                        style={{
+                                            padding:
+                                                "16px",
+                                            borderRadius:
+                                                "16px",
+                                            background:
+                                                "rgba(239,68,68,0.08)",
+                                            border:
+                                                "1px solid rgba(239,68,68,0.20)",
+                                            color:
+                                                "white",
+                                        }}
+                                    >
+                                        <strong>
+                                            {
+                                                item.name
+                                            }
+                                        </strong>
+                                        {" "}
+                                        stock is
+                                        running
+                                        low (
+                                        {
+                                            item.stock
+                                        }
+                                        )
+                                    </div>
+                                )
+                            )}
+                    </div>
+                )}
             </div>
         </OwnerLayout>
     );

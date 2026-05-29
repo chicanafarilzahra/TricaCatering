@@ -11,13 +11,19 @@ import {
     Search,
     Image as ImageIcon,
     X,
+    Package,
+    Layers3,
+    MoreVertical,
 } from "lucide-react";
 
 import OwnerLayout from "../../layouts/OwnerLayout";
 
 export default function MenusOwner() {
-    const [menus, setMenus] = useState([]);
-    const [search, setSearch] = useState("");
+    const [menus, setMenus] =
+        useState([]);
+
+    const [search, setSearch] =
+        useState("");
 
     const [showModal, setShowModal] =
         useState(false);
@@ -40,24 +46,14 @@ export default function MenusOwner() {
 
     const fetchMenus = async () => {
         try {
-            const res = await axios.get(
-                "/api/owner/menus"
-            );
+            const res =
+                await axios.get(
+                    "/api/owner/menus"
+                );
 
             setMenus(res.data);
-
         } catch (err) {
             console.log(err);
-
-            if (err.response) {
-                console.log(err.response.data);
-
-                alert(
-                    JSON.stringify(
-                        err.response.data
-                    )
-                );
-            }
         }
     };
 
@@ -96,7 +92,8 @@ export default function MenusOwner() {
         setForm({
             name: menu.name || "",
             price: menu.price || "",
-            category: menu.category || "",
+            category:
+                menu.category || "",
             stock: menu.stock || "",
             description:
                 menu.description || "",
@@ -192,19 +189,8 @@ export default function MenusOwner() {
             });
 
             fetchMenus();
-
         } catch (err) {
             console.log(err);
-
-            if (err.response) {
-                console.log(err.response.data);
-
-                alert(
-                    JSON.stringify(
-                        err.response.data
-                    )
-                );
-            }
         }
     };
 
@@ -229,19 +215,8 @@ export default function MenusOwner() {
             );
 
             fetchMenus();
-
         } catch (err) {
             console.log(err);
-
-            if (err.response) {
-                console.log(err.response.data);
-
-                alert(
-                    JSON.stringify(
-                        err.response.data
-                    )
-                );
-            }
         }
     };
 
@@ -261,96 +236,8 @@ export default function MenusOwner() {
     return (
         <OwnerLayout>
             {/* HEADER */}
-
             <div
                 style={{
-                    display: "flex",
-                    justifyContent:
-                        "space-between",
-                    alignItems:
-                        "center",
-                    flexWrap: "wrap",
-                    gap: "16px",
-                    marginBottom:
-                        "22px",
-                }}
-            >
-                <div>
-                    <h1
-                        style={{
-                            margin: 0,
-                            color: "white",
-                            fontSize:
-                                "28px",
-                            fontWeight:
-                                "800",
-                        }}
-                    >
-                        Menu Management
-                    </h1>
-
-                    <p
-                        style={{
-                            margin:
-                                "6px 0 0",
-                            color:
-                                "#94a3b8",
-                            fontSize:
-                                "14px",
-                        }}
-                    >
-                        Manage your
-                        catering food
-                        menu
-                    </p>
-                </div>
-
-                <button
-                    onClick={
-                        openCreateModal
-                    }
-                    style={{
-                        height: "42px",
-                        padding:
-                            "0 16px",
-                        border: "none",
-                        borderRadius:
-                            "12px",
-                        background:
-                            "linear-gradient(135deg,#2563eb,#1d4ed8)",
-                        color:
-                            "white",
-                        fontWeight:
-                            "700",
-                        fontSize:
-                            "13px",
-                        display:
-                            "flex",
-                        alignItems:
-                            "center",
-                        gap: "8px",
-                        cursor:
-                            "pointer",
-                    }}
-                >
-                    <Plus size={16} />
-                    Add Menu
-                </button>
-            </div>
-
-            {/* TOP BAR */}
-
-            <div
-                style={{
-                    background:
-                        "#111827",
-                    border:
-                        "1px solid rgba(148,163,184,0.08)",
-                    borderRadius:
-                        "18px",
-                    padding: "16px",
-                    marginBottom:
-                        "20px",
                     display: "flex",
                     justifyContent:
                         "space-between",
@@ -358,416 +245,733 @@ export default function MenusOwner() {
                         "center",
                     flexWrap: "wrap",
                     gap: "14px",
+                    marginBottom:
+                        "22px",
                 }}
             >
-                <div>
+                <div
+                    style={{
+                        display: "flex",
+                        alignItems:
+                            "center",
+                        gap: "14px",
+                    }}
+                >
                     <div
                         style={{
-                            color:
-                                "#94a3b8",
-                            fontSize:
-                                "12px",
+                            width: "58px",
+                            height: "58px",
+                            borderRadius:
+                                "18px",
+                            background:
+                                "linear-gradient(135deg,#1d4ed8,#0f172a)",
+                            border:
+                                "1px solid rgba(59,130,246,0.30)",
+                            display:
+                                "flex",
+                            alignItems:
+                                "center",
+                            justifyContent:
+                                "center",
+                            boxShadow:
+                                "0 12px 24px rgba(37,99,235,0.20)",
                         }}
                     >
-                        Total Menus
+                        <UtensilsCrossed
+                            size={28}
+                            color="white"
+                        />
                     </div>
 
-                    <div
-                        style={{
-                            color:
-                                "white",
-                            fontSize:
-                                "24px",
-                            fontWeight:
-                                "800",
-                        }}
-                    >
-                        {
-                            filteredMenus.length
-                        }
+                    <div>
+                        <h1
+                            style={{
+                                margin: 0,
+                                fontSize:
+                                    "30px",
+                                fontWeight:
+                                    "900",
+                                color:
+                                    "white",
+                                lineHeight:
+                                    "1",
+                            }}
+                        >
+                            Menu
+                            Management
+                        </h1>
+
+                        <p
+                            style={{
+                                margin:
+                                    "8px 0 0",
+                                color:
+                                    "#94a3b8",
+                                fontSize:
+                                    "13px",
+                            }}
+                        >
+                            Manage
+                            catering
+                            menus,
+                            pricing,
+                            stock,
+                            and
+                            categories.
+                        </p>
                     </div>
                 </div>
 
-                {/* SEARCH */}
-
-                <div
+                <button
+                    onClick={
+                        openCreateModal
+                    }
                     style={{
-                        width: "240px",
-                        height: "42px",
-                        borderRadius:
-                            "12px",
-                        background:
-                            "#0f172a",
+                        height: "48px",
+                        padding:
+                            "0 18px",
                         border:
-                            "1px solid rgba(148,163,184,0.08)",
+                            "1px solid rgba(59,130,246,0.35)",
+                        borderRadius:
+                            "14px",
+                        background:
+                            "linear-gradient(135deg,rgba(29,78,216,0.20),rgba(15,23,42,0.95))",
+                        color:
+                            "white",
+                        fontWeight:
+                            "800",
+                        fontSize:
+                            "14px",
                         display:
                             "flex",
                         alignItems:
                             "center",
-                        padding:
-                            "0 14px",
-                        gap: "10px",
+                        gap: "8px",
+                        cursor:
+                            "pointer",
+                        boxShadow:
+                            "0 12px 28px rgba(37,99,235,0.18)",
                     }}
                 >
-                    <Search
-                        size={15}
-                        color="#64748b"
-                    />
-
-                    <input
-                        value={
-                            search
-                        }
-                        onChange={(
-                            e
-                        ) =>
-                            setSearch(
-                                e.target
-                                    .value
-                            )
-                        }
-                        placeholder="Search menu..."
-                        style={{
-                            flex: 1,
-                            border:
-                                "none",
-                            outline:
-                                "none",
-                            background:
-                                "transparent",
-                            color:
-                                "white",
-                            fontSize:
-                                "13px",
-                        }}
-                    />
-                </div>
+                    <Plus size={18} />
+                    Add Menu
+                </button>
             </div>
 
-            {/* EMPTY */}
-
-            {filteredMenus.length === 0 ? (
-    <div
-        style={{
-            background: "#111827",
-            border:
-                "1px solid rgba(148,163,184,0.08)",
-            borderRadius: "24px",
-            minHeight: "300px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            textAlign: "center",
-        }}
-    >
-        <UtensilsCrossed
-            size={42}
-            color="#60a5fa"
-        />
-
-        <h3
-            style={{
-                color: "white",
-                marginTop: "18px",
-            }}
-        >
-            No Menus Found
-        </h3>
-
-        <p
-            style={{
-                color: "#94a3b8",
-                fontSize: "14px",
-            }}
-        >
-            Add your first menu item
-        </p>
-    </div>
-) : (
-    <div
-        style={{
-            background: "#111827",
-            border:
-                "1px solid rgba(148,163,184,0.08)",
-            borderRadius: "24px",
-            overflow: "hidden",
-        }}
-    >
-        {/* TABLE HEADER */}
-
-        <div
-            style={{
-                display: "grid",
-                gridTemplateColumns:
-                    "2fr 1fr 1fr 1fr 120px",
-                padding: "22px 24px",
-                borderBottom:
-                    "1px solid rgba(148,163,184,0.08)",
-                color: "#94a3b8",
-                fontSize: "13px",
-                fontWeight: "700",
-            }}
-        >
-            <div>MENU</div>
-            <div>CATEGORY</div>
-            <div>STOCK</div>
-            <div>PRICE</div>
+            {/* STATS */}
             <div
-                style={{
-                    textAlign: "center",
-                }}
-            >
-                ACTIONS
-            </div>
-        </div>
-
-        {/* TABLE BODY */}
-
-        {filteredMenus.map((menu) => (
-            <div
-                key={menu.id}
                 style={{
                     display: "grid",
                     gridTemplateColumns:
-                        "2fr 1fr 1fr 1fr 120px",
-                    alignItems: "center",
-                    padding: "22px 24px",
-                    borderBottom:
-                        "1px solid rgba(148,163,184,0.05)",
+                        "repeat(auto-fit, minmax(220px, 1fr))",
+                    gap: "16px",
+                    marginBottom:
+                        "22px",
                 }}
             >
-                {/* MENU */}
+                <StatCard
+                    title="Total Menus"
+                    subtitle="All menu items"
+                    value={
+                        filteredMenus.length
+                    }
+                    icon={
+                        <UtensilsCrossed
+                            size={22}
+                        />
+                    }
+                    color="#2563eb"
+                />
 
+                <StatCard
+                    title="Total Stock"
+                    subtitle="Available stock"
+                    value={menus.reduce(
+                        (
+                            total,
+                            item
+                        ) =>
+                            total +
+                            Number(
+                                item.stock ||
+                                    0
+                            ),
+                        0
+                    )}
+                    icon={
+                        <Package
+                            size={22}
+                        />
+                    }
+                    color="#22c55e"
+                />
+
+                <StatCard
+                    title="Categories"
+                    subtitle="Food categories"
+                    value={
+                        [
+                            ...new Set(
+                                menus.map(
+                                    (
+                                        item
+                                    ) =>
+                                        item.category
+                                )
+                            ),
+                        ].length
+                    }
+                    icon={
+                        <Layers3
+                            size={22}
+                        />
+                    }
+                    color="#f59e0b"
+                />
+            </div>
+
+            {/* SEARCH */}
+            <div
+                style={{
+                    background:
+                        "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(15,23,42,0.95))",
+                    border:
+                        "1px solid rgba(59,130,246,0.15)",
+                    borderRadius:
+                        "22px",
+                    padding: "20px",
+                    boxShadow:
+                        "0 16px 40px rgba(0,0,0,0.28)",
+                }}
+            >
+                {/* TOP */}
                 <div
                     style={{
-                        display: "flex",
-                        alignItems: "center",
+                        display:
+                            "flex",
+                        justifyContent:
+                            "space-between",
+                        alignItems:
+                            "center",
+                        flexWrap:
+                            "wrap",
                         gap: "16px",
+                        marginBottom:
+                            "22px",
                     }}
                 >
-                    <div
-                        style={{
-                            width: "78px",
-                            height: "78px",
-                            borderRadius: "18px",
-                            overflow: "hidden",
-                            background: "#0f172a",
-                            flexShrink: 0,
-                        }}
-                    >
-                        {menu.image ? (
-                            <img
-                                src={`/storage/${menu.image}`}
-                                alt={menu.name}
-                                style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit:
-                                        "cover",
-                                }}
-                            />
-                        ) : (
-                            <div
-                                style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    display:
-                                        "flex",
-                                    alignItems:
-                                        "center",
-                                    justifyContent:
-                                        "center",
-                                    color:
-                                        "#64748b",
-                                }}
-                            >
-                                <ImageIcon
-                                    size={26}
-                                />
-                            </div>
-                        )}
-                    </div>
-
                     <div>
                         <div
                             style={{
-                                color: "white",
-                                fontWeight:
-                                    "700",
+                                color:
+                                    "#94a3b8",
                                 fontSize:
-                                    "18px",
+                                    "12px",
                                 marginBottom:
-                                    "6px",
+                                    "4px",
                             }}
                         >
-                            {menu.name}
+                            Total
+                            Result
                         </div>
 
                         <div
                             style={{
-                                color: "#94a3b8",
+                                display:
+                                    "flex",
+                                alignItems:
+                                    "baseline",
+                                gap: "10px",
+                            }}
+                        >
+                            <div
+                                style={{
+                                    color:
+                                        "white",
+                                    fontSize:
+                                        "34px",
+                                    fontWeight:
+                                        "900",
+                                    lineHeight:
+                                        "1",
+                                }}
+                            >
+                                {
+                                    filteredMenus.length
+                                }
+                            </div>
+
+                            <div
+                                style={{
+                                    color:
+                                        "#cbd5e1",
+                                    fontSize:
+                                        "13px",
+                                }}
+                            >
+                                menu
+                                items
+                                found
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        style={{
+                            width:
+                                "290px",
+                            maxWidth:
+                                "100%",
+                            height:
+                                "46px",
+                            borderRadius:
+                                "14px",
+                            background:
+                                "rgba(15,23,42,0.90)",
+                            border:
+                                "1px solid rgba(59,130,246,0.18)",
+                            display:
+                                "flex",
+                            alignItems:
+                                "center",
+                            padding:
+                                "0 14px",
+                            gap: "10px",
+                        }}
+                    >
+                        <Search
+                            size={18}
+                            color="#94a3b8"
+                        />
+
+                        <input
+                            value={
+                                search
+                            }
+                            onChange={(
+                                e
+                            ) =>
+                                setSearch(
+                                    e
+                                        .target
+                                        .value
+                                )
+                            }
+                            placeholder="Search menu..."
+                            style={{
+                                flex: 1,
+                                border:
+                                    "none",
+                                outline:
+                                    "none",
+                                background:
+                                    "transparent",
+                                color:
+                                    "white",
                                 fontSize:
                                     "14px",
-                                marginBottom:
-                                    "8px",
                             }}
-                        >
-                            {menu.description ||
-                                "No description"}
-                        </div>
-
-                        <div
-                            style={{
-                                color: "#3b82f6",
-                                fontWeight:
-                                    "800",
-                                fontSize:
-                                    "28px",
-                            }}
-                        >
-                            Rp{" "}
-                            {Number(
-                                menu.price || 0
-                            ).toLocaleString()}
-                        </div>
+                        />
                     </div>
                 </div>
 
-                {/* CATEGORY */}
-
-                <div>
-                    <span
-                        style={{
-                            padding:
-                                "8px 14px",
-                            borderRadius:
-                                "999px",
-                            background:
-                                "rgba(59,130,246,0.12)",
-                            color: "#60a5fa",
-                            fontSize: "13px",
-                            fontWeight: "700",
-                        }}
-                    >
-                        {menu.category ||
-                            "No Category"}
-                    </span>
-                </div>
-
-                {/* STOCK */}
-
-                <div>
-                    <span
-                        style={{
-                            padding:
-                                "8px 14px",
-                            borderRadius:
-                                "999px",
-                            background:
-                                "rgba(16,185,129,0.12)",
-                            color: "#34d399",
-                            fontSize: "13px",
-                            fontWeight: "700",
-                        }}
-                    >
-                        {menu.stock || 0}
-                    </span>
-                </div>
-
-                {/* PRICE */}
-
+                {/* MENU GRID */}
                 <div
                     style={{
-                        color: "white",
-                        fontWeight: "800",
-                        fontSize: "24px",
+                        display:
+                            "grid",
+                        gridTemplateColumns:
+                            "repeat(auto-fit, minmax(320px, 1fr))",
+                        gap: "16px",
                     }}
                 >
-                    Rp{" "}
-                    {Number(
-                        menu.price || 0
-                    ).toLocaleString()}
-                </div>
+                    {filteredMenus.map(
+                        (menu) => (
+                            <div
+                                key={
+                                    menu.id
+                                }
+                                style={{
+                                    background:
+                                        "linear-gradient(145deg, rgba(15,23,42,0.96), rgba(17,24,39,0.98))",
+                                    border:
+                                        "1px solid rgba(59,130,246,0.12)",
+                                    borderRadius:
+                                        "18px",
+                                    padding:
+                                        "14px",
+                                    position:
+                                        "relative",
+                                    overflow:
+                                        "hidden",
+                                    boxShadow:
+                                        "0 12px 30px rgba(0,0,0,0.28)",
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        position:
+                                            "absolute",
+                                        top: "-70px",
+                                        right:
+                                            "-70px",
+                                        width:
+                                            "140px",
+                                        height:
+                                            "140px",
+                                        background:
+                                            "rgba(37,99,235,0.10)",
+                                        filter:
+                                            "blur(50px)",
+                                    }}
+                                />
 
-                {/* ACTIONS */}
+                                <div
+                                    style={{
+                                        display:
+                                            "flex",
+                                        gap: "14px",
+                                        position:
+                                            "relative",
+                                        zIndex: 2,
+                                    }}
+                                >
+                                    {/* IMAGE */}
+                                    <div
+                                        style={{
+                                            width:
+                                                "115px",
+                                            height:
+                                                "115px",
+                                            borderRadius:
+                                                "16px",
+                                            overflow:
+                                                "hidden",
+                                            background:
+                                                "#0f172a",
+                                            border:
+                                                "1px solid rgba(255,255,255,0.06)",
+                                            flexShrink:
+                                                0,
+                                        }}
+                                    >
+                                        {menu.image ? (
+                                            <img
+                                                src={`/storage/${menu.image}`}
+                                                alt={
+                                                    menu.name
+                                                }
+                                                style={{
+                                                    width: "100%",
+                                                    height:
+                                                        "100%",
+                                                    objectFit:
+                                                        "cover",
+                                                }}
+                                            />
+                                        ) : (
+                                            <div
+                                                style={{
+                                                    width: "100%",
+                                                    height:
+                                                        "100%",
+                                                    display:
+                                                        "flex",
+                                                    alignItems:
+                                                        "center",
+                                                    justifyContent:
+                                                        "center",
+                                                    color:
+                                                        "#64748b",
+                                                }}
+                                            >
+                                                <ImageIcon
+                                                    size={
+                                                        28
+                                                    }
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
 
-                <div
-                    style={{
-                        display: "flex",
-                        justifyContent:
-                            "center",
-                        gap: "10px",
-                    }}
-                >
-                    <button
-                        onClick={() =>
-                            openEditModal(menu)
-                        }
-                        style={{
-                            width: "46px",
-                            height: "46px",
-                            border: "none",
-                            borderRadius: "14px",
-                            background:
-                                "#2563eb",
-                            color: "white",
-                            display: "flex",
-                            alignItems:
-                                "center",
-                            justifyContent:
-                                "center",
-                            cursor: "pointer",
-                        }}
-                    >
-                        <Pencil size={18} />
-                    </button>
+                                    {/* CONTENT */}
+                                    <div
+                                        style={{
+                                            flex: 1,
+                                            minWidth: 0,
+                                            display:
+                                                "flex",
+                                            flexDirection:
+                                                "column",
+                                        }}
+                                    >
+                                        <div
+                                            style={{
+                                                display:
+                                                    "flex",
+                                                justifyContent:
+                                                    "space-between",
+                                                alignItems:
+                                                    "flex-start",
+                                            }}
+                                        >
+                                            <div>
+                                                <h3
+                                                    style={{
+                                                        margin: 0,
+                                                        color:
+                                                            "white",
+                                                        fontSize:
+                                                            "17px",
+                                                        fontWeight:
+                                                            "800",
+                                                    }}
+                                                >
+                                                    {
+                                                        menu.name
+                                                    }
+                                                </h3>
 
-                    <button
-                        onClick={() =>
-                            handleDelete(
-                                menu.id
-                            )
-                        }
-                        style={{
-                            width: "46px",
-                            height: "46px",
-                            border: "none",
-                            borderRadius: "14px",
-                            background:
-                                "#dc2626",
-                            color: "white",
-                            display: "flex",
-                            alignItems:
-                                "center",
-                            justifyContent:
-                                "center",
-                            cursor: "pointer",
-                        }}
-                    >
-                        <Trash2 size={18} />
-                    </button>
+                                                <div
+                                                    style={{
+                                                        marginTop:
+                                                            "7px",
+                                                        display:
+                                                            "inline-flex",
+                                                        padding:
+                                                            "4px 10px",
+                                                        borderRadius:
+                                                            "999px",
+                                                        background:
+                                                            "rgba(37,99,235,0.16)",
+                                                        border:
+                                                            "1px solid rgba(59,130,246,0.20)",
+                                                        color:
+                                                            "#93c5fd",
+                                                        fontSize:
+                                                            "10px",
+                                                        fontWeight:
+                                                            "700",
+                                                    }}
+                                                >
+                                                    {menu.category ||
+                                                        "Menu"}
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                style={{
+                                                    width:
+                                                        "30px",
+                                                    height:
+                                                        "30px",
+                                                    borderRadius:
+                                                        "10px",
+                                                    border:
+                                                        "none",
+                                                    background:
+                                                        "rgba(255,255,255,0.05)",
+                                                    color:
+                                                        "#cbd5e1",
+                                                    display:
+                                                        "flex",
+                                                    alignItems:
+                                                        "center",
+                                                    justifyContent:
+                                                        "center",
+                                                    cursor:
+                                                        "pointer",
+                                                }}
+                                            >
+                                                <MoreVertical
+                                                    size={
+                                                        14
+                                                    }
+                                                />
+                                            </button>
+                                        </div>
+
+                                        <p
+                                            style={{
+                                                margin:
+                                                    "10px 0 0",
+                                                color:
+                                                    "#cbd5e1",
+                                                fontSize:
+                                                    "12px",
+                                                lineHeight:
+                                                    "1.5",
+                                                minHeight:
+                                                    "36px",
+                                            }}
+                                        >
+                                            {menu.description ||
+                                                "No description available"}
+                                        </p>
+
+                                        <div
+                                            style={{
+                                                marginTop:
+                                                    "auto",
+                                            }}
+                                        >
+                                            <div
+                                                style={{
+                                                    display:
+                                                        "flex",
+                                                    justifyContent:
+                                                        "space-between",
+                                                    alignItems:
+                                                        "center",
+                                                    marginTop:
+                                                        "12px",
+                                                }}
+                                            >
+                                                <div
+                                                    style={{
+                                                        color:
+                                                            "#4ade80",
+                                                        fontSize:
+                                                            "22px",
+                                                        fontWeight:
+                                                            "900",
+                                                        lineHeight:
+                                                            "1",
+                                                    }}
+                                                >
+                                                    Rp{" "}
+                                                    {Number(
+                                                        menu.price ||
+                                                            0
+                                                    ).toLocaleString()}
+                                                </div>
+
+                                                <div
+                                                    style={{
+                                                        color:
+                                                            "#cbd5e1",
+                                                        fontSize:
+                                                            "12px",
+                                                    }}
+                                                >
+                                                    Stock:{" "}
+                                                    <span
+                                                        style={{
+                                                            color:
+                                                                "white",
+                                                            fontWeight:
+                                                                "800",
+                                                        }}
+                                                    >
+                                                        {
+                                                            menu.stock
+                                                        }
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* ACTION */}
+                                            <div
+                                                style={{
+                                                    display:
+                                                        "flex",
+                                                    gap: "8px",
+                                                    marginTop:
+                                                        "14px",
+                                                }}
+                                            >
+                                                <button
+                                                    onClick={() =>
+                                                        openEditModal(
+                                                            menu
+                                                        )
+                                                    }
+                                                    style={{
+                                                        flex: 1,
+                                                        height:
+                                                            "36px",
+                                                        borderRadius:
+                                                            "10px",
+                                                        border:
+                                                            "1px solid rgba(59,130,246,0.45)",
+                                                        background:
+                                                            "linear-gradient(135deg,#1d4ed8,#1e3a8a)",
+                                                        color:
+                                                            "white",
+                                                        fontWeight:
+                                                            "700",
+                                                        fontSize:
+                                                            "12px",
+                                                        display:
+                                                            "flex",
+                                                        alignItems:
+                                                            "center",
+                                                        justifyContent:
+                                                            "center",
+                                                        gap: "6px",
+                                                        cursor:
+                                                            "pointer",
+                                                    }}
+                                                >
+                                                    <Pencil
+                                                        size={
+                                                            13
+                                                        }
+                                                    />
+                                                    Edit
+                                                </button>
+
+                                                <button
+                                                    onClick={() =>
+                                                        handleDelete(
+                                                            menu.id
+                                                        )
+                                                    }
+                                                    style={{
+                                                        flex: 1,
+                                                        height:
+                                                            "36px",
+                                                        borderRadius:
+                                                            "10px",
+                                                        border:
+                                                            "1px solid rgba(239,68,68,0.35)",
+                                                        background:
+                                                            "linear-gradient(135deg,#7f1d1d,#991b1b)",
+                                                        color:
+                                                            "white",
+                                                        fontWeight:
+                                                            "700",
+                                                        fontSize:
+                                                            "12px",
+                                                        display:
+                                                            "flex",
+                                                        alignItems:
+                                                            "center",
+                                                        justifyContent:
+                                                            "center",
+                                                        gap: "6px",
+                                                        cursor:
+                                                            "pointer",
+                                                    }}
+                                                >
+                                                    <Trash2
+                                                        size={
+                                                            13
+                                                        }
+                                                    />
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )
+                    )}
                 </div>
             </div>
-        ))}
-
-        {/* FOOTER */}
-
-        <div
-            style={{
-                padding: "20px 24px",
-                color: "#94a3b8",
-                fontSize: "14px",
-            }}
-        >
-            Showing 1 to {filteredMenus.length} of{" "}
-            {filteredMenus.length} menu
-        </div>
-    </div>
-)}
 
             {/* MODAL */}
-
             {showModal && (
                 <div
                     style={{
@@ -775,7 +979,7 @@ export default function MenusOwner() {
                             "fixed",
                         inset: 0,
                         background:
-                            "rgba(0,0,0,0.65)",
+                            "rgba(0,0,0,0.75)",
                         display:
                             "flex",
                         alignItems:
@@ -792,19 +996,19 @@ export default function MenusOwner() {
                             width:
                                 "100%",
                             maxWidth:
-                                "430px",
+                                "460px",
                             background:
                                 "#111827",
                             borderRadius:
-                                "20px",
+                                "22px",
                             padding:
                                 "22px",
                             border:
-                                "1px solid rgba(148,163,184,0.08)",
+                                "1px solid rgba(59,130,246,0.15)",
+                            boxShadow:
+                                "0 20px 50px rgba(0,0,0,0.40)",
                         }}
                     >
-                        {/* HEADER */}
-
                         <div
                             style={{
                                 display:
@@ -814,16 +1018,17 @@ export default function MenusOwner() {
                                 alignItems:
                                     "center",
                                 marginBottom:
-                                    "20px",
+                                    "22px",
                             }}
                         >
                             <div>
-                                <div
+                                <h2
                                     style={{
+                                        margin: 0,
                                         color:
                                             "white",
                                         fontSize:
-                                            "20px",
+                                            "24px",
                                         fontWeight:
                                             "800",
                                     }}
@@ -831,21 +1036,22 @@ export default function MenusOwner() {
                                     {editingId
                                         ? "Edit Menu"
                                         : "Add Menu"}
-                                </div>
+                                </h2>
 
-                                <div
+                                <p
                                     style={{
+                                        margin:
+                                            "6px 0 0",
                                         color:
                                             "#94a3b8",
                                         fontSize:
                                             "13px",
-                                        marginTop:
-                                            "4px",
                                     }}
                                 >
-                                    Fill menu
+                                    Complete
+                                    menu
                                     information
-                                </div>
+                                </p>
                             </div>
 
                             <button
@@ -862,11 +1068,11 @@ export default function MenusOwner() {
                                     border:
                                         "none",
                                     borderRadius:
-                                        "10px",
+                                        "12px",
                                     background:
-                                        "rgba(148,163,184,0.08)",
+                                        "rgba(255,255,255,0.06)",
                                     color:
-                                        "#94a3b8",
+                                        "#cbd5e1",
                                     display:
                                         "flex",
                                     alignItems:
@@ -883,8 +1089,6 @@ export default function MenusOwner() {
                             </button>
                         </div>
 
-                        {/* FORM */}
-
                         <form
                             onSubmit={
                                 handleSubmit
@@ -892,7 +1096,7 @@ export default function MenusOwner() {
                         >
                             <input
                                 type="text"
-                                placeholder="Menu name"
+                                placeholder="Menu Name"
                                 value={
                                     form.name
                                 }
@@ -946,12 +1150,15 @@ export default function MenusOwner() {
                                 onChange={(
                                     e
                                 ) =>
-                                    setForm({
-                                        ...form,
-                                        category:
-                                            e.target
-                                                .value,
-                                    })
+                                    setForm(
+                                        {
+                                            ...form,
+                                            category:
+                                                e
+                                                    .target
+                                                    .value,
+                                        }
+                                    )
                                 }
                                 style={
                                     inputStyle
@@ -967,12 +1174,15 @@ export default function MenusOwner() {
                                 onChange={(
                                     e
                                 ) =>
-                                    setForm({
-                                        ...form,
-                                        stock:
-                                            e.target
-                                                .value,
-                                    })
+                                    setForm(
+                                        {
+                                            ...form,
+                                            stock:
+                                                e
+                                                    .target
+                                                    .value,
+                                        }
+                                    )
                                 }
                                 style={
                                     inputStyle
@@ -1000,11 +1210,11 @@ export default function MenusOwner() {
                                 style={{
                                     ...inputStyle,
                                     height:
-                                        "100px",
+                                        "110px",
                                     resize:
                                         "none",
                                     paddingTop:
-                                        "12px",
+                                        "14px",
                                 }}
                             />
 
@@ -1025,13 +1235,13 @@ export default function MenusOwner() {
                                 }
                                 style={{
                                     marginTop:
-                                        "14px",
+                                        "16px",
                                     color:
                                         "#cbd5e1",
+                                    fontSize:
+                                        "13px",
                                 }}
                             />
-
-                            {/* FOOTER */}
 
                             <div
                                 style={{
@@ -1055,13 +1265,13 @@ export default function MenusOwner() {
                                         height:
                                             "42px",
                                         padding:
-                                            "0 16px",
+                                            "0 18px",
                                         border:
                                             "none",
                                         borderRadius:
-                                            "10px",
+                                            "12px",
                                         background:
-                                            "rgba(148,163,184,0.08)",
+                                            "rgba(255,255,255,0.06)",
                                         color:
                                             "#cbd5e1",
                                         fontWeight:
@@ -1083,13 +1293,13 @@ export default function MenusOwner() {
                                         border:
                                             "none",
                                         borderRadius:
-                                            "10px",
+                                            "12px",
                                         background:
                                             "linear-gradient(135deg,#2563eb,#1d4ed8)",
                                         color:
                                             "white",
                                         fontWeight:
-                                            "700",
+                                            "800",
                                         cursor:
                                             "pointer",
                                     }}
@@ -1107,16 +1317,138 @@ export default function MenusOwner() {
     );
 }
 
+/* =========================
+   STAT CARD
+========================= */
+
+function StatCard({
+    title,
+    subtitle,
+    value,
+    icon,
+    color,
+}) {
+    return (
+        <div
+            style={{
+                background:
+                    "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(15,23,42,0.92))",
+                border: `1px solid ${color}35`,
+                borderRadius:
+                    "20px",
+                padding:
+                    "18px",
+                overflow:
+                    "hidden",
+                position:
+                    "relative",
+                minHeight:
+                    "120px",
+                boxShadow:
+                    "0 12px 28px rgba(0,0,0,0.24)",
+            }}
+        >
+            <div
+                style={{
+                    position:
+                        "absolute",
+                    top: "-70px",
+                    right: "-70px",
+                    width: "150px",
+                    height:
+                        "150px",
+                    background: `${color}18`,
+                    filter:
+                        "blur(50px)",
+                }}
+            />
+
+            <div
+                style={{
+                    position:
+                        "relative",
+                    zIndex: 2,
+                }}
+            >
+                <div
+                    style={{
+                        width: "52px",
+                        height:
+                            "52px",
+                        borderRadius:
+                            "16px",
+                        background: `${color}18`,
+                        border: `1px solid ${color}40`,
+                        display:
+                            "flex",
+                        alignItems:
+                            "center",
+                        justifyContent:
+                            "center",
+                        color,
+                        marginBottom:
+                            "14px",
+                    }}
+                >
+                    {icon}
+                </div>
+
+                <div
+                    style={{
+                        color:
+                            "#cbd5e1",
+                        fontSize:
+                            "13px",
+                        marginBottom:
+                            "6px",
+                    }}
+                >
+                    {title}
+                </div>
+
+                <div
+                    style={{
+                        color:
+                            "white",
+                        fontSize:
+                            "32px",
+                        fontWeight:
+                            "900",
+                        lineHeight:
+                            "1",
+                    }}
+                >
+                    {value}
+                </div>
+
+                <div
+                    style={{
+                        marginTop:
+                            "6px",
+                        color:
+                            "#94a3b8",
+                        fontSize:
+                            "12px",
+                    }}
+                >
+                    {subtitle}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 const inputStyle = {
     width: "100%",
-    height: "46px",
+    height: "44px",
     borderRadius: "12px",
-    border: "1px solid rgba(148,163,184,0.08)",
+    border:
+        "1px solid rgba(59,130,246,0.14)",
     background: "#0f172a",
     padding: "0 14px",
     color: "white",
     marginTop: "14px",
     outline: "none",
     boxSizing: "border-box",
-    fontSize: "13px",
+    fontSize: "14px",
 };
