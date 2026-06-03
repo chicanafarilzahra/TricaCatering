@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Http\Controllers\AdminMenuController;
 use App\Http\Controllers\AdminClientController;
 use App\Http\Controllers\AdminStockController;
+use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\OrderController;
 
@@ -44,6 +45,24 @@ Route::post('/login', function (Request $request) {
         ], 401);
     }
 
+    if ($user->status === 'pending') {
+
+    return response()->json([
+        'message' =>
+            'Akun Anda masih menunggu validasi admin'
+    ], 403);
+
+}
+
+if ($user->status === 'rejected') {
+
+    return response()->json([
+        'message' =>
+            'Pendaftaran Anda ditolak admin'
+    ], 403);
+
+}
+
     $token = $user
         ->createToken('auth-token')
         ->plainTextToken;
@@ -58,35 +77,43 @@ Route::post('/register', function (Request $request) {
 
     $request->validate([
 
-        'name' =>
-            'required|string|max:255',
+    'name' =>
+        'required|string|max:255',
 
-        'email' =>
-            'required|email|unique:users,email',
+    'email' =>
+        'required|email|unique:users,email',
 
-        'password' =>
-            'required|string|min:6|confirmed',
+    'password' =>
+        'required|string|min:6|confirmed',
 
-        'role' =>
-            'required|in:owner,klien,kurir,operator_sppg',
-    ]);
+    'role' =>
+        'required|in:owner,klien,kurir,operator_sppg',
 
-    $user = User::create([
-        'name' =>
-            $request->name,
+    'nama_catering' =>
+        'nullable|string|max:255',
 
-        'email' =>
-            $request->email,
+    'alamat_catering' =>
+        'nullable|string',
+]);
 
-        'password' =>
-            Hash::make(
-                $request->password
-            ),
+    $status =
+    $request->role === 'klien'
+        ? 'approved'
+        : 'pending';
 
-        'role' =>
-            $request->role,
-    ]);
-
+$user = User::create([
+    'name' => $request->name,
+    'email' => $request->email,
+    'password' => Hash::make(
+        $request->password
+    ),
+    'role' => $request->role,
+    'nama_catering' =>
+        $request->nama_catering,
+    'alamat_catering' =>
+        $request->alamat_catering,
+    'status' => $status,
+]);
     return response()->json([
         'message' =>
             'Register berhasil',
@@ -156,6 +183,20 @@ Route::get(
     [OrderController::class, 'reports']
 );
 
+Route::get(
+    '/users',
+    [AdminUserController::class, 'index']
+);
+
+Route::put(
+    '/users/{id}/approve',
+    [AdminUserController::class, 'approve']
+);
+
+Route::put(
+    '/users/{id}/reject',
+    [AdminUserController::class, 'reject']
+);
 /*
 |--------------------------------------------------------------------------
 | KURIR

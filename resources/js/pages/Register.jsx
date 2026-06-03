@@ -27,11 +27,11 @@ export default function Register() {
     const [role, setRole] =
         useState("klien");
 
-    // TAMBAHAN
-    const [
-        alamatCatering,
-        setAlamatCatering,
-    ] = useState("");
+    const [namaCatering, setNamaCatering] =
+        useState("");
+
+    const [alamatCatering, setAlamatCatering,] = 
+        useState("");
 
     const [message, setMessage] =
         useState("");
@@ -57,7 +57,11 @@ export default function Register() {
                             passwordConfirmation,
                         role,
 
-                        // TAMBAHAN
+                        nama_catering:
+                            role === "owner"
+                                ? namaCatering
+                                : null,
+
                         alamat_catering:
                             role === "owner"
                                 ? alamatCatering
@@ -492,74 +496,71 @@ export default function Register() {
                     </div>
 
                     {/* TAMBAHAN ALAMAT CATERING */}
-                    {role ===
-                        "owner" && (
-                        <div
-                            style={{
-                                marginBottom:
-                                    "24px",
-                            }}
-                        >
-                            <label
-                                style={
-                                    labelStyle
-                                }
-                            >
-                                Alamat
-                                Catering
-                            </label>
+{role === "owner" && (
+    <>
+        <div
+            style={{
+                marginBottom: "18px",
+            }}
+        >
+            <label style={labelStyle}>
+                Nama Catering
+            </label>
 
-                            <textarea
-                                placeholder="Masukkan alamat catering"
-                                value={
-                                    alamatCatering
-                                }
-                                onChange={(
-                                    e
-                                ) =>
-                                    setAlamatCatering(
-                                        e
-                                            .target
-                                            .value
-                                    )
-                                }
-                                required
-                                style={{
-                                    width:
-                                        "100%",
+            <input
+                type="text"
+                placeholder="Masukkan nama catering"
+                value={namaCatering}
+                onChange={(e) =>
+                    setNamaCatering(
+                        e.target.value
+                    )
+                }
+                required
+                style={inputStyle}
+            />
+        </div>
 
-                                    minHeight:
-                                        "120px",
+        <div
+            style={{
+                marginBottom: "24px",
+            }}
+        >
+            <label style={labelStyle}>
+                Alamat Catering
+            </label>
 
-                                    border:
-                                        "1px solid rgba(255,255,255,0.08)",
-
-                                    borderRadius:
-                                        "14px",
-
-                                    padding:
-                                        "16px",
-
-                                    fontSize:
-                                        "14px",
-
-                                    outline:
-                                        "none",
-
-                                    background:
-                                        "#0f172a",
-
-                                    color:
-                                        "#ffffff",
-
-                                    boxSizing:
-                                        "border-box",
-
-                                    resize:
-                                        "vertical",
-                                }}
-                            />
-                        </div>
+            <textarea
+                placeholder="Masukkan alamat catering"
+                value={alamatCatering}
+                onChange={(e) =>
+                    setAlamatCatering(
+                        e.target.value
+                    )
+                }
+                required
+                style={{
+                    width: "100%",
+                    minHeight: "120px",
+                    border:
+                        "1px solid rgba(255,255,255,0.08)",
+                    borderRadius:
+                        "14px",
+                    padding: "16px",
+                    fontSize: "14px",
+                    outline: "none",
+                    background:
+                        "#0f172a",
+                    color:
+                        "#ffffff",
+                    boxSizing:
+                        "border-box",
+                    resize:
+                        "vertical",
+                }}
+            />
+        </div>
+    </>
                     )}
 
                     {/* BUTTON */}
