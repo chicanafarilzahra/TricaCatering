@@ -563,7 +563,7 @@ export default function LandingPage() {
                       fontWeight: "800",
                     }}
                   >
-                    {menu.nama_menu ||
+                    {menu.name ||
                       "Menu Catering"}
                   </h3>
 
@@ -576,7 +576,7 @@ export default function LandingPage() {
                       minHeight: "48px",
                     }}
                   >
-                    {menu.deskripsi ||
+                    {menu.description ||
                       "Menu catering tersedia"}
                   </p>
 
