@@ -17,7 +17,6 @@ import {
 } from "react-icons/fa";
 
 import axios from "axios";
-import SidebarKlien from "../../components/SidebarKlien";
 import NavbarKlien from "../../components/NavbarKlien";
 
 import {
@@ -347,34 +346,32 @@ export default function PesanMakan() {
     return (
         <div
             style={{
-                width: "100vw",
-                height: "100vh",
-                display: "flex",
-                overflow: "hidden",
+                width: "100%",
+                minHeight: "100vh",
                 background: "#071028",
                 fontFamily:
                     '"Times New Roman", serif',
                 fontWeight: "700",
             }}
         >
-            <SidebarKlien />
 
-            <div
-                style={{
-                    flex: 1,
-                    display: "flex",
-                    flexDirection: "column",
-                    overflow: "hidden",
-                }}
-            >
+          <div
+            style={{
+                width: "100%",
+                display: "flex",
+                flexDirection: "column",
+            }}
+        >
                 <NavbarKlien title="Pesan Makan" />
 
                 <div
                     className="hide-scrollbar"
                     style={{
-                        flex: 1,
+                        height: "calc(100vh - 70px)", // sesuaikan tinggi navbar
                         overflowY: "auto",
                         padding: "22px",
+                        scrollbarWidth: "none", // Firefox
+                        msOverflowStyle: "none", // IE & Edge lama
                     }}
                 >
                     {/* ================================================= */}
@@ -1218,13 +1215,19 @@ export default function PesanMakan() {
                     }
 
                     body{
-                        overflow:hidden;
+                        overflow:auto;
                         background:#071028;
                     }
+                    .hide-scrollbar{
+                            scrollbar-width:none;
+                            -ms-overflow-style:none;
+                        }
 
-                    .hide-scrollbar::-webkit-scrollbar{
-                        display:none;
-                    }
+                        .hide-scrollbar::-webkit-scrollbar{
+                            width:0;
+                            height:0;
+                            display:none;
+                        }
                 `}
             </style>
         </div>

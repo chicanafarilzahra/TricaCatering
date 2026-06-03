@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-import SidebarKlien from "../../components/SidebarKlien";
 import NavbarKlien from "../../components/NavbarKlien";
 
 import {
@@ -90,40 +89,36 @@ export default function UlasanKlien() {
   };
 
   return (
+  <div
+    style={{
+      width: "100%",
+      minHeight: "100vh",
+      background: "#071028",
+    }}
+  >
     <div
       style={{
+        width: "100%",
         display: "flex",
-        height: "100vh",
-        background: "#071028",
-        overflow: "hidden",
+        flexDirection: "column",
       }}
     >
-      {/* SIDEBAR */}
-      <SidebarKlien />
 
-      {/* MAIN */}
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          minWidth: 0,
-          height: "100vh",
-          overflow: "hidden",
-        }}
-      >
         {/* NAVBAR */}
         <NavbarKlien title="Ulasan & Komplain" />
 
         {/* CONTENT */}
         <div
+          className="hide-scrollbar"
           style={{
             flex: 1,
             overflowY: "auto",
             padding: "30px",
             boxSizing: "border-box",
+            height: "calc(100vh - 80px)",
           }}
         >
+          
           {/* HEADER */}
           <div style={{ marginBottom: "28px" }}>
             <h1
@@ -378,7 +373,32 @@ export default function UlasanKlien() {
           </div>
         </div>
       </div>
+            <style>
+        {`
+          *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+          }
+
+          body{
+            background:#071028;
+          }
+
+          .hide-scrollbar{
+            scrollbar-width:none;
+            -ms-overflow-style:none;
+          }
+
+          .hide-scrollbar::-webkit-scrollbar{
+            display:none;
+            width:0;
+            height:0;
+          }
+        `}
+      </style>
     </div>
+    
   );
 }
 
