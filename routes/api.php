@@ -276,10 +276,15 @@ Route::get(
     [KlienController::class, 'PesanMakan']
 );
 
+Route::get('/klien/menus', function () {
+    return \App\Models\Menu::where('is_active', true)->get();
+});
+
 Route::post('klien/orders', [KlienController::class, 'storePesanan']);
 Route::get('klien/orders', [KlienController::class, 'pesananSaya']); // histori
 Route::post('/kurir/update-lokasi', [CourierController::class, 'updateLocation']);
 Route::get('/klien/lacak/{order_id}', [TrackingController::class, 'show']);
+
 
 /*
 |--------------------------------------------------------------------------

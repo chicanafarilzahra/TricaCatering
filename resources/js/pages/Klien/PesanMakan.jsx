@@ -73,71 +73,6 @@ const cateringTypes = [
     },
 ];
 
-const dummyMenus = {
-    harian: [
-        {
-            id: 1,
-            name: "Nasi Ayam Geprek",
-            price: 28000,
-            owner: "Dapur Nusantara",
-            ownerAddress:
-                "Jl. Raya Darmo No. 88 Surabaya",
-            detail:
-                "Nasi hangat, ayam geprek crispy, sambal bawang pedas, lalapan segar dan kerupuk.",
-            image:
-                "https://images.unsplash.com/photo-1512058564366-18510be2db19?q=80&w=1200&auto=format&fit=crop",
-            cateringLat: -7.284905,
-            cateringLng: 112.739792,
-        },
-
-        {
-            id: 2,
-            name: "Nasi Rawon",
-            price: 32000,
-            owner: "Catering Bu Rina",
-            ownerAddress:
-                "Jl. Ahmad Yani No. 12 Surabaya",
-            detail:
-                "Rawon khas Surabaya dengan daging empuk, telur asin dan sambal.",
-            image:
-                "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1200&auto=format&fit=crop",
-            cateringLat: -7.3101,
-            cateringLng: 112.729,
-        },
-    ],
-
-    insidentil: [
-        {
-            id: 3,
-            name: "Sate Ayam",
-            price: 45000,
-            owner: "Sate Nusantara",
-            ownerAddress:
-                "Jl. Ketintang No. 45 Surabaya",
-            detail:
-                "Sate ayam bumbu kacang premium lengkap dengan lontong dan acar.",
-            image:
-                "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=1200&auto=format&fit=crop",
-            cateringLat: -7.3005,
-            cateringLng: 112.715,
-        },
-
-        {
-            id: 4,
-            name: "Bakso Premium",
-            price: 30000,
-            owner: "Bakso Sultan",
-            ownerAddress:
-                "Jl. Wonokromo No. 90 Surabaya",
-            detail:
-                "Bakso premium isi daging jumbo dengan kuah kaldu sapi spesial.",
-            image:
-                "https://images.unsplash.com/photo-1547592180-85f173990554?q=80&w=1200&auto=format&fit=crop",
-            cateringLat: -7.2952,
-            cateringLng: 112.736,
-        },
-    ],
-};
 
 /*
 |--------------------------------------------------------------------------
@@ -151,6 +86,8 @@ export default function PesanMakan() {
 
     const [selectedMenu, setSelectedMenu] =
         useState(null);
+    
+    const [menus, setMenus] = useState([]);
 
     const [clientLocation, setClientLocation] =
         useState(null);
@@ -163,16 +100,33 @@ export default function PesanMakan() {
     
     const [routeCoords, setRouteCoords] =
     useState([]);
+    
 
     const [form, setForm] = useState({
-        nama: "",
-        alamat: "",
-        jumlah: "",
-        durasi: "",
-        tanggal: "",
-        tema: "",
-        catatan: "",
-    });
+    nama: "",
+    alamat: "",
+    jumlah: "",
+    durasi: "",
+    tanggal: "",
+    tema: "",
+    catatan: "",
+});
+
+const loadMenus = async () => {
+    try {
+        const res = await axios.get(
+            "/api/klien/menus"
+        );
+
+        setMenus(res.data);
+    } catch (error) {
+        console.log(error);
+    }
+};
+
+useEffect(() => {
+    loadMenus();
+}, []);
 
     /*
     |--------------------------------------------------------------------------
@@ -570,12 +524,13 @@ export default function PesanMakan() {
                                         gap: "22px",
                                     }}
                                 >
-                                    {dummyMenus[
-                                        selectedType
-                                    ].map(
-                                        (
-                                            menu
-                                        ) => (
+                                   {menus
+                                    .filter(
+                                        (menu) =>
+                                            menu.category?.toLowerCase() ===
+                                            selectedType.toLowerCase()
+                                    )
+                                    .map((menu) => (
                                             <div
                                                 key={
                                                     menu.id
@@ -592,6 +547,8 @@ export default function PesanMakan() {
                                                 <img
                                                     src={
                                                         menu.image
+                                                            ? `/storage/${menu.image}`
+                                                            : "/no-image.png"
                                                     }
                                                     alt=""
                                                     style={{
@@ -751,49 +708,8 @@ export default function PesanMakan() {
                                                 "20px",
                                         }}
                                     >
-                                        {
-                                            selectedMenu.detail
-                                        }
+                                        {selectedMenu.description}
                                     </p>
-
-                                    <div
-                                        style={{
-                                            color:
-                                                "#94a3b8",
-                                            marginBottom:
-                                                "12px",
-                                            display:
-                                                "flex",
-                                            gap: "10px",
-                                            alignItems:
-                                                "center",
-                                        }}
-                                    >
-                                        <FaUserTie />
-                                        Owner :{" "}
-                                        {
-                                            selectedMenu.owner
-                                        }
-                                    </div>
-
-                                    <div
-                                        style={{
-                                            color:
-                                                "#94a3b8",
-                                            marginBottom:
-                                                "28px",
-                                            display:
-                                                "flex",
-                                            gap: "10px",
-                                            alignItems:
-                                                "center",
-                                        }}
-                                    >
-                                        <FaMapMarkerAlt />
-                                        {
-                                            selectedMenu.ownerAddress
-                                        }
-                                    </div>
 
                                     {/* FORM */}
                                     <div
