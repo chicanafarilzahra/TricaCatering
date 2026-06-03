@@ -33,6 +33,12 @@ export default function Register() {
     const [alamatCatering, setAlamatCatering,] = 
         useState("");
 
+    const [namaSppg, setNamaSppg] =
+        useState("");
+
+    const [alamatSppg, setAlamatSppg] =
+        useState("");
+
     const [message, setMessage] =
         useState("");
 
@@ -65,6 +71,16 @@ export default function Register() {
                         alamat_catering:
                             role === "owner"
                                 ? alamatCatering
+                                : null,
+                        
+                        nama_sppg:
+                            role === "operator_sppg"
+                                ? namaSppg
+                                : null,
+
+                        alamat_sppg:
+                            role === "operator_sppg"
+                                ? alamatSppg
                                 : null,
                     }
                 );
@@ -118,7 +134,7 @@ export default function Register() {
             setLoading(false);
         }
     };
-
+    console.log("ROLE =", role);
     return (
         <div
             style={{
@@ -562,6 +578,73 @@ export default function Register() {
         </div>
     </>
                     )}
+
+                    {role === "operator_sppg" && (
+    <>
+        <div
+            style={{
+                marginBottom: "18px",
+            }}
+        >
+            <label style={labelStyle}>
+                Nama SPPG
+            </label>
+
+            <input
+                type="text"
+                placeholder="Masukkan nama SPPG"
+                value={namaSppg}
+                onChange={(e) =>
+                    setNamaSppg(
+                        e.target.value
+                    )
+                }
+                required
+                style={inputStyle}
+            />
+        </div>
+
+        <div
+            style={{
+                marginBottom: "24px",
+            }}
+        >
+            <label style={labelStyle}>
+                Alamat SPPG
+            </label>
+
+            <textarea
+                placeholder="Masukkan alamat SPPG"
+                value={alamatSppg}
+                onChange={(e) =>
+                    setAlamatSppg(
+                        e.target.value
+                    )
+                }
+                required
+                style={{
+                    width: "100%",
+                    minHeight: "120px",
+                    border:
+                        "1px solid rgba(255,255,255,0.08)",
+                    borderRadius:
+                        "14px",
+                    padding: "16px",
+                    fontSize: "14px",
+                    outline: "none",
+                    background:
+                        "#0f172a",
+                    color:
+                        "#ffffff",
+                    boxSizing:
+                        "border-box",
+                    resize:
+                        "vertical",
+                }}
+            />
+        </div>
+    </>
+)}
 
                     {/* BUTTON */}
                     <button

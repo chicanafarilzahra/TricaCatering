@@ -19,6 +19,9 @@ class User extends Authenticatable
     'nama_catering',
     'alamat_catering',
     'status',
+
+    'nama_sppg',
+    'alamat_sppg',
 ];
 
     protected $hidden = [

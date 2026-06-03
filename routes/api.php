@@ -96,6 +96,12 @@ Route::post('/register', function (Request $request) {
 
     'alamat_catering' =>
         'nullable|string',
+
+    'nama_sppg' =>
+        'nullable|string|max:255',
+
+    'alamat_sppg' =>
+        'nullable|string',
 ]);
 
     $status =
@@ -115,6 +121,12 @@ $user = User::create([
     'alamat_catering' =>
         $request->alamat_catering,
     'status' => $status,
+    
+    'nama_sppg' =>
+        $request->nama_sppg,
+
+    'alamat_sppg' =>
+        $request->alamat_sppg,
 ]);
     return response()->json([
         'message' =>

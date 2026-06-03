@@ -525,19 +525,13 @@ export default function LandingPage() {
             menus.slice(0, 6).map((menu) => (
 
               <div
-  key={menu.id}
-  className="glass floating-card"
-  style={{
-    borderRadius: "24px",
-    overflow: "hidden",
-
-    display: "flex",
-    flexDirection: "column",
-
-    height: "100%",
-    minHeight: "540px",
-  }}
->
+                key={menu.id}
+                className="glass floating-card"
+                style={{
+                  borderRadius: "24px",
+                  overflow: "hidden",
+                }}
+              >
 
                 {/* IMAGE */}
                 <img
