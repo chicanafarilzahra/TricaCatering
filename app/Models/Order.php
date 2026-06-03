@@ -7,31 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 class Order extends Model
 {
     protected $fillable = [
-
-        'client_id',
-
-        'package_id',
-
-        'total_price',
-
-        'delivery_date',
-
-        'status',
+        'client_id','type','menu_id','quantity','duration','event_date','theme','notes',
+        'address','lat','lng','total_price','courier_fee','status'
     ];
 
-
-    public function client()
-    {
-        return $this->belongsTo(
-            Client::class
-        );
+    public function courierLocation() {
+        return $this->hasOne(CourierLocation::class);
     }
 
-
-    public function package()
-    {
-        return $this->belongsTo(
-            Package::class
-        );
+    public function menu() {
+        return $this->belongsTo(Menu::class);
     }
 }

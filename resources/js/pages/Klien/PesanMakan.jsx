@@ -16,6 +16,7 @@ import {
     FaUserTie,
 } from "react-icons/fa";
 
+import axios from "axios";
 import SidebarKlien from "../../components/SidebarKlien";
 import NavbarKlien from "../../components/NavbarKlien";
 
@@ -1161,28 +1162,42 @@ export default function PesanMakan() {
 
                                         <button
                                             style={{
-                                                height:
-                                                    "58px",
-                                                border:
-                                                    "none",
-                                                borderRadius:
-                                                    "18px",
-                                                background:
-                                                    "linear-gradient(90deg,#2563eb,#3b82f6)",
-                                                color:
-                                                    "#fff",
-                                                fontSize:
-                                                    "16px",
-                                                cursor:
-                                                    "pointer",
+                                                height: "58px",
+                                                border: "none",
+                                                borderRadius: "18px",
+                                                background: "linear-gradient(90deg,#2563eb,#3b82f6)",
+                                                color: "#fff",
+                                                fontSize: "16px",
+                                                cursor: "pointer",
+                                            }}
+                                            onClick={async () => {
+                                                if (!selectedMenu) return;
+
+                                                try {
+                                                    const res = await axios.post('/api/klien/orders', {
+                                                        type: selectedType,
+                                                        menu_id: selectedMenu.id,
+                                                        quantity: form.jumlah,
+                                                        duration: selectedType === 'harian' ? form.durasi : null,
+                                                        event_date: selectedType === 'insidentil' ? form.tanggal : null,
+                                                        theme: selectedType === 'insidentil' ? form.tema : null,
+                                                        notes: form.catatan,
+                                                        address: form.alamat,
+                                                        lat: clientLocation.lat,
+                                                        lng: clientLocation.lng,
+                                                        total_price: selectedType === 'harian' ? totalHarian : totalInsidentil,
+                                                        courier_fee: courierFee,
+                                                    });
+
+                                                    alert('Pesanan berhasil dibuat!');
+                                                    // redirect ke invoice atau reset form
+                                                } catch (err) {
+                                                    console.error(err);
+                                                    alert('Gagal membuat pesanan.');
+                                                }
                                             }}
                                         >
-                                            <FaShoppingCart />
-                                            {"  "}
-                                            {selectedType ===
-                                            "harian"
-                                                ? "Kirim Pesanan Harian"
-                                                : "Ajukan Pesanan Insidentil"}
+                                            <FaShoppingCart /> {selectedType === "harian" ? "Kirim Pesanan Harian" : "Ajukan Pesanan Insidentil"}
                                         </button>
                                     </div>
                                 </div>

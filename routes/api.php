@@ -16,6 +16,8 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\KurirController;
 use App\Http\Controllers\LaporanHarianController;
 use App\Http\Controllers\KlienController;
+use App\Http\Controllers\Api\CourierController;
+use App\Http\Controllers\Api\TrackingController;
 
 use App\Http\Controllers\Api\OwnerMenuController;
 
@@ -261,6 +263,11 @@ Route::get(
     'klien/pesan',
     [KlienController::class, 'PesanMakan']
 );
+
+Route::post('klien/orders', [KlienController::class, 'storePesanan']);
+Route::get('klien/orders', [KlienController::class, 'pesananSaya']); // histori
+Route::post('/kurir/update-lokasi', [CourierController::class, 'updateLocation']);
+Route::get('/klien/lacak/{order_id}', [TrackingController::class, 'show']);
 
 /*
 |--------------------------------------------------------------------------

@@ -3,388 +3,453 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-import SidebarKlien from "../../components/SidebarKlien";
 import NavbarKlien from "../../components/NavbarKlien";
 
 import {
-    FaClipboardList,
-    FaClock,
-    FaTruck,
-    FaCheckCircle,
+  FaClipboardList,
+  FaTruck,
+  FaClock,
+  FaCheckCircle,
+  FaUtensils,
+  FaWallet,
 } from "react-icons/fa";
 
 export default function HomeKlien() {
-    const [user, setUser] = useState(null);
-    const [orders, setOrders] = useState([]);
+  const [user, setUser] = useState(null);
+  const [orders, setOrders] = useState([]);
 
-    useEffect(() => {
-        document.body.style.margin = "0";
-        document.body.style.overflow = "hidden";
-        document.documentElement.style.overflow = "hidden";
+  useEffect(() => {
+    document.body.style.margin = "0";
+    document.body.style.background = "#020817";
 
-        const storedUser = localStorage.getItem("user");
+    const storedUser =
+      localStorage.getItem("user");
 
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
-        }
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
 
-        axios
-            .get("/api/klien/pesanan")
-            .then((res) => {
-                setOrders(res.data || []);
-            })
-            .catch((err) => {
-                console.error(err);
-            });
+    axios
+      .get("/api/klien/pesanan")
+      .then((res) => {
+        setOrders(res.data || []);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  }, []);
 
-        return () => {
-            document.body.style.overflow = "auto";
-            document.documentElement.style.overflow = "auto";
-        };
-    }, []);
+  const activeOrders = orders.filter((item) =>
+    [
+      "pending",
+      "confirmed",
+      "on_delivery",
+    ].includes(item.status)
+  );
 
-    const activeOrders = orders.filter((o) =>
-        ["pending", "confirmed", "on_delivery"].includes(o.status)
-    );
+  const selesai = orders.filter(
+    (item) => item.status === "delivered"
+  );
 
-    const latestOrder = orders[0];
+  const totalTransaksi = orders.reduce(
+    (sum, item) =>
+      sum + Number(item.total_price || 0),
+    0
+  );
 
-    const estimasi = latestOrder?.delivery_time || "-";
+  return (
+    <div
+      style={{
+        width: "100%",
+        minHeight: "100vh",
+        background: "#020817",
+      }}
+    >
+      <NavbarKlien />
 
-    const subscriptionLeft =
-        user?.subscription_days || 0;
+      <div
+        style={{
+          padding: "30px",
+        }}
+      >
+        {/* HERO */}
 
-    return (
         <div
-            style={{
-                width: "100vw",
-                height: "100vh",
-                display: "flex",
-                overflow: "hidden",
-                background: "#071028",
-            }}
+          style={{
+            background:
+              "linear-gradient(135deg,#0f172a,#1e3a8a)",
+            borderRadius: "30px",
+            padding: "40px",
+            marginBottom: "30px",
+            color: "white",
+            border:
+              "1px solid rgba(255,255,255,.05)",
+          }}
         >
-            {/* SIDEBAR */}
-            <SidebarKlien />
+          <h1
+            style={{
+              fontSize: "42px",
+              margin: 0,
+              fontWeight: "800",
+            }}
+          >
+            Selamat Datang,
+            {" "}
+            {user?.name || "Klien"} 👋
+          </h1>
 
-            {/* MAIN */}
-            <div
-                style={{
-                    flex: 1,
-                    height: "100vh",
-                    display: "flex",
-                    flexDirection: "column",
-                    overflow: "hidden",
-                    background: "#071028",
-                }}
-            >
-                {/* NAVBAR */}
-                <NavbarKlien title="Dashboard Klien" />
-
-                {/* CONTENT */}
-                <div
-                    className="hide-scrollbar"
-                    style={{
-                        flex: 1,
-                        overflowY: "auto",
-                        overflowX: "hidden",
-                        padding: "22px",
-                        boxSizing: "border-box",
-                        scrollbarWidth: "none",
-                        msOverflowStyle: "none",
-                    }}
-                >
-                    {/* HERO */}
-                    <div
-                        style={{
-                            background:
-                                "linear-gradient(135deg,#17306a 0%,#1f3f8b 100%)",
-                            borderRadius: "22px",
-                            padding: "28px",
-                            marginBottom: "22px",
-                            border:
-                                "1px solid rgba(255,255,255,0.05)",
-                            color: "#fff",
-                        }}
-                    >
-                        <h1
-                            style={{
-                                margin: 0,
-                                fontSize: "36px",
-                                fontWeight: "800",
-                                lineHeight: 1.2,
-                            }}
-                        >
-                            Selamat Datang,{" "}
-                            {user?.name || "Klien"}
-                        </h1>
-
-                        <p
-                            style={{
-                                marginTop: "12px",
-                                color: "rgba(255,255,255,0.75)",
-                                fontSize: "15px",
-                                maxWidth: "700px",
-                                lineHeight: 1.6,
-                            }}
-                        >
-                            Pesan catering harian dengan mudah
-                            langsung dari dashboard klien.
-                            Pantau status pesanan, proses
-                            pengiriman, dan riwayat transaksi
-                            secara real-time dalam satu tempat.
-                        </p>
-                    </div>
-
-                    {/* STAT CARD */}
-                    <div
-                        style={{
-                            display: "grid",
-                            gridTemplateColumns:
-                                "repeat(auto-fit,minmax(220px,1fr))",
-                            gap: "18px",
-                            marginBottom: "24px",
-                        }}
-                    >
-                        <StatCard
-                            icon={<FaClipboardList />}
-                            title="Pesanan Aktif"
-                            value={activeOrders.length}
-                        />
-
-                        <StatCard
-                            icon={<FaClock />}
-                            title="Estimasi Tiba"
-                            value={estimasi}
-                        />
-
-                        <StatCard
-                            icon={<FaTruck />}
-                            title="Sisa Langganan"
-                            value={subscriptionLeft}
-                        />
-                    </div>
-
-                    {/* STATUS */}
-                    <div
-                        style={{
-                            background: "#182338",
-                            borderRadius: "22px",
-                            overflow: "hidden",
-                            border:
-                                "1px solid rgba(255,255,255,0.05)",
-                        }}
-                    >
-                        <div
-                            style={{
-                                padding: "20px 24px",
-                                borderBottom:
-                                    "1px solid rgba(255,255,255,0.05)",
-                                fontSize: "22px",
-                                fontWeight: "700",
-                                color: "#fff",
-                            }}
-                        >
-                            🚚 Status Pesanan
-                        </div>
-
-                        <div
-                            style={{
-                                padding: "6px 24px 20px",
-                            }}
-                        >
-                            <TimelineItem
-                                active
-                                title="Pesanan diterima"
-                                subtitle="Pesanan berhasil masuk sistem"
-                            />
-
-                            <TimelineItem
-                                active={
-                                    latestOrder?.status !==
-                                    "pending"
-                                }
-                                title="Pesanan diproses"
-                                subtitle="Makanan sedang disiapkan"
-                            />
-
-                            <TimelineItem
-                                progress={
-                                    latestOrder?.status ===
-                                    "on_delivery"
-                                }
-                                title="Dalam perjalanan"
-                                subtitle={`Estimasi tiba ${estimasi}`}
-                            />
-
-                            <TimelineItem
-                                title="Pesanan diterima"
-                                subtitle="Menunggu kurir tiba"
-                            />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <style>
-                {`
-                    .hide-scrollbar::-webkit-scrollbar {
-                        display: none;
-                    }
-                `}
-            </style>
+          <p
+            style={{
+              color: "#cbd5e1",
+              marginTop: "15px",
+              maxWidth: "700px",
+              lineHeight: "1.8",
+            }}
+          >
+            Kelola pesanan catering,
+            pantau pengiriman,
+            lihat invoice dan riwayat
+            transaksi dalam satu dashboard.
+          </p>
         </div>
-    );
+
+        {/* STAT */}
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(auto-fit,minmax(250px,1fr))",
+            gap: "20px",
+            marginBottom: "30px",
+          }}
+        >
+          <StatCard
+            icon={<FaClipboardList />}
+            title="Total Pesanan"
+            value={orders.length}
+          />
+
+          <StatCard
+            icon={<FaTruck />}
+            title="Pesanan Aktif"
+            value={activeOrders.length}
+          />
+
+          <StatCard
+            icon={<FaCheckCircle />}
+            title="Pesanan Selesai"
+            value={selesai.length}
+          />
+
+          <StatCard
+            icon={<FaWallet />}
+            title="Total Transaksi"
+            value={`Rp ${totalTransaksi.toLocaleString(
+              "id-ID"
+            )}`}
+          />
+        </div>
+
+        {/* GRID */}
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "2fr 1fr",
+            gap: "25px",
+          }}
+        >
+          {/* STATUS */}
+
+          <div
+            style={{
+              background: "#0f172a",
+              borderRadius: "25px",
+              padding: "25px",
+              border:
+                "1px solid rgba(255,255,255,.05)",
+            }}
+          >
+            <h2
+              style={{
+                color: "white",
+                marginTop: 0,
+                marginBottom: 25,
+              }}
+            >
+              🚚 Status Pesanan
+            </h2>
+
+            <TimelineItem
+              active
+              title="Pesanan Masuk"
+              subtitle="Pesanan berhasil diterima sistem"
+            />
+
+            <TimelineItem
+              active={
+                activeOrders.length > 0
+              }
+              title="Diproses Dapur"
+              subtitle="Makanan sedang disiapkan"
+            />
+
+            <TimelineItem
+              progress={
+                activeOrders.some(
+                  (o) =>
+                    o.status ===
+                    "on_delivery"
+                )
+              }
+              title="Pengiriman"
+              subtitle="Kurir sedang menuju lokasi"
+            />
+
+            <TimelineItem
+              title="Pesanan Sampai"
+              subtitle="Menunggu diterima pelanggan"
+            />
+          </div>
+
+          {/* AKTIVITAS */}
+
+          <div
+            style={{
+              background: "#0f172a",
+              borderRadius: "25px",
+              padding: "25px",
+              border:
+                "1px solid rgba(255,255,255,.05)",
+            }}
+          >
+            <h2
+              style={{
+                color: "white",
+                marginTop: 0,
+                marginBottom: 25,
+              }}
+            >
+              Aktivitas Terbaru
+            </h2>
+
+            {orders.length === 0 ? (
+              <p
+                style={{
+                  color: "#94a3b8",
+                }}
+              >
+                Belum ada aktivitas.
+              </p>
+            ) : (
+              orders
+                .slice(0, 5)
+                .map((item) => (
+                  <div
+                    key={item.id}
+                    style={{
+                      padding: "15px 0",
+                      borderBottom:
+                        "1px solid rgba(255,255,255,.05)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        color: "white",
+                        fontWeight: "700",
+                      }}
+                    >
+                      Pesanan #{item.id}
+                    </div>
+
+                    <div
+                      style={{
+                        color: "#94a3b8",
+                        marginTop: 5,
+                        fontSize: "14px",
+                      }}
+                    >
+                      Status :
+                      {" "}
+                      {item.status}
+                    </div>
+                  </div>
+                ))
+            )}
+          </div>
+        </div>
+
+        {/* MENU CEPAT */}
+
+        <div
+          style={{
+            marginTop: "30px",
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(auto-fit,minmax(280px,1fr))",
+            gap: "20px",
+          }}
+        >
+          <QuickCard
+            icon={<FaUtensils />}
+            title="Pesan Makanan"
+            desc="Pesan menu catering harian dengan cepat."
+          />
+
+          <QuickCard
+            icon={<FaTruck />}
+            title="Tracking Pesanan"
+            desc="Pantau posisi pengiriman secara realtime."
+          />
+
+          <QuickCard
+            icon={<FaClock />}
+            title="Riwayat Pesanan"
+            desc="Lihat seluruh histori transaksi Anda."
+          />
+        </div>
+      </div>
+    </div>
+  );
 }
 
-/* ========================= */
+/* ===================== */
 
 function StatCard({
-    icon,
-    title,
-    value,
+  icon,
+  title,
+  value,
 }) {
-    return (
-        <div
-            style={{
-                background: "#182338",
-                borderRadius: "20px",
-                padding: "22px",
-                border:
-                    "1px solid rgba(255,255,255,0.05)",
-                color: "#fff",
-            }}
-        >
-            <div
-                style={{
-                    width: "58px",
-                    height: "58px",
-                    borderRadius: "18px",
-                    background:
-                        "rgba(59,130,246,0.18)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "#3b82f6",
-                    fontSize: "24px",
-                    marginBottom: "18px",
-                }}
-            >
-                {icon}
-            </div>
+  return (
+    <div
+      style={{
+        background: "#0f172a",
+        borderRadius: "25px",
+        padding: "25px",
+      }}
+    >
+      <div
+        style={{
+          color: "#3b82f6",
+          fontSize: "26px",
+        }}
+      >
+        {icon}
+      </div>
 
-            <div
-                style={{
-                    fontSize: "14px",
-                    color: "#94a3b8",
-                    marginBottom: "8px",
-                }}
-            >
-                {title}
-            </div>
+      <div
+        style={{
+          color: "#94a3b8",
+          marginTop: "15px",
+        }}
+      >
+        {title}
+      </div>
 
-            <div
-                style={{
-                    fontSize: "32px",
-                    fontWeight: "800",
-                    color: "#fff",
-                }}
-            >
-                {value}
-            </div>
-        </div>
-    );
+      <h2
+        style={{
+          color: "white",
+          marginBottom: 0,
+        }}
+      >
+        {value}
+      </h2>
+    </div>
+  );
+}
+
+function QuickCard({
+  icon,
+  title,
+  desc,
+}) {
+  return (
+    <div
+      style={{
+        background: "#0f172a",
+        borderRadius: "25px",
+        padding: "25px",
+      }}
+    >
+      <div
+        style={{
+          color: "#3b82f6",
+          fontSize: "30px",
+        }}
+      >
+        {icon}
+      </div>
+
+      <h3
+        style={{
+          color: "white",
+        }}
+      >
+        {title}
+      </h3>
+
+      <p
+        style={{
+          color: "#94a3b8",
+          lineHeight: 1.8,
+        }}
+      >
+        {desc}
+      </p>
+    </div>
+  );
 }
 
 function TimelineItem({
-    title,
-    subtitle,
-    active,
-    progress,
+  title,
+  subtitle,
+  active,
+  progress,
 }) {
-    return (
+  return (
+    <div
+      style={{
+        display: "flex",
+        gap: "15px",
+        marginBottom: "25px",
+      }}
+    >
+      <div
+        style={{
+          width: "18px",
+          height: "18px",
+          borderRadius: "50%",
+          marginTop: "6px",
+          background: active
+            ? "#3b82f6"
+            : progress
+            ? "#60a5fa"
+            : "#334155",
+        }}
+      />
+
+      <div>
         <div
-            style={{
-                display: "flex",
-                gap: "16px",
-                padding: "18px 0",
-                borderBottom:
-                    "1px solid rgba(255,255,255,0.05)",
-            }}
+          style={{
+            color: "white",
+            fontWeight: "700",
+          }}
         >
-            <div
-                style={{
-                    width: "46px",
-                    height: "46px",
-                    borderRadius: "50%",
-                    background: active
-                        ? "linear-gradient(135deg,#2563eb,#3b82f6)"
-                        : progress
-                        ? "rgba(59,130,246,0.15)"
-                        : "rgba(255,255,255,0.08)",
-                    border: progress
-                        ? "2px solid #3b82f6"
-                        : "none",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    color: "#fff",
-                    fontSize: "16px",
-                }}
-            >
-                {active ? (
-                    <FaCheckCircle />
-                ) : (
-                    <FaTruck />
-                )}
-            </div>
-
-            <div style={{ flex: 1 }}>
-                <div
-                    style={{
-                        fontSize: "17px",
-                        fontWeight: "700",
-                        marginBottom: "4px",
-                        color: "#fff",
-                    }}
-                >
-                    {title}
-                </div>
-
-                <div
-                    style={{
-                        fontSize: "13px",
-                        color: "#94a3b8",
-                    }}
-                >
-                    {subtitle}
-                </div>
-
-                {progress && (
-                    <div
-                        style={{
-                            width: "100%",
-                            height: "7px",
-                            background:
-                                "rgba(255,255,255,0.08)",
-                            borderRadius: "999px",
-                            overflow: "hidden",
-                            marginTop: "14px",
-                        }}
-                    >
-                        <div
-                            style={{
-                                width: "70%",
-                                height: "100%",
-                                background:
-                                    "linear-gradient(90deg,#2563eb,#3b82f6)",
-                                borderRadius: "999px",
-                            }}
-                        />
-                    </div>
-                )}
-            </div>
+          {title}
         </div>
-    );
+
+        <div
+          style={{
+            color: "#94a3b8",
+            marginTop: "5px",
+            fontSize: "14px",
+          }}
+        >
+          {subtitle}
+        </div>
+      </div>
+    </div>
+  );
 }
