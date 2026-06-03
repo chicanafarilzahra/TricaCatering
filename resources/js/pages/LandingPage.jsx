@@ -525,13 +525,19 @@ export default function LandingPage() {
             menus.slice(0, 6).map((menu) => (
 
               <div
-                key={menu.id}
-                className="glass floating-card"
-                style={{
-                  borderRadius: "24px",
-                  overflow: "hidden",
-                }}
-              >
+  key={menu.id}
+  className="glass floating-card"
+  style={{
+    borderRadius: "24px",
+    overflow: "hidden",
+
+    display: "flex",
+    flexDirection: "column",
+
+    height: "100%",
+    minHeight: "540px",
+  }}
+>
 
                 {/* IMAGE */}
                 <img
@@ -549,59 +555,69 @@ export default function LandingPage() {
                 />
 
                 {/* CONTENT */}
-                <div
-                  style={{
-                    padding: "20px",
-                  }}
-                >
+<div
+  style={{
+    padding: "20px",
+    display: "flex",
+    flexDirection: "column",
+    flex: 1,
+  }}
+>
+  {/* NAMA MENU */}
+  <h3
+    style={{
+      fontSize: "22px",
+      marginBottom: "12px",
+      fontWeight: "800",
 
-                  {/* NAMA MENU */}
-                  <h3
-                    style={{
-                      fontSize: "22px",
-                      marginBottom: "12px",
-                      fontWeight: "800",
-                    }}
-                  >
-                    {menu.name ||
-                      "Menu Catering"}
-                  </h3>
+      minHeight: "56px", // samakan area judul
+    }}
+  >
+    {menu.name || "Menu Catering"}
+  </h3>
 
-                  {/* DESKRIPSI */}
-                  <p
-                    style={{
-                      color: "#94a3b8",
-                      lineHeight: "1.7",
-                      marginBottom: "22px",
-                      minHeight: "48px",
-                    }}
-                  >
-                    {menu.description ||
-                      "Menu catering tersedia"}
-                  </p>
+  {/* DESKRIPSI */}
+  <p
+    style={{
+      color: "#94a3b8",
+      lineHeight: "1.7",
 
-                  {/* BUTTON ONLY */}
-                  <Link
-                    to="/login"
-                    style={{
-                      width: "100%",
-                      padding: "14px 18px",
-                      borderRadius: "14px",
-                      background:
-                        "linear-gradient(135deg,#2563eb,#3b82f6)",
-                      color: "white",
-                      textDecoration: "none",
-                      fontWeight: "800",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    Pesan
-                  </Link>
+      flex: 1, // isi ruang kosong
 
-                </div>
-              </div>
+      overflow: "hidden",
+      display: "-webkit-box",
+      WebkitLineClamp: 4,
+      WebkitBoxOrient: "vertical",
+    }}
+  >
+    {menu.description ||
+      "Menu catering tersedia"}
+  </p>
+
+  {/* BUTTON */}
+  <Link
+    to="/login"
+    style={{
+      marginTop: "auto", // dorong ke bawah
+
+      width: "100%",
+      padding: "14px 18px",
+      borderRadius: "14px",
+      background:
+        "linear-gradient(135deg,#2563eb,#3b82f6)",
+      color: "white",
+      textDecoration: "none",
+      fontWeight: "800",
+
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    }}
+  >
+    Pesan
+  </Link>
+</div>
+</div>
 
             ))
 

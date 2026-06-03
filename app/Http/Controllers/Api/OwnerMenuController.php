@@ -18,19 +18,15 @@ class OwnerMenuController extends Controller
    public function store(Request $request)
 {
     $request->validate([
-
         'name' => 'required',
-
         'description' => 'nullable',
-
         'price' => 'required',
-
         'category' => 'required',
-
         'stock' => 'required',
-
         'image' => 'nullable|image|mimes:jpg,jpeg,png,webp',
 
+        'jenis_catering' => 'required|string',
+        'min_porsi' => 'required|integer|min:1',
     ]);
 
     $imagePath = null;
@@ -59,6 +55,10 @@ class OwnerMenuController extends Controller
 
         'is_active' => true,
 
+        'jenis_catering' => $request->jenis_catering,
+
+        'min_porsi' => $request->min_porsi,
+
     ]);
 
     return response()->json([
@@ -79,52 +79,40 @@ class OwnerMenuController extends Controller
     $menu = Menu::findOrFail($id);
 
     $request->validate([
-
         'name' => 'required',
-
         'description' => 'nullable',
-
         'price' => 'required',
-
         'category' => 'required',
-
         'stock' => 'required',
-
         'image' => 'nullable|image|mimes:jpg,jpeg,png,webp',
 
+        'jenis_catering' => 'required|string',
+        'min_porsi' => 'required|integer|min:1',
     ]);
 
     $imagePath = $menu->image;
 
     if ($request->hasFile('image')) {
-
         $imagePath = $request
             ->file('image')
             ->store('menus', 'public');
     }
 
     $menu->update([
-
         'name' => $request->name,
-
         'description' => $request->description,
-
         'price' => $request->price,
-
         'category' => $request->category,
-
         'stock' => $request->stock,
-
         'image' => $imagePath,
 
+        'jenis_catering' => $request->jenis_catering,
+        'min_porsi' => $request->min_porsi,
     ]);
 
     return response()->json([
-
         'message' => 'Menu berhasil diupdate',
-
         'data' => $menu
-
     ]);
 }
     public function destroy($id)

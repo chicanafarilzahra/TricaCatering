@@ -8,11 +8,12 @@ class Menu extends Model
 {
     protected $fillable = [
         'name',
-        'description',
         'price',
         'category',
         'stock',
+        'description',
         'image',
-        'is_active',
+        'jenis_catering',
+        'min_porsi',
     ];
 }

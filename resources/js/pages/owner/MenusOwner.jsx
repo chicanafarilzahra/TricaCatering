@@ -38,6 +38,9 @@ export default function MenusOwner() {
         stock: "",
         description: "",
         image: null,
+
+        jenis_catering: "Insidentil",
+        min_porsi: 1,
     });
 
     /* =========================
@@ -75,6 +78,9 @@ export default function MenusOwner() {
             stock: "",
             description: "",
             image: null,
+
+            jenis_catering: "Insidentil",
+            min_porsi: 1,
         });
 
         setShowModal(true);
@@ -92,12 +98,17 @@ export default function MenusOwner() {
         setForm({
             name: menu.name || "",
             price: menu.price || "",
-            category:
-                menu.category || "",
+            category: menu.category || "",
             stock: menu.stock || "",
-            description:
-                menu.description || "",
+            description: menu.description || "",
             image: null,
+
+            jenis_catering:
+                menu.jenis_catering ||
+                "Insidentil",
+
+            min_porsi:
+                menu.min_porsi || 1,
         });
 
         setShowModal(true);
@@ -129,6 +140,16 @@ export default function MenusOwner() {
             data.append(
                 "category",
                 form.category
+            );
+
+            data.append(
+                "jenis_catering",
+                form.jenis_catering
+            );
+
+            data.append(
+                "min_porsi",
+                form.min_porsi
             );
 
             data.append(
@@ -578,398 +599,227 @@ export default function MenusOwner() {
                 {/* MENU GRID */}
                 <div
                     style={{
-                        display:
-                            "grid",
-                        gridTemplateColumns:
-                            "repeat(auto-fit, minmax(320px, 1fr))",
-                        gap: "16px",
+                        display: "grid",
+                        gridTemplateColumns: "repeat(3, 1fr)",
+                        gap: "20px",
+                        alignItems: "stretch",
                     }}
                 >
                     {filteredMenus.map(
                         (menu) => (
                             <div
-                                key={
-                                    menu.id
-                                }
-                                style={{
-                                    background:
-                                        "linear-gradient(145deg, rgba(15,23,42,0.96), rgba(17,24,39,0.98))",
-                                    border:
-                                        "1px solid rgba(59,130,246,0.12)",
-                                    borderRadius:
-                                        "18px",
-                                    padding:
-                                        "14px",
-                                    position:
-                                        "relative",
-                                    overflow:
-                                        "hidden",
-                                    boxShadow:
-                                        "0 12px 30px rgba(0,0,0,0.28)",
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        position:
-                                            "absolute",
-                                        top: "-70px",
-                                        right:
-                                            "-70px",
-                                        width:
-                                            "140px",
-                                        height:
-                                            "140px",
-                                        background:
-                                            "rgba(37,99,235,0.10)",
-                                        filter:
-                                            "blur(50px)",
-                                    }}
-                                />
-
-                                <div
-                                    style={{
-                                        display:
-                                            "flex",
-                                        gap: "14px",
-                                        position:
-                                            "relative",
-                                        zIndex: 2,
-                                    }}
-                                >
-                                    {/* IMAGE */}
-                                    <div
-                                        style={{
-                                            width:
-                                                "115px",
-                                            height:
-                                                "115px",
-                                            borderRadius:
-                                                "16px",
-                                            overflow:
-                                                "hidden",
-                                            background:
-                                                "#0f172a",
-                                            border:
-                                                "1px solid rgba(255,255,255,0.06)",
-                                            flexShrink:
-                                                0,
-                                        }}
-                                    >
-                                        {menu.image ? (
-                                            <img
-                                                src={`/storage/${menu.image}`}
-                                                alt={
-                                                    menu.name
-                                                }
-                                                style={{
-                                                    width: "100%",
-                                                    height:
-                                                        "100%",
-                                                    objectFit:
-                                                        "cover",
-                                                }}
-                                            />
-                                        ) : (
-                                            <div
-                                                style={{
-                                                    width: "100%",
-                                                    height:
-                                                        "100%",
-                                                    display:
-                                                        "flex",
-                                                    alignItems:
-                                                        "center",
-                                                    justifyContent:
-                                                        "center",
-                                                    color:
-                                                        "#64748b",
-                                                }}
-                                            >
-                                                <ImageIcon
-                                                    size={
-                                                        28
-                                                    }
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* CONTENT */}
-                                    <div
-                                        style={{
-                                            flex: 1,
-                                            minWidth: 0,
-                                            display:
-                                                "flex",
-                                            flexDirection:
-                                                "column",
-                                        }}
-                                    >
-                                        <div
-                                            style={{
-                                                display:
-                                                    "flex",
-                                                justifyContent:
-                                                    "space-between",
-                                                alignItems:
-                                                    "flex-start",
-                                            }}
-                                        >
-                                            <div>
-                                                <h3
-                                                    style={{
-                                                        margin: 0,
-                                                        color:
-                                                            "white",
-                                                        fontSize:
-                                                            "17px",
-                                                        fontWeight:
-                                                            "800",
-                                                    }}
-                                                >
-                                                    {
-                                                        menu.name
-                                                    }
-                                                </h3>
-
-                                                <div
-                                                    style={{
-                                                        marginTop:
-                                                            "7px",
-                                                        display:
-                                                            "inline-flex",
-                                                        padding:
-                                                            "4px 10px",
-                                                        borderRadius:
-                                                            "999px",
-                                                        background:
-                                                            "rgba(37,99,235,0.16)",
-                                                        border:
-                                                            "1px solid rgba(59,130,246,0.20)",
-                                                        color:
-                                                            "#93c5fd",
-                                                        fontSize:
-                                                            "10px",
-                                                        fontWeight:
-                                                            "700",
-                                                    }}
-                                                >
-                                                    {menu.category ||
-                                                        "Menu"}
-                                                </div>
-                                            </div>
-
-                                            <button
-                                                style={{
-                                                    width:
-                                                        "30px",
-                                                    height:
-                                                        "30px",
-                                                    borderRadius:
-                                                        "10px",
-                                                    border:
-                                                        "none",
-                                                    background:
-                                                        "rgba(255,255,255,0.05)",
-                                                    color:
-                                                        "#cbd5e1",
-                                                    display:
-                                                        "flex",
-                                                    alignItems:
-                                                        "center",
-                                                    justifyContent:
-                                                        "center",
-                                                    cursor:
-                                                        "pointer",
-                                                }}
-                                            >
-                                                <MoreVertical
-                                                    size={
-                                                        14
-                                                    }
-                                                />
-                                            </button>
-                                        </div>
-
-                                        <p
-                                            style={{
-                                                margin:
-                                                    "10px 0 0",
-                                                color:
-                                                    "#cbd5e1",
-                                                fontSize:
-                                                    "12px",
-                                                lineHeight:
-                                                    "1.5",
-                                                minHeight:
-                                                    "36px",
-                                            }}
-                                        >
-                                            {menu.description ||
-                                                "No description available"}
-                                        </p>
-
-                                        <div
-                                            style={{
-                                                marginTop:
-                                                    "auto",
-                                            }}
-                                        >
-                                            <div
-                                                style={{
-                                                    display:
-                                                        "flex",
-                                                    justifyContent:
-                                                        "space-between",
-                                                    alignItems:
-                                                        "center",
-                                                    marginTop:
-                                                        "12px",
-                                                }}
-                                            >
-                                                <div
-                                                    style={{
-                                                        color:
-                                                            "#4ade80",
-                                                        fontSize:
-                                                            "22px",
-                                                        fontWeight:
-                                                            "900",
-                                                        lineHeight:
-                                                            "1",
-                                                    }}
-                                                >
-                                                    Rp{" "}
-                                                    {Number(
-                                                        menu.price ||
-                                                            0
-                                                    ).toLocaleString()}
-                                                </div>
-
-                                                <div
-                                                    style={{
-                                                        color:
-                                                            "#cbd5e1",
-                                                        fontSize:
-                                                            "12px",
-                                                    }}
-                                                >
-                                                    Stock:{" "}
-                                                    <span
-                                                        style={{
-                                                            color:
-                                                                "white",
-                                                            fontWeight:
-                                                                "800",
-                                                        }}
-                                                    >
-                                                        {
-                                                            menu.stock
-                                                        }
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            {/* ACTION */}
-                                            <div
-                                                style={{
-                                                    display:
-                                                        "flex",
-                                                    gap: "8px",
-                                                    marginTop:
-                                                        "14px",
-                                                }}
-                                            >
-                                                <button
-                                                    onClick={() =>
-                                                        openEditModal(
-                                                            menu
-                                                        )
-                                                    }
-                                                    style={{
-                                                        flex: 1,
-                                                        height:
-                                                            "36px",
-                                                        borderRadius:
-                                                            "10px",
-                                                        border:
-                                                            "1px solid rgba(59,130,246,0.45)",
-                                                        background:
-                                                            "linear-gradient(135deg,#1d4ed8,#1e3a8a)",
-                                                        color:
-                                                            "white",
-                                                        fontWeight:
-                                                            "700",
-                                                        fontSize:
-                                                            "12px",
-                                                        display:
-                                                            "flex",
-                                                        alignItems:
-                                                            "center",
-                                                        justifyContent:
-                                                            "center",
-                                                        gap: "6px",
-                                                        cursor:
-                                                            "pointer",
-                                                    }}
-                                                >
-                                                    <Pencil
-                                                        size={
-                                                            13
-                                                        }
-                                                    />
-                                                    Edit
-                                                </button>
-
-                                                <button
-                                                    onClick={() =>
-                                                        handleDelete(
-                                                            menu.id
-                                                        )
-                                                    }
-                                                    style={{
-                                                        flex: 1,
-                                                        height:
-                                                            "36px",
-                                                        borderRadius:
-                                                            "10px",
-                                                        border:
-                                                            "1px solid rgba(239,68,68,0.35)",
-                                                        background:
-                                                            "linear-gradient(135deg,#7f1d1d,#991b1b)",
-                                                        color:
-                                                            "white",
-                                                        fontWeight:
-                                                            "700",
-                                                        fontSize:
-                                                            "12px",
-                                                        display:
-                                                            "flex",
-                                                        alignItems:
-                                                            "center",
-                                                        justifyContent:
-                                                            "center",
-                                                        gap: "6px",
-                                                        cursor:
-                                                            "pointer",
-                                                    }}
-                                                >
-                                                    <Trash2
-                                                        size={
-                                                            13
-                                                        }
-                                                    />
-                                                    Delete
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )
-                    )}
-                </div>
+    key={menu.id}
+    style={{
+        background:
+            "linear-gradient(145deg, rgba(15,23,42,0.96), rgba(17,24,39,0.98))",
+        border: "1px solid rgba(59,130,246,0.12)",
+        borderRadius: "20px",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        minHeight: "430px",
+        boxShadow:
+            "0 12px 30px rgba(0,0,0,0.28)",
+    }}
+>
+    {/* IMAGE */}
+    <div
+        style={{
+            width: "100%",
+            height: "180px",
+            overflow: "hidden",
+        }}
+    >
+        {menu.image ? (
+            <img
+                src={`/storage/${menu.image}`}
+                alt={menu.name}
+                style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                }}
+            />
+        ) : (
+            <div
+                style={{
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "#0f172a",
+                }}
+            >
+                <ImageIcon size={40} />
             </div>
+        )}
+    </div>
+
+    {/* CONTENT */}
+    <div
+        style={{
+            padding: "18px",
+            display: "flex",
+            flexDirection: "column",
+            flex: 1,
+        }}
+    >
+        <h3
+            style={{
+                color: "white",
+                margin: 0,
+                fontSize: "20px",
+                fontWeight: "800",
+                minHeight: "52px",
+            }}
+        >
+            {menu.name}
+        </h3>
+
+        <div
+    style={{
+        display: "flex",
+        gap: "6px",
+        flexWrap: "wrap",
+        marginTop: "8px",
+    }}
+>
+    <div
+        style={{
+            padding: "4px 10px",
+            borderRadius: "999px",
+            background: "rgba(37,99,235,0.16)",
+            border: "1px solid rgba(59,130,246,0.20)",
+            color: "#93c5fd",
+            fontSize: "10px",
+            fontWeight: "700",
+        }}
+    >
+        {menu.category}
+    </div>
+
+    <div
+        style={{
+            padding: "4px 10px",
+            borderRadius: "999px",
+            background: "rgba(34,197,94,0.12)",
+            border: "1px solid rgba(34,197,94,0.25)",
+            color: "#86efac",
+            fontSize: "10px",
+            fontWeight: "700",
+        }}
+    >
+        {menu.jenis_catering}
+    </div>
+
+    <div
+        style={{
+            padding: "4px 10px",
+            borderRadius: "999px",
+            background: "rgba(245,158,11,0.12)",
+            border: "1px solid rgba(245,158,11,0.25)",
+            color: "#fcd34d",
+            fontSize: "10px",
+            fontWeight: "700",
+        }}
+    >
+        Min {menu.min_porsi} Porsi
+    </div>
+</div>
+
+        <p
+            style={{
+                marginTop: "12px",
+                color: "#94a3b8",
+                fontSize: "13px",
+                lineHeight: "1.7",
+                flex: 1,
+                overflow: "hidden",
+                display: "-webkit-box",
+                WebkitLineClamp: 4,
+                WebkitBoxOrient: "vertical",
+            }}
+        >
+            {menu.description ||
+                "No description available"}
+        </p>
+
+        {/* FOOTER */}
+        <div
+            style={{
+                marginTop: "16px",
+            }}
+        >
+            <div
+                style={{
+                    color: "#4ade80",
+                    fontSize: "28px",
+                    fontWeight: "900",
+                    marginBottom: "14px",
+                }}
+            >
+                Rp{" "}
+                {Number(
+                    menu.price || 0
+                ).toLocaleString("id-ID")}
+            </div>
+
+            <div
+                style={{
+                    display: "flex",
+                    gap: "10px",
+                }}
+            >
+                <button
+                    onClick={() =>
+                        openEditModal(menu)
+                    }
+                    style={{
+                        flex: 1,
+                        height: "42px",
+                        borderRadius: "12px",
+                        border: "none",
+                        background:
+                            "#2563eb",
+                        color: "white",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                    }}
+                >
+                    Edit
+                </button>
+
+                <button
+                    onClick={() =>
+                        handleDelete(menu.id)
+                    }
+                    style={{
+                        flex: 1,
+                        height: "42px",
+                        borderRadius: "12px",
+                        border: "none",
+                        background:
+                            "#b91c1c",
+                        color: "white",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                    }}
+                >
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div> 
+))
+}
+</div> 
+
+</div>
+
 
             {/* MODAL */}
             {showModal && (
@@ -1165,29 +1015,38 @@ export default function MenusOwner() {
                                 }
                             />
 
+                            <select
+                                value={form.jenis_catering}
+                                onChange={(e) =>
+                                    setForm({
+                                        ...form,
+                                        jenis_catering:
+                                            e.target.value,
+                                    })
+                                }
+                                style={inputStyle}
+                            >
+                                <option value="Insidentil">
+                                    Insidentil
+                                </option>
+
+                                <option value="Harian">
+                                    Harian
+                                </option>
+                            </select>
                             <input
-                                type="number"
-                                placeholder="Stock"
-                                value={
-                                    form.stock
-                                }
-                                onChange={(
-                                    e
-                                ) =>
-                                    setForm(
-                                        {
-                                            ...form,
-                                            stock:
-                                                e
-                                                    .target
-                                                    .value,
-                                        }
-                                    )
-                                }
-                                style={
-                                    inputStyle
-                                }
-                            />
+    type="number"
+    placeholder="Minimal Porsi"
+    value={form.min_porsi}
+    onChange={(e) =>
+        setForm({
+            ...form,
+            min_porsi:
+                e.target.value,
+        })
+    }
+    style={inputStyle}
+/>
 
                             <textarea
                                 placeholder="Description"
