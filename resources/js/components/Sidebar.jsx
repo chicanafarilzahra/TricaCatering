@@ -123,20 +123,28 @@ export default function Sidebar() {
                 },
 
                 {
-                    label: "Customers",
-                    path: "/customers",
-                    icon: (
-                        <Users size={18} />
-                    ),
-                },
+    label: "Customers",
+    path: "/customers",
+    icon: (
+        <Users size={18} />
+    ),
+},
 
-                {
-                    label: "Reports",
-                    path: "/reports",
-                    icon: (
-                        <FileBarChart2 size={18} />
-                    ),
-                },
+{
+    label: "Validasi User",
+    path: "/admin-validasi-user",
+    icon: (
+        <Users size={18} />
+    ),
+},
+
+{
+    label: "Reports",
+    path: "/reports",
+    icon: (
+        <FileBarChart2 size={18} />
+    ),
+},
             ],
         },
     ];

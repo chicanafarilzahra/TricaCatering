@@ -2,41 +2,63 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Mail;
 use App\Models\User;
 
 class AdminUserController extends Controller
 {
     public function index()
-    {
-        return User::whereIn(
-            'role',
-            ['owner', 'kurir', 'operator_sppg']
-        )->get();
-    }
+{
+    return User::latest()->get();
+}
 
     public function approve($id)
-    {
-        $user = User::findOrFail($id);
+{
+    $user = User::findOrFail($id);
 
-        $user->update([
-            'status' => 'approved'
-        ]);
+    $user->status = 'approved';
+    $user->save();
 
-        return response()->json([
-            'message' => 'User berhasil disetujui'
-        ]);
-    }
+    Mail::raw(
+        'Akun Anda telah disetujui oleh admin TriCa Catering.',
+        function ($message) use ($user) {
+
+            $message->to($user->email);
+
+            $message->subject(
+                'Akun Disetujui'
+            );
+        }
+    );
+
+    return response()->json([
+        'message' => 'User berhasil disetujui'
+    ]);
+}
 
     public function reject($id)
-    {
-        $user = User::findOrFail($id);
+{
+    $user = User::findOrFail($id);
 
-        $user->update([
-            'status' => 'rejected'
-        ]);
+    $user->status = 'rejected';
+    $user->save();
 
-        return response()->json([
-            'message' => 'User ditolak'
-        ]);
-    }
+    Mail::raw(
+        'Mohon maaf, pendaftaran Anda ditolak oleh admin TriCa Catering.',
+        function ($message) use ($user) {
+
+            $message->to($user->email);
+
+            $message->subject(
+                'Pendaftaran Ditolak'
+            );
+        }
+    );
+
+    return response()->json([
+        'message' => 'User berhasil ditolak'
+    ]);
+}
+
+    
 }

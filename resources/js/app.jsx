@@ -27,6 +27,7 @@ import Deliveries from "./pages/Deliveries";
 import Customers from "./pages/Customers";
 import Reports from "./pages/Reports";
 import Stocks from "./pages/Stocks";
+import AdminValidasiUser from "./pages/AdminValidasiUser";
 
 /* =========================
    AUTH
@@ -123,6 +124,11 @@ function App() {
                             <Dashboard />
                         </ProtectedRoute>
                     }
+                />
+
+               <Route
+                    path="/admin-validasi-user"
+                    element={<AdminValidasiUser />}
                 />
 
                 <Route
