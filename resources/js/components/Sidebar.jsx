@@ -92,7 +92,7 @@ export default function Sidebar() {
 
                 {
                     label: "SPPG",
-                    path: "/sppg",
+                    path: "/admin/sppg",
                     icon: (
                         <ClipboardList size={18} />
                     ),

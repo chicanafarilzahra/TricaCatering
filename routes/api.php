@@ -21,6 +21,10 @@ use App\Http\Controllers\Api\TrackingController;
 
 use App\Http\Controllers\Api\OwnerMenuController;
 
+use App\Http\Controllers\SPPG\DashboardSPPGController;
+use App\Http\Controllers\SPPG\MenuHarianController;
+use App\Http\Controllers\SPPG\SekolahController;
+
 /*
 |--------------------------------------------------------------------------
 | AUTH
@@ -313,5 +317,29 @@ Route::prefix('owner')->group(function () {
         '/menus/{id}',
         [OwnerMenuController::class, 'destroy']
     );
+
+/*
+|--------------------------------------------------------------------------
+| SPPG
+|--------------------------------------------------------------------------
+*/
+
+    Route::prefix('sppg')->group(function () {
+
+    Route::get(
+        '/dashboard',
+        [DashboardSPPGController::class, 'index']
+    );
+
+    Route::get(
+        '/menus',
+        [MenuHarianController::class, 'index']
+    );
+
+    Route::get(
+        '/sekolah',
+        [SekolahController::class, 'index']
+    );
+});
 
 });

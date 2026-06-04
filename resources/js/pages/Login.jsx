@@ -69,7 +69,7 @@ export default function Login() {
                     break;
 
                 case "operator_sppg":
-                    navigate("/sppg");
+                    navigate("/sppg/dashboard");
                     break;
 
                 default:

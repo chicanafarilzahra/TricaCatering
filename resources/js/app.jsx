@@ -74,6 +74,14 @@ import Tracking from "./pages/Klien/Tracking";
 import InvoiceKlien from "./pages/Klien/InvoiceKlien";
 import UlasanKlien from "./pages/Klien/UlasanKlien";
 
+
+/* =========================
+   SPPG
+========================= */
+
+import DashboardSPPG from "./pages/sppg/DashboardSPPG";
+import MenuHarianSPPG from "./pages/sppg/MenuHarianSPPG";
+
 /* =========================
    COMPONENTS
 ========================= */
@@ -168,9 +176,9 @@ function App() {
                 />
 
                 <Route
-                    path="/sppg"
+                    path="/admin/sppg"
                     element={
-                        <ProtectedRoute>
+                        <ProtectedRoute role="admin">
                             <SPPG />
                         </ProtectedRoute>
                     }
@@ -427,6 +435,27 @@ function App() {
                         element={
                             <ProtectedRoute role="klien">
                                 <UlasanKlien />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    {/* =========================
+                        SPPG
+                    ========================= */}
+                    <Route
+                        path="/sppg/dashboard"
+                        element={
+                            <ProtectedRoute role="operator_sppg">
+                                <DashboardSPPG />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/sppg/menu-harian"
+                        element={
+                            <ProtectedRoute role="operator_sppg">
+                                <MenuHarianSPPG />
                             </ProtectedRoute>
                         }
                     />
