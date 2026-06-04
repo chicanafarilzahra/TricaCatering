@@ -11,16 +11,11 @@ class OwnerMenuController extends Controller
 {
     public function index(Request $request)
 {
-    return response()->json(
-
-        Menu::where(
-            'owner_id',
-            $request->owner_id
-        )
-        ->latest()
-        ->get()
-
-    );
+    $menus = Menu::where('is_active', true)
+                 ->latest()
+                 ->get();
+    
+    return response()->json($menus);
 }
 
    public function store(Request $request)

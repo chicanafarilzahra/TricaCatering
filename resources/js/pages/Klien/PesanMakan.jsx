@@ -125,9 +125,17 @@ const loadMenus = async () => {
 };
 
 useEffect(() => {
+    const loadMenus = async () => {
+        try {
+            const res = await axios.get("/api/klien/menus");
+            setMenus(res.data);
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
     loadMenus();
 }, []);
-
     /*
     |--------------------------------------------------------------------------
     | GEOCODING ALAMAT
@@ -1110,7 +1118,7 @@ useEffect(() => {
 
                                                         return;
                                                     }
-                                                    
+
                                                     const res = await axios.post('/api/klien/orders', {
                                                         type: selectedType,
                                                         menu_id: selectedMenu.id,
