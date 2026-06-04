@@ -64,8 +64,8 @@ export default function MenusOwner() {
 
             setMenus(res.data);
         } catch (err) {
-            console.log(err);
-        }
+    console.log(err);
+}
     };
 
     useEffect(() => {
@@ -228,8 +228,8 @@ export default function MenusOwner() {
 
             fetchMenus();
         } catch (err) {
-            console.log(err);
-        }
+    console.log(err.response.data);
+}
     };
 
     /* =========================
@@ -1052,18 +1052,31 @@ export default function MenusOwner() {
                                 </option>
                             </select>
                             <input
-    type="number"
-    placeholder="Minimal Porsi"
-    value={form.min_porsi}
-    onChange={(e) =>
-        setForm({
-            ...form,
-            min_porsi:
-                e.target.value,
-        })
-    }
-    style={inputStyle}
-/>
+                                type="number"
+                                placeholder="Minimal Porsi"
+                                value={form.min_porsi}
+                                onChange={(e) =>
+                                    setForm({
+                                        ...form,
+                                        min_porsi:
+                                            e.target.value,
+                                    })
+                                }
+                                style={inputStyle}
+                            />
+
+                            <input
+                                type="number"
+                                placeholder="Stock"
+                                value={form.stock}
+                                onChange={(e) =>
+                                    setForm({
+                                        ...form,
+                                        stock: e.target.value,
+                                    })
+                                }
+                                style={inputStyle}
+                            />
 
                             <textarea
                                 placeholder="Description"

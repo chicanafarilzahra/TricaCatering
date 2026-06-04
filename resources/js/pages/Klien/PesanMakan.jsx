@@ -527,7 +527,7 @@ useEffect(() => {
                                    {menus
                                     .filter(
                                         (menu) =>
-                                            menu.category?.toLowerCase() ===
+                                            menu.jenis_catering?.toLowerCase() ===
                                             selectedType.toLowerCase()
                                     )
                                     .map((menu) => (
@@ -546,10 +546,11 @@ useEffect(() => {
                                             >
                                                 <img
                                                     src={
-                                                        menu.image
-                                                            ? `/storage/${menu.image}`
+                                                        selectedMenu.image
+                                                            ? `/storage/${selectedMenu.image}`
                                                             : "/no-image.png"
                                                     }
+                                                    alt={selectedMenu.name}
                                                     alt=""
                                                     style={{
                                                         width:
@@ -581,6 +582,26 @@ useEffect(() => {
                                                             menu.name
                                                         }
                                                     </h2>
+
+                                                    <div
+                                                        style={{
+                                                            color:"#60a5fa",
+                                                            marginBottom:"10px",
+                                                            fontSize:"14px"
+                                                        }}
+                                                    >
+                                                        {menu.jenis_catering}
+                                                    </div>
+
+                                                    <div
+                                                        style={{
+                                                            color:"#fbbf24",
+                                                            marginBottom:"16px",
+                                                            fontSize:"14px"
+                                                        }}
+                                                    >
+                                                        Minimal {menu.min_porsi} Porsi
+                                                    </div>
 
                                                     <div
                                                         style={{
@@ -742,23 +763,15 @@ useEffect(() => {
                                         "harian" ? (
                                             <>
                                                 <Input
-                                                    label="Jumlah Porsi"
+                                                    label={`Jumlah Porsi (minimal ${selectedMenu.min_porsi})`}
                                                     type="number"
-                                                    value={
-                                                        form.jumlah
-                                                    }
-                                                    onChange={(
-                                                        e
-                                                    ) =>
-                                                        setForm(
-                                                            {
-                                                                ...form,
-                                                                jumlah:
-                                                                    e
-                                                                        .target
-                                                                        .value,
-                                                            }
-                                                        )
+                                                    min={selectedMenu.min_porsi}
+                                                    value={form.jumlah}
+                                                    onChange={(e)=>
+                                                        setForm({
+                                                            ...form,
+                                                            jumlah:e.target.value
+                                                        })
                                                     }
                                                 />
 
@@ -1087,6 +1100,17 @@ useEffect(() => {
                                                 if (!selectedMenu) return;
 
                                                 try {
+                                                    if (
+                                                        Number(form.jumlah) <
+                                                        Number(selectedMenu.min_porsi)
+                                                    ) {
+                                                        alert(
+                                                            `Minimal pemesanan ${selectedMenu.min_porsi} porsi`
+                                                        );
+
+                                                        return;
+                                                    }
+                                                    
                                                     const res = await axios.post('/api/klien/orders', {
                                                         type: selectedType,
                                                         menu_id: selectedMenu.id,
