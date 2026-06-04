@@ -3,60 +3,94 @@
 namespace App\Http\Controllers\SPPG;
 
 use App\Http\Controllers\Controller;
-use App\Models\Sekolah;
-use App\Models\Distribusi;
-use App\Models\MenuHarian;
+use Illuminate\Support\Facades\DB;
 
 class DashboardSPPGController extends Controller
 {
     public function index()
     {
-        return response()->json([
+        $totalSekolah =
+            DB::table('sekolahs')->count();
 
+        $totalSiswa =
+            DB::table('sekolahs')
+                ->sum('jumlah_siswa');
+
+        $menuHariIni =
+            DB::table('menus')
+                ->where('is_active', 1)
+                ->count();
+
+        $jadwal =
+            DB::table('sekolahs')
+                ->select(
+                    'id',
+                    'nama_sekolah',
+                    'jumlah_siswa',
+                    DB::raw('jumlah_siswa as jumlah_porsi')
+                )
+                ->get();
+
+        $activities = [];
+
+        // aktivitas dari menu terbaru
+        $menus =
+            DB::table('menus')
+                ->latest('id')
+                ->take(3)
+                ->get();
+
+        foreach ($menus as $menu) {
+            $activities[] = [
+                'title' =>
+                    'Menu "' . $menu->name . '" ditambahkan',
+                'time' =>
+                    \Carbon\Carbon::parse(
+                        $menu->created_at
+                    )->diffForHumans(),
+            ];
+        }
+
+        // aktivitas dari sekolah terbaru
+        $sekolahs =
+            DB::table('sekolahs')
+                ->latest('id')
+                ->take(2)
+                ->get();
+
+        foreach ($sekolahs as $sekolah) {
+            $activities[] = [
+                'title' =>
+                    'Sekolah "' .
+                    $sekolah->nama_sekolah .
+                    '" terdaftar',
+                'time' =>
+                    \Carbon\Carbon::parse(
+                        $sekolah->created_at
+                    )->diffForHumans(),
+            ];
+        }
+
+        return response()->json([
             'total_sekolah' =>
-                Sekolah::count(),
+                $totalSekolah,
 
             'total_siswa' =>
-                Sekolah::sum('jumlah_siswa'),
-
-            'distribusi_hari_ini' =>
-                Distribusi::whereDate(
-                    'tanggal',
-                    today()
-                )->sum('jumlah_porsi'),
+                $totalSiswa,
 
             'menu_hari_ini' =>
-                MenuHarian::whereDate(
-                    'tanggal',
-                    today()
-                )->count(),
+                $menuHariIni,
+
+            'distribusi_hari_ini' =>
+                $totalSiswa,
 
             'jadwal' =>
-                Distribusi::with(
-                    'sekolah'
-                )
-                ->whereDate(
-                    'tanggal',
-                    today()
-                )
-                ->get()
-                ->map(function ($item) {
+                $jadwal,
 
-                    return [
-                        'id' =>
-                            $item->id,
-
-                        'nama_sekolah' =>
-                            $item->sekolah->nama,
-
-                        'jumlah_siswa' =>
-                            $item->sekolah->jumlah_siswa,
-
-                        'jumlah_porsi' =>
-                            $item->jumlah_porsi,
-                    ];
-
-                }),
+            'activities' =>
+                collect($activities)
+                    ->sortByDesc('time')
+                    ->values(),
         ]);
     }
 }

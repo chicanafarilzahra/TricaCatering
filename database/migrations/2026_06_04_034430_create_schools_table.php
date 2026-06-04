@@ -6,41 +6,34 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up()
-{
-    Schema::create('schools', function (Blueprint $table) {
+    public function up(): void
+    {
+        Schema::create('sekolahs', function (Blueprint $table) {
 
-        $table->id();
+            $table->id();
 
-        $table->string('name');
+            $table->foreignId('sppg_id')
+                ->constrained('users')
+                ->cascadeOnDelete();
 
-        $table->enum('level',[
-            'SD',
-            'SMP',
-            'SMA',
-            'SMK'
-        ]);
+            $table->string('nama_sekolah');
 
-        $table->integer('student_count');
+            $table->text('alamat');
 
-        $table->text('address');
+            $table->integer('jumlah_siswa');
 
-        $table->decimal('latitude',10,7)->nullable();
+            $table->decimal('latitude', 10, 7)
+                ->nullable();
 
-        $table->decimal('longitude',10,7)->nullable();
+            $table->decimal('longitude', 10, 7)
+                ->nullable();
 
-        $table->timestamps();
-    });
-}
+            $table->timestamps();
+        });
+    }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('schools');
+        Schema::dropIfExists('sekolahs');
     }
 };

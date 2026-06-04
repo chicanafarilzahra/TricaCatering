@@ -40,7 +40,7 @@ export default function SidebarSPPG() {
             icon: <School size={18} />,
         },
         {
-            label: "Jadwal Distribusi",
+            label: "Distribusi",
             path: "/sppg/distribusi",
             icon: <CalendarDays size={18} />,
         },
@@ -55,7 +55,7 @@ export default function SidebarSPPG() {
             icon: <Package size={18} />,
         },
         {
-            label: "Riwayat Distribusi",
+            label: "Riwayat",
             path: "/sppg/riwayat",
             icon: <History size={18} />,
         },
@@ -67,49 +67,88 @@ export default function SidebarSPPG() {
     ];
 
     return (
-        <div
+        <aside
             style={{
                 width: "270px",
                 height: "100vh",
                 position: "fixed",
                 left: 0,
                 top: 0,
+
                 background:
-                    "linear-gradient(180deg,#020617,#071028)",
+                    "#071028",
+
                 borderRight:
-                    "1px solid rgba(255,255,255,0.05)",
-                padding: "20px",
+                    "1px solid rgba(255,255,255,.05)",
+
                 display: "flex",
                 flexDirection: "column",
                 justifyContent:
                     "space-between",
+
+                padding: "24px",
+
+                boxSizing:
+                    "border-box",
+
+                zIndex: 999,
             }}
         >
             <div>
+                {/* HEADER */}
+
                 <div
                     style={{
                         display: "flex",
+                        alignItems:
+                            "center",
+
                         gap: "14px",
-                        alignItems: "center",
-                        marginBottom: "40px",
+
+                        marginBottom:
+                            "40px",
                     }}
                 >
                     <div
                         style={{
-                            width: "55px",
-                            height: "55px",
-                            borderRadius: "18px",
+                            width: "58px",
+                            height: "58px",
+
+                            borderRadius:
+                                "18px",
+
                             background:
                                 "linear-gradient(135deg,#06b6d4,#2563eb)",
+
+                            display: "flex",
+                            alignItems:
+                                "center",
+                            justifyContent:
+                                "center",
+
+                            color: "#fff",
+
+                            fontSize:
+                                "24px",
+
+                            fontWeight:
+                                "800",
                         }}
-                    />
+                    >
+                        S
+                    </div>
 
                     <div>
                         <div
                             style={{
-                                color: "#fff",
-                                fontWeight: 800,
-                                fontSize: 20,
+                                color:
+                                    "#fff",
+
+                                fontSize:
+                                    "18px",
+
+                                fontWeight:
+                                    "700",
                             }}
                         >
                             {user?.nama_sppg ||
@@ -118,14 +157,19 @@ export default function SidebarSPPG() {
 
                         <div
                             style={{
-                                color: "#64748b",
-                                fontSize: 13,
+                                color:
+                                    "#94a3b8",
+
+                                fontSize:
+                                    "13px",
                             }}
                         >
                             Program MBG
                         </div>
                     </div>
                 </div>
+
+                {/* MENU */}
 
                 {menus.map((menu) => (
                     <NavLink
@@ -141,27 +185,38 @@ export default function SidebarSPPG() {
                         }) => (
                             <div
                                 style={{
-                                    display:
-                                        "flex",
-                                    alignItems:
-                                        "center",
-                                    gap: "14px",
                                     height:
                                         "52px",
+
+                                    display:
+                                        "flex",
+
+                                    alignItems:
+                                        "center",
+
+                                    gap: "14px",
+
                                     padding:
                                         "0 16px",
+
                                     borderRadius:
                                         "16px",
+
                                     marginBottom:
                                         "8px",
-                                    color:
-                                        isActive
-                                            ? "#fff"
-                                            : "#94a3b8",
+
                                     background:
                                         isActive
                                             ? "linear-gradient(135deg,#06b6d4,#2563eb)"
                                             : "transparent",
+
+                                    color:
+                                        isActive
+                                            ? "#fff"
+                                            : "#94a3b8",
+
+                                    fontWeight:
+                                        "600",
                                 }}
                             >
                                 {
@@ -177,22 +232,34 @@ export default function SidebarSPPG() {
                 ))}
             </div>
 
+            {/* USER */}
+
             <div>
                 <div
                     style={{
                         background:
-                            "rgba(255,255,255,0.04)",
+                            "#0f172a",
+
+                        border:
+                            "1px solid rgba(255,255,255,.05)",
+
+                        padding:
+                            "16px",
+
                         borderRadius:
                             "18px",
-                        padding: "14px",
+
                         marginBottom:
                             "14px",
                     }}
                 >
                     <div
                         style={{
-                            color: "#fff",
-                            fontWeight: 600,
+                            color:
+                                "#fff",
+
+                            fontWeight:
+                                "700",
                         }}
                     >
                         {user?.name}
@@ -200,8 +267,11 @@ export default function SidebarSPPG() {
 
                     <div
                         style={{
-                            color: "#94a3b8",
-                            fontSize: 13,
+                            color:
+                                "#94a3b8",
+
+                            fontSize:
+                                "13px",
                         }}
                     >
                         Operator SPPG
@@ -212,15 +282,23 @@ export default function SidebarSPPG() {
                     onClick={logout}
                     style={{
                         width: "100%",
-                        height: "50px",
+                        height: "52px",
+
                         border: "none",
+
                         borderRadius:
                             "16px",
+
                         background:
                             "#ef4444",
+
                         color: "#fff",
-                        cursor: "pointer",
-                        fontWeight: 700,
+
+                        cursor:
+                            "pointer",
+
+                        fontWeight:
+                            "700",
                     }}
                 >
                     <LogOut
@@ -229,6 +307,6 @@ export default function SidebarSPPG() {
                     Logout
                 </button>
             </div>
-        </div>
+        </aside>
     );
 }
