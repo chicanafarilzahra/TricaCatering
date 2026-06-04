@@ -5,15 +5,23 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Menu;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class OwnerMenuController extends Controller
 {
-    public function index()
-    {
-        return response()->json(
-            Menu::latest()->get()
-        );
-    }
+    public function index(Request $request)
+{
+    return response()->json(
+
+        Menu::where(
+            'owner_id',
+            $request->owner_id
+        )
+        ->latest()
+        ->get()
+
+    );
+}
 
    public function store(Request $request)
 {
@@ -40,6 +48,7 @@ class OwnerMenuController extends Controller
     }
 
     $menu = Menu::create([
+        'owner_id' => $request->owner_id,
 
         'name' => $request->name,
 
@@ -76,7 +85,13 @@ class OwnerMenuController extends Controller
 
     public function update(Request $request, $id)
 {
-    $menu = Menu::findOrFail($id);
+    $menu = Menu::where(
+    'id',
+    $id
+)->where(
+    'owner_id',
+    $request->owner_id
+)->firstOrFail();
 
     $request->validate([
         'name' => 'required',
@@ -115,15 +130,18 @@ class OwnerMenuController extends Controller
         'data' => $menu
     ]);
 }
-    public function destroy($id)
-    {
-        Menu::destroy($id);
+    public function destroy(Request $request, $id)
+{
+    Menu::where(
+        'id',
+        $id
+    )->where(
+        'owner_id',
+        $request->owner_id
+    )->delete();
 
-        return response()->json([
-
-            'message' =>
-                'Menu berhasil dihapus'
-
-        ]);
-    }
+    return response()->json([
+        'message' => 'Menu berhasil dihapus'
+    ]);
+}
 }

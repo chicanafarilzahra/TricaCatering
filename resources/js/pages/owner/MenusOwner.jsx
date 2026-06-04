@@ -49,10 +49,18 @@ export default function MenusOwner() {
 
     const fetchMenus = async () => {
         try {
-            const res =
-                await axios.get(
-                    "/api/owner/menus"
-                );
+           const user = JSON.parse(
+                localStorage.getItem("user")
+            );
+
+            const res = await axios.get(
+                "/api/owner/menus",
+                {
+                    params: {
+                        owner_id: user.id
+                    }
+                }
+);
 
             setMenus(res.data);
         } catch (err) {
@@ -119,13 +127,22 @@ export default function MenusOwner() {
     ========================= */
 
     const handleSubmit = async (
-        e
-    ) => {
-        e.preventDefault();
+    e
+) => {
+    e.preventDefault();
 
-        try {
-            const data =
-                new FormData();
+    try {
+
+        const user = JSON.parse(
+            localStorage.getItem("user")
+        );
+
+        const data = new FormData();
+
+            data.append(
+                "owner_id",
+                user.id
+                );
 
             data.append(
                 "name",

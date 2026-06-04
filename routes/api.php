@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 
 use App\Models\User;
 
@@ -113,6 +114,46 @@ Route::post('/register', function (Request $request) {
         ? 'approved'
         : 'pending';
 
+    $latitude = null;
+$longitude = null;
+
+if (
+    $request->role === 'owner' &&
+    !empty($request->alamat_catering)
+) {
+
+    try {
+
+        $response = Http::withHeaders([
+            'User-Agent' => 'WebCatering'
+        ])->get(
+            'https://nominatim.openstreetmap.org/search',
+            [
+                'q' => $request->alamat_catering,
+                'format' => 'json',
+                'limit' => 1,
+            ]
+        );
+
+        $location = $response->json();
+
+        if (!empty($location)) {
+
+            $latitude =
+                $location[0]['lat'];
+
+            $longitude =
+                $location[0]['lon'];
+        }
+
+    } catch (\Exception $e) {
+
+        $latitude = null;
+        $longitude = null;
+
+    }
+}
+
 $user = User::create([
     'name' => $request->name,
     'email' => $request->email,
@@ -122,9 +163,13 @@ $user = User::create([
     'role' => $request->role,
     'nama_catering' =>
         $request->nama_catering,
-    'alamat_catering' =>
+   'alamat_catering' =>
         $request->alamat_catering,
-    'status' => $status,
+
+        'latitude' => $latitude,
+        'longitude' => $longitude,
+
+'status' => $status,
     
     'nama_sppg' =>
         $request->nama_sppg,
@@ -281,7 +326,40 @@ Route::get(
 );
 
 Route::get('/klien/menus', function () {
-    return \App\Models\Menu::where('is_active', true)->get();
+
+    return \App\Models\Menu::with('owner')
+        ->where('is_active', true)
+        ->get()
+        ->map(function ($menu) {
+
+            return [
+
+                'id' => $menu->id,
+
+                'name' => $menu->name,
+
+                'description' => $menu->description,
+
+                'price' => $menu->price,
+
+                'image' => $menu->image,
+
+                // kategori menu
+                'category' => $menu->jenis_catering,
+
+                // data owner
+                'owner' => $menu->owner?->nama_catering,
+
+                'ownerAddress' => $menu->owner?->alamat_catering,
+
+                'cateringLat' => $menu->owner?->latitude,
+
+                'cateringLng' => $menu->owner?->longitude,
+
+            ];
+
+        });
+
 });
 
 Route::post('klien/orders', [KlienController::class, 'storePesanan']);

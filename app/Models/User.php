@@ -18,8 +18,9 @@ class User extends Authenticatable
     'role',
     'nama_catering',
     'alamat_catering',
+    'latitude',
+    'longitude',
     'status',
-
     'nama_sppg',
     'alamat_sppg',
 ];
