@@ -46,94 +46,62 @@ export default function Register() {
         useState(false);
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+    e.preventDefault();
 
-        setLoading(true);
-        setMessage("");
+    setLoading(true);
+    setMessage("");
 
-        try {
-            const res =
-                await axios.post(
-                    "/api/register",
-                    {
-                        name,
-                        email,
-                        password,
-                        password_confirmation:
-                            passwordConfirmation,
-                        role,
+    try {
+        await axios.post(
+            "/api/register",
+            {
+                name,
+                email,
+                password,
+                password_confirmation:
+                    passwordConfirmation,
+                role,
 
-                        nama_catering:
-                            role === "owner"
-                                ? namaCatering
-                                : null,
+                nama_catering:
+                    role === "owner"
+                        ? namaCatering
+                        : null,
 
-                        alamat_catering:
-                            role === "owner"
-                                ? alamatCatering
-                                : null,
-                        
-                        nama_sppg:
-                            role === "operator_sppg"
-                                ? namaSppg
-                                : null,
+                alamat_catering:
+                    role === "owner"
+                        ? alamatCatering
+                        : null,
 
-                        alamat_sppg:
-                            role === "operator_sppg"
-                                ? alamatSppg
-                                : null,
-                    }
-                );
+                nama_sppg:
+                    role === "operator_sppg"
+                        ? namaSppg
+                        : null,
 
-            localStorage.setItem(
-                "token",
-                res.data.token
-            );
-
-            localStorage.setItem(
-                "user",
-                JSON.stringify(
-                    res.data.user
-                )
-            );
-
-            setMessage(
-                "Register berhasil!"
-            );
-
-            switch (role) {
-                case "owner":
-                    navigate("/owner");
-                    break;
-
-                case "kurir":
-                    navigate("/kurir");
-                    break;
-
-                case "operator_sppg":
-                    navigate("/sppg");
-                    break;
-
-                case "klien":
-                    navigate("/klien");
-                    break;
-
-                default:
-                    navigate(
-                        "/dashboard"
-                    );
-                    break;
+                alamat_sppg:
+                    role === "operator_sppg"
+                        ? alamatSppg
+                        : null,
             }
-        } catch (err) {
-            setMessage(
-                err.response?.data
-                    ?.message ||
-                    "Register gagal"
-            );
-        } finally {
-            setLoading(false);
-        }
-    };
+        );
+
+        setMessage(
+            "Register berhasil! Silakan login."
+        );
+
+        setTimeout(() => {
+            navigate("/login");
+        }, 1500);
+
+    } catch (err) {
+        setMessage(
+            err.response?.data
+                ?.message ||
+                "Register gagal"
+        );
+    } finally {
+        setLoading(false);
+    }
+};
     console.log("ROLE =", role);
     return (
         <div

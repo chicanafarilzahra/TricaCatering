@@ -84,106 +84,67 @@ Route::post('/register', function (Request $request) {
 
     $request->validate([
 
-    'name' =>
-        'required|string|max:255',
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|unique:users,email',
+        'password' => 'required|string|min:6|confirmed',
+        'role' => 'required|in:owner,klien,kurir,operator_sppg',
+        'nama_catering' => 'nullable|string|max:255',
+        'alamat_catering' => 'nullable|string',
+        'nama_sppg' => 'nullable|string|max:255',
+        'alamat_sppg' => 'nullable|string',
+    ]);
 
-    'email' =>
-        'required|email|unique:users,email',
-
-    'password' =>
-        'required|string|min:6|confirmed',
-
-    'role' =>
-        'required|in:owner,klien,kurir,operator_sppg',
-
-    'nama_catering' =>
-        'nullable|string|max:255',
-
-    'alamat_catering' =>
-        'nullable|string',
-
-    'nama_sppg' =>
-        'nullable|string|max:255',
-
-    'alamat_sppg' =>
-        'nullable|string',
-]);
-
-    $status = in_array(
-        $request->role,
-        ['owner', 'kurir', 'operator_sppg']
-    )
+    $status = in_array($request->role, ['owner', 'kurir', 'operator_sppg'])
         ? 'pending'
         : 'approved';
 
     $latitude = null;
-$longitude = null;
+    $longitude = null;
 
-if (
-    $request->role === 'owner' &&
-    !empty($request->alamat_catering)
-) {
+    if ($request->role === 'owner' && !empty($request->alamat_catering)) {
+        try {
+            $response = Http::withHeaders(['User-Agent' => 'WebCatering'])
+                ->get('https://nominatim.openstreetmap.org/search', [
+                    'q' => $request->alamat_catering,
+                    'format' => 'json',
+                    'limit' => 1,
+                ]);
 
-    try {
-
-        $response = Http::withHeaders([
-            'User-Agent' => 'WebCatering'
-        ])->get(
-            'https://nominatim.openstreetmap.org/search',
-            [
-                'q' => $request->alamat_catering,
-                'format' => 'json',
-                'limit' => 1,
-            ]
-        );
-
-        $location = $response->json();
-
-        if (!empty($location)) {
-
-            $latitude =
-                $location[0]['lat'];
-
-            $longitude =
-                $location[0]['lon'];
+            $location = $response->json();
+            if (!empty($location)) {
+                $latitude = $location[0]['lat'];
+                $longitude = $location[0]['lon'];
+            }
+        } catch (\Exception $e) {
+            $latitude = null;
+            $longitude = null;
         }
-
-    } catch (\Exception $e) {
-
-        $latitude = null;
-        $longitude = null;
-
     }
-}
 
-$user = User::create([
-    'name' => $request->name,
-    'email' => $request->email,
-    'password' => Hash::make(
-        $request->password
-    ),
-    'role' => $request->role,
-    'nama_catering' =>
-        $request->nama_catering,
-   'alamat_catering' =>
-        $request->alamat_catering,
-
+    $user = User::create([
+        'name' => $request->name,
+        'email' => $request->email,
+        'password' => Hash::make($request->password),
+        'role' => $request->role,
+        'nama_catering' => $request->nama_catering,
+        'alamat_catering' => $request->alamat_catering,
         'latitude' => $latitude,
         'longitude' => $longitude,
+        'status' => $status,
+        'nama_sppg' => $request->nama_sppg,
+        'alamat_sppg' => $request->alamat_sppg,
+    ]);
 
-'status' => $status,
-    
-    'nama_sppg' =>
-        $request->nama_sppg,
+    // jika status approved, buat token otomatis untuk auto-login
+    $token = null;
+    if ($status === 'approved') {
+        $token = $user->createToken('auth-token')->plainTextToken;
+    }
 
-    'alamat_sppg' =>
-        $request->alamat_sppg,
-]);
     return response()->json([
-        'message' =>
-            'Register berhasil',
-
+        'message' => 'Register berhasil',
         'user' => $user,
+        'token' => $token, // token null jika pending/rejected
     ]);
 });
 
