@@ -128,6 +128,9 @@ useEffect(() => {
     const loadMenus = async () => {
         try {
             const res = await axios.get("/api/klien/menus");
+
+            console.log(res.data[0]);
+
             setMenus(res.data);
         } catch (err) {
             console.log(err);
@@ -535,8 +538,7 @@ useEffect(() => {
                                    {menus
                                     .filter(
                                         (menu) =>
-                                            menu.jenis_catering?.toLowerCase() ===
-                                            selectedType.toLowerCase()
+                                            menu.category?.toLowerCase() === selectedType.toLowerCase()
                                     )
                                     .map((menu) => (
                                             <div
@@ -552,23 +554,15 @@ useEffect(() => {
                                                         "hidden",
                                                 }}
                                             >
-                                                <img
-                                                    src={
-                                                        selectedMenu.image
-                                                            ? `/storage/${selectedMenu.image}`
-                                                            : "/no-image.png"
-                                                    }
-                                                    alt={selectedMenu.name}
-                                                    alt=""
-                                                    style={{
-                                                        width:
-                                                            "100%",
-                                                        height:
-                                                            "210px",
-                                                        objectFit:
-                                                            "cover",
-                                                    }}
-                                                />
+                                        <img
+                                        src={menu.image ? `/storage/${menu.image}` : "/no-image.png"}
+                                        alt={menu.name}
+                                        style={{
+                                            width: "100%",
+                                            height: "210px",
+                                            objectFit: "cover",
+                                        }}
+                                    />
 
                                                 <div
                                                     style={{
@@ -591,15 +585,9 @@ useEffect(() => {
                                                         }
                                                     </h2>
 
-                                                    <div
-                                                        style={{
-                                                            color:"#60a5fa",
-                                                            marginBottom:"10px",
-                                                            fontSize:"14px"
-                                                        }}
-                                                    >
-                                                        {menu.jenis_catering}
-                                                    </div>
+                                                    <div style={{ color:"#60a5fa", marginBottom:"10px", fontSize:"14px" }}>
+                                                                {menu.category}
+                                                        </div>      
 
                                                     <div
                                                         style={{
@@ -695,15 +683,14 @@ useEffect(() => {
                                 <img
                                     src={
                                         selectedMenu.image
+                                            ? `/storage/${selectedMenu.image}`
+                                            : "/no-image.png"
                                     }
-                                    alt=""
+                                    alt={selectedMenu.name}
                                     style={{
-                                        width:
-                                            "100%",
-                                        height:
-                                            "320px",
-                                        objectFit:
-                                            "cover",
+                                        width: "100%",
+                                        height: "320px",
+                                        objectFit: "cover",
                                     }}
                                 />
 
