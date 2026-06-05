@@ -1,6 +1,6 @@
 // resources/js/components/NavbarKlien.jsx
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   FaHome,
   FaUtensils,
@@ -12,6 +12,18 @@ import {
 } from "react-icons/fa";
 
 export default function NavbarKlien({ title }) {
+  const navigate = useNavigate();
+
+  // Ambil data user dari localStorage
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  // Logout handler
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/"); // redirect ke landing page
+  };
+
   return (
     <nav
       style={{
@@ -23,7 +35,7 @@ export default function NavbarKlien({ title }) {
         background: "#0f172a",
         color: "#fff",
         gap: "12px",
-        flexWrap: "wrap", // agar wrap ketika layar sempit
+        flexWrap: "wrap",
       }}
     >
       {/* Logo & Dashboard */}
@@ -53,51 +65,34 @@ export default function NavbarKlien({ title }) {
         </div>
       </div>
 
-     {/* Menu Links */}
-<div
-  style={{
-    display: "flex",
-    alignItems: "center",
-    gap: "14px",
-    flexWrap: "wrap",
-  }}
->
-  <NavItem
-    to="/klien"
-    icon={<FaHome />}
-    label="Home"
-  />
-
-  <NavItem
-    to="/klien/pesan"
-    icon={<FaUtensils />}
-    label="Pesan Makan"
-  />
-
-  <NavItem
-    to="/klien/pesanan"
-    icon={<FaClipboardList />}
-    label="Pesanan Saya"
-  />
-
-  <NavItem
-    to="/klien/lacak-pengiriman"
-    icon={<FaTruck />}
-    label="Tracking"
-  />
-
-  <NavItem
-    to="/klien/invoice"
-    icon={<FaFileInvoiceDollar />}
-    label="Invoice"
-  />
-
-  <NavItem
-    to="/klien/ulasan"
-    icon={<FaStar />}
-    label="Ulasan"
-  />
-</div>
+      {/* Menu Links */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "14px",
+          flexWrap: "wrap",
+        }}
+      >
+        <NavItem to="/klien" icon={<FaHome />} label="Home" />
+        <NavItem to="/klien/pesan" icon={<FaUtensils />} label="Pesan Makan" />
+        <NavItem
+          to="/klien/pesanan"
+          icon={<FaClipboardList />}
+          label="Pesanan Saya"
+        />
+        <NavItem
+          to="/klien/lacak-pengiriman"
+          icon={<FaTruck />}
+          label="Tracking"
+        />
+        <NavItem
+          to="/klien/invoice"
+          icon={<FaFileInvoiceDollar />}
+          label="Invoice"
+        />
+        <NavItem to="/klien/ulasan" icon={<FaStar />} label="Ulasan" />
+      </div>
 
       {/* User & Notifications */}
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -114,13 +109,16 @@ export default function NavbarKlien({ title }) {
             fontWeight: "700",
           }}
         >
-          D
+          {user?.name?.charAt(0) || "U"}
         </div>
         <div>
-          <div style={{ fontWeight: "700" }}>Dwiky</div>
-          <div style={{ fontSize: "12px", color: "#94a3b8" }}>Pelanggan</div>
+          <div style={{ fontWeight: "700" }}>{user?.name || "User"}</div>
+          <div style={{ fontSize: "12px", color: "#94a3b8" }}>
+            {user?.role || "Klien"}
+          </div>
         </div>
         <button
+          onClick={handleLogout}
           style={{
             background: "#ef4444",
             color: "#fff",
