@@ -109,10 +109,12 @@ Route::post('/register', function (Request $request) {
         'nullable|string',
 ]);
 
-    $status =
-    $request->role === 'klien'
-        ? 'approved'
-        : 'pending';
+    $status = in_array(
+        $request->role,
+        ['owner', 'kurir', 'operator_sppg']
+    )
+        ? 'pending'
+        : 'approved';
 
     $latitude = null;
 $longitude = null;
