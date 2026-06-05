@@ -50,21 +50,24 @@ export default function MenusOwner() {
     const fetchMenus = async () => {
         try {
            const user = JSON.parse(
-                localStorage.getItem("user")
-            );
+    localStorage.getItem("user")
+);
 
-            const res = await axios.get(
-                "/api/owner/menus",
-                {
-                    params: {
-                        owner_id: user.id
-                    }
-                }
+const res = await axios.get(
+    "/api/owner/menus",
+    {
+        params: {
+            owner_id: user.id
+        }
+    }
 );
 
             setMenus(res.data);
-        } catch (err) {
-    console.log(err);
+        } catch (error) {
+    console.log("ERROR =", error);
+    console.log("DATA =", error.response?.data);
+
+    alert(JSON.stringify(error.response?.data));
 }
     };
 
@@ -126,16 +129,20 @@ export default function MenusOwner() {
        SUBMIT
     ========================= */
 
-    const handleSubmit = async (
-    e
-) => {
+ const handleSubmit = async (e) => {
+
     e.preventDefault();
+
+    console.log("HANDLE SUBMIT JALAN");
+    console.log("editingId =", editingId);
 
     try {
 
         const user = JSON.parse(
             localStorage.getItem("user")
         );
+
+        console.log("USER =", user);
 
         const data = new FormData();
 
@@ -180,40 +187,44 @@ export default function MenusOwner() {
             );
 
             if (form.image) {
-                data.append(
-                    "image",
-                    form.image
-                );
-            }
+    data.append("image", form.image);
+}
 
-            if (editingId) {
-                data.append(
-                    "_method",
-                    "PUT"
-                );
+console.log("FORM =", form);
 
-                await axios.post(
-                    `/api/owner/menus/${editingId}`,
-                    data,
-                    {
-                        headers: {
-                            "Content-Type":
-                                "multipart/form-data",
-                        },
-                    }
-                );
-            } else {
-                await axios.post(
-                    "/api/owner/menus",
-                    data,
-                    {
-                        headers: {
-                            "Content-Type":
-                                "multipart/form-data",
-                        },
-                    }
-                );
-            }
+for (let pair of data.entries()) {
+    console.log(pair[0], pair[1]);
+}
+
+if (editingId) {
+
+    data.append("_method", "PUT");
+
+    await axios.post(
+        `/api/owner/menus/${editingId}`,
+        data,
+        {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        }
+    );
+}
+
+else {
+
+    await axios.post(
+        "/api/owner/menus",
+        data,
+        {
+            headers: {
+                "Content-Type":
+                    "multipart/form-data",
+            },
+        }
+    );
+
+}
 
             setShowModal(false);
 
@@ -224,11 +235,16 @@ export default function MenusOwner() {
                 stock: "",
                 description: "",
                 image: null,
+                jenis_catering: "",
+                min_porsi: "",
             });
 
             fetchMenus();
-        } catch (err) {
-    console.log(err.response.data);
+        } catch (error) {
+    console.log("ERROR =", error);
+    console.log("DATA =", error.response?.data);
+
+    alert(JSON.stringify(error.response?.data));
 }
     };
 
@@ -1173,30 +1189,28 @@ export default function MenusOwner() {
                                 </button>
 
                                 <button
-                                    type="submit"
-                                    style={{
-                                        height:
-                                            "42px",
-                                        padding:
-                                            "0 18px",
-                                        border:
-                                            "none",
-                                        borderRadius:
-                                            "12px",
-                                        background:
-                                            "linear-gradient(135deg,#2563eb,#1d4ed8)",
-                                        color:
-                                            "white",
-                                        fontWeight:
-                                            "800",
-                                        cursor:
-                                            "pointer",
-                                    }}
-                                >
-                                    {editingId
-                                        ? "Update"
-                                        : "Save"}
-                                </button>
+    type="submit"
+    onClick={() =>
+        console.log(
+            "BUTTON UPDATE DIKLIK"
+        )
+    }
+    style={{
+        height: "42px",
+        padding: "0 18px",
+        border: "none",
+        borderRadius: "12px",
+        background:
+            "linear-gradient(135deg,#2563eb,#1d4ed8)",
+        color: "white",
+        fontWeight: "800",
+        cursor: "pointer",
+    }}
+>
+    {editingId
+        ? "Update"
+        : "Save"}
+</button>
                             </div>
                         </form>
                     </div>
