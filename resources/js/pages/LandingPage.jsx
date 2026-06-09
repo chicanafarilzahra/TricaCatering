@@ -20,24 +20,42 @@ export default function LandingPage() {
   // MENU STATE
   // =========================
   const [menus, setMenus] = useState([]);
-  const [loadingMenu, setLoadingMenu] =
-    useState(true);
+  const [loadingMenu, setLoadingMenu] = useState(true);
 
+
+  const [stats, setStats] = useState({
+  customers: 0,
+  kurirs: 0,
+  owners: 0,
+  orders: 0,
+});
   // =========================
   // GET MENU OWNER
   // =========================
   useEffect(() => {
-    fetch("/api/menus")
-      .then((res) => res.json())
-      .then((data) => {
-        setMenus(data);
-        setLoadingMenu(false);
-      })
-      .catch((err) => {
-        console.log(err);
-        setLoadingMenu(false);
-      });
-  }, []);
+  fetch("/api/menus")
+    .then((res) => res.json())
+    .then((data) => {
+      setMenus(data);
+      setLoadingMenu(false);
+    })
+    .catch((err) => {
+      console.log(err);
+      setLoadingMenu(false);
+    });
+}, []);
+
+useEffect(() => {
+  fetch("/api/dashboard-stats")
+    .then((res) => res.json())
+    .then((data) => {
+      console.log("Dashboard Stats:", data);
+      setStats(data);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+}, []);
 
   return (
     <div
@@ -395,10 +413,10 @@ export default function LandingPage() {
           overflow: "hidden",
           position: "relative",
           background:
-            "url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1600&auto=format&fit=crop') center/cover",
+            "url('/storage/images/hero.jpg') center/cover",
         }}
       >
-        <div
+        <div    
           style={{
             position: "absolute",
             inset: 0,
@@ -425,28 +443,28 @@ export default function LandingPage() {
             }}
           >
             <StatCard
-              icon={<FaUsers />}
-              title="Customer"
-              value="0"
-            />
+  icon={<FaUsers />}
+  title="Customer"
+  value={stats.customers}
+/>
 
-            <StatCard
-              icon={<FaTruck />}
-              title="Kurir"
-              value="0"
-            />
+<StatCard
+  icon={<FaTruck />}
+  title="Kurir"
+  value={stats.kurirs}
+/>
 
-            <StatCard
-              icon={<FaStore />}
-              title="Owner"
-              value="0"
-            />
+<StatCard
+  icon={<FaStore />}
+  title="Owner"
+  value={stats.owners}
+/>
 
-            <StatCard
-              icon={<FaBoxes />}
-              title="Pesanan"
-              value="0"
-            />
+<StatCard
+  icon={<FaBoxes />}
+  title="Pesanan"
+  value={stats.orders}
+/>
           </div>
         </div>
       </div>

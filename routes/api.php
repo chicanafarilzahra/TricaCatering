@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 
 use App\Models\User;
+use App\Models\Order;
 
 use App\Http\Controllers\AdminMenuController;
 use App\Http\Controllers\AdminClientController;
@@ -382,5 +383,21 @@ Route::prefix('owner')->group(function () {
         [SekolahController::class, 'index']
     );
 });
+
+});
+
+Route::get('/dashboard-stats', function () {
+
+    return response()->json([
+
+        'customers' => User::where('role', 'klien')->count(),
+
+        'kurirs' => User::where('role', 'kurir')->count(),
+
+        'owners' => User::where('role', 'owner')->count(),
+
+        'orders' => Order::count(),
+
+    ]);
 
 });
