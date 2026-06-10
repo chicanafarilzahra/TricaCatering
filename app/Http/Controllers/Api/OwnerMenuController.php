@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Menu;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class OwnerMenuController extends Controller
 {
@@ -27,7 +26,6 @@ class OwnerMenuController extends Controller
         'description' => 'nullable',
         'price' => 'required',
         'category' => 'required',
-        'stock' => 'required',
         'image' => 'nullable|image|mimes:jpg,jpeg,png,webp',
         'jenis_catering' => 'required|string',
         'min_porsi' => 'required|integer|min:1',
@@ -48,7 +46,6 @@ class OwnerMenuController extends Controller
     'description' => $request->description,
     'price' => $request->price,
     'category' => $request->category,
-    'stock' => $request->stock,
     'image' => $imagePath,
     'is_active' => true,
     'jenis_catering' => $request->jenis_catering,
@@ -60,7 +57,7 @@ class OwnerMenuController extends Controller
         'data' => $menu
     ]);
 }
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id)
 {
     try {
 
@@ -77,7 +74,6 @@ class OwnerMenuController extends Controller
             'description' => 'nullable',
             'price' => 'required',
             'category' => 'required',
-            'stock' => 'required',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,webp',
             'jenis_catering' => 'required|string',
             'min_porsi' => 'required|integer|min:1',
@@ -96,7 +92,6 @@ class OwnerMenuController extends Controller
             'description' => $request->description,
             'price' => $request->price,
             'category' => $request->category,
-            'stock' => $request->stock,
             'image' => $imagePath,
             'jenis_catering' => $request->jenis_catering,
             'min_porsi' => $request->min_porsi,
@@ -116,7 +111,8 @@ class OwnerMenuController extends Controller
 
     }
 }
-    public function destroy(Request $request, $id)
+    public function destroy(Request $request, int $id)
+
 {
     Menu::where(
         'id',

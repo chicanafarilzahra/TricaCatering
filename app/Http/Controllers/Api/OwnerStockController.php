@@ -32,7 +32,7 @@ class OwnerStockController extends Controller
         return response()->json($stock,201);
     }
 
-    public function update(Request $request,$id)
+    public function update(Request $request, int $id)
     {
         $stock = Stock::findOrFail($id);
 
@@ -46,7 +46,7 @@ class OwnerStockController extends Controller
         return response()->json($stock);
     }
 
-    public function destroy($id)
+    public function destroy(int $id)
     {
         Stock::findOrFail($id)->delete();
 

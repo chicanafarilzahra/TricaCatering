@@ -6,7 +6,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 
 use App\Models\User;
-use App\Models\Order;
 
 use App\Http\Controllers\AdminMenuController;
 use App\Http\Controllers\AdminClientController;

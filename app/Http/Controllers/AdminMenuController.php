@@ -39,9 +39,6 @@ class AdminMenuController extends Controller
             'image' =>
                 $request->image,
 
-            'stock' =>
-                $request->stock,
-
             'status' =>
                 'active',
         ]);
@@ -55,38 +52,34 @@ class AdminMenuController extends Controller
     }
 
 
-    public function show($id)
-    {
-        return Menu::findOrFail($id);
-    }
-
+    public function show(int $id)
+{
+    return Menu::findOrFail($id);
+}
 
 
     public function update(
-        Request $request,
-        $id
-    ) {
+    Request $request,
+    int $id
+)
+{
+    $menu = Menu::findOrFail($id);
 
-        $menu = Menu::findOrFail($id);
+    $menu->update($request->all());
 
-        $menu->update($request->all());
-
-        return response()->json([
-            'message' =>
-                'Menu berhasil diupdate',
-
-            'data' => $menu
-        ]);
-    }
+    return response()->json([
+        'message' => 'Menu berhasil diupdate',
+        'data' => $menu,
+    ]);
+}
 
    
-    public function destroy($id)
-    {
-        Menu::destroy($id);
+    public function destroy(int $id)
+{
+    Menu::destroy($id);
 
-        return response()->json([
-            'message' =>
-                'Menu berhasil dihapus'
-        ]);
-    }
+    return response()->json([
+        'message' => 'Menu berhasil dihapus',
+    ]);
+}
 }

@@ -9,19 +9,10 @@ class AdminUserController extends Controller
 {
     public function index()
 {
-    return User::whereIn(
-        'role',
-        [
-            'owner',
-            'kurir',
-            'operator_sppg'
-        ]
-    )
-    ->latest()
-    ->get();
+    return User::latest()->get();
 }
 
-    public function approve($id)
+    public function approve(int $id)
 {
     $user = User::findOrFail($id);
 
@@ -45,7 +36,7 @@ class AdminUserController extends Controller
     ]);
 }
 
-    public function reject($id)
+    public function reject(int $id)
 {
     $user = User::findOrFail($id);
 
