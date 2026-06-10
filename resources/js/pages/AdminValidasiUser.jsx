@@ -514,9 +514,6 @@ const filteredUsers =
         <option value="operator_sppg">
             Operator SPPG
         </option>
-        <option value="klien">
-            Klien
-        </option>
     </select>
 
     <select
@@ -579,8 +576,8 @@ const filteredUsers =
                                         "Nama",
                                         "Email",
                                         "Role",
-                                        "Nama Catering",
-                                        "Alamat Catering",
+                                        "Nama Tempat",
+                                        "Alamat",
                                         "Status",
                                         "Aksi",
                                     ].map(
@@ -661,28 +658,38 @@ const filteredUsers =
                                             </td>
 
                                             <td
-                                                style={{
-                                                    padding:
-                                                        "16px",
-                                                    color:
-                                                        "#cbd5e1",
-                                                }}
-                                            >
-                                                {user.nama_catering ||
-                                                    "-"}
-                                            </td>
+    style={{
+        padding:"16px",
+        color:"#cbd5e1",
+    }}
+>
+{
+user.role==="owner"
+? user.nama_catering
+: user.role==="kurir"
+? user.nama_tempat_kurir
+: user.role==="operator_sppg"
+? user.nama_sppg
+: "-"
+}
+</td>
 
-                                            <td
-                                                style={{
-                                                    padding:
-                                                        "16px",
-                                                    color:
-                                                        "#cbd5e1",
-                                                }}
-                                            >
-                                                {user.alamat_catering ||
-                                                    "-"}
-                                            </td>
+<td
+    style={{
+        padding:"16px",
+        color:"#cbd5e1",
+    }}
+>
+{
+user.role==="owner"
+? user.alamat_catering
+: user.role==="kurir"
+? user.alamat_tempat_kurir
+: user.role==="operator_sppg"
+? user.alamat_sppg
+: "-"
+}
+</td>
 
                                             <td
                                                 style={{
@@ -730,84 +737,74 @@ const filteredUsers =
                                                         "16px",
                                                 }}
                                             >
-                                                {user.status ===
-                                                    "pending" && (
-                                                    <div
-                                                        style={{
-                                                            display:
-                                                                "flex",
-                                                            gap: "10px",
-                                                        }}
-                                                    >
-                                                        <button
-                                                            onClick={() =>
-                                                                approveUser(
-                                                                    user.id
-                                                                )
-                                                            }
-                                                            style={{
-                                                                border:
-                                                                    "none",
-                                                                background:
-                                                                    "#22c55e",
-                                                                color:
-                                                                    "white",
-                                                                padding:
-                                                                    "10px 14px",
-                                                                borderRadius:
-                                                                    "12px",
-                                                                cursor:
-                                                                    "pointer",
-                                                                display:
-                                                                    "flex",
-                                                                alignItems:
-                                                                    "center",
-                                                                gap: "6px",
-                                                            }}
-                                                        >
-                                                            <CheckCircle
-                                                                size={
-                                                                    16
-                                                                }
-                                                            />
-                                                            Approve
-                                                        </button>
+                                                {user.status === "pending" ? (
 
-                                                        <button
-                                                            onClick={() =>
-                                                                rejectUser(
-                                                                    user.id
-                                                                )
-                                                            }
-                                                            style={{
-                                                                border:
-                                                                    "none",
-                                                                background:
-                                                                    "#ef4444",
-                                                                color:
-                                                                    "white",
-                                                                padding:
-                                                                    "10px 14px",
-                                                                borderRadius:
-                                                                    "12px",
-                                                                cursor:
-                                                                    "pointer",
-                                                                display:
-                                                                    "flex",
-                                                                alignItems:
-                                                                    "center",
-                                                                gap: "6px",
-                                                            }}
-                                                        >
-                                                            <XCircle
-                                                                size={
-                                                                    16
-                                                                }
-                                                            />
-                                                            Reject
-                                                        </button>
-                                                    </div>
-                                                )}
+    <div
+        style={{
+            display: "flex",
+            gap: "10px",
+        }}
+    >
+        <button
+            onClick={() =>
+                approveUser(user.id)
+            }
+            style={{
+                border: "none",
+                background: "#22c55e",
+                color: "white",
+                padding: "10px 14px",
+                borderRadius: "12px",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+            }}
+        >
+            <CheckCircle size={16} />
+            Approve
+        </button>
+
+        <button
+            onClick={() =>
+                rejectUser(user.id)
+            }
+            style={{
+                border: "none",
+                background: "#ef4444",
+                color: "white",
+                padding: "10px 14px",
+                borderRadius: "12px",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+            }}
+        >
+            <XCircle size={16} />
+            Reject
+        </button>
+    </div>
+
+) : (
+
+    <button
+        onClick={() =>
+            deleteUser(user.id)
+        }
+        style={{
+            border: "none",
+            background: "#ef4444",
+            color: "white",
+            padding: "10px 14px",
+            borderRadius: "12px",
+            cursor: "pointer",
+        }}
+    >
+        Hapus
+    </button>
+
+)}
                                             </td>
                                         </tr>
                                     )

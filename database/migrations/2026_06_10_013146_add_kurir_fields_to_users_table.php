@@ -10,15 +10,19 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {
-        Schema::table('users', function (Blueprint $table) {
+{
+    Schema::table('users', function (Blueprint $table) {
 
-            $table->string('nama_sppg')->nullable();
+        $table->string('nama_tempat_kurir')
+            ->nullable()
+            ->after('nama_catering');
 
-            $table->text('alamat_sppg')->nullable();
+        $table->text('alamat_tempat_kurir')
+            ->nullable()
+            ->after('nama_tempat_kurir');
 
-        });
-    }
+    });
+}
 
     /**
      * Reverse the migrations.
@@ -28,8 +32,8 @@ return new class extends Migration
     Schema::table('users', function (Blueprint $table) {
 
         $table->dropColumn([
-            'nama_sppg',
-            'alamat_sppg',
+            'nama_tempat_kurir',
+            'alamat_tempat_kurir',
         ]);
 
     });

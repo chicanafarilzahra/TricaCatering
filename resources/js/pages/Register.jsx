@@ -7,6 +7,12 @@ import {
     Link,
 } from "react-router-dom";
 
+import {
+    FaEye,
+    FaEyeSlash,
+    FaArrowLeft,
+} from "react-icons/fa";
+
 export default function Register() {
     const navigate = useNavigate();
 
@@ -18,6 +24,12 @@ export default function Register() {
 
     const [password, setPassword] =
         useState("");
+
+    const [showPassword, setShowPassword] =
+        useState(false);
+
+    const [showConfirmPassword, setShowConfirmPassword] =
+        useState(false);
 
     const [
         passwordConfirmation,
@@ -39,6 +51,9 @@ export default function Register() {
     const [alamatSppg, setAlamatSppg] =
         useState("");
 
+    const [namaTempatKurir, setNamaTempatKurir] = useState("");
+    const [alamatTempatKurir, setAlamatTempatKurir] = useState("");
+
     const [message, setMessage] =
         useState("");
 
@@ -53,36 +68,49 @@ export default function Register() {
 
     try {
         await axios.post(
-            "/api/register",
-            {
-                name,
-                email,
-                password,
-                password_confirmation:
-                    passwordConfirmation,
-                role,
+    "/api/register",
+    {
+        name,
+        email,
+        password,
+        password_confirmation:
+            passwordConfirmation,
+        role,
 
-                nama_catering:
-                    role === "owner"
-                        ? namaCatering
-                        : null,
+        // OWNER
+        nama_catering:
+            role === "owner"
+                ? namaCatering
+                : null,
 
-                alamat_catering:
-                    role === "owner"
-                        ? alamatCatering
-                        : null,
+        alamat_catering:
+            role === "owner"
+                ? alamatCatering
+                : null,
 
-                nama_sppg:
-                    role === "operator_sppg"
-                        ? namaSppg
-                        : null,
+        // KURIR
+        nama_tempat_kurir:
+            role === "kurir"
+                ? namaTempatKurir
+                : null,
 
-                alamat_sppg:
-                    role === "operator_sppg"
-                        ? alamatSppg
-                        : null,
-            }
-        );
+        alamat_tempat_kurir:
+            role === "kurir"
+                ? alamatTempatKurir
+                : null,
+
+        // OPERATOR SPPG
+        nama_sppg:
+            role === "operator_sppg"
+                ? namaSppg
+                : null,
+
+        alamat_sppg:
+            role === "operator_sppg"
+                ? alamatSppg
+                : null,
+    }
+);
 
         setMessage(
             "Register berhasil! Silakan login."
@@ -156,6 +184,31 @@ export default function Register() {
                         "40px",
                 }}
             >
+
+                <div
+    style={{
+        marginBottom: "20px",
+    }}
+>
+    <button
+        type="button"
+        onClick={() => navigate("/")}
+        style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            background: "transparent",
+            border: "none",
+            color: "#cbd5e1",
+            cursor: "pointer",
+            fontSize: "15px",
+            fontWeight: "600",
+            padding: 0,
+        }}
+    >
+        <FaArrowLeft size={12} />
+    </button>
+</div>
                 {/* LOGO */}
                 <div
                     style={{
@@ -308,7 +361,7 @@ export default function Register() {
 
                         <input
                             type="text"
-                            placeholder="Masukkan nama"
+                            placeholder=""
                             value={name}
                             onChange={(
                                 e
@@ -342,7 +395,7 @@ export default function Register() {
 
                         <input
                             type="email"
-                            placeholder="Enter your email"
+                            placeholder=""
                             value={email}
                             onChange={(
                                 e
@@ -374,25 +427,57 @@ export default function Register() {
                             Password
                         </label>
 
-                        <input
-                            type="password"
-                            placeholder="Enter your password"
-                            value={
-                                password
-                            }
-                            onChange={(
-                                e
-                            ) =>
-                                setPassword(
-                                    e.target
-                                        .value
-                                )
-                            }
-                            required
-                            style={
-                                inputStyle
-                            }
-                        />
+                        <div
+    style={{
+        position: "relative",
+    }}
+>
+    <input
+        type={
+            showPassword
+                ? "text"
+                : "password"
+        }
+        value={password}
+        onChange={(e) =>
+            setPassword(e.target.value)
+        }
+        style={{
+            ...inputStyle,
+            paddingRight: "50px",
+        }}
+    />
+
+    <button
+    type="button"
+    onClick={() =>
+        setShowPassword(
+            !showPassword
+        )
+    }
+    style={{
+        position: "absolute",
+        right: "12px",
+        top: "50%",
+        transform:
+            "translateY(-50%)",
+        border: "none",
+        background: "transparent",
+        cursor: "pointer",
+        color: "#94a3b8",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 0,
+    }}
+>
+    {showPassword ? (
+        <FaEyeSlash size={18} />
+    ) : (
+        <FaEye size={18} />
+    )}
+</button>
+</div>
                     </div>
 
                     {/* CONFIRM PASSWORD */}
@@ -410,25 +495,59 @@ export default function Register() {
                             Konfirmasi Password
                         </label>
 
-                        <input
-                            type="password"
-                            placeholder="Confirm password"
-                            value={
-                                passwordConfirmation
-                            }
-                            onChange={(
-                                e
-                            ) =>
-                                setPasswordConfirmation(
-                                    e.target
-                                        .value
-                                )
-                            }
-                            required
-                            style={
-                                inputStyle
-                            }
-                        />
+                        <div
+    style={{
+        position: "relative",
+    }}
+>
+    <input
+        type={
+            showConfirmPassword
+                ? "text"
+                : "password"
+        }
+        value={passwordConfirmation}
+        onChange={(e) =>
+            setPasswordConfirmation(
+                e.target.value
+            )
+        }
+        style={{
+            ...inputStyle,
+            paddingRight: "50px",
+        }}
+    />
+
+    <button
+    type="button"
+    onClick={() =>
+        setShowConfirmPassword(
+            !showConfirmPassword
+        )
+    }
+    style={{
+        position: "absolute",
+        right: "12px",
+        top: "50%",
+        transform:
+            "translateY(-50%)",
+        border: "none",
+        background: "transparent",
+        cursor: "pointer",
+        color: "#94a3b8",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 0,
+    }}
+>
+    {showConfirmPassword ? (
+        <FaEyeSlash size={18} />
+    ) : (
+        <FaEye size={18} />
+    )}
+</button>
+</div>
                     </div>
 
                     {/* ROLE */}
@@ -609,6 +728,47 @@ export default function Register() {
                     resize:
                         "vertical",
                 }}
+            />
+        </div>
+    </>
+)}
+
+{role === "kurir" && (
+    <>
+        <div style={{ marginBottom: "18px" }}>
+            <label style={labelStyle}>
+                Nama Tempat yang Dilamar
+            </label>
+
+            <input
+                type="text"
+                placeholder="Contoh: TriCa Catering"
+                value={namaTempatKurir}
+                onChange={(e) =>
+                    setNamaTempatKurir(e.target.value)
+                }
+                style={inputStyle}
+                required
+            />
+        </div>
+
+        <div style={{ marginBottom: "24px" }}>
+            <label style={labelStyle}>
+                Alamat Tempat yang Dilamar
+            </label>
+
+            <textarea
+                placeholder="Masukkan alamat lengkap"
+                value={alamatTempatKurir}
+                onChange={(e) =>
+                    setAlamatTempatKurir(e.target.value)
+                }
+                style={{
+                    ...inputStyle,
+                    minHeight: "90px",
+                    resize: "vertical",
+                }}
+                required
             />
         </div>
     </>

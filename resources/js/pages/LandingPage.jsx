@@ -748,6 +748,182 @@ useEffect(() => {
         </div>
       </section>
 
+      {/* PANDUAN PENDAFTARAN */}
+<section
+  className="container"
+  style={{
+    paddingBottom: "100px",
+  }}
+>
+  <div
+    style={{
+      textAlign: "center",
+      marginBottom: "50px",
+    }}
+  >
+    <h2 className="section-title">
+      Panduan Pendaftaran Owner, Kurir & Operator SPPG
+    </h2>
+
+    <p
+      style={{
+        color: "#94a3b8",
+        marginTop: "15px",
+        fontSize: "17px",
+      }}
+    >
+      Ikuti langkah berikut agar akun dapat digunakan.
+    </p>
+  </div>
+
+  <div
+    className="glass"
+    style={{
+      borderRadius: "30px",
+      padding: "40px",
+    }}
+  >
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "25px",
+      }}
+    >
+      <div style={{ display: "flex", gap: "20px" }}>
+        <div
+          style={{
+            width: "45px",
+            height: "45px",
+            borderRadius: "50%",
+            background: "#2563eb",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontWeight: "bold",
+          }}
+        >
+          1
+        </div>
+
+        <div>
+          <h3 style={{ marginBottom: "8px" }}>
+            Lakukan Registrasi
+          </h3>
+
+          <p style={{ color: "#94a3b8", lineHeight: "1.8" }}>
+            Daftarkan akun sebagai <b>Owner</b>,
+            <b> Kurir</b>, atau <b>Operator SPPG </b>
+            menggunakan email yang masih aktif dan data yang benar.
+          </p>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", gap: "20px" }}>
+        <div
+          style={{
+            width: "45px",
+            height: "45px",
+            borderRadius: "50%",
+            background: "#2563eb",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontWeight: "bold",
+          }}
+        >
+          2
+        </div>
+
+        <div>
+          <h3 style={{ marginBottom: "8px" }}>
+            Tunggu Validasi Admin
+          </h3>
+
+          <p style={{ color: "#94a3b8", lineHeight: "1.8" }}>
+            Setelah registrasi, akun akan masuk ke proses
+            verifikasi oleh Admin TriCa Catering. Mohon menunggu
+            hingga proses validasi selesai.
+          </p>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", gap: "20px" }}>
+        <div
+          style={{
+            width: "45px",
+            height: "45px",
+            borderRadius: "50%",
+            background: "#2563eb",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontWeight: "bold",
+          }}
+        >
+          3
+        </div>
+
+        <div>
+          <h3 style={{ marginBottom: "8px" }}>
+            Pantau Email
+          </h3>
+
+          <p style={{ color: "#94a3b8", lineHeight: "1.8" }}>
+            Pantau inbox email yang digunakan saat registrasi.
+            Jika akun disetujui, Anda akan menerima pemberitahuan
+            dari TriCa Catering.
+          </p>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", gap: "20px" }}>
+        <div
+          style={{
+            width: "45px",
+            height: "45px",
+            borderRadius: "50%",
+            background: "#22c55e",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontWeight: "bold",
+          }}
+        >
+          4
+        </div>
+
+        <div>
+          <h3 style={{ marginBottom: "8px" }}>
+            Login dan Mulai Menggunakan Sistem
+          </h3>
+
+          <p style={{ color: "#94a3b8", lineHeight: "1.8" }}>
+            Setelah menerima email persetujuan, silakan login
+            menggunakan akun yang telah didaftarkan dan mulai
+            menggunakan fitur sesuai peran Anda.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div
+      style={{
+        marginTop: "35px",
+        padding: "18px",
+        borderRadius: "16px",
+        background: "rgba(59,130,246,0.12)",
+        color: "#cbd5e1",
+        lineHeight: "1.8",
+      }}
+    >
+      <b>Catatan:</b> Role <b>Klien</b> tidak memerlukan validasi
+      admin dan dapat langsung menggunakan sistem setelah
+      melakukan registrasi.
+    </div>
+  </div>
+</section>
+
       {/* FOOTER */}
       <footer
         style={{

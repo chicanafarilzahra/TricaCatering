@@ -9,7 +9,16 @@ class AdminUserController extends Controller
 {
     public function index()
 {
-    return User::latest()->get();
+    return User::whereIn(
+        'role',
+        [
+            'owner',
+            'kurir',
+            'operator_sppg'
+        ]
+    )
+    ->latest()
+    ->get();
 }
 
     public function approve($id)

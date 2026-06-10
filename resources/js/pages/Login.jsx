@@ -7,6 +7,12 @@ import {
     Link,
 } from "react-router-dom";
 
+import {
+    FaEye,
+    FaEyeSlash,
+    FaArrowLeft,
+} from "react-icons/fa";
+
 import { FcGoogle } from "react-icons/fc";
 
 export default function Login() {
@@ -17,6 +23,9 @@ export default function Login() {
 
     const [password, setPassword] =
         useState("");
+
+    const [showPassword, setShowPassword] =
+        useState(false);
 
     const [loading, setLoading] =
         useState(false);
@@ -153,6 +162,31 @@ export default function Login() {
                             "20px",
                     }}
                 >
+
+                    <div
+    style={{
+        marginBottom: "20px",
+    }}
+>
+    <button
+        type="button"
+        onClick={() => navigate("/")}
+        style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            background: "transparent",
+            border: "none",
+            color: "#cbd5e1",
+            cursor: "pointer",
+            fontSize: "15px",
+            fontWeight: "600",
+            padding: 0,
+        }}
+    >
+        <FaArrowLeft size={12} />
+    </button>
+</div>
                     {/* LOGO */}
                     <div
                         style={{
@@ -383,7 +417,7 @@ export default function Login() {
 
                             <input
                                 type="email"
-                                placeholder="Enter your email"
+                                placeholder=""
                                 value={
                                     email
                                 }
@@ -432,82 +466,91 @@ export default function Login() {
                         </div>
 
                         {/* PASSWORD */}
-                        <div
-                            style={{
-                                marginBottom:
-                                    "24px",
-                            }}
-                        >
-                            <label
-                                style={{
-                                    display:
-                                        "block",
+                
+<div
+    style={{
+        marginBottom: "24px",
+    }}
+>
+    <label
+        style={{
+            display: "block",
+            marginBottom: "8px",
+            fontSize: "13px",
+            fontWeight: "600",
+            color: "#cbd5e1",
+        }}
+    >
+        Password
+    </label>
 
-                                    marginBottom:
-                                        "8px",
+    <div
+        style={{
+            position: "relative",
+        }}
+    >
+        <input
+            type={
+                showPassword
+                    ? "text"
+                    : "password"
+            }
+            placeholder=""
+            value={password}
+            onChange={(e) =>
+                setPassword(
+                    e.target.value
+                )
+            }
+            required
+            style={{
+                width: "100%",
+                height: "56px",
+                border:
+                    "1px solid rgba(255,255,255,0.08)",
+                borderRadius: "14px",
+                padding: "0 50px 0 16px",
+                fontSize: "14px",
+                outline: "none",
+                background: "#0f172a",
+                color: "#ffffff",
+                boxSizing: "border-box",
+            }}
+        />
 
-                                    fontSize:
-                                        "13px",
-
-                                    fontWeight:
-                                        "600",
-
-                                    color:
-                                        "#cbd5e1",
-                                }}
-                            >
-                                Password
-                            </label>
-
-                            <input
-                                type="password"
-                                placeholder="Enter your password"
-                                value={
-                                    password
-                                }
-                                onChange={(
-                                    e
-                                ) =>
-                                    setPassword(
-                                        e
-                                            .target
-                                            .value
-                                    )
-                                }
-                                required
-                                style={{
-                                    width:
-                                        "100%",
-
-                                    height:
-                                        "56px",
-
-                                    border:
-                                        "1px solid rgba(255,255,255,0.08)",
-
-                                    borderRadius:
-                                        "14px",
-
-                                    padding:
-                                        "0 16px",
-
-                                    fontSize:
-                                        "14px",
-
-                                    outline:
-                                        "none",
-
-                                    background:
-                                        "#0f172a",
-
-                                    color:
-                                        "#ffffff",
-
-                                    boxSizing:
-                                        "border-box",
-                                }}
-                            />
-                        </div>
+        <button
+            type="button"
+            onClick={() =>
+                setShowPassword(
+                    !showPassword
+                )
+            }
+            style={{
+                position: "absolute",
+                top: "50%",
+                right: "16px",
+                transform:
+                    "translateY(-50%)",
+                background:
+                    "transparent",
+                border: "none",
+                cursor: "pointer",
+                color: "#94a3b8",
+                display: "flex",
+                alignItems: "center",
+                justifyContent:
+                    "center",
+                padding: 0,
+            }}
+        >
+            {showPassword ? (
+                <FaEyeSlash size={18} />
+            ) : (
+                <FaEye size={18} />
+            )}
+        </button>
+    </div>
+</div>
 
                         {/* BUTTON LOGIN */}
                         <button

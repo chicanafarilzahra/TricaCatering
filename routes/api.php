@@ -53,7 +53,10 @@ Route::post('/login', function (Request $request) {
         ], 401);
     }
 
-    if ($user->status === 'pending') {
+    if (
+    $user->role != 'admin' &&
+    $user->status == 'pending'
+) {
 
     return response()->json([
         'message' =>
@@ -62,7 +65,10 @@ Route::post('/login', function (Request $request) {
 
 }
 
-if ($user->status === 'rejected') {
+if (
+    $user->role != 'admin' &&
+    $user->status == 'rejected'
+) {
 
     return response()->json([
         'message' =>
@@ -93,6 +99,9 @@ Route::post('/register', function (Request $request) {
         'alamat_catering' => 'nullable|string',
         'nama_sppg' => 'nullable|string|max:255',
         'alamat_sppg' => 'nullable|string',
+
+        'nama_tempat_kurir' => 'nullable|string|max:255',
+        'alamat_tempat_kurir' => 'nullable|string',
     ]);
 
     $status = in_array($request->role, ['owner', 'kurir', 'operator_sppg'])
@@ -129,11 +138,17 @@ Route::post('/register', function (Request $request) {
         'role' => $request->role,
         'nama_catering' => $request->nama_catering,
         'alamat_catering' => $request->alamat_catering,
-        'latitude' => $latitude,
-        'longitude' => $longitude,
-        'status' => $status,
+
+        'nama_tempat_kurir' => $request->nama_tempat_kurir,
+        'alamat_tempat_kurir' => $request->alamat_tempat_kurir,
+
         'nama_sppg' => $request->nama_sppg,
         'alamat_sppg' => $request->alamat_sppg,
+
+        'latitude' => $latitude,
+        'longitude' => $longitude,
+
+        'status' => $status,
     ]);
 
     // jika status approved, buat token otomatis untuk auto-login

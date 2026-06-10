@@ -10,13 +10,14 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
 
-            $table->string('nama_tempat')
-                ->nullable()
-                ->after('nama_catering');
-
-            $table->text('alamat')
+            $table->string('nama_tempat_kurir')
                 ->nullable()
                 ->after('alamat_catering');
+
+            $table->text('alamat_tempat_kurir')
+                ->nullable()
+                ->after('nama_tempat_kurir');
+
         });
     }
 
@@ -25,9 +26,10 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
 
             $table->dropColumn([
-                'nama_tempat',
-                'alamat',
+                'nama_tempat_kurir',
+                'alamat_tempat_kurir',
             ]);
+
         });
     }
 };
