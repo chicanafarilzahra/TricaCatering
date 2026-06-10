@@ -45,6 +45,12 @@ export default function Register() {
     const [alamatCatering, setAlamatCatering,] = 
         useState("");
 
+    const [latitude, setLatitude] =
+    useState(null);
+
+    const [longitude, setLongitude] =
+    useState(null);
+
     const [namaSppg, setNamaSppg] =
         useState("");
 
@@ -60,6 +66,43 @@ export default function Register() {
     const [loading, setLoading] =
         useState(false);
 
+    const getLocation = () => {
+
+    if (!navigator.geolocation) {
+
+        alert("Browser tidak mendukung GPS");
+
+        return;
+
+    }
+
+    navigator.geolocation.getCurrentPosition(
+
+        (position) => {
+
+            setLatitude(
+                position.coords.latitude
+            );
+
+            setLongitude(
+                position.coords.longitude
+            );
+
+            alert("Lokasi berhasil diambil");
+
+        },
+
+        (error) => {
+
+            console.log(error);
+
+            alert("Gagal mengambil lokasi");
+
+        }
+
+    );
+
+};
     const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -76,6 +119,16 @@ export default function Register() {
         password_confirmation:
             passwordConfirmation,
         role,
+
+        latitude:
+    role === "owner"
+        ? latitude
+        : null,
+
+    longitude:
+    role === "owner"
+        ? longitude
+        : null,
 
         // OWNER
         nama_catering:
@@ -662,6 +715,45 @@ export default function Register() {
                         "vertical",
                 }}
             />
+            <button
+            type="button"
+            onClick={getLocation}
+            style={{
+                width: "100%",
+                height: "50px",
+                marginTop: "12px",
+                border: "none",
+                borderRadius: "14px",
+                background: "#2563eb",
+                color: "#fff",
+                cursor: "pointer",
+                fontWeight: "600",
+            }}
+                >
+                    Ambil Lokasi Saya
+                </button>
+
+                {latitude && longitude && (
+
+                <div
+                    style={{
+                        marginTop: "10px",
+                        color: "#94a3b8",
+                        fontSize: "13px",
+                    }}
+                >
+
+                    Latitude :
+                    {latitude}
+
+                    <br />
+
+                    Longitude :
+                    {longitude}
+
+                </div>
+
+)}
         </div>
     </>
                     )}

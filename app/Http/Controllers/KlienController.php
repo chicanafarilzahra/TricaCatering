@@ -114,25 +114,30 @@ class KlienController extends Controller
 
     public function storePesanan(Request $request)
 {
-    $user = Auth::user();
-
     $request->validate([
+        'client_id' => 'required',
+        'customer_name' => 'required|string',
+        'phone' => 'required|string',
+
         'type' => 'required|in:harian,insidentil',
         'menu_id' => 'required|exists:menus,id',
         'quantity' => 'required|integer|min:1',
-        'duration' => 'nullable|integer|min:1',
-        'event_date' => 'nullable|date',
-        'theme' => 'nullable|string',
-        'notes' => 'nullable|string',
+
         'address' => 'required|string',
         'lat' => 'required|numeric',
         'lng' => 'required|numeric',
+
         'total_price' => 'required|numeric',
         'courier_fee' => 'required|numeric',
     ]);
 
     $order = Order::create([
-        'client_id' => $user->id,
+        'client_id' => $request->client_id,
+        'customer_name' => $request->customer_name,
+        'phone' => $request->phone,
+        'address' => $request->address,
+        'order_date' => now()->format('Y-m-d'),
+
         'type' => $request->type,
         'menu_id' => $request->menu_id,
         'quantity' => $request->quantity,
@@ -140,18 +145,19 @@ class KlienController extends Controller
         'event_date' => $request->event_date,
         'theme' => $request->theme,
         'notes' => $request->notes,
-        'address' => $request->address,
+
         'lat' => $request->lat,
         'lng' => $request->lng,
+
         'total_price' => $request->total_price,
         'courier_fee' => $request->courier_fee,
-        'status' => 'pending',
+
+        'status' => 'Pending',
     ]);
 
     return response()->json([
         'message' => 'Pesanan berhasil dibuat',
-        'order' => $order,
+        'order' => $order
     ]);
 }
-
 }

@@ -8,15 +8,36 @@ use Illuminate\Http\Request;
 
 class OwnerMenuController extends Controller
 {
-    public function index(Request $request)
+   public function index(Request $request)
 {
-    return Menu::where(
-        'owner_id',
-        $request->owner_id
-    )
-    ->where('is_active', true)
-    ->latest()
-    ->get();
+    $menus = Menu::with('owner')
+        ->where('owner_id', $request->owner_id)
+        ->where('is_active', true)
+        ->latest()
+        ->get();
+
+    return response()->json(
+        $menus->map(function ($menu) {
+            return [
+                'id' => $menu->id,
+                'name' => $menu->name,
+                'description' => $menu->description,
+                'price' => $menu->price,
+                'category' => $menu->category,
+                'image' => $menu->image,
+                'min_porsi' => $menu->min_porsi,
+                'jenis_catering' => $menu->jenis_catering,
+
+                // Owner info
+                'owner_name' => $menu->owner->nama_catering ?? '',
+                'catering_address' => $menu->owner->alamat_catering ?? '',
+
+                // Lokasi untuk hitung jarak
+                'cateringLat' => $menu->owner->latitude ?? null,
+                'cateringLng' => $menu->owner->longitude ?? null,
+            ];
+        })
+    );
 }
 
    public function store(Request $request)

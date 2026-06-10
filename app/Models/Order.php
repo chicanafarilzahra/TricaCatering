@@ -7,10 +7,26 @@ use Illuminate\Database\Eloquent\Model;
 class Order extends Model
 {
     protected $table = 'orders'; // pastikan ini sesuai nama tabel di DB
-    protected $fillable = [
-        'client_id','type','menu_id','quantity','duration','event_date','theme','notes',
-        'address','lat','lng','total_price','courier_fee','status'
-    ];
+   protected $fillable = [
+    'client_id',
+    'customer_name',
+    'phone',
+    'order_date',
+    'address',
+    'total_price',
+    'status',
+
+    'type',
+    'menu_id',
+    'quantity',
+    'duration',
+    'event_date',
+    'theme',
+    'notes',
+    'lat',
+    'lng',
+    'courier_fee',
+];
 
 
     public function courierLocation() {

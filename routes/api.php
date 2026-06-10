@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
-
+use Illuminate\Support\Facades\Log;
 use App\Models\User;
 
 use App\Http\Controllers\AdminMenuController;
@@ -100,6 +100,9 @@ Route::post('/register', function (Request $request) {
         'nama_sppg' => 'nullable|string|max:255',
         'alamat_sppg' => 'nullable|string',
 
+        'latitude' => 'nullable|numeric',
+        'longitude' => 'nullable|numeric',
+
         'nama_tempat_kurir' => 'nullable|string|max:255',
         'alamat_tempat_kurir' => 'nullable|string',
     ]);
@@ -111,25 +114,17 @@ Route::post('/register', function (Request $request) {
     $latitude = null;
     $longitude = null;
 
-    if ($request->role === 'owner' && !empty($request->alamat_catering)) {
-        try {
-            $response = Http::withHeaders(['User-Agent' => 'WebCatering'])
-                ->get('https://nominatim.openstreetmap.org/search', [
-                    'q' => $request->alamat_catering,
-                    'format' => 'json',
-                    'limit' => 1,
-                ]);
+$latitude = null;
+$longitude = null;
 
-            $location = $response->json();
-            if (!empty($location)) {
-                $latitude = $location[0]['lat'];
-                $longitude = $location[0]['lon'];
-            }
-        } catch (\Exception $e) {
-            $latitude = null;
-            $longitude = null;
-        }
-    }
+if ($request->role === 'owner') {
+
+    $latitude = $request->latitude;
+    $longitude = $request->longitude;
+
+    Log::info('Latitude: ' . $latitude);
+    Log::info('Longitude: ' . $longitude);
+}
 
     $user = User::create([
         'name' => $request->name,
@@ -162,6 +157,8 @@ Route::post('/register', function (Request $request) {
         'user' => $user,
         'token' => $token, // token null jika pending/rejected
     ]);
+
+
 });
 
 /*
@@ -314,25 +311,20 @@ Route::get('/klien/menus', function () {
             return [
 
                 'id' => $menu->id,
-
                 'name' => $menu->name,
-
                 'description' => $menu->description,
-
                 'price' => $menu->price,
-
                 'image' => $menu->image,
 
-                // kategori menu
                 'category' => $menu->jenis_catering,
 
-                // data owner
+                // TAMBAHKAN INI
+                'min_porsi' => $menu->min_porsi,
+
+                // owner
                 'owner' => $menu->owner?->nama_catering,
-
                 'ownerAddress' => $menu->owner?->alamat_catering,
-
                 'cateringLat' => $menu->owner?->latitude,
-
                 'cateringLng' => $menu->owner?->longitude,
 
             ];

@@ -28,6 +28,8 @@ return new class extends Migration
     $table->decimal('courier_fee', 8, 2);
     $table->enum('status', ['pending', 'confirmed', 'on_delivery', 'delivered'])->default('pending');
     $table->timestamps();
+    $table->date('tanggal')->nullable();
+    $table->time('jam')->nullable();
 });
 }
 

@@ -19,44 +19,7 @@ import {
 import axios from "axios";
 import NavbarKlien from "../../components/NavbarKlien";
 
-import {
-    MapContainer,
-    TileLayer,
-    Marker,
-    Popup,
-    Polyline,
-    useMap,
-} from "react-leaflet";
 
-import "leaflet-routing-machine";
-import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
-
-import "leaflet/dist/leaflet.css";
-
-import L from "leaflet";
-
-/*
-|--------------------------------------------------------------------------
-| FIX MARKER LEAFLET
-|--------------------------------------------------------------------------
-*/
-
-delete L.Icon.Default.prototype._getIconUrl;
-
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl:
-        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-    iconUrl:
-        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-    shadowUrl:
-        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-});
-
-/*
-|--------------------------------------------------------------------------
-| DUMMY DATA
-|--------------------------------------------------------------------------
-*/
 
 const cateringTypes = [
     {
@@ -104,25 +67,25 @@ export default function PesanMakan() {
 
     const [form, setForm] = useState({
     nama: "",
+    phone: "",
     alamat: "",
     jumlah: "",
     durasi: "",
     tanggal: "",
+    jam: "",
     tema: "",
     catatan: "",
 });
 
-const loadMenus = async () => {
-    try {
-        const res = await axios.get(
-            "/api/klien/menus"
-        );
+// setelah hargaProduk
+const tanggalSelesai = useMemo(() => {
+    if (!form.tanggal || !form.durasi) return "";
 
-        setMenus(res.data);
-    } catch (error) {
-        console.log(error);
-    }
-};
+    const tgl = new Date(form.tanggal);
+    tgl.setDate(tgl.getDate() + Number(form.durasi) - 1);
+
+    return tgl.toISOString().split("T")[0];
+}, [form.tanggal, form.durasi]);
 
 useEffect(() => {
     const loadMenus = async () => {
@@ -185,10 +148,12 @@ useEffect(() => {
     useEffect(() => {
     if (
         !clientLocation ||
-        !selectedMenu
-    )
+        !selectedMenu ||
+        !selectedMenu.cateringLat ||
+        !selectedMenu.cateringLng
+    ) {
         return;
-
+    }
     const start =
         `${selectedMenu.cateringLng},${selectedMenu.cateringLat}`;
 
@@ -238,11 +203,20 @@ useEffect(() => {
     |--------------------------------------------------------------------------
     */
 
-    const courierFee = useMemo(() => {
-        if (!distanceKm) return 0;
+const courierFee = useMemo(() => {
+    if (!distanceKm) return 0;
+    return Math.ceil(distanceKm) * 7000;
+}, [distanceKm]);
 
-        return Math.ceil(distanceKm) * 10000;
-    }, [distanceKm]);
+const totalCourierFee = useMemo(() => {
+    if (!courierFee) return 0;
+
+    if (selectedType === "harian") {
+        return courierFee * Number(form.durasi || 0);
+    }
+
+    return courierFee;
+}, [courierFee, form.durasi, selectedType]);
 
     /*
     |--------------------------------------------------------------------------
@@ -263,9 +237,7 @@ useEffect(() => {
             Number(form.jumlah) *
             Number(form.durasi);
 
-        const courier =
-            courierFee *
-            Number(form.durasi);
+        const courier = totalCourierFee;
 
         return subtotal + courier;
     }, [
@@ -301,6 +273,28 @@ useEffect(() => {
 
     const dp =
         totalInsidentil * 0.5;
+
+    const hargaProduk = useMemo(() => {
+    if (!selectedMenu || !form.jumlah) return 0;
+
+    if (selectedType === "harian") {
+        return (
+            selectedMenu.price *
+            Number(form.jumlah) *
+            Number(form.durasi || 0)
+        );
+    }
+
+    return (
+        selectedMenu.price *
+        Number(form.jumlah)
+    );
+}, [
+    selectedMenu,
+    form.jumlah,
+    form.durasi,
+    selectedType,
+]);
 
     /*
     |--------------------------------------------------------------------------
@@ -623,11 +617,10 @@ useEffect(() => {
                                                         }}
                                                     >
                                                         <button
-                                                            onClick={() =>
-                                                                setSelectedMenu(
-                                                                    menu
-                                                                )
-                                                            }
+                                                            onClick={() => {
+                                                                console.log(menu);
+                                                                setSelectedMenu(menu);
+                                                            }}
                                                             style={
                                                                 primaryButton
                                                             }
@@ -681,18 +674,20 @@ useEffect(() => {
                                 }}
                             >
                                 <img
-                                    src={
-                                        selectedMenu.image
-                                            ? `/storage/${selectedMenu.image}`
-                                            : "/no-image.png"
-                                    }
-                                    alt={selectedMenu.name}
-                                    style={{
-                                        width: "100%",
-                                        height: "320px",
-                                        objectFit: "cover",
-                                    }}
-                                />
+                                src={
+                                    selectedMenu.image
+                                        ? `/storage/${selectedMenu.image}`
+                                        : "/no-image.png"
+                                }
+                                alt={selectedMenu.name}
+                                style={{
+                                    width: "100%",
+                                    height: "320px",
+                                    objectFit: "cover",
+                                }}
+                            />
+
+                            
 
                                 <div
                                     style={{
@@ -717,15 +712,31 @@ useEffect(() => {
 
                                     <p
                                         style={{
-                                            color:
-                                                "#cbd5e1",
-                                            lineHeight: 1.8,
-                                            marginBottom:
-                                                "20px",
+                                            color:"#cbd5e1",
+                                            lineHeight:1.8,
+                                            marginBottom:"20px",
                                         }}
                                     >
                                         {selectedMenu.description}
                                     </p>
+
+                                    <div
+                                        style={{
+                                            background:"#0f172a",
+                                            padding:"16px",
+                                            borderRadius:"12px",
+                                            marginBottom:"20px",
+                                            color:"#fff",
+                                        }}
+                                    >
+                                                                            <div style={{ marginBottom:"8px" }}>
+                                        <strong>Nama Catering :</strong> {selectedMenu.owner}
+                                    </div>
+
+                                    <div>
+                                        <strong>Alamat Catering :</strong> {selectedMenu.ownerAddress}
+                                    </div>                 
+                                    </div>
 
                                     {/* FORM */}
                                     <div
@@ -754,44 +765,76 @@ useEffect(() => {
                                             }
                                         />
 
-                                        {selectedType ===
-                                        "harian" ? (
-                                            <>
-                                                <Input
-                                                    label={`Jumlah Porsi (minimal ${selectedMenu.min_porsi})`}
-                                                    type="number"
-                                                    min={selectedMenu.min_porsi}
-                                                    value={form.jumlah}
-                                                    onChange={(e)=>
-                                                        setForm({
-                                                            ...form,
-                                                            jumlah:e.target.value
-                                                        })
-                                                    }
-                                                />
+                                        <Input
+                                        label="No Telepon"
+                                        value={form.phone}
+                                        onChange={(e) =>
+                                            setForm({
+                                                ...form,
+                                                phone: e.target.value,
+                                            })
+                                        }
+                                    />
 
-                                                <Input
-                                                    label="Durasi Langganan"
-                                                    type="number"
-                                                    value={
-                                                        form.durasi
-                                                    }
-                                                    onChange={(
-                                                        e
-                                                    ) =>
-                                                        setForm(
-                                                            {
-                                                                ...form,
-                                                                durasi:
-                                                                    e
-                                                                        .target
-                                                                        .value,
-                                                            }
-                                                        )
-                                                    }
-                                                />
-                                            </>
-                                        ) : (
+                                        {selectedType === "harian" ? (
+                                        <>
+                                            <Input
+                                                label={`Jumlah Porsi (minimal ${selectedMenu.min_porsi})`}
+                                                type="number"
+                                                min={selectedMenu.min_porsi}
+                                                value={form.jumlah}
+                                                onChange={(e) =>
+                                                    setForm({
+                                                        ...form,
+                                                        jumlah: e.target.value,
+                                                    })
+                                                }
+                                            />
+
+                                            <Input
+                                                label="Durasi Langganan (Hari)"
+                                                type="number"
+                                                value={form.durasi}
+                                                onChange={(e) =>
+                                                    setForm({
+                                                        ...form,
+                                                        durasi: e.target.value,
+                                                    })
+                                                }
+                                            />
+
+                                            <Input
+                                                label="Tanggal Mulai Langganan"
+                                                type="date"
+                                                value={form.tanggal}
+                                                onChange={(e) =>
+                                                    setForm({
+                                                        ...form,
+                                                        tanggal: e.target.value,
+                                                    })
+                                                }
+                                            />
+
+                                            <Input
+                                                label="Tanggal Selesai Langganan"
+                                                type="date"
+                                                value={tanggalSelesai}
+                                                readOnly
+                                            />
+
+                                            <Input
+                                                label="Jam Pengiriman"
+                                                type="time"
+                                                value={form.jam}
+                                                onChange={(e) =>
+                                                    setForm({
+                                                        ...form,
+                                                        jam: e.target.value,
+                                                    })
+                                                }
+                                            />
+                                        </>
+                                    ) : (
                                             <>
                                                 <Input
                                                     label="Tanggal Event"
@@ -811,6 +854,17 @@ useEffect(() => {
                                                                         .value,
                                                             }
                                                         )
+                                                    }
+                                                />
+                                                <Input
+                                                    label="Jam Event"
+                                                    type="time"
+                                                    value={form.jam}
+                                                    onChange={(e) =>
+                                                        setForm({
+                                                            ...form,
+                                                            jam: e.target.value,
+                                                        })
                                                     }
                                                 />
 
@@ -876,211 +930,101 @@ useEffect(() => {
                                             }
                                         />
 
-                                        {/* MAP */}
-                                        {clientLocation && (
-                                            <div
-                                                style={{
-                                                    overflow:
-                                                        "hidden",
-                                                    borderRadius:
-                                                        "24px",
-                                                }}
-                                            >
-                                                <MapContainer
-                                                    center={[
-                                                        selectedMenu.cateringLat,
-                                                        selectedMenu.cateringLng,
-                                                    ]}
-                                                    zoom={
-                                                        12
-                                                    }
-                                                    style={{
-                                                        height:
-                                                            "400px",
-                                                        width:
-                                                            "100%",
-                                                    }}
-                                                >
-                                                    <TileLayer
-                                                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                                    />
-
-                                                    <Marker
-                                                        position={[
-                                                            selectedMenu.cateringLat,
-                                                            selectedMenu.cateringLng,
-                                                        ]}
-                                                    >
-                                                        <Popup>
-                                                            Lokasi
-                                                            Catering
-                                                        </Popup>
-                                                    </Marker>
-
-                                                    <Marker
-                                                        position={[
-                                                            clientLocation.lat,
-                                                            clientLocation.lng,
-                                                        ]}
-                                                    >
-                                                        <Popup>
-                                                            Lokasi
-                                                            Klien
-                                                        </Popup>
-                                                    </Marker>
-
-                                                    {routeCoords.length > 0 && (
-                                                            <Polyline
-                                                                positions={routeCoords}
-                                                                pathOptions={{
-                                                                    color: "#2563eb",
-                                                                    weight: 6,
-                                                                }}
-                                                            />
-                                                        )}
-
-                                                    <MapFly
-                                                        lat={
-                                                            clientLocation.lat
-                                                        }
-                                                        lng={
-                                                            clientLocation.lng
-                                                        }
-                                                    />
-                                                </MapContainer>
-                                            </div>
-                                        )}
 
                                         {/* INFO */}
-                                        {distanceKm >
-                                            0 && (
-                                            <div
+                                        <div
+                                        style={{
+                                            background:"#0f172a",
+                                            padding:"24px",
+                                            borderRadius:"20px",
+                                            color:"#fff"
+                                        }}
+                                    >
+                                        <h3
+                                            style={{
+                                                marginBottom:"20px",
+                                                fontSize:"22px"
+                                            }}
+                                        >
+                                            Ringkasan Pesanan
+                                        </h3>
+
+                                        <div style={{ marginBottom:"12px" }}>
+                                            Harga Produk :
+                                            <span
                                                 style={{
-                                                    background:
-                                                        "#0f172a",
-                                                    padding:
-                                                        "24px",
-                                                    borderRadius:
-                                                        "22px",
-                                                    color:
-                                                        "#fff",
+                                                    float:"right",
+                                                    color:"#fbbf24"
                                                 }}
                                             >
-                                                <div
-                                                    style={{
-                                                        marginBottom:
-                                                            "14px",
-                                                    }}
-                                                >
-                                                    Jarak Rute Jalan :
-                                                    {" "}
-                                                    <span
-                                                        style={{
-                                                            color:
-                                                                "#60a5fa",
-                                                        }}
-                                                    >
-                                                        {distanceKm.toFixed(
-                                                            1
-                                                        )} KM
-                                                    </span>
-                                                </div>
-                                                
-                                                <div
-                                                    style={{
-                                                        marginBottom:
-                                                            "14px",
-                                                    }}
-                                                >
-                                                    Estimasi
-                                                    Tiba :
-                                                    {" "}
-                                                    <span
-                                                        style={{
-                                                            color:
-                                                                "#60a5fa",
-                                                        }}
-                                                    >
-                                                        {
-                                                            durationMinute
-                                                        }{" "}
-                                                        Menit
-                                                    </span>
-                                                </div>
+                                                Rp {(hargaProduk || 0).toLocaleString("id-ID")}
+                                            </span>
+                                        </div>
 
-                                                <div
-                                                    style={{
-                                                        marginBottom:
-                                                            "14px",
-                                                    }}
-                                                >
-                                                    Biaya
-                                                    Kurir :
-                                                    {" "}
-                                                    <span
-                                                        style={{
-                                                            color:
-                                                                "#22c55e",
-                                                        }}
-                                                    >
-                                                        Rp{" "}
-                                                        {courierFee.toLocaleString(
-                                                            "id-ID"
-                                                        )}
-                                                    </span>
-                                                </div>
+                                      <div style={{ marginBottom: "12px" }}>
+                                        Biaya Kurir :
+                                        <span style={{ float: "right", color: "#fbbf24" }}>
+                                            Rp {totalCourierFee.toLocaleString("id-ID")}
+                                        </span>
+                                    </div>
 
-                                                <div
-                                                    style={{
-                                                        fontSize:
-                                                            "28px",
-                                                        color:
-                                                            "#fff",
-                                                    }}
-                                                >
-                                                    TOTAL
-                                                    :
-                                                    {" "}
-                                                    <span
-                                                        style={{
-                                                            color:
-                                                                "#22c55e",
-                                                        }}
-                                                    >
-                                                        Rp{" "}
-                                                        {(
-                                                            selectedType ===
-                                                            "harian"
-                                                                ? totalHarian
-                                                                : totalInsidentil
-                                                        ).toLocaleString(
-                                                            "id-ID"
-                                                        )}
-                                                    </span>
-                                                </div>
+                                        <div style={{ marginBottom:"12px" }}>
+                                            Jarak :
+                                            <span style={{ float:"right" }}>
+                                                {distanceKm
+                                                    ? distanceKm.toFixed(1)
+                                                    : 0} KM
+                                            </span>
+                                        </div>
 
-                                                {selectedType ===
-                                                    "insidentil" && (
-                                                    <div
-                                                        style={{
-                                                            marginTop:
-                                                                "16px",
-                                                            color:
-                                                                "#fbbf24",
-                                                        }}
-                                                    >
-                                                        DP
-                                                        50%
-                                                        :
-                                                        Rp{" "}
-                                                        {dp.toLocaleString(
-                                                            "id-ID"
-                                                        )}
-                                                    </div>
-                                                )}
+                                        <div style={{ marginBottom:"12px" }}>
+                                            Estimasi Sampai :
+                                            <span style={{ float:"right" }}>
+                                                {durationMinute || 0} Menit
+                                            </span>
+                                        </div>
+
+                                        <hr
+                                            style={{
+                                                margin:"18px 0",
+                                                borderColor:"#334155"
+                                            }}
+                                        />
+
+                                        <div
+                                            style={{
+                                                fontSize:"24px",
+                                                fontWeight:"bold"
+                                            }}
+                                        >
+                                            Total Keseluruhan
+
+                                            <span
+                                                style={{
+                                                    float:"right",
+                                                    color:"#fbbf24"
+                                                }}
+                                            >
+                                                Rp {(
+                                                    selectedType === "harian"
+                                                        ? totalHarian
+                                                        : totalInsidentil
+                                                ).toLocaleString("id-ID")}
+                                            </span>
+                                        </div>
+
+                                        {selectedType === "insidentil" && (
+                                            <div
+                                                style={{
+                                                    marginTop:"16px",
+                                                    color:"#fbbf24"
+                                                }}
+                                            >
+                                                DP 50% :
+                                                Rp {dp.toLocaleString("id-ID")}
                                             </div>
                                         )}
-
+                                    </div>
                                         <button
                                             style={{
                                                 height: "58px",
@@ -1092,44 +1036,72 @@ useEffect(() => {
                                                 cursor: "pointer",
                                             }}
                                             onClick={async () => {
-                                                if (!selectedMenu) return;
-
                                                 try {
-                                                    if (
-                                                        Number(form.jumlah) <
-                                                        Number(selectedMenu.min_porsi)
-                                                    ) {
-                                                        alert(
-                                                            `Minimal pemesanan ${selectedMenu.min_porsi} porsi`
-                                                        );
+                                                    const user = JSON.parse(localStorage.getItem("user"));
 
+                                                    if (!user?.id) {
+                                                        alert("User tidak ditemukan, silakan login ulang");
                                                         return;
                                                     }
 
-                                                    const res = await axios.post('/api/klien/orders', {
+                                                    if (!selectedMenu) return;
+
+                                                    if (Number(form.jumlah) < Number(selectedMenu.min_porsi)) {
+                                                        alert(`Minimal pemesanan ${selectedMenu.min_porsi} porsi`);
+                                                        return;
+                                                    }
+
+                                                    if (!clientLocation) {
+                                                        alert("Alamat tidak valid");
+                                                        return;
+                                                    }
+
+                                                    const courierFeeCalculated =
+                                                        Math.ceil(distanceKm) * 7000;
+
+                                                    const totalPrice =
+                                                        selectedType === "harian"
+                                                            ? selectedMenu.price * Number(form.jumlah) * Number(form.durasi) +
+                                                            courierFeeCalculated * Number(form.durasi)
+                                                            : selectedMenu.price * Number(form.jumlah) +
+                                                            courierFeeCalculated;
+
+                                               await axios.post("/api/klien/orders", {
+                                                        client_id: user.id,
+
+                                                        customer_name: form.nama,
+                                                        phone: form.phone,
+                                                        order_date: new Date().toISOString().split("T")[0],
+
                                                         type: selectedType,
                                                         menu_id: selectedMenu.id,
                                                         quantity: form.jumlah,
-                                                        duration: selectedType === 'harian' ? form.durasi : null,
-                                                        event_date: selectedType === 'insidentil' ? form.tanggal : null,
-                                                        theme: selectedType === 'insidentil' ? form.tema : null,
+
+                                                        duration: selectedType === "harian" ? form.durasi : null,
+                                                        event_date: selectedType === "insidentil" ? form.tanggal : null,
+                                                        theme: selectedType === "insidentil" ? form.tema : null,
+
+                                                        jam: form.jam,
                                                         notes: form.catatan,
+
                                                         address: form.alamat,
                                                         lat: clientLocation.lat,
                                                         lng: clientLocation.lng,
-                                                        total_price: selectedType === 'harian' ? totalHarian : totalInsidentil,
-                                                        courier_fee: courierFee,
+
+                                                        total_price: totalPrice,
+                                                        courier_fee: courierFeeCalculated,
                                                     });
 
-                                                    alert('Pesanan berhasil dibuat!');
-                                                    // redirect ke invoice atau reset form
+                                                    alert("Pesanan berhasil dibuat!");
+                                                    window.location.href = "/klien/orders";
+
                                                 } catch (err) {
                                                     console.error(err);
-                                                    alert('Gagal membuat pesanan.');
+                                                    alert("Gagal membuat pesanan.");
                                                 }
                                             }}
                                         >
-                                            <FaShoppingCart /> {selectedType === "harian" ? "Kirim Pesanan Harian" : "Ajukan Pesanan Insidentil"}
+                                            <FaShoppingCart /> Kirim Pesanan
                                         </button>
                                     </div>
                                 </div>
@@ -1211,24 +1183,6 @@ function Input({
     );
 }
 
-/*
-|--------------------------------------------------------------------------
-| MAP FLY
-|--------------------------------------------------------------------------
-*/
-
-function MapFly({
-    lat,
-    lng,
-}) {
-    const map = useMap();
-
-    useEffect(() => {
-        map.flyTo([lat, lng], 13);
-    }, [lat, lng]);
-
-    return null;
-}
 
 /*
 |--------------------------------------------------------------------------
