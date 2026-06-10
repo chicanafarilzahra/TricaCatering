@@ -35,10 +35,8 @@ export default function MenusOwner() {
         name: "",
         price: "",
         category: "",
-        stock: "",
         description: "",
         image: null,
-
         jenis_catering: "Insidentil",
         min_porsi: 1,
     });
@@ -86,7 +84,6 @@ const res = await axios.get(
             name: "",
             price: "",
             category: "",
-            stock: "",
             description: "",
             image: null,
 
@@ -110,7 +107,6 @@ const res = await axios.get(
             name: menu.name || "",
             price: menu.price || "",
             category: menu.category || "",
-            stock: menu.stock || "",
             description: menu.description || "",
             image: null,
 
@@ -177,11 +173,6 @@ const res = await axios.get(
             );
 
             data.append(
-                "stock",
-                form.stock
-            );
-
-            data.append(
                 "description",
                 form.description
             );
@@ -232,7 +223,6 @@ else {
                 name: "",
                 price: "",
                 category: "",
-                stock: "",
                 description: "",
                 image: null,
                 jenis_catering: "",
@@ -369,7 +359,6 @@ else {
                             catering
                             menus,
                             pricing,
-                            stock,
                             and
                             categories.
                         </p>
@@ -438,28 +427,18 @@ else {
                 />
 
                 <StatCard
-                    title="Total Stock"
-                    subtitle="Available stock"
-                    value={menus.reduce(
-                        (
-                            total,
-                            item
-                        ) =>
-                            total +
-                            Number(
-                                item.stock ||
-                                    0
-                            ),
-                        0
-                    )}
-                    icon={
-                        <Package
-                            size={22}
-                        />
-                    }
-                    color="#22c55e"
-                />
-
+    title="Jenis Catering"
+    subtitle="Tipe layanan"
+    value={[
+        ...new Set(
+            menus.map(
+                (item) => item.jenis_catering
+            )
+        ),
+    ].length}
+    icon={<Package size={22} />}
+    color="#22c55e"
+/>
                 <StatCard
                     title="Categories"
                     subtitle="Food categories"
@@ -1076,19 +1055,6 @@ else {
                                         ...form,
                                         min_porsi:
                                             e.target.value,
-                                    })
-                                }
-                                style={inputStyle}
-                            />
-
-                            <input
-                                type="number"
-                                placeholder="Stock"
-                                value={form.stock}
-                                onChange={(e) =>
-                                    setForm({
-                                        ...form,
-                                        stock: e.target.value,
                                     })
                                 }
                                 style={inputStyle}

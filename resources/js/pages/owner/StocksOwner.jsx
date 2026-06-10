@@ -151,69 +151,148 @@ function EmptyState({
     );
 }
 
-export default function StocksOwner() {
+export default function StocksOwner(){
 
-    const [stocks, setStocks] =
-        useState([]);
+    const [stocks,setStocks]=useState([]);
 
-    useEffect(() => {
+    const [showModal,setShowModal]=useState(false);
+
+    const [editId, setEditId] = useState(null);
+
+    const [form,setForm]=useState({
+        name:"",
+        qty:"",
+        unit:"",
+        minimum_stock:"",
+    });
+
+    useEffect(()=>{
         fetchStocks();
-    }, []);
+    },[]);
 
     const fetchStocks = async () => {
-        try {
-            const res =
-                await axios.get(
-                    "/api/owner/stocks"
-                );
+    try {
+        const res = await axios.get("/api/owner/stocks");
+        setStocks(res.data);
+    } catch (err) {
+        console.log(err);
+    }
+};
 
-            setStocks(res.data);
-        } catch (err) {
-            console.log(err);
-        }
-    };
+const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+        if (editId) {
+    await axios.put(
+        `/api/owner/stocks/${editId}`,
+        form
+    );
+} else {
+    await axios.post(
+        "/api/owner/stocks",
+        form
+    );
+}
+        setEditId(null);
+
+        setShowModal(false);
+
+        setForm({
+            name: "",
+            qty: "",
+            unit: "",
+            minimum_stock: "",
+        });
+
+        fetchStocks();
+    } catch (err) {
+        console.log(err);
+    }
+};
+
+const handleEdit = (item) => {
+    setForm({
+        name: item.name,
+        qty: item.qty,
+        unit: item.unit,
+        minimum_stock: item.minimum_stock,
+    });
+
+    setEditId(item.id);
+    setShowModal(true);
+};
+
+const handleDelete = async (id) => {
+
+    if (!window.confirm("Yakin ingin menghapus bahan ini?"))
+        return;
+
+    try {
+
+        await axios.delete(
+            `/api/owner/stocks/${id}`
+        );
+
+        fetchStocks();
+
+    } catch (err) {
+        console.log(err);
+    }
+};
 
     return (
         <OwnerLayout>
             {/* Header */}
-            <div
-                style={{
-                    marginBottom: "30px",
-                }}
-            >
-                <h1
-                    style={{
-                        margin: 0,
-                        fontSize: "34px",
-                        fontWeight: "800",
-                        color: "white",
-                    }}
-                >
-                    Stock Monitoring
-                </h1>
+<div
+    style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: "30px",
+        flexWrap: "wrap",
+        gap: "20px",
+    }}
+>
+    <div>
+        <h1
+            style={{
+                margin: 0,
+                fontSize: "34px",
+                fontWeight: "800",
+                color: "white",
+            }}
+        >
+            Stock Bahan Baku
+        </h1>
 
-                <p
-                    style={{
-                        margin:
-                            "10px 0 0",
-                        color:
-                            "#94a3b8",
-                        fontSize:
-                            "14px",
-                        lineHeight:
-                            "1.8",
-                        maxWidth:
-                            "650px",
-                    }}
-                >
-                    Monitor inventory
-                    levels, stock
-                    availability, and
-                    critical supply
-                    insights in real
-                    time.
-                </p>
-            </div>
+        <p
+            style={{
+                margin: "10px 0 0",
+                color: "#94a3b8",
+                fontSize: "14px",
+            }}
+        >
+            Kelola persediaan bahan baku untuk kebutuhan produksi catering.
+        </p>
+    </div>
+
+    <button
+        onClick={() => setShowModal(true)}
+        style={{
+            background:
+                "linear-gradient(135deg,#2563eb,#1d4ed8)",
+            color: "white",
+            border: "none",
+            padding: "12px 18px",
+            borderRadius: "12px",
+            cursor: "pointer",
+            fontWeight: "700",
+        }}
+    >
+        + Tambah Bahan
+    </button>
+</div>
 
             {/* Metrics */}
             <div
@@ -227,82 +306,48 @@ export default function StocksOwner() {
                 }}
             >
                 <MetricCard
-                    title="Total Items"
-                    value={
-                        stocks.length
-                    }
-                    icon={
-                        <Boxes size={22} />
-                    }
-                    color="#10b981"
-                />
+    title="Total Bahan"
+    value={stocks.length}
+    icon={<Boxes size={22} />}
+    color="#10b981"
+/>
 
-                <MetricCard
-                    title="Low Stock"
-                    value={
-                        stocks.filter(
-                            (
-                                item
-                            ) =>
-                                Number(
-                                    item.stock
-                                ) > 0 &&
-                                Number(
-                                    item.stock
-                                ) <=
-                                    Number(
-                                        item.minimum_stock ||
-                                            5
-                                    )
-                        ).length
-                    }
-                    icon={
-                        <AlertTriangle
-                            size={22}
-                        />
-                    }
-                    color="#f59e0b"
-                />
+<MetricCard
+    title="Stok Menipis"
+    value={
+        stocks.filter(
+            item =>
+                Number(item.qty) <=
+                Number(item.minimum_stock)
+        ).length
+    }
+    icon={<AlertTriangle size={22} />}
+    color="#f59e0b"
+/>
 
-                <MetricCard
-                    title="Out of Stock"
-                    value={
-                        stocks.filter(
-                            (
-                                item
-                            ) =>
-                                Number(
-                                    item.stock
-                                ) === 0
-                        ).length
-                    }
-                    icon={
-                        <TrendingDown
-                            size={22}
-                        />
-                    }
-                    color="#ef4444"
-                />
+<MetricCard
+    title="Habis"
+    value={
+        stocks.filter(
+            item =>
+                Number(item.qty) == 0
+        ).length
+    }
+    icon={<TrendingDown size={22} />}
+    color="#ef4444"
+/>
 
-                <MetricCard
-                    title="Available Items"
-                    value={
-                        stocks.filter(
-                            (
-                                item
-                            ) =>
-                                Number(
-                                    item.stock
-                                ) > 0
-                        ).length
-                    }
-                    icon={
-                        <PackageCheck
-                            size={22}
-                        />
-                    }
-                    color="#22c55e"
-                />
+<MetricCard
+    title="Tersedia"
+    value={
+        stocks.filter(
+            item =>
+                Number(item.qty) > 0
+        ).length
+    }
+    icon={<PackageCheck size={22} />}
+    color="#22c55e"
+/>
             </div>
 
             {/* Inventory Table */}
@@ -387,11 +432,12 @@ export default function StocksOwner() {
                                 }}
                             >
                                 {[
-                                    "Item Name",
-                                    "Category",
-                                    "Stock",
-                                    "Minimum Stock",
+                                    "Nama Bahan",
+                                    "Jumlah",
+                                    "Satuan",
+                                    "Minimum",
                                     "Status",
+                                    "Aksi",
                                 ].map(
                                     (
                                         item
@@ -429,10 +475,7 @@ export default function StocksOwner() {
                                 (
                                     item
                                 ) => {
-                                    const stock =
-                                        Number(
-                                            item.stock
-                                        );
+                                    const stock = Number(item.qty);
 
                                     const min =
                                         Number(
@@ -446,24 +489,17 @@ export default function StocksOwner() {
                                     let color =
                                         "#22c55e";
 
-                                    if (
-                                        stock ===
-                                        0
-                                    ) {
-                                        status =
-                                            "Out of Stock";
-
-                                        color =
-                                            "#ef4444";
-                                    } else if (
-                                        stock <=
-                                        min
-                                    ) {
-                                        status =
-                                            "Low Stock";
-
-                                        color =
-                                            "#f59e0b";
+                                    if(stock==0){
+                                        status="Habis";
+                                        color="#ef4444";
+                                        }
+                                        else if(stock<=min){
+                                        status="Menipis";
+                                        color="#f59e0b";
+                                        }
+                                        else{
+                                        status="Tersedia";
+                                        color="#22c55e";
                                     }
 
                                     return (
@@ -477,55 +513,41 @@ export default function StocksOwner() {
                                             }}
                                         >
                                             <td
-                                                style={{
-                                                    padding:
-                                                        "16px",
-                                                    color:
-                                                        "white",
-                                                }}
-                                            >
-                                                {
-                                                    item.name
-                                                }
-                                            </td>
+style={{
+padding:"16px",
+color:"white"
+}}
+>
+{item.name}
+</td>
 
-                                            <td
-                                                style={{
-                                                    padding:
-                                                        "16px",
-                                                    color:
-                                                        "#cbd5e1",
-                                                }}
-                                            >
-                                                {item.category ||
-                                                    "-"}
-                                            </td>
+<td
+style={{
+padding:"16px",
+color:"white",
+fontWeight:"700"
+}}
+>
+{item.qty}
+</td>
 
-                                            <td
-                                                style={{
-                                                    padding:
-                                                        "16px",
-                                                    color:
-                                                        "white",
-                                                    fontWeight:
-                                                        "700",
-                                                }}
-                                            >
-                                                {
-                                                    item.stock
-                                                }
-                                            </td>
+<td
+style={{
+padding:"16px",
+color:"#cbd5e1"
+}}
+>
+{item.unit}
+</td>
 
-                                            <td
-                                                style={{
-                                                    padding:
-                                                        "16px",
-                                                    color:
-                                                        "#cbd5e1",
-                                                }}
-                                            >
-                                                {min}
-                                            </td>
+<td
+style={{
+padding:"16px",
+color:"#cbd5e1"
+}}
+>
+{min}
+</td>
 
                                             <td
                                                 style={{
@@ -553,6 +575,47 @@ export default function StocksOwner() {
                                                     }
                                                 </span>
                                             </td>
+
+                                            <td
+    style={{
+        padding: "16px",
+    }}
+>
+    <div
+        style={{
+            display: "flex",
+            gap: "10px",
+        }}
+    >
+        <button
+            onClick={() => handleEdit(item)}
+            style={{
+                background: "#2563eb",
+                color: "white",
+                border: "none",
+                padding: "8px 12px",
+                borderRadius: "8px",
+                cursor: "pointer",
+            }}
+        >
+            Edit
+        </button>
+
+        <button
+            onClick={() => handleDelete(item.id)}
+            style={{
+                background: "#ef4444",
+                color: "white",
+                border: "none",
+                padding: "8px 12px",
+                borderRadius: "8px",
+                cursor: "pointer",
+            }}
+        >
+            Hapus
+        </button>
+    </div>
+</td>
                                         </tr>
                                     );
                                 }
@@ -638,7 +701,7 @@ export default function StocksOwner() {
                                     item
                                 ) =>
                                     Number(
-                                        item.stock
+                                        item.qty
                                     ) <=
                                     Number(
                                         item.minimum_stock ||
@@ -666,25 +729,156 @@ export default function StocksOwner() {
                                                 "white",
                                         }}
                                     >
-                                        <strong>
-                                            {
-                                                item.name
-                                            }
-                                        </strong>
-                                        {" "}
-                                        stock is
-                                        running
-                                        low (
-                                        {
-                                            item.stock
-                                        }
-                                        )
+                                        <strong>{item.name}</strong>
+
+{" "}
+tersisa
+
+<b>{item.qty} {item.unit}</b>
+
+dan sudah mencapai batas minimum. (
+{item.qty} {item.unit}
+)
                                     </div>
                                 )
                             )}
                     </div>
                 )}
             </div>
+            {showModal && (
+<div
+    style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,.7)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 9999,
+    }}
+>
+    <div
+        style={{
+            width: "450px",
+            background: "#111827",
+            borderRadius: "20px",
+            padding: "25px",
+        }}
+    >
+        <h2
+            style={{
+                color: "white",
+                marginBottom: "20px",
+            }}
+        >
+            Tambah Bahan Baku
+        </h2>
+
+        <form onSubmit={handleSubmit}>
+
+            <input
+                placeholder="Nama Bahan"
+                value={form.name}
+                onChange={(e)=>
+                    setForm({
+                        ...form,
+                        name:e.target.value
+                    })
+                }
+                style={inputStyle}
+            />
+
+            <input
+                type="number"
+                placeholder="Jumlah Stock"
+                value={form.qty}
+                onChange={(e)=>
+                    setForm({
+                        ...form,
+                        qty:e.target.value
+                    })
+                }
+                style={inputStyle}
+            />
+
+            <input
+                placeholder="Satuan (kg, pcs, liter)"
+                value={form.unit}
+                onChange={(e)=>
+                    setForm({
+                        ...form,
+                        unit:e.target.value
+                    })
+                }
+                style={inputStyle}
+            />
+
+            <input
+                type="number"
+                placeholder="Minimum Stock"
+                value={form.minimum_stock}
+                onChange={(e)=>
+                    setForm({
+                        ...form,
+                        minimum_stock:e.target.value
+                    })
+                }
+                style={inputStyle}
+            />
+
+            <div
+                style={{
+                    display:"flex",
+                    justifyContent:"flex-end",
+                    gap:"10px",
+                    marginTop:"20px",
+                }}
+            >
+                <button
+                    type="button"
+                    onClick={()=>setShowModal(false)}
+                    style={{
+                        padding:"10px 18px",
+                        borderRadius:"10px",
+                        border:"none",
+                        cursor:"pointer",
+                    }}
+                >
+                    Batal
+                </button>
+
+                <button
+                    type="submit"
+                    style={{
+                        padding:"10px 18px",
+                        borderRadius:"10px",
+                        border:"none",
+                        background:"#2563eb",
+                        color:"white",
+                        fontWeight:"700",
+                        cursor:"pointer",
+                    }}
+                >
+                    Simpan
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+)}
         </OwnerLayout>
     );
 }
+const inputStyle = {
+    width: "100%",
+    height: "46px",
+    borderRadius: "10px",
+    border: "1px solid #334155",
+    background: "#0f172a",
+    color: "white",
+    padding: "0 14px",
+    marginBottom: "14px",
+    outline: "none",
+    boxSizing: "border-box",
+};

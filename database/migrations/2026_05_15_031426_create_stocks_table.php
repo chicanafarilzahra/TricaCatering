@@ -13,18 +13,31 @@ return new class extends Migration
     {
         Schema::create('stocks', function (Blueprint $table) {
 
-            $table->id();
+    $table->id();
 
-            $table->string('name');
+    // pemilik stock
+    $table->foreignId('owner_id')->nullable();
 
-            $table->integer('qty');
+    // jika stock milik SPPG
+    $table->foreignId('sppg_id')->nullable();
 
-            $table->string('unit');
+    // nama bahan
+    $table->string('name');
 
-            $table->integer('minimum_stock');
+    // kategori
+    $table->string('category')->nullable();
 
-            $table->timestamps();
-        });
+    // jumlah stock
+    $table->decimal('qty',10,2);
+
+    // satuan
+    $table->string('unit');
+
+    // batas minimum
+    $table->decimal('minimum_stock',10,2)->default(0);
+
+    $table->timestamps();
+});
     }
 
     /**

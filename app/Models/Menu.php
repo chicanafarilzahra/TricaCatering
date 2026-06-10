@@ -23,4 +23,12 @@ class Menu extends Model
     {
         return $this->belongsTo(User::class, 'owner_id');
     }
+
+    public function bahans()
+{
+    return $this->belongsToMany(
+        Stock::class,
+        'menu_bahan'
+    )->withPivot('qty');
+}
 }

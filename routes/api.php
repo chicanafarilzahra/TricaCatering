@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\CourierController;
 use App\Http\Controllers\Api\TrackingController;
 
 use App\Http\Controllers\Api\OwnerMenuController;
+use App\Http\Controllers\Api\OwnerStockController;
 
 use App\Http\Controllers\SPPG\DashboardSPPGController;
 use App\Http\Controllers\SPPG\MenuHarianController;
@@ -375,6 +376,26 @@ Route::prefix('owner')->group(function () {
         [OwnerMenuController::class, 'destroy']
     );
 
+    Route::get(
+        '/stocks',
+        [OwnerStockController::class,'index']
+    );
+
+    Route::post(
+        '/stocks',
+        [OwnerStockController::class,'store']
+    );
+
+    Route::put(
+        '/stocks/{id}',
+        [OwnerStockController::class,'update']
+    );
+
+    Route::delete(
+        '/stocks/{id}',
+        [OwnerStockController::class,'destroy']
+    );
+
 /*
 |--------------------------------------------------------------------------
 | SPPG
@@ -405,13 +426,19 @@ Route::get('/dashboard-stats', function () {
 
     return response()->json([
 
-        'customers' => User::where('role', 'klien')->count(),
+    'customers' => User::where('role','klien')->count(),
 
-        'kurirs' => User::where('role', 'kurir')->count(),
+    'kurirs' => User::where('role','kurir')
+        ->where('status','approved')
+        ->count(),
 
-        'owners' => User::where('role', 'owner')->count(),
+    'owners' => User::where('role','owner')
+        ->where('status','approved')
+        ->count(),
 
-        'orders' => Order::count(),
+    'sppgs' => User::where('role','operator_sppg')
+        ->where('status','approved')
+        ->count(),
 
     ]);
 

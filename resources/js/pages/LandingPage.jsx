@@ -117,8 +117,8 @@ useEffect(() => {
 
         .menu-grid{
           display:grid;
-          grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-          gap:22px;
+          grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+          gap:24px;
         }
 
         .role-grid{
@@ -461,9 +461,9 @@ useEffect(() => {
 />
 
 <StatCard
-  icon={<FaBoxes />}
-  title="Pesanan"
-  value={stats.orders}
+  icon={<FaClipboardList />}
+  title="SPPG"
+  value={stats.sppgs}
 />
           </div>
         </div>
@@ -548,6 +548,9 @@ useEffect(() => {
                 style={{
                   borderRadius: "24px",
                   overflow: "hidden",
+                  display: "flex",
+                  flexDirection: "column",
+                  height: "100%",
                 }}
               >
 
@@ -577,57 +580,52 @@ useEffect(() => {
 >
   {/* NAMA MENU */}
   <h3
-    style={{
-      fontSize: "22px",
-      marginBottom: "12px",
-      fontWeight: "800",
-
-      minHeight: "56px", // samakan area judul
-    }}
-  >
-    {menu.name || "Menu Catering"}
-  </h3>
+  style={{
+    fontSize: "22px",
+    marginBottom: "12px",
+    fontWeight: "800",
+    minHeight: "60px",
+  }}
+>
+  {menu.name || "Menu Catering"}
+</h3>
 
   {/* DESKRIPSI */}
   <p
-    style={{
-      color: "#94a3b8",
-      lineHeight: "1.7",
-
-      flex: 1, // isi ruang kosong
-
-      overflow: "hidden",
-      display: "-webkit-box",
-      WebkitLineClamp: 4,
-      WebkitBoxOrient: "vertical",
-    }}
-  >
-    {menu.description ||
-      "Menu catering tersedia"}
-  </p>
+  style={{
+    color: "#94a3b8",
+    lineHeight: "1.7",
+    flex: 1,
+    overflow: "hidden",
+    display: "-webkit-box",
+    WebkitLineClamp: 4,
+    WebkitBoxOrient: "vertical",
+    minHeight: "110px",
+  }}
+>
+  {menu.description || "Menu catering tersedia"}
+</p>
 
   {/* BUTTON */}
   <Link
-    to="/login"
-    style={{
-      marginTop: "auto", // dorong ke bawah
-
-      width: "100%",
-      padding: "14px 18px",
-      borderRadius: "14px",
-      background:
-        "linear-gradient(135deg,#2563eb,#3b82f6)",
-      color: "white",
-      textDecoration: "none",
-      fontWeight: "800",
-
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-    }}
-  >
-    Pesan
-  </Link>
+  to="/login"
+  style={{
+    marginTop: "auto",
+    width: "100%",
+    padding: "14px",
+    borderRadius: "14px",
+    background:
+      "linear-gradient(135deg,#2563eb,#3b82f6)",
+    color: "white",
+    textDecoration: "none",
+    fontWeight: "800",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+  }}
+>
+  Pesan
+</Link>
 </div>
 </div>
 
