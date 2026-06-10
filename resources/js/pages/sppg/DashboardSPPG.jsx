@@ -982,39 +982,63 @@ function ActionButton({
 }
 
 function ActivityItem({
+    icon,
     title,
+    time,
     desc,
 }) {
     return (
         <div
             style={{
-                padding:
-                    "14px 0",
+                display: "flex",
+                gap: "12px",
+                padding: "14px 0",
                 borderBottom:
                     "1px solid rgba(255,255,255,.05)",
             }}
         >
             <div
                 style={{
-                    color: "#fff",
-                    fontWeight:
-                        "600",
+                    color: "#38bdf8",
+                    marginTop: "3px",
                 }}
             >
-                {title}
+                {icon || <Activity size={16} />}
             </div>
 
-            <div
-                style={{
-                    color:
-                        "#94a3b8",
-                    fontSize:
-                        "14px",
-                    marginTop:
-                        "4px",
-                }}
-            >
-                {desc}
+            <div style={{ flex: 1 }}>
+                <div
+                    style={{
+                        color: "#fff",
+                        fontWeight: 600,
+                    }}
+                >
+                    {title}
+                </div>
+
+                {desc && (
+                    <div
+                        style={{
+                            color: "#94a3b8",
+                            fontSize: 14,
+                            marginTop: 4,
+                        }}
+                    >
+                        {desc}
+                    </div>
+                )}
+
+                {time && (
+                    <div
+                        style={{
+                            color: "#64748b",
+                            fontSize: 12,
+                            marginTop: 4,
+                        }}
+                    >
+                        {time}
+                    </div>
+                )}
             </div>
         </div>
     );

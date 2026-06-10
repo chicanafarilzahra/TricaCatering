@@ -7,19 +7,19 @@ use Illuminate\Database\Eloquent\Model;
 class Sekolah extends Model
 {
     protected $fillable = [
-
+        'sppg_id',
         'nama_sekolah',
-        'jenjang',
         'alamat',
-        'jumlah_siswa'
-
+        'jumlah_siswa',
+        'latitude',
+        'longitude',
     ];
 
-    public function sppgs()
+    public function sppg()
     {
-        return $this->belongsToMany(
+        return $this->belongsTo(
             User::class,
-            'sppg_sekolah'
+            'sppg_id'
         );
     }
 }

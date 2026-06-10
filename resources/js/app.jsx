@@ -81,6 +81,7 @@ import UlasanKlien from "./pages/Klien/UlasanKlien";
 
 import DashboardSPPG from "./pages/sppg/DashboardSPPG";
 import MenuHarianSPPG from "./pages/sppg/MenuHarianSPPG";
+import SekolahSPPG from "./pages/sppg/SekolahSPPG";
 
 /* =========================
    COMPONENTS
@@ -456,6 +457,15 @@ function App() {
                         element={
                             <ProtectedRoute role="operator_sppg">
                                 <MenuHarianSPPG />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/sppg/sekolah"
+                        element={
+                            <ProtectedRoute role="operator_sppg">
+                                <SekolahSPPG />
                             </ProtectedRoute>
                         }
                     />

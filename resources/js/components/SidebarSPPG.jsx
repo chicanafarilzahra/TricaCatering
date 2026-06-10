@@ -24,7 +24,6 @@ export default function SidebarSPPG() {
     const logout = () => {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-
         navigate("/login");
     };
 
@@ -46,7 +45,7 @@ export default function SidebarSPPG() {
         },
         {
             label: "Menu & Gizi",
-            path: "/sppg/menu",
+            path: "/sppg/menu-harian",
             icon: <UtensilsCrossed size={18} />,
         },
         {
@@ -69,70 +68,43 @@ export default function SidebarSPPG() {
     return (
         <aside
             style={{
-                width: "270px",
+                width: 270,
                 height: "100vh",
                 position: "fixed",
-                left: 0,
                 top: 0,
-
-                background:
-                    "#071028",
-
-                borderRight:
-                    "1px solid rgba(255,255,255,.05)",
-
+                left: 0,
+                background: "#071028",
+                borderRight: "1px solid rgba(255,255,255,.05)",
                 display: "flex",
                 flexDirection: "column",
-                justifyContent:
-                    "space-between",
-
-                padding: "24px",
-
-                boxSizing:
-                    "border-box",
-
+                justifyContent: "space-between",
+                padding: 24,
+                boxSizing: "border-box",
                 zIndex: 999,
             }}
         >
             <div>
-                {/* HEADER */}
-
                 <div
                     style={{
                         display: "flex",
-                        alignItems:
-                            "center",
-
-                        gap: "14px",
-
-                        marginBottom:
-                            "40px",
+                        alignItems: "center",
+                        gap: 14,
+                        marginBottom: 40,
                     }}
                 >
                     <div
                         style={{
-                            width: "58px",
-                            height: "58px",
-
-                            borderRadius:
-                                "18px",
-
+                            width: 58,
+                            height: 58,
+                            borderRadius: 18,
                             background:
                                 "linear-gradient(135deg,#06b6d4,#2563eb)",
-
                             display: "flex",
-                            alignItems:
-                                "center",
-                            justifyContent:
-                                "center",
-
+                            alignItems: "center",
+                            justifyContent: "center",
                             color: "#fff",
-
-                            fontSize:
-                                "24px",
-
-                            fontWeight:
-                                "800",
+                            fontWeight: 800,
+                            fontSize: 24,
                         }}
                     >
                         S
@@ -141,27 +113,18 @@ export default function SidebarSPPG() {
                     <div>
                         <div
                             style={{
-                                color:
-                                    "#fff",
-
-                                fontSize:
-                                    "18px",
-
-                                fontWeight:
-                                    "700",
+                                color: "#fff",
+                                fontWeight: 700,
+                                fontSize: 18,
                             }}
                         >
-                            {user?.nama_sppg ||
-                                "SPPG"}
+                            {user?.nama_sppg || "SPPG"}
                         </div>
 
                         <div
                             style={{
-                                color:
-                                    "#94a3b8",
-
-                                fontSize:
-                                    "13px",
+                                color: "#94a3b8",
+                                fontSize: 13,
                             }}
                         >
                             Program MBG
@@ -169,97 +132,54 @@ export default function SidebarSPPG() {
                     </div>
                 </div>
 
-                {/* MENU */}
-
                 {menus.map((menu) => (
                     <NavLink
                         key={menu.path}
                         to={menu.path}
-                        style={{
-                            textDecoration:
-                                "none",
-                        }}
+                        style={{ textDecoration: "none" }}
                     >
-                        {({
-                            isActive,
-                        }) => (
+                        {({ isActive }) => (
                             <div
                                 style={{
-                                    height:
-                                        "52px",
-
-                                    display:
-                                        "flex",
-
-                                    alignItems:
-                                        "center",
-
-                                    gap: "14px",
-
-                                    padding:
-                                        "0 16px",
-
-                                    borderRadius:
-                                        "16px",
-
-                                    marginBottom:
-                                        "8px",
-
-                                    background:
-                                        isActive
-                                            ? "linear-gradient(135deg,#06b6d4,#2563eb)"
-                                            : "transparent",
-
-                                    color:
-                                        isActive
-                                            ? "#fff"
-                                            : "#94a3b8",
-
-                                    fontWeight:
-                                        "600",
+                                    height: 52,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 14,
+                                    padding: "0 16px",
+                                    borderRadius: 16,
+                                    marginBottom: 8,
+                                    background: isActive
+                                        ? "linear-gradient(135deg,#06b6d4,#2563eb)"
+                                        : "transparent",
+                                    color: isActive
+                                        ? "#fff"
+                                        : "#94a3b8",
+                                    fontWeight: 600,
+                                    transition: ".2s",
                                 }}
                             >
-                                {
-                                    menu.icon
-                                }
-
-                                {
-                                    menu.label
-                                }
+                                {menu.icon}
+                                <span>{menu.label}</span>
                             </div>
                         )}
                     </NavLink>
                 ))}
             </div>
 
-            {/* USER */}
-
             <div>
                 <div
                     style={{
-                        background:
-                            "#0f172a",
-
-                        border:
-                            "1px solid rgba(255,255,255,.05)",
-
-                        padding:
-                            "16px",
-
-                        borderRadius:
-                            "18px",
-
-                        marginBottom:
-                            "14px",
+                        background: "#0f172a",
+                        border: "1px solid rgba(255,255,255,.05)",
+                        padding: 16,
+                        borderRadius: 18,
+                        marginBottom: 14,
                     }}
                 >
                     <div
                         style={{
-                            color:
-                                "#fff",
-
-                            fontWeight:
-                                "700",
+                            color: "#fff",
+                            fontWeight: 700,
                         }}
                     >
                         {user?.name}
@@ -267,11 +187,8 @@ export default function SidebarSPPG() {
 
                     <div
                         style={{
-                            color:
-                                "#94a3b8",
-
-                            fontSize:
-                                "13px",
+                            color: "#94a3b8",
+                            fontSize: 13,
                         }}
                     >
                         Operator SPPG
@@ -282,28 +199,20 @@ export default function SidebarSPPG() {
                     onClick={logout}
                     style={{
                         width: "100%",
-                        height: "52px",
-
+                        height: 52,
                         border: "none",
-
-                        borderRadius:
-                            "16px",
-
-                        background:
-                            "#ef4444",
-
+                        borderRadius: 16,
+                        background: "#ef4444",
                         color: "#fff",
-
-                        cursor:
-                            "pointer",
-
-                        fontWeight:
-                            "700",
+                        cursor: "pointer",
+                        fontWeight: 700,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 8,
                     }}
                 >
-                    <LogOut
-                        size={18}
-                    />{" "}
+                    <LogOut size={18} />
                     Logout
                 </button>
             </div>

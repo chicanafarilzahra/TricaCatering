@@ -387,6 +387,7 @@ Route::prefix('owner')->group(function () {
         [OwnerStockController::class,'destroy']
     );
 
+    });
 /*
 |--------------------------------------------------------------------------
 | SPPG
@@ -406,11 +407,29 @@ Route::prefix('owner')->group(function () {
     );
 
     Route::get(
-        '/sekolah',
-        [SekolahController::class, 'index']
-    );
-});
+    '/sekolah',
+    [SekolahController::class,'index']
+);
 
+Route::post(
+    '/sekolah',
+    [SekolahController::class,'store']
+);
+
+Route::get(
+    '/sekolah/{id}',
+    [SekolahController::class,'show']
+);
+
+Route::put(
+    '/sekolah/{id}',
+    [SekolahController::class,'update']
+);
+
+Route::delete(
+    '/sekolah/{id}',
+    [SekolahController::class,'destroy']
+);
 });
 
 Route::get('/dashboard-stats', function () {
