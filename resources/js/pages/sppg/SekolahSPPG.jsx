@@ -18,7 +18,9 @@ export default function SekolahSPPG() {
     const [sekolahs, setSekolahs] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [editId, setEditId] = useState(null);
+    const [activeEdit, setActiveEdit] = useState(null);
     const [deleteId, setDeleteId] = useState(null);
+    const [search, setSearch] = useState("");
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     const [form, setForm] = useState({
@@ -34,39 +36,64 @@ export default function SekolahSPPG() {
     }, []);
 
     const fetchData = async () => {
-        try {
-            const res = await axios.get(
-                `/api/sppg/sekolah?sppg_id=${user.id}`
-            );
-            setSekolahs(res.data);
-        } catch (e) {
-            console.log(e);
-        }
-    };
+    try {
+        console.log("fetchData jalan");
 
+        const token = localStorage.getItem("token");
+        console.log("token:", token);
+
+        const res = await axios.get(
+            "/api/sppg/sekolah",
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        console.log("HASIL API:", res);
+        console.log("DATA:", res.data);
+
+        setSekolahs(res.data);
+
+    } catch (e) {
+        console.log("ERROR:", e);
+    }
+};
     const saveData = async (e) => {
     e.preventDefault();
 
     try {
         const data = {
             ...form,
-            sppg_id: user.id,
         };
 
         if (editId) {
             // Update
             await axios.put(
                 `/api/sppg/sekolah/${editId}`,
-                data
+                data,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
             );
 
             alert("Data sekolah berhasil diperbarui.");
         } else {
             // Tambah
-            await axios.post(
-                "/api/sppg/sekolah",
-                data
-            );
+            const token = localStorage.getItem("token");
+
+                await axios.post(
+                    "/api/sppg/sekolah",
+                    data,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
 
             alert("Data sekolah berhasil ditambahkan.");
         }
@@ -114,39 +141,65 @@ export default function SekolahSPPG() {
 };
 
     const hapus = async (id) => {
-    const konfirmasi = window.confirm(
-        "Apakah Anda yakin ingin menghapus data sekolah ini?"
-    );
-
-    if (!konfirmasi) return;
+    if (!window.confirm("Yakin ingin menghapus?")) return;
 
     try {
-        await axios.delete(`/api/sppg/sekolah/${id}`);
+        const token = localStorage.getItem("token");
 
-        alert("Data sekolah berhasil dihapus.");
+        await axios.delete(
+            `/api/sppg/sekolah/${id}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
 
+        alert("Data berhasil dihapus");
         fetchData();
     } catch (err) {
-        console.error(err);
-
-        alert(
-            err.response?.data?.message ||
-            "Gagal menghapus data sekolah."
-        );
+        console.log(err);
+        alert("Gagal menghapus");
     }
 };
+
 const confirmDelete = async () => {
+    console.log("DELETE ID:", deleteId);
+
     try {
-        await axios.delete(`/api/sppg/sekolah/${deleteId}`);
+        const token = localStorage.getItem("token");
+
+        const res = await axios.delete(
+            `/api/sppg/sekolah/${deleteId}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        console.log("BERHASIL", res.data);
 
         setShowDeleteModal(false);
         setDeleteId(null);
 
         fetchData();
+
     } catch (err) {
-        console.error(err);
+        console.log("ERROR:", err);
+        console.log("RESPONSE:", err.response);
     }
 };
+
+const filteredSekolah = sekolahs.filter(
+    (item) =>
+        item.nama_sekolah
+            ?.toLowerCase()
+            .includes(search.toLowerCase()) ||
+        item.alamat
+            ?.toLowerCase()
+            .includes(search.toLowerCase())
+);
 
     const inputStyle = {
         width: "100%",
@@ -364,33 +417,35 @@ marginBottom:25
 >
 
 <div
-style={{
-display:"flex",
-alignItems:"center",
-background:"#111827",
-padding:"12px 18px",
-borderRadius:15,
-width:350
-}}
+    style={{
+        display: "flex",
+        alignItems: "center",
+        background: "#111827",
+        padding: "12px 18px",
+        borderRadius: 15,
+        width: 350,
+    }}
 >
+    <Search
+        size={18}
+        color="#94a3b8"
+    />
 
-<Search
-size={18}
-color="#94a3b8"
-/>
-
-<input
-placeholder="Cari sekolah..."
-style={{
-background:"transparent",
-border:0,
-outline:"none",
-marginLeft:10,
-color:"white",
-width:"100%"
-}}
-/>
-
+    <input
+        value={search}
+        onChange={(e) =>
+            setSearch(e.target.value)
+        }
+        placeholder="Cari sekolah..."
+        style={{
+            background: "transparent",
+            border: 0,
+            outline: "none",
+            marginLeft: 10,
+            color: "white",
+            width: "100%",
+        }}
+    />
 </div>
 
 <button
@@ -473,7 +528,7 @@ Tambah Sekolah
                 fontWeight: 600,
             }}
         >
-            {sekolahs.length} Sekolah
+            {filteredSekolah.length} Sekolah
         </div>
     </div>
 
@@ -509,15 +564,30 @@ Tambah Sekolah
         </thead>
 
         <tbody>
-            {sekolahs.map((item, index) => (
-                <tr
-                    key={item.id}
-                    style={{
-                        borderTop:
-                            "1px solid rgba(255,255,255,.05)",
-                        transition: ".3s",
-                    }}
-                >
+
+            {filteredSekolah.length === 0 ? (
+        <tr>
+            <td
+                colSpan="5"
+                style={{
+                    textAlign: "center",
+                    padding: 30,
+                    color: "#94a3b8",
+                }}
+            >
+                Data sekolah tidak ditemukan
+            </td>
+        </tr>
+    ) : 
+        filteredSekolah.map((item, index) => (
+            <tr
+                key={item.id}
+                style={{
+                    borderTop:
+                        "1px solid rgba(255,255,255,.05)",
+                    transition: ".3s",
+                }}
+            >
                     <td
                         style={{
                             padding: 20,
@@ -641,19 +711,43 @@ Tambah Sekolah
                                     background: "#2563eb22",
                                     color: "#3b82f6",
                                     cursor: "pointer",
+                                    transition: "0.25s",
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = "#22c55e22";
+                                    e.currentTarget.style.color = "#22c55e";
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = "#2563eb22";
+                                    e.currentTarget.style.color = "#3b82f6";
                                 }}
                             >
                                 <Pencil size={18} />
                             </button>
 
                             <button
-                                onClick={() => {
-                                    setDeleteId(item.id);
-                                    setShowDeleteModal(true);
-                                }}
-                            >
-                                <Trash2 size={18} />
-                            </button>
+    onClick={() => hapus(item.id)}
+    style={{
+        width: 42,
+        height: 42,
+        borderRadius: 12,
+        border: 0,
+        background: "#2563eb22",
+        color: "#3b82f6",
+        cursor: "pointer",
+        transition: "0.3s",
+    }}
+    onMouseEnter={(e) => {
+        e.currentTarget.style.background = "#ef444422";
+        e.currentTarget.style.color = "#ef4444";
+    }}
+    onMouseLeave={(e) => {
+        e.currentTarget.style.background = "#2563eb22";
+        e.currentTarget.style.color = "#3b82f6";
+    }}
+>
+    <Trash2 size={18} />
+</button>
                         </div>
                     </td>
                 </tr>

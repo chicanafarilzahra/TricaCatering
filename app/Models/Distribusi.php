@@ -6,21 +6,22 @@ use Illuminate\Database\Eloquent\Model;
 
 class Distribusi extends Model
 {
-    protected $table = 'distribusi';
-
     protected $fillable = [
-
-        'school_id',
+        'sppg_id',
+        'sekolah_id',
+        'menu_id',
         'tanggal',
         'jumlah_porsi',
-        'jam_kirim',
         'status'
     ];
 
-    public function school()
+    public function sekolah()
     {
-        return $this->belongsTo(
-            School::class
-        );
+        return $this->belongsTo(Sekolah::class);
+    }
+
+    public function menu()
+    {
+        return $this->belongsTo(Menu::class);
     }
 }

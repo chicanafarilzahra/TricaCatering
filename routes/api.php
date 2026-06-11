@@ -26,6 +26,8 @@ use App\Http\Controllers\Api\OwnerStockController;
 use App\Http\Controllers\SPPG\DashboardSPPGController;
 use App\Http\Controllers\SPPG\MenuHarianController;
 use App\Http\Controllers\SPPG\SekolahController;
+use App\Http\Controllers\SPPG\SppgMenuController;
+use App\Http\Controllers\SPPG\DistribusiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -398,7 +400,9 @@ Route::prefix('owner')->group(function () {
 |--------------------------------------------------------------------------
 */
 
-    Route::prefix('sppg')->group(function () {
+    Route::middleware('auth:sanctum')
+    ->prefix('sppg')
+    ->group(function () {
 
     Route::get(
         '/dashboard',
@@ -406,34 +410,80 @@ Route::prefix('owner')->group(function () {
     );
 
     Route::get(
-        '/menus',
-        [MenuHarianController::class, 'index']
+        '/sekolah',
+        [SekolahController::class,'index']
+    );
+
+    Route::post(
+        '/sekolah',
+        [SekolahController::class,'store']
     );
 
     Route::get(
-    '/sekolah',
-    [SekolahController::class,'index']
+        '/sekolah/{id}',
+        [SekolahController::class,'show']
+    );
+
+    Route::put(
+        '/sekolah/{id}',
+        [SekolahController::class,'update']
+    );
+
+    Route::delete(
+        '/sekolah/{id}',
+        [SekolahController::class,'destroy']
+    );
+
+    Route::get(
+        '/menus',
+        [SppgMenuController::class, 'index']
+    );
+
+    Route::post(
+        '/menus',
+        [SppgMenuController::class, 'store']
+    );
+
+    Route::put(
+        '/menus/{id}',
+        [SppgMenuController::class, 'update']
+    );
+
+    Route::delete(
+        '/menus/{id}',
+        [SppgMenuController::class, 'destroy']
+    );
+
+    Route::get(
+        '/menu-harian',
+        [MenuHarianController::class,'index']
+    );
+
+    Route::get(
+    '/distribusi',
+    [DistribusiController::class,'index']
 );
 
 Route::post(
-    '/sekolah',
-    [SekolahController::class,'store']
-);
-
-Route::get(
-    '/sekolah/{id}',
-    [SekolahController::class,'show']
+    '/distribusi',
+    [DistribusiController::class,'store']
 );
 
 Route::put(
-    '/sekolah/{id}',
-    [SekolahController::class,'update']
+    '/distribusi/{id}',
+    [DistribusiController::class,'update']
 );
 
 Route::delete(
-    '/sekolah/{id}',
-    [SekolahController::class,'destroy']
+    '/distribusi/{id}',
+    [DistribusiController::class,'destroy']
 );
+
+Route::get(
+    '/distribusi/{id}',
+    [DistribusiController::class,'show']
+);
+
 });
 
 Route::get('/dashboard-stats', function () {

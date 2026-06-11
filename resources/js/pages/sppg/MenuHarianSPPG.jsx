@@ -8,7 +8,6 @@ import axios from "axios";
 import SidebarSPPG from "../../components/SidebarSPPG";
 
 export default function MenuHarianSPPG() {
-
     const [menus, setMenus] =
         useState([]);
 
@@ -16,62 +15,62 @@ export default function MenuHarianSPPG() {
         useState(true);
 
     useEffect(() => {
-
         fetchMenus();
-
     }, []);
 
     async function fetchMenus() {
-
         try {
+            const token = localStorage.getItem("token");
+
+                await axios.post(
+                    "/api/sppg/sekolah",
+                    data,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+            );
 
             const res =
                 await axios.get(
-                    "/api/sppg/menus"
+                    "/api/sppg/menus",
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
                 );
 
             setMenus(res.data);
-
         } catch (err) {
-
             console.log(err);
-
         } finally {
-
             setLoading(false);
-
         }
     }
 
     return (
         <div
             style={{
-                minHeight:
-                    "100vh",
-                background:
-                    "#0f172a",
+                minHeight: "100vh",
+                background: "#0f172a",
             }}
         >
             <SidebarSPPG />
 
             <div
                 style={{
-                    marginLeft:
-                        "270px",
-                    padding:
-                        "30px",
+                    marginLeft: "270px",
+                    padding: "30px",
                 }}
             >
                 <h1
                     style={{
-                        color:
-                            "#fff",
-                        fontSize:
-                            "32px",
-                        fontWeight:
-                            "800",
-                        marginBottom:
-                            "25px",
+                        color: "#fff",
+                        fontSize: "32px",
+                        fontWeight: "800",
+                        marginBottom: "25px",
                     }}
                 >
                     Menu Harian
@@ -79,72 +78,53 @@ export default function MenuHarianSPPG() {
 
                 <div
                     style={{
-                        background:
-                            "#182338",
-                        borderRadius:
-                            "24px",
-                        padding:
-                            "24px",
+                        background: "#182338",
+                        borderRadius: "24px",
+                        padding: "24px",
                         border:
                             "1px solid rgba(255,255,255,0.05)",
                     }}
                 >
                     {loading ? (
-
                         <p
                             style={{
-                                color:
-                                    "#fff",
+                                color: "#fff",
                             }}
                         >
                             Loading...
                         </p>
-
                     ) : (
-
                         <table
                             style={{
-                                width:
-                                    "100%",
+                                width: "100%",
                                 borderCollapse:
                                     "collapse",
-                                color:
-                                    "#fff",
+                                color: "#fff",
                             }}
                         >
                             <thead>
                                 <tr>
-                                    <th
-                                        align="left"
-                                    >
+                                    <th align="left">
                                         Nama Menu
                                     </th>
 
-                                    <th
-                                        align="left"
-                                    >
-                                        Kategori
+                                    <th align="left">
+                                        Deskripsi
                                     </th>
 
-                                    <th
-                                        align="left"
-                                    >
+                                    <th align="left">
                                         Harga
                                     </th>
 
-                                    <th
-                                        align="left"
-                                    >
-                                        Stok
+                                    <th align="left">
+                                        Status
                                     </th>
                                 </tr>
                             </thead>
 
                             <tbody>
                                 {menus.map(
-                                    (
-                                        menu
-                                    ) => (
+                                    (menu) => (
                                         <tr
                                             key={
                                                 menu.id
@@ -157,34 +137,34 @@ export default function MenuHarianSPPG() {
                                                 }}
                                             >
                                                 {
-                                                    menu.name
+                                                    menu.nama_menu
                                                 }
                                             </td>
 
                                             <td>
                                                 {
-                                                    menu.category
+                                                    menu.deskripsi
                                                 }
                                             </td>
 
                                             <td>
                                                 Rp{" "}
                                                 {Number(
-                                                    menu.price
+                                                    menu.harga ??
+                                                        0
                                                 ).toLocaleString()}
                                             </td>
 
                                             <td>
-                                                {
-                                                    menu.stock
-                                                }
+                                                {menu.is_active
+                                                    ? "Aktif"
+                                                    : "Nonaktif"}
                                             </td>
                                         </tr>
                                     )
                                 )}
                             </tbody>
                         </table>
-
                     )}
                 </div>
             </div>
