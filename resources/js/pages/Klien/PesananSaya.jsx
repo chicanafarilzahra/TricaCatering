@@ -20,7 +20,8 @@ export default function PesananSaya() {
 
   const getPesanan = async () => {
     try {
-      const res = await axios.get("/api/klien/pesanan-saya");
+      const res = await axios.get("/api/klien/orders");
+      console.log("DATA ORDER:", res.data);
       setPesanan(res.data || []);
     } catch (error) {
       console.error(error);

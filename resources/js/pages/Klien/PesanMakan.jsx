@@ -1092,9 +1092,10 @@ const totalCourierFee = useMemo(() => {
                                                         courier_fee: courierFeeCalculated,
                                                     });
 
-                                                    alert("Pesanan berhasil dibuat!");
-                                                    window.location.href = "/klien/orders";
-
+                                                    alert("✅ Pesanan berhasil dibuat!");
+                                                     setTimeout(() => {
+                                                            window.location.href = "/klien/pesanan-saya";
+                                                        }, 500);
                                                 } catch (err) {
                                                     console.error(err);
                                                     alert("Gagal membuat pesanan.");

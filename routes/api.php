@@ -348,6 +348,10 @@ Route::get('/klien/lacak/{order_id}', [TrackingController::class, 'show']);
 Route::prefix('owner')->group(function () {
 
     Route::get(
+        '/orders/{ownerId}',
+        [OrderController::class, 'ownerOrders']
+    );
+    Route::get(
         '/menus',
         [OwnerMenuController::class, 'index']
     );

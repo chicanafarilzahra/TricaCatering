@@ -51,56 +51,43 @@ class KlienController extends Controller
     /**
      * PESANAN SAYA
      */
-    public function pesananSaya()
-    {
-        $orders = Order::with([
-            'menu',
-            'courier',
-        ])
-            ->where('client_id', Auth::id())
-            ->latest()
-            ->get();
+   public function pesananSaya()
+{
+    $orders = Order::with('menu')
+        ->latest()
+        ->get();
 
-        return response()->json($orders);
-    }
-
+    return response()->json($orders);
+}
     /**
      * TRACKING PENGIRIMAN
      */
     public function lacakPengiriman()
-    {
-        $orders = Order::with([
-            'courier',
-            'menu',
+{
+    $orders = Order::with('menu')
+        ->whereIn('status', [
+            'on_delivery',
+            'delivered'
         ])
-            ->where('client_id', Auth::id())
-            ->whereIn('status', [
-                'on_delivery',
-                'delivered'
-            ])
-            ->latest()
-            ->get();
+        ->latest()
+        ->get();
 
-        return response()->json($orders);
-    }
-
+    return response()->json($orders);
+}
     /**
      * INVOICE
      */
     public function invoice()
-    {
-        $orders = Order::with('menu')
-            ->where('client_id', Auth::id())
-            ->latest()
-            ->get();
+{
+    $orders = Order::with('menu')
+        ->latest()
+        ->get();
 
-        $totalTagihan = $orders->sum('total_price');
-
-        return response()->json([
-            'total_tagihan' => $totalTagihan,
-            'data' => $orders,
-        ]);
-    }
+    return response()->json([
+        'total_tagihan' => $orders->sum('total_price'),
+        'data' => $orders
+    ]);
+}
 
     /**
      * ULASAN & KOMPLAIN

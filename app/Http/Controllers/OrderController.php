@@ -8,10 +8,12 @@ use Illuminate\Http\Request;
 class OrderController extends Controller
 {
 
-    public function index()
-    {
-        return Order::latest()->get();
-    }
+   public function index()
+{
+    return Order::with('menu')
+        ->latest()
+        ->get();
+}
 
 public function store(Request $request)
 {
@@ -99,34 +101,30 @@ public function store(Request $request)
 
 
     public function approve($id)
-    {
-        $order = Order::findOrFail($id);
+{
+    $order = Order::findOrFail($id);
 
-        $order->update([
-            'status' => 'approved'
-        ]);
+    $order->update([
+        'status' => 'Diproses' // bukan 'approved'
+    ]);
 
-        return response()->json([
-            'message' =>
-                'Order berhasil diapprove'
-        ]);
-    }
+    return response()->json([
+        'message' => 'Order berhasil diapprove'
+    ]);
+}
 
+public function reject($id)
+{
+    $order = Order::findOrFail($id);
 
-    public function reject($id)
-    {
-        $order = Order::findOrFail($id);
+    $order->update([
+        'status' => 'Dibatalkan' // bukan 'rejected'
+    ]);
 
-        $order->update([
-            'status' => 'rejected'
-        ]);
-
-        return response()->json([
-            'message' =>
-                'Order berhasil direject'
-        ]);
-    }
-
+    return response()->json([
+        'message' => 'Order berhasil direject'
+    ]);
+}
    
 
     public function productions()
@@ -153,4 +151,16 @@ public function store(Request $request)
     {
         return Order::latest()->get();
     }
+
+    public function ownerOrders($ownerId)
+{
+    $orders = Order::with('menu')
+        ->whereHas('menu', function ($query) use ($ownerId) {
+            $query->where('owner_id', $ownerId);
+        })
+        ->latest()
+        ->get();
+
+    return response()->json($orders);
+}
 }
