@@ -5,82 +5,88 @@ namespace App\Http\Controllers\SPPG;
 use App\Http\Controllers\Controller;
 use App\Models\Distribusi;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
 
 class DistribusiController extends Controller
 {
     // Menampilkan semua distribusi milik SPPG
-    public function index(Request $request)
-    {
-        return Distribusi::with([
-                'sekolah',
-                'menu'
-            ])
-            ->where('sppg_id', $request->user()->id)
-            ->latest()
-            ->get();
-    }
+    public function index()
+{
+    dd(
+        Auth::check(),
+        Auth::id(),
+        Auth::user()
+    );
+}
 
     // Menambahkan distribusi
     public function store(Request $request)
-    {
-        $request->validate([
-            'sekolah_id' => 'required|integer',
-            'menu_id' => 'required|integer',
-            'tanggal' => 'required|date',
-            'jumlah_porsi' => 'required|integer',
-            'status' => 'nullable|string',
-        ]);
+{
+    $request->validate([
+        'sekolah_id'=>'required|exists:sekolahs,id',
+        'menu_id'=>'required|exists:sppg_menus,id',
+        'tanggal'=>'required|date',
+        'jumlah_porsi'=>'required|integer|min:1'
+    ]);
 
-        $distribusi = Distribusi::create([
-            'sppg_id' => $request->user()->id,
-            'sekolah_id' => $request->sekolah_id,
-            'menu_id' => $request->menu_id,
-            'tanggal' => $request->tanggal,
-            'jumlah_porsi' => $request->jumlah_porsi,
-            'status' => $request->status ?? 'Diproses',
-        ]);
-
-        return response()->json($distribusi, 201);
-    }
-
+    return Distribusi::create([
+        'sppg_id'=>Auth::id(),
+        'sekolah_id'=>$request->sekolah_id,
+        'menu_id'=>$request->menu_id,
+        'tanggal'=>$request->tanggal,
+        'jumlah_porsi'=>$request->jumlah_porsi,
+        'status'=>$request->status ?? 'Menunggu',
+    ]);
+}
     // Detail distribusi
     public function show($id)
-    {
-        return Distribusi::with([
-                'sekolah',
-                'menu'
-            ])
-            ->findOrFail($id);
-    }
+{
+    return Distribusi::with([
+        'sekolah',
+        'menu'
+    ])
+    ->where(
+        'sppg_id',
+        Auth::id()
+    )
+    ->findOrFail($id);
+}
 
     // Update distribusi
-    public function update(Request $request, $id)
-    {
-        $request->validate([
-            'sekolah_id' => 'required|integer',
-            'menu_id' => 'required|integer',
-            'tanggal' => 'required|date',
-            'jumlah_porsi' => 'required|integer',
-            'status' => 'required|string',
-        ]);
+    public function update(Request $request,$id)
+{
+    $data=Distribusi::where(
+        'id',$id
+    )
+    ->where(
+        'sppg_id',
+        Auth::id()
+    )
+    ->firstOrFail();
 
-        $distribusi = Distribusi::findOrFail($id);
+    $data->update([
+        'sekolah_id'=>$request->sekolah_id,
+        'menu_id'=>$request->menu_id,
+        'tanggal'=>$request->tanggal,
+        'jumlah_porsi'=>$request->jumlah_porsi,
+        'status'=>$request->status,
+    ]);
 
-        $distribusi->update([
-            'sekolah_id' => $request->sekolah_id,
-            'menu_id' => $request->menu_id,
-            'tanggal' => $request->tanggal,
-            'jumlah_porsi' => $request->jumlah_porsi,
-            'status' => $request->status,
-        ]);
-
-        return response()->json($distribusi);
-    }
-
+    return $data;
+}
     // Hapus distribusi
     public function destroy($id)
     {
-        $distribusi = Distribusi::findOrFail($id);
+        $distribusi = Distribusi::where(
+            'id',
+            $id
+        )
+        ->where(
+            'sppg_id',
+            Auth::id()
+        )
+        ->firstOrFail();
 
         $distribusi->delete();
 

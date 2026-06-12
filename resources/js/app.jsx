@@ -82,6 +82,7 @@ import UlasanKlien from "./pages/Klien/UlasanKlien";
 import DashboardSPPG from "./pages/sppg/DashboardSPPG";
 import MenuHarianSPPG from "./pages/sppg/MenuHarianSPPG";
 import SekolahSPPG from "./pages/sppg/SekolahSPPG";
+import DistribusiSPPG from "./pages/sppg/DistribusiSPPG";
 
 /* =========================
    COMPONENTS
@@ -468,6 +469,11 @@ function App() {
                                 <SekolahSPPG />
                             </ProtectedRoute>
                         }
+                    />
+
+                    <Route
+                        path="/sppg/distribusi"
+                        element={<DistribusiSPPG />}
                     />
                     
                 {/* =========================

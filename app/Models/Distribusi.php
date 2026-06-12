@@ -12,7 +12,7 @@ class Distribusi extends Model
         'menu_id',
         'tanggal',
         'jumlah_porsi',
-        'status'
+        'status',
     ];
 
     public function sekolah()
@@ -22,6 +22,7 @@ class Distribusi extends Model
 
     public function menu()
     {
-        return $this->belongsTo(Menu::class);
+        return $this->belongsTo(SppgMenu::class);
     }
+
 }

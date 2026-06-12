@@ -31,28 +31,34 @@ export default function DashboardSPPG() {
         localStorage.getItem("user")
 
     );
+    const navigate = useNavigate();
 
     useEffect(() => {
         loadDashboard();
     }, []);
 
-    const loadDashboard =
-        async () => {
-            try {
-                const res =
-                    await axios.get(
-                        "/api/sppg/dashboard"
-                    );
+    const loadDashboard = async () => {
+    try {
 
-                setSummary(
-                    res.data
-                );
-            } catch (err) {
-                console.log(err);
-            } finally {
-                setLoading(false);
+        const token = localStorage.getItem("token");
+
+        const res = await axios.get(
+            "/api/sppg/dashboard",
+            {
+                headers:{
+                    Authorization:`Bearer ${token}`
+                }
             }
-        };
+        );
+
+        setSummary(res.data);
+
+    } catch(err){
+        console.log(err);
+    } finally{
+        setLoading(false);
+    }
+};
 
     return (
         <div

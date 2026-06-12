@@ -4,93 +4,73 @@ namespace App\Http\Controllers\SPPG;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class DashboardSPPGController extends Controller
 {
     public function index()
     {
-        $totalSekolah =
-            DB::table('sekolahs')->count();
+        $userId = Auth::id();
 
-        $totalSiswa =
-            DB::table('sekolahs')
-                ->sum('jumlah_siswa');
+        $totalSekolah = DB::table('sekolahs')
+            ->where('sppg_id', $userId)
+            ->count();
 
-        $menuHariIni =
-            DB::table('menus')
-                ->where('is_active', 1)
-                ->count();
+        $totalSiswa = DB::table('sekolahs')
+            ->where('sppg_id', $userId)
+            ->sum('jumlah_siswa');
 
-        $jadwal =
-            DB::table('sekolahs')
-                ->select(
-                    'id',
-                    'nama_sekolah',
-                    'jumlah_siswa',
-                    DB::raw('jumlah_siswa as jumlah_porsi')
-                )
-                ->get();
+        $menuHariIni = DB::table('sppg_menus')
+            ->where('sppg_id', $userId)
+            ->where('is_active', 1)
+            ->count();
+
+        $jadwal = DB::table('sekolahs')
+            ->where('sppg_id', $userId)
+            ->select(
+                'id',
+                'nama_sekolah',
+                'jumlah_siswa',
+                DB::raw('jumlah_siswa as jumlah_porsi')
+            )
+            ->get();
 
         $activities = [];
 
-        // aktivitas dari menu terbaru
-        $menus =
-            DB::table('menus')
-                ->latest('id')
-                ->take(3)
-                ->get();
+        $menus = DB::table('sppg_menus')
+            ->where('sppg_id', $userId)
+            ->latest('id')
+            ->take(3)
+            ->get();
 
         foreach ($menus as $menu) {
             $activities[] = [
-                'title' =>
-                    'Menu "' . $menu->name . '" ditambahkan',
-                'time' =>
-                    \Carbon\Carbon::parse(
-                        $menu->created_at
-                    )->diffForHumans(),
+                'title' => 'Menu "' . $menu->nama_menu . '" ditambahkan',
+                'time' => Carbon::parse($menu->created_at)->diffForHumans(),
             ];
         }
 
-        // aktivitas dari sekolah terbaru
-        $sekolahs =
-            DB::table('sekolahs')
-                ->latest('id')
-                ->take(2)
-                ->get();
+        $sekolahs = DB::table('sekolahs')
+            ->where('sppg_id', $userId)
+            ->latest('id')
+            ->take(3)
+            ->get();
 
         foreach ($sekolahs as $sekolah) {
             $activities[] = [
-                'title' =>
-                    'Sekolah "' .
-                    $sekolah->nama_sekolah .
-                    '" terdaftar',
-                'time' =>
-                    \Carbon\Carbon::parse(
-                        $sekolah->created_at
-                    )->diffForHumans(),
+                'title' => 'Sekolah "' . $sekolah->nama_sekolah . '" ditambahkan',
+                'time' => Carbon::parse($sekolah->created_at)->diffForHumans(),
             ];
         }
 
         return response()->json([
-            'total_sekolah' =>
-                $totalSekolah,
-
-            'total_siswa' =>
-                $totalSiswa,
-
-            'menu_hari_ini' =>
-                $menuHariIni,
-
-            'distribusi_hari_ini' =>
-                $totalSiswa,
-
-            'jadwal' =>
-                $jadwal,
-
-            'activities' =>
-                collect($activities)
-                    ->sortByDesc('time')
-                    ->values(),
+            'total_sekolah' => $totalSekolah,
+            'total_siswa' => $totalSiswa,
+            'menu_hari_ini' => $menuHariIni,
+            'distribusi_hari_ini' => $totalSiswa,
+            'jadwal' => $jadwal,
+            'activities' => collect($activities)->values(),
         ]);
     }
 }
