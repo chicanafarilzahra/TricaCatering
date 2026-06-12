@@ -3,44 +3,41 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 
 return Application::configure(
-
     basePath: dirname(__DIR__)
-
 )
 
-    ->withRouting(
+->withRouting(
+    web: __DIR__.'/../routes/web.php',
+    api: __DIR__.'/../routes/api.php',
+    commands: __DIR__.'/../routes/console.php',
+    health: '/up',
+)
 
-        web: __DIR__.'/../routes/web.php',
+->withMiddleware(function (Middleware $middleware) {
 
-        api: __DIR__.'/../routes/api.php',
+    $middleware->alias([
+        'admin' => \App\Http\Middleware\AdminMiddleware::class,
+    ]);
 
-        commands: __DIR__.'/../routes/console.php',
+    $middleware->redirectGuestsTo(function (Request $request) {
 
-        health: '/up',
+        if ($request->expectsJson()) {
+            return null;
+        }
 
-    )
+        return '/login';
 
-    ->withMiddleware(function (Middleware $middleware): void {
+    });
 
-        //
+})
 
-    })
+->withExceptions(function (Exceptions $exceptions): void {
 
-    ->withMiddleware(function ($middleware) {
+    //
 
-        $middleware->alias([
+})
 
-            'admin' =>
-            \App\Http\Middleware\AdminMiddleware::class,
-
-        ]);
-
-    })
-
-    ->withExceptions(function (Exceptions $exceptions): void {
-
-        //
-
-    })->create();
+->create();

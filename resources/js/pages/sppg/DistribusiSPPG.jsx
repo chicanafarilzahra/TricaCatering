@@ -47,7 +47,15 @@ const fetchDistribusi = async () => {
       }
     );
 
-    setDistribusi(res.data);
+    console.log(JSON.stringify(res.data, null, 2));
+    console.log("Array?", Array.isArray(res.data));
+
+    setDistribusi(
+      Array.isArray(res.data)
+        ? res.data
+        : []
+    );
+
   } catch (err) {
     console.log(err);
   }
@@ -82,6 +90,49 @@ const fetchMenu = async () => {
     );
 
     setMenus(res.data);
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+const saveData = async (e) => {
+  e.preventDefault();
+
+  try {
+    if (editId) {
+      await axios.put(
+        `/api/sppg/distribusi/${editId}`,
+        form,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+    } else {
+      await axios.post(
+        "/api/sppg/distribusi",
+        form,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+    }
+
+    fetchDistribusi();
+    setShowModal(false);
+
+    setForm({
+      sekolah_id: "",
+      menu_id: "",
+      tanggal: "",
+      jumlah_porsi: "",
+      status: "Diproses",
+    });
+
+    setEditId(null);
   } catch (err) {
     console.log(err);
   }

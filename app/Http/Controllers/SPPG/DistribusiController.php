@@ -13,11 +13,16 @@ class DistribusiController extends Controller
     // Menampilkan semua distribusi milik SPPG
     public function index()
 {
-    dd(
-        Auth::check(),
-        Auth::id(),
-        Auth::user()
-    );
+    return Distribusi::with([
+        'sekolah',
+        'menu'
+    ])
+    ->where(
+        'sppg_id',
+        Auth::id()
+    )
+    ->latest()
+    ->get();
 }
 
     // Menambahkan distribusi
