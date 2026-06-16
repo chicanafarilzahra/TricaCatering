@@ -38,9 +38,9 @@ return new class extends Migration
                   ->onDelete('cascade');
 
             $table->foreign('menu_id')
-                  ->references('id')
-                  ->on('menus')
-                  ->onDelete('cascade');
+                ->references('id')
+                ->on('sppg_menus')
+                ->onDelete('cascade');
         });
     }
 

@@ -26,13 +26,24 @@ class DashboardSPPGController extends Controller
             ->where('is_active', 1)
             ->count();
 
-        $jadwal = DB::table('sekolahs')
+        $totalDistribusi = DB::table('distribusis')
             ->where('sppg_id', $userId)
+            ->sum('jumlah_porsi');
+
+        $jadwal = DB::table('distribusis')
+            ->join(
+                'sekolahs',
+                'distribusis.sekolah_id',
+                '=',
+                'sekolahs.id'
+            )
+            ->where('distribusis.sppg_id', $userId)
             ->select(
-                'id',
-                'nama_sekolah',
-                'jumlah_siswa',
-                DB::raw('jumlah_siswa as jumlah_porsi')
+                'distribusis.id',
+                'sekolahs.nama_sekolah',
+                'distribusis.jumlah_porsi',
+                'distribusis.tanggal',
+                'distribusis.status'
             )
             ->get();
 
@@ -68,7 +79,7 @@ class DashboardSPPGController extends Controller
             'total_sekolah' => $totalSekolah,
             'total_siswa' => $totalSiswa,
             'menu_hari_ini' => $menuHariIni,
-            'distribusi_hari_ini' => $totalSiswa,
+            'distribusi_hari_ini' => $totalDistribusi,
             'jadwal' => $jadwal,
             'activities' => collect($activities)->values(),
         ]);
