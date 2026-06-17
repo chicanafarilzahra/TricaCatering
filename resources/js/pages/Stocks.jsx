@@ -1,4 +1,5 @@
 // resources/js/pages/Stocks.jsx
+import axios from "axios";
 
 import {
     Boxes,
@@ -13,6 +14,7 @@ import {
     useMemo,
     useRef,
     useState,
+    useEffect,
 } from "react";
 
 import AdminLayout from "../layouts/AdminLayout";
@@ -26,34 +28,57 @@ export default function Stocks() {
     const [statusFilter, setStatusFilter] =
         useState("All");
 
-    const stocks = [];
+    const [stocks, setStocks] = useState([]);
+
+useEffect(() => {
+    fetchStocks();
+}, []);
+
+const fetchStocks = async () => {
+    try {
+        const res = await axios.get(
+            "http://localhost:8000/api/stocks"
+        );
+
+        setStocks(res.data);
+    } catch (err) {
+        console.log(err);
+    }
+};
 
     const filteredStocks =
         useMemo(() => {
             return stocks.filter(
                 (item) => {
                     const matchSearch =
-                        item.ingredient
-                            ?.toLowerCase()
-                            .includes(
-                                search.toLowerCase()
-                            ) ||
-                        item.category
-                            ?.toLowerCase()
-                            .includes(
-                                search.toLowerCase()
-                            ) ||
-                        item.unit
-                            ?.toLowerCase()
-                            .includes(
-                                search.toLowerCase()
-                            );
+    item.name
+        ?.toLowerCase()
+        .includes(
+            search.toLowerCase()
+        ) ||
+    item.tempat
+        ?.toLowerCase()
+        .includes(
+            search.toLowerCase()
+        ) ||
+    item.source
+        ?.toLowerCase()
+        .includes(
+            search.toLowerCase()
+        ) ||
+    item.unit
+        ?.toLowerCase()
+        .includes(
+            search.toLowerCase()
+        );
+                    const stockStatus =
+    item.qty <= item.minimum_stock
+        ? "Low Stock"
+        : "Normal";
 
-                    const matchStatus =
-                        statusFilter ===
-                            "All" ||
-                        item.status ===
-                            statusFilter;
+const matchStatus =
+    statusFilter === "All" ||
+    stockStatus === statusFilter;
 
                     return (
                         matchSearch &&
@@ -75,12 +100,13 @@ export default function Stocks() {
         {
             title: "Low Stock",
             value:
-                stocks.filter(
-                    (item) =>
-                        item.status ===
-                        "Low Stock"
-                ).length,
+            stocks.filter(
+                (item) =>
+                    item.qty <=
+                    item.minimum_stock
+            ).length,
             icon: (
+                
                 <AlertTriangle
                     size={22}
                 />
@@ -90,25 +116,25 @@ export default function Stocks() {
         },
 
         {
-            title: "Available",
-            value:
-                stocks.filter(
-                    (item) =>
-                        item.status ===
-                        "Available"
-                ).length,
+            title: "Owner Stocks    ",
+                value:
+                    stocks.filter(
+                        (item) =>
+                            item.source ===
+                            "Owner"
+                    ).length,
             icon: <Package size={22} />,
             color: "#8b5cf6",
             bg: "rgba(139,92,246,0.12)",
         },
 
         {
-            title: "In Stock",
+            title: "Sppg Stock",
             value:
                 stocks.filter(
                     (item) =>
-                        item.status ===
-                        "In Stock"
+                        item.source ===
+                        "SPPG"
                 ).length,
             icon: (
                 <CheckCircle2
@@ -588,23 +614,13 @@ export default function Stocks() {
                             </option>
 
                             <option
-                                value="Available"
+                                value="Normal"
                                 style={{
                                     color:
                                         "black",
                                 }}
                             >
-                                Available
-                            </option>
-
-                            <option
-                                value="In Stock"
-                                style={{
-                                    color:
-                                        "black",
-                                }}
-                            >
-                                In Stock
+                                Normal
                             </option>
 
                             <option
@@ -640,9 +656,10 @@ export default function Stocks() {
                         <thead>
                             <tr>
                                 {[
-                                    "Ingredient",
-                                    "Category",
-                                    "Quantity",
+                                    "Sumber",
+                                    "Nama Tempat",
+                                    "Bahan",
+                                    "Qty",
                                     "Unit",
                                     "Status",
                                 ].map(
@@ -696,96 +713,79 @@ export default function Stocks() {
                                             }}
                                         >
                                             <td
-                                                style={{
-                                                    padding:
-                                                        "20px",
-                                                    color:
-                                                        "white",
-                                                }}
-                                            >
-                                                {
-                                                    item.ingredient
-                                                }
-                                            </td>
+    style={{
+        padding: "20px",
+        color: "white",
+    }}
+>
+    {item.source}
+</td>
 
-                                            <td
-                                                style={{
-                                                    padding:
-                                                        "20px",
-                                                    color:
-                                                        "#cbd5e1",
-                                                }}
-                                            >
-                                                {
-                                                    item.category
-                                                }
-                                            </td>
+<td
+    style={{
+        padding: "20px",
+        color: "#cbd5e1",
+    }}
+>
+    {item.tempat}
+</td>
 
-                                            <td
-                                                style={{
-                                                    padding:
-                                                        "20px",
-                                                    color:
-                                                        "#cbd5e1",
-                                                }}
-                                            >
-                                                {
-                                                    item.quantity
-                                                }
-                                            </td>
+<td
+    style={{
+        padding: "20px",
+        color: "#cbd5e1",
+    }}
+>
+    {item.name}
+</td>
 
-                                            <td
-                                                style={{
-                                                    padding:
-                                                        "20px",
-                                                    color:
-                                                        "#cbd5e1",
-                                                }}
-                                            >
-                                                {
-                                                    item.unit
-                                                }
-                                            </td>
+<td
+    style={{
+        padding: "20px",
+        color: "#cbd5e1",
+    }}
+>
+    {item.qty}
+</td>
 
-                                            <td
-                                                style={{
-                                                    padding:
-                                                        "20px",
-                                                }}
-                                            >
-                                                <span
-                                                    style={{
-                                                        padding:
-                                                            "8px 14px",
-                                                        borderRadius:
-                                                            "999px",
-                                                        fontSize:
-                                                            "12px",
-                                                        fontWeight:
-                                                            "700",
-                                                        background:
-                                                            item.status ===
-                                                            "Available"
-                                                                ? "rgba(16,185,129,0.15)"
-                                                                : item.status ===
-                                                                  "Low Stock"
-                                                                ? "rgba(245,158,11,0.15)"
-                                                                : "rgba(139,92,246,0.15)",
-                                                        color:
-                                                            item.status ===
-                                                            "Available"
-                                                                ? "#10b981"
-                                                                : item.status ===
-                                                                  "Low Stock"
-                                                                ? "#f59e0b"
-                                                                : "#8b5cf6",
-                                                    }}
-                                                >
-                                                    {
-                                                        item.status
-                                                    }
-                                                </span>
-                                            </td>
+<td
+    style={{
+        padding: "20px",
+        color: "#cbd5e1",
+    }}
+>
+    {item.unit}
+</td>
+
+<td
+    style={{
+        padding: "20px",
+    }}
+>
+    <span
+        style={{
+            padding: "8px 14px",
+            borderRadius: "999px",
+            fontSize: "12px",
+            fontWeight: "700",
+            background:
+                item.qty <=
+                item.minimum_stock
+                    ? "rgba(239,68,68,0.15)"
+                    : "rgba(16,185,129,0.15)",
+            color:
+                item.qty <=
+                item.minimum_stock
+                    ? "#ef4444"
+                    : "#10b981",
+        }}
+    >
+        {item.qty <=
+        item.minimum_stock
+            ? "Low Stock"
+            : "Normal"}
+    </span>
+</td>
                                         </tr>
                                     )
                                 )
@@ -793,7 +793,7 @@ export default function Stocks() {
                                 <tr>
                                     <td
                                         colSpan={
-                                            5
+                                            6
                                         }
                                         style={{
                                             padding:
