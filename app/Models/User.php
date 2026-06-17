@@ -46,4 +46,12 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    public function menus()
+{
+    return $this->hasMany(
+        Menu::class,
+        'owner_id'
+    );
+}
 }

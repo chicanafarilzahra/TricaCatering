@@ -1,4 +1,5 @@
 // resources/js/pages/Menus.jsx
+import axios from "axios";
 
 import {
     UtensilsCrossed,
@@ -13,6 +14,7 @@ import {
 import {
     useMemo,
     useState,
+    useEffect,
 } from "react";
 
 import AdminLayout from "../layouts/AdminLayout";
@@ -27,8 +29,35 @@ export default function Menus() {
     const [selectedCategory, setSelectedCategory] =
         useState("All");
 
-    // DATA DARI API / BACKEND
-    const menus = [];
+    const [menus, setMenus] =
+        useState([]);
+
+    const [previewImage, setPreviewImage] = useState(null);
+
+    useEffect(() => {
+        fetchMenus();
+    }, []);
+
+    const fetchMenus = async () => {
+    try {
+        const res = await axios.get("/api/menus");
+
+        console.log("DATA MENU:", res.data);
+
+        if (res.data.length > 0) {
+            console.log("MENU PERTAMA:", res.data[0]);
+            console.log("IMAGE:", res.data[0].image);
+        }
+
+        setMenus(
+            Array.isArray(res.data)
+                ? res.data
+                : []
+        );
+    } catch (err) {
+        console.log(err);
+    }
+};
 
     // FILTER DATA
     const filteredMenus = useMemo(() => {
@@ -43,7 +72,8 @@ export default function Menus() {
                 item.category
                     ?.toLowerCase()
                     .includes(keyword) ||
-                item.status
+                item.owner
+                    ?.nama_catering
                     ?.toLowerCase()
                     .includes(keyword);
 
@@ -68,93 +98,59 @@ export default function Menus() {
     const totalMenus =
         menus.length;
 
-    const foodMenus =
-        menus.filter(
-            (item) =>
-                item.category ===
-                "Food"
-        ).length;
+    const foodMenus = menus.filter(
+        (item) =>
+            item.category?.toLowerCase() ===
+            "makanan"
+    ).length;
 
-    const drinkMenus =
-        menus.filter(
-            (item) =>
-                item.category ===
-                "Drink"
-        ).length;
+    const drinkMenus = menus.filter(
+        (item) =>
+            item.category?.toLowerCase() ===
+            "minuman"
+    ).length;
 
     const availableMenus =
-        menus.filter(
-            (item) =>
-                item.status ===
-                "Available"
-        ).length;
+    menus.filter(
+        (item) => item.is_active == 1
+    ).length;
 
     const stats = [
-        {
-            title: "Total Menus",
-            value: totalMenus,
-            icon: (
-                <UtensilsCrossed size={22} />
-            ),
-            color: "#3b82f6",
-            bg: "rgba(59,130,246,0.12)",
-        },
+{
+   title: "Total Menus",
+   value: totalMenus,
+   icon: <UtensilsCrossed size={22} />,
+   color: "#3b82f6",
+   bg: "rgba(59,130,246,0.12)",
+},
 
-        {
-            title: "Food Menus",
-            value: foodMenus,
-            icon: <Soup size={22} />,
-            color: "#10b981",
-            bg: "rgba(16,185,129,0.12)",
-        },
-
-        {
-            title: "Drink Menus",
-            value: drinkMenus,
-            icon: <Coffee size={22} />,
-            color: "#8b5cf6",
-            bg: "rgba(139,92,246,0.12)",
-        },
-
-        {
-            title: "Available",
-            value: availableMenus,
-            icon: (
-                <BadgeCheck size={22} />
-            ),
-            color: "#f59e0b",
-            bg: "rgba(245,158,11,0.12)",
-        },
-    ];
+{
+   title: "Active Menus",
+   value: availableMenus,
+   icon: <BadgeCheck size={22} />,
+   color: "#10b981",
+   bg: "rgba(16,185,129,0.12)",
+},
+];
 
     const getStatusStyle = (
-        status
+        isActive
     ) => {
-        switch (status) {
-            case "Available":
-                return {
-                    background:
-                        "rgba(16,185,129,0.15)",
-                    color: "#34d399",
-                };
-
-            case "Out of Stock":
-                return {
-                    background:
-                        "rgba(239,68,68,0.15)",
-                    color: "#f87171",
-                };
-
-            default:
-                return {
-                    background:
-                        "rgba(148,163,184,0.15)",
-                    color: "#cbd5e1",
-                };
-        }
+        return isActive
+            ? {
+                  background:
+                      "rgba(16,185,129,0.15)",
+                  color: "#34d399",
+              }
+            : {
+                  background:
+                      "rgba(239,68,68,0.15)",
+                  color: "#f87171",
+              };
     };
 
     return (
+    <>
         <AdminLayout>
             {/* HERO */}
             <div
@@ -697,11 +693,14 @@ export default function Menus() {
                         <thead>
                             <tr>
                                 {[
+                                    
+                                    "Owner Catering",
+                                    "Foto",
                                     "Menu Name",
                                     "Category",
                                     "Price",
-                                    "Stock",
                                     "Status",
+                                    
                                 ].map(
                                     (
                                         item,
@@ -744,6 +743,7 @@ export default function Menus() {
                                         index
                                     ) => (
                                         <tr
+                                        
                                             key={
                                                 index
                                             }
@@ -752,6 +752,38 @@ export default function Menus() {
                                                     "1px solid rgba(255,255,255,0.04)",
                                             }}
                                         >
+                                            <td
+                                                style={{
+                                                    padding: "18px 20px",
+                                                    color: "#cbd5e1",
+                                                }}
+                                            >
+                                                {menu.owner?.nama_catering || "-"}
+                                            </td>
+
+                                            <td
+    style={{
+        padding: "18px 20px",
+    }}
+>
+    <img
+    src={`http://localhost:8000/storage/${menu.image}`}
+    alt={menu.name}
+    onClick={() =>
+        setPreviewImage(
+            `http://localhost:8000/storage/${menu.image}`
+        )
+    }
+    style={{
+        width: "60px",
+        height: "60px",
+        objectFit: "cover",
+        borderRadius: "12px",
+        cursor: "pointer",
+        transition: "0.2s",
+    }}
+/>
+</td>
                                             <td
                                                 style={{
                                                     padding:
@@ -801,39 +833,22 @@ export default function Menus() {
                                                 style={{
                                                     padding:
                                                         "18px 20px",
-                                                    color:
-                                                        "#cbd5e1",
-                                                }}
-                                            >
-                                                {
-                                                    menu.stock
-                                                }
-                                            </td>
-
-                                            <td
-                                                style={{
-                                                    padding:
-                                                        "18px 20px",
                                                 }}
                                             >
                                                 <span
                                                     style={{
-                                                        padding:
-                                                            "8px 14px",
-                                                        borderRadius:
-                                                            "999px",
-                                                        fontSize:
-                                                            "12px",
-                                                        fontWeight:
-                                                            "700",
+                                                        padding: "8px 14px",
+                                                        borderRadius: "999px",
+                                                        fontSize: "12px",
+                                                        fontWeight: "700",
                                                         ...getStatusStyle(
-                                                            menu.status
+                                                            menu.is_active
                                                         ),
                                                     }}
                                                 >
-                                                    {
-                                                        menu.status
-                                                    }
+                                                    {menu.is_active
+                                                        ? "Active"
+                                                        : "Inactive"}
                                                 </span>
                                             </td>
                                         </tr>
@@ -843,7 +858,7 @@ export default function Menus() {
                                 <tr>
                                     <td
                                         colSpan={
-                                            5
+                                            6
                                         }
                                         style={{
                                             padding:
@@ -870,5 +885,58 @@ export default function Menus() {
                 </div>
             </div>
         </AdminLayout>
-    );
+        {previewImage && (
+    <div
+        onClick={() => setPreviewImage(null)}
+        style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.85)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+        }}
+    >
+        <button
+            onClick={() => setPreviewImage(null)}
+            style={{
+                position: "absolute",
+                top: "20px",
+                right: "25px",
+                width: "45px",
+                height: "45px",
+                borderRadius: "50%",
+                border: "none",
+                background: "rgba(255,255,255,0.15)",
+                color: "#fff",
+                fontSize: "24px",
+                fontWeight: "bold",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backdropFilter: "blur(8px)",
+            }}
+        >
+            ✕
+        </button>
+                <img
+                    src={previewImage}
+                    alt="Preview"
+                    onClick={(e) =>
+                        e.stopPropagation()
+                    }
+                    style={{
+                        maxWidth: "90%",
+                        maxHeight: "90%",
+                        borderRadius: "20px",
+                        boxShadow:
+                            "0 20px 60px rgba(0,0,0,0.5)",
+                    }}
+                />
+            </div>
+        )}
+    </>
+);
 }

@@ -10,7 +10,11 @@ class AdminMenuController extends Controller
 
     public function index()
     {
-        return Menu::latest()->get();
+        return Menu::with([
+            'owner:id,nama_catering,email'
+        ])
+        ->latest()
+        ->get();
     }
 
 
