@@ -64,95 +64,49 @@ public function store(Request $request)
     }
 }
 
-    public function show($id)
-    {
-        return Order::findOrFail($id);
-    }
+   public function show(int $id)
+{
+    return Order::findOrFail($id);
+}
 
+public function update(
+    Request $request,
+    int $id
+)
+{
+    $order = Order::findOrFail($id);
 
-    public function update(
-        Request $request,
-        $id
-    ) {
+    $order->update($request->all());
 
-        $order = Order::findOrFail($id);
+    return response()->json([
+        'message' => 'Order berhasil diupdate',
+        'data' => $order
+    ]);
+}
 
-        $order->update($request->all());
+public function destroy(int $id)
+{
+    Order::destroy($id);
 
-        return response()->json([
-            'message' =>
-                'Order berhasil diupdate',
+    return response()->json([
+        'message' => 'Order berhasil dihapus'
+    ]);
+}
 
-            'data' => $order
-        ]);
-    }
-
-    
-
-    public function destroy($id)
-    {
-        Order::destroy($id);
-
-        return response()->json([
-            'message' =>
-                'Order berhasil dihapus'
-        ]);
-    }
-
-
-    public function approve($id)
+public function kirim(int $id)
 {
     $order = Order::findOrFail($id);
 
     $order->update([
-        'status' => 'Diproses' // bukan 'approved'
+        'status' => 'Dikirim'
     ]);
 
     return response()->json([
-        'message' => 'Order berhasil diapprove'
+        'message' => 'Order berhasil dikirim'
     ]);
 }
 
-public function reject($id)
-{
-    $order = Order::findOrFail($id);
-
-    $order->update([
-        'status' => 'Dibatalkan' // bukan 'rejected'
-    ]);
-
-    return response()->json([
-        'message' => 'Order berhasil direject'
-    ]);
-}
-   
-
-    public function productions()
-    {
-        return Order::where(
-            'status',
-            'approved'
-        )->get();
-    }
-
-    
-
-    public function deliveries()
-    {
-        return Order::where(
-            'status',
-            'delivery'
-        )->get();
-    }
-
-  
-
-    public function reports()
-    {
-        return Order::latest()->get();
-    }
-
-    public function ownerOrders($ownerId)
+public function ownerOrders(int $ownerId)
 {
     $orders = Order::with('menu')
         ->whereHas('menu', function ($query) use ($ownerId) {
@@ -162,5 +116,4 @@ public function reject($id)
         ->get();
 
     return response()->json($orders);
-}
-}
+}}

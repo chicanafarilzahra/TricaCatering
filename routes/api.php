@@ -28,6 +28,9 @@ use App\Http\Controllers\SPPG\MenuHarianController;
 use App\Http\Controllers\SPPG\SekolahController;
 use App\Http\Controllers\SPPG\SppgMenuController;
 use App\Http\Controllers\SPPG\DistribusiController;
+use App\Http\Controllers\SPPG\StocksSPPGController;
+use App\Http\Controllers\SPPG\RiwayatSPPGController;
+use App\Http\Controllers\SPPG\LaporanSPPGController;
 
 /*
 |--------------------------------------------------------------------------
@@ -207,6 +210,11 @@ Route::put(
 Route::put(
     '/orders/{id}/reject',
     [OrderController::class, 'reject']
+);
+
+Route::put(
+    '/orders/{id}/kirim',
+    [OrderController::class, 'kirim']
 );
 
 Route::get(
@@ -460,6 +468,21 @@ Route::prefix('owner')->group(function () {
     );
 
     Route::get(
+    '/stocks',
+    [StocksSPPGController::class, 'index']
+);
+
+Route::post(
+    '/stocks',
+    [StocksSPPGController::class, 'store']
+);
+
+Route::delete(
+    '/stocks/{id}',
+    [StocksSPPGController::class, 'destroy']
+);
+
+    Route::get(
     '/distribusi',
     [DistribusiController::class,'index']
 );
@@ -483,6 +506,15 @@ Route::get(
     '/distribusi/{id}',
     [DistribusiController::class,'show']
 );
+Route::get(
+        '/riwayat',
+        [RiwayatSPPGController::class,'index']
+    );
+
+    Route::get(
+        '/laporan',
+        [LaporanSPPGController::class,'index']
+    );
 
 });
 

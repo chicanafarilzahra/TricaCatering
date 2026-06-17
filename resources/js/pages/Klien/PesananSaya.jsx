@@ -31,20 +31,50 @@ export default function PesananSaya() {
   };
 
   const getStatus = (status) => {
-    switch (status) {
-      case "pending":
-        return { bg: "rgba(245,158,11,0.15)", color: "#f59e0b", text: "Menunggu" };
-      case "diproses":
-        return { bg: "rgba(59,130,246,0.15)", color: "#3b82f6", text: "Diproses" };
-      case "dikirim":
-        return { bg: "rgba(168,85,247,0.15)", color: "#a855f7", text: "Dikirim" };
-      case "selesai":
-        return { bg: "rgba(34,197,94,0.15)", color: "#22c55e", text: "Selesai" };
-      default:
-        return { bg: "rgba(148,163,184,0.15)", color: "#94a3b8", text: status || "Unknown" };
-    }
-  };
+  switch (status) {
+    case "Pending":
+      return {
+        bg: "rgba(251,191,36,0.12)",
+        color: "#d4a017",
+        text: "Pending"
+      };
 
+    case "Diproses":
+      return {
+        bg: "rgba(59,130,246,0.12)",
+        color: "#60a5fa",
+        text: "Diproses"
+      };
+
+    case "Dikirim":
+      return {
+        bg: "rgba(139,92,246,0.12)",
+        color: "#a78bfa",
+        text: "Dikirim"
+      };
+
+    case "Selesai":
+      return {
+        bg: "rgba(34,197,94,0.12)",
+        color: "#4ade80",
+        text: "Selesai"
+      };
+
+    case "Dibatalkan":
+      return {
+        bg: "rgba(239,68,68,0.12)",
+        color: "#f87171",
+        text: "Dibatalkan"
+      };
+
+    default:
+      return {
+        bg: "rgba(148,163,184,0.12)",
+        color: "#94a3b8",
+        text: status || "Unknown"
+      };
+  }
+};
   return (
     <div style={{ width: "100vw", height: "100vh", background: "#071028", display: "flex", flexDirection: "column", overflow: "hidden" }}>
       {/* NAVBAR */}

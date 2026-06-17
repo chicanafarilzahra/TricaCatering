@@ -74,7 +74,7 @@ export default function SidebarSPPG() {
                 top: 0,
                 left: 0,
                 background: "#071028",
-                borderRight: "1px solid rgba(255,255,255,.05)",
+                borderRight: "none",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",

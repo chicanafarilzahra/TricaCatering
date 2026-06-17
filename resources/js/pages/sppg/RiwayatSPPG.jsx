@@ -4,46 +4,47 @@ import axios from "axios";
 import SidebarSPPG from "../../components/SidebarSPPG";
 
 import {
-    FileBarChart2,
+    History,
+    CheckCircle,
+    XCircle,
     Package,
-    School,
-    Building2,
     Search,
 } from "lucide-react";
 
-export default function LaporanSPPG() {
+export default function RiwayatSPPG() {
     const [summary, setSummary] = useState({});
-    const [laporan, setLaporan] = useState([]);
+    const [data, setData] = useState([]);
     const [search, setSearch] = useState("");
 
     useEffect(() => {
         document.body.style.margin = "0";
         document.body.style.padding = "0";
-        document.documentElement.style.margin = "0";
-        document.documentElement.style.padding = "0";
     }, []);
 
     useEffect(() => {
-        loadLaporan();
+        loadData();
     }, []);
 
-    const loadLaporan = async () => {
+    const loadData = async () => {
         try {
             const res = await axios.get(
-                "/api/sppg/laporan"
+                "/api/sppg/riwayat"
             );
 
             setSummary(res.data.summary);
-            setLaporan(res.data.data);
+            setData(res.data.data);
         } catch (err) {
             console.log(err);
         }
     };
 
-    const filtered = laporan.filter((item) =>
-        item.tanggal
-            ?.toLowerCase()
-            .includes(search.toLowerCase())
+    const filtered = data.filter(
+        (item) =>
+            item.sekolah?.nama
+                ?.toLowerCase()
+                .includes(
+                    search.toLowerCase()
+                )
     );
 
     return (
@@ -59,43 +60,31 @@ export default function LaporanSPPG() {
                         "linear-gradient(135deg,#081120,#0f172a)",
                     padding: 30,
                     boxSizing: "border-box",
-                    overflow: "hidden",
                 }}
             >
-                {/* HEADER */}
-
                 <div
                     style={{
-                        display: "flex",
-                        justifyContent:
-                            "space-between",
-                        alignItems: "center",
                         marginBottom: 25,
                     }}
                 >
-                    <div>
-                        <h1
-                            style={{
-                                color: "#fff",
-                                margin: 0,
-                                fontSize: 32,
-                            }}
-                        >
-                            📑 Laporan SPPG
-                        </h1>
+                    <h1
+                        style={{
+                            color: "#fff",
+                            fontSize: 32,
+                            margin: 0,
+                        }}
+                    >
+                        📦 Riwayat Distribusi
+                    </h1>
 
-                        <p
-                            style={{
-                                color: "#94a3b8",
-                            }}
-                        >
-                            Rekap distribusi MBG
-                            untuk pelaporan dinas
-                        </p>
-                    </div>
+                    <p
+                        style={{
+                            color: "#94a3b8",
+                        }}
+                    >
+                        Riwayat pengiriman MBG ke sekolah
+                    </p>
                 </div>
-
-                {/* CARD */}
 
                 <div
                     style={{
@@ -111,9 +100,7 @@ export default function LaporanSPPG() {
                         value={
                             summary.total_distribusi
                         }
-                        icon={
-                            <FileBarChart2 />
-                        }
+                        icon={<History />}
                         color="#3b82f6"
                     />
 
@@ -127,32 +114,25 @@ export default function LaporanSPPG() {
                     />
 
                     <StatCard
-                        title="Total Sekolah"
+                        title="Berhasil"
                         value={
-                            summary.total_sekolah
+                            summary.berhasil
                         }
-                        icon={<School />}
+                        icon={<CheckCircle />}
                         color="#22c55e"
                     />
 
                     <StatCard
-                        title="Total SPPG"
-                        value={
-                            summary.total_sppg
-                        }
-                        icon={
-                            <Building2 />
-                        }
-                        color="#f59e0b"
+                        title="Gagal"
+                        value={summary.gagal}
+                        icon={<XCircle />}
+                        color="#ef4444"
                     />
                 </div>
 
-                {/* SEARCH */}
-
                 <div
                     style={{
-                        background:
-                            "#111827",
+                        background: "#111827",
                         padding: 18,
                         borderRadius: 20,
                         marginBottom: 20,
@@ -160,8 +140,7 @@ export default function LaporanSPPG() {
                 >
                     <div
                         style={{
-                            position:
-                                "relative",
+                            position: "relative",
                         }}
                     >
                         <Search
@@ -183,7 +162,7 @@ export default function LaporanSPPG() {
                                     e.target.value
                                 )
                             }
-                            placeholder="Cari tanggal laporan..."
+                            placeholder="Cari sekolah..."
                             style={{
                                 width: "100%",
                                 boxSizing:
@@ -200,23 +179,19 @@ export default function LaporanSPPG() {
                     </div>
                 </div>
 
-                {/* TABLE */}
-
                 <div
                     style={{
-                        background:
-                            "#111827",
+                        background: "#111827",
                         borderRadius: 20,
-                        overflow:
-                            "hidden",
+                        overflow: "hidden",
                     }}
                 >
                     <table
                         style={{
                             width: "100%",
+                            color: "#fff",
                             borderCollapse:
                                 "collapse",
-                            color: "#fff",
                         }}
                     >
                         <thead>
@@ -226,61 +201,30 @@ export default function LaporanSPPG() {
                                         "#1f2937",
                                 }}
                             >
-                                <th
-                                    style={
-                                        th
-                                    }
-                                >
+                                <th style={th}>
                                     Tanggal
                                 </th>
-
-                                <th
-                                    style={
-                                        th
-                                    }
-                                >
-                                    Total Distribusi
+                                <th style={th}>
+                                    Sekolah
                                 </th>
-
-                                <th
-                                    style={
-                                        th
-                                    }
-                                >
-                                    Total Porsi
+                                <th style={th}>
+                                    Menu
+                                </th>
+                                <th style={th}>
+                                    Porsi
+                                </th>
+                                <th style={th}>
+                                    Status
                                 </th>
                             </tr>
                         </thead>
 
                         <tbody>
-                            {filtered.length ===
-                                0 && (
-                                <tr>
-                                    <td
-                                        colSpan="3"
-                                        style={{
-                                            textAlign:
-                                                "center",
-                                            padding:
-                                                "50px",
-                                            color:
-                                                "#94a3b8",
-                                        }}
-                                    >
-                                        Belum ada
-                                        laporan
-                                    </td>
-                                </tr>
-                            )}
-
                             {filtered.map(
-                                (
-                                    item,
-                                    index
-                                ) => (
+                                (item) => (
                                     <tr
                                         key={
-                                            index
+                                            item.id
                                         }
                                     >
                                         <td
@@ -299,7 +243,9 @@ export default function LaporanSPPG() {
                                             }
                                         >
                                             {
-                                                item.total_distribusi
+                                                item
+                                                    .sekolah
+                                                    ?.nama
                                             }
                                         </td>
 
@@ -309,9 +255,28 @@ export default function LaporanSPPG() {
                                             }
                                         >
                                             {
-                                                item.total_porsi
-                                            }{" "}
-                                            Porsi
+                                                item
+                                                    .menu
+                                                    ?.nama_menu
+                                            }
+                                        </td>
+
+                                        <td
+                                            style={
+                                                td
+                                            }
+                                        >
+                                            {
+                                                item.jumlah_porsi
+                                            }
+                                        </td>
+
+                                        <td
+                                            style={
+                                                td
+                                            }
+                                        >
+                                            {item.status}
                                         </td>
                                     </tr>
                                 )
@@ -327,16 +292,13 @@ export default function LaporanSPPG() {
 const th = {
     padding: "18px 20px",
     textAlign: "left",
-    fontWeight: "700",
     color: "#cbd5e1",
-    fontSize: "14px",
 };
 
 const td = {
     padding: "18px 20px",
     borderTop:
         "1px solid rgba(255,255,255,.05)",
-    color: "#e2e8f0",
 };
 
 function StatCard({
@@ -352,10 +314,6 @@ function StatCard({
                     "linear-gradient(145deg,#111827,#1e293b)",
                 borderRadius: 24,
                 padding: 24,
-                border:
-                    "1px solid rgba(255,255,255,.05)",
-                boxShadow:
-                    "0 10px 25px rgba(0,0,0,.25)",
                 color: "#fff",
             }}
         >
@@ -365,34 +323,19 @@ function StatCard({
                     height: 55,
                     borderRadius: 16,
                     background: `${color}20`,
+                    color,
                     display: "flex",
                     alignItems: "center",
                     justifyContent:
                         "center",
-                    color,
                     marginBottom: 16,
                 }}
             >
                 {icon}
             </div>
 
-            <h2
-                style={{
-                    fontSize: 32,
-                    fontWeight: 800,
-                    marginBottom: 6,
-                }}
-            >
-                {value || 0}
-            </h2>
-
-            <span
-                style={{
-                    color: "#94a3b8",
-                }}
-            >
-                {title}
-            </span>
+            <h2>{value || 0}</h2>
+            <span>{title}</span>
         </div>
     );
 }

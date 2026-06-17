@@ -83,6 +83,9 @@ import DashboardSPPG from "./pages/sppg/DashboardSPPG";
 import MenuHarianSPPG from "./pages/sppg/MenuHarianSPPG";
 import SekolahSPPG from "./pages/sppg/SekolahSPPG";
 import DistribusiSPPG from "./pages/sppg/DistribusiSPPG";
+import StockSPPG from "./pages/sppg/StockSPPG";
+import RiwayatSPPG from "./pages/sppg/RiwayatSPPG";
+import LaporanSPPG from "./pages/sppg/LaporanSPPG";
 
 /* =========================
    COMPONENTS
@@ -475,7 +478,34 @@ function App() {
                         path="/sppg/distribusi"
                         element={<DistribusiSPPG />}
                     />
-                    
+
+                    <Route
+                        path="/sppg/stok"
+                        element={
+                            <ProtectedRoute role="operator_sppg">
+                                <StockSPPG />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/sppg/riwayat"
+                        element={
+                            <ProtectedRoute role="operator_sppg">
+                                <RiwayatSPPG />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/sppg/laporan"
+                        element={
+                            <ProtectedRoute role="operator_sppg">
+                                <LaporanSPPG />
+                            </ProtectedRoute>
+                        }
+                    />
+
                 {/* =========================
                     404 REDIRECT
                 ========================= */}
