@@ -13,6 +13,7 @@ class Distribusi extends Model
         'sekolah_id',
         'menu_id',
         'tanggal',
+        'jam_distribusi',
         'jumlah_porsi',
         'status'
     ];

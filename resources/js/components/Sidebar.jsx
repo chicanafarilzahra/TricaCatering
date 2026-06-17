@@ -42,112 +42,86 @@ export default function Sidebar() {
     };
 
     const menus = [
-        {
-            title: "MAIN MENU",
-            items: [
-                {
-                    label: "Dashboard",
-                    path: "/dashboard",
-                    icon: (
-                        <LayoutDashboard size={18} />
-                    ),
-                },
+  {
+    title: "MAIN MENU",
+    items: [
+      {
+        label: "Dashboard",
+        path: "/dashboard",
+        icon: <LayoutDashboard size={18} />,
+      },
 
-                {
-                    label: "Orders",
-                    path: "/orders",
-                    icon: (
-                        <ShoppingCart size={18} />
-                    ),
-                },
-            ],
-        },
+      {
+        label: "Orders",
+        path: "/orders",
+        icon: <ShoppingCart size={18} />,
+      },
+    ],
+  },
 
-        {
-            title: "MANAGEMENT",
-            items: [
-                {
-                    label: "Menus",
-                    path: "/menus",
-                    icon: (
-                        <UtensilsCrossed size={18} />
-                    ),
-                },
+  {
+    title: "OPERASIONAL",
+    items: [
+      {
+        label: "Produk Catering",
+        path: "/menus",
+        icon: <UtensilsCrossed size={18} />,
+      },
 
-                {
-                    label: "Packages",
-                    path: "/packages",
-                    icon: (
-                        <Package size={18} />
-                    ),
-                },
+      {
+        label: "Inventori",
+        path: "/stocks",
+        icon: <Boxes size={18} />,
+      },
 
-                {
-                    label: "Productions",
-                    path: "/productions",
-                    icon: (
-                        <Factory size={18} />
-                    ),
-                },
+      {
+        label: "Produksi",
+        path: "/productions",
+        icon: <Factory size={18} />,
+      },
 
-                {
-                    label: "SPPG",
-                    path: "/admin/sppg",
-                    icon: (
-                        <ClipboardList size={18} />
-                    ),
-                },
+      {
+        label: "Pengiriman",
+        path: "/deliveries",
+        icon: <Truck size={18} />,
+      },
+    ],
+  },
 
-                {
-                    label: "Stocks",
-                    path: "/stocks",
-                    icon: (
-                        <Boxes size={18} />
-                    ),
-                },
+  {
+    title: "MANAJEMEN",
+    items: [
+      {
+        label: "SPPG",
+        path: "/admin/sppg",
+        icon: <ClipboardList size={18} />,
+      },
 
-                {
-                    label: "Couriers",
-                    path: "/couriers",
-                    icon: (
-                        <Truck size={18} />
-                    ),
-                },
+      {
+        label: "Validasi User",
+        path: "/admin-validasi-user",
+        icon: <Users size={18} />,
+      },
 
-                {
-                    label: "Deliveries",
-                    path: "/deliveries",
-                    icon: (
-                        <Truck size={18} />
-                    ),
-                },
+      {
+        label: "Pelanggan",
+        path: "/customers",
+        icon: <Users size={18} />,
+      },
+    ],
+  },
 
-                {
-    label: "Customers",
-    path: "/customers",
-    icon: (
-        <Users size={18} />
-    ),
-},
-
-{
-    label: "Validasi User",
-    path: "/admin-validasi-user",
-    icon: (
-        <Users size={18} />
-    ),
-},
-
-{
-    label: "Reports",
-    path: "/reports",
-    icon: (
-        <FileBarChart2 size={18} />
-    ),
-},
-            ],
-        },
-    ];
+  {
+    title: "LAPORAN",
+    items: [
+      {
+        label: "Reports",
+        path: "/reports",
+        icon: <FileBarChart2 size={18} />,
+      },
+    ],
+  },
+];
 
     return (
         <div

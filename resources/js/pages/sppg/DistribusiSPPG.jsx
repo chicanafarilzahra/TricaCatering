@@ -7,6 +7,8 @@ import {
   Plus,
   Package,
   UtensilsCrossed,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 
 export default function DistribusiSPPG() {
@@ -20,12 +22,13 @@ export default function DistribusiSPPG() {
   const [editId, setEditId] = useState(null);
 
   const [form, setForm] = useState({
-    sekolah_id: "",
-    menu_id: "",
-    tanggal: "",
-    jumlah_porsi: "",
-    status: "Diproses",
-  });
+  sekolah_id: "",
+  menu_id: "",
+  tanggal: "",
+  jam_distribusi: "",
+  jumlah_porsi: "",
+  status: "Diproses",
+});
 
   useEffect(() => {
     fetchDistribusi();
@@ -72,10 +75,74 @@ const fetchSekolah = async () => {
       }
     );
 
+    console.log(
+  "DATA SEKOLAH:",
+  JSON.stringify(res.data, null, 2)
+);
+
     setSekolahs(res.data);
   } catch (err) {
     console.log(err);
   }
+};
+
+const editData = (item) => {
+  const sekolah = sekolahs.find(
+    (s) => s.id === item.sekolah_id
+  );
+
+  setEditId(item.id);
+
+  setForm({
+    sekolah_id: item.sekolah_id,
+    menu_id: item.menu_id,
+    tanggal: item.tanggal,
+    jumlah_porsi:
+      sekolah?.jumlah_siswa || item.jumlah_porsi,
+    status: item.status,
+  });
+
+  setShowModal(true);
+};
+
+const hapus = async (id) => {
+  if (!confirm("Hapus distribusi ini?")) return;
+
+  try {
+    await axios.delete(
+      `/api/sppg/distribusi/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    fetchDistribusi();
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+const inputStyle = {
+  width: "100%",
+  height: 48,
+  padding: "0 14px",
+  borderRadius: 12,
+  border: "1px solid #334155",
+  background: "#1e293b",
+  color: "#fff",
+  fontSize: 14,
+  boxSizing: "border-box",
+};
+
+const labelStyle = {
+  color: "#cbd5e1",
+  fontSize: 14,
+  fontWeight: 500,
+  display: "block",
+  marginBottom: 8,
+  marginTop: 16,
 };
 
 const fetchMenu = async () => {
@@ -625,10 +692,10 @@ const saveData = async (e) => {
             <form
               onSubmit={saveData}
               style={{
-                width: 650,
-                background: "#111827",
-                borderRadius: 22,
-                padding: 30,
+                width: 600,
+                background: "#0f172a",
+                borderRadius: 24,
+                padding: 32,
                 border: "1px solid rgba(255,255,255,.08)",
               }}
             >
@@ -644,18 +711,33 @@ const saveData = async (e) => {
                   : "Tambah Distribusi"}
               </h2>
 
-              <label style={{ color: "#cbd5e1" }}>
+              <label
+                style={{
+                  display: "block",
+                  color: "#cbd5e1",
+                  marginBottom: 8,
+                  marginTop: 16,
+                  fontSize: 14,
+                  fontWeight: 500,
+                }}
+              >
                 Sekolah
               </label>
 
               <select
                 value={form.sekolah_id}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    sekolah_id: e.target.value,
-                  })
-                }
+                onChange={(e) => {
+                const sekolah = sekolahs.find(
+                  (s) => s.id == e.target.value
+                );
+
+                setForm({
+                  ...form,
+                  sekolah_id: e.target.value,
+                  jumlah_porsi:
+                    sekolah?.jumlah_siswa || 0,
+                });
+              }}
                 style={inputStyle}
               >
                 <option value="">
@@ -672,7 +754,16 @@ const saveData = async (e) => {
                 ))}
               </select>
 
-              <label style={{ color: "#cbd5e1" }}>
+              <label
+                style={{
+                  display: "block",
+                  color: "#cbd5e1",
+                  marginBottom: 8,
+                  marginTop: 16,
+                  fontSize: 14,
+                  fontWeight: 500,
+                }}
+              >
                 Menu
               </label>
 
@@ -700,62 +791,113 @@ const saveData = async (e) => {
                 ))}
               </select>
 
-              <div
+             <div
+  style={{
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr 1fr",
+    gap: 20,
+    marginTop: 16,
+  }}
+>
+  <div>
+    <label
+      style={{
+        display: "block",
+        color: "#cbd5e1",
+        marginBottom: 8,
+        fontSize: 14,
+        fontWeight: 500,
+      }}
+    >
+      Tanggal Distribusi
+    </label>
+
+    <input
+      type="date"
+      value={form.tanggal}
+      onChange={(e) =>
+        setForm({
+          ...form,
+          tanggal: e.target.value,
+        })
+      }
+      style={inputStyle}
+    />
+  </div>
+
+  <div>
+  <label
+  style={{
+    display: "block",
+    color: "#cbd5e1",
+    marginBottom: 8,
+    fontSize: 14,
+    fontWeight: 500,
+  }}
+>
+  Jam Distribusi
+</label>
+
+<select
+  value={form.jam_distribusi}
+  onChange={(e) =>
+    setForm({
+      ...form,
+      jam_distribusi: e.target.value,
+    })
+  }
+  style={inputStyle}
+>
+  <option value="">Pilih Jam</option>
+
+  {Array.from({ length: 24 * 12 }, (_, i) => {
+    const hour = String(Math.floor(i / 12)).padStart(2, "0");
+    const minute = String((i % 12) * 5).padStart(2, "0");
+
+    return (
+      <option
+        key={`${hour}:${minute}`}
+        value={`${hour}:${minute}`}
+      >
+        {hour}:{minute}
+      </option>
+    );
+  })}
+</select>
+</div>
+
+  <div>
+  <label
+    style={{
+      display: "block",
+      color: "#cbd5e1",
+      marginBottom: 8,
+      fontSize: 14,
+      fontWeight: 500,
+    }}
+  >
+    Jumlah Porsi
+  </label>
+
+  <input
+    type="number"
+    value={form.jumlah_porsi}
+    readOnly
+    style={inputStyle}
+  />
+</div>
+</div>
+
+              <label
                 style={{
-                  display: "grid",
-                  gridTemplateColumns:
-                    "1fr 1fr",
-                  gap: 18,
+                  display: "block",
+                  color: "#cbd5e1",
+                  marginBottom: 8,
+                  marginTop: 16,
+                  fontSize: 14,
+                  fontWeight: 500,
                 }}
               >
-                <div>
-                  <label
-                    style={{
-                      color: "#cbd5e1",
-                    }}
-                  >
-                    Tanggal
-                  </label>
-
-                  <input
-                    type="date"
-                    value={form.tanggal}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        tanggal:
-                          e.target.value,
-                      })
-                    }
-                    style={inputStyle}
-                  />
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      color: "#cbd5e1",
-                    }}
-                  >
-                    Jumlah Porsi
-                  </label>
-
-                  <input
-                    type="number"
-                    value={form.jumlah_porsi}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        jumlah_porsi:
-                          e.target.value,
-                      })
-                    }
-                    style={inputStyle}
-                  />
-                </div>
-              </div>
-
-              <label style={{ color: "#cbd5e1" }}>
                 Status
               </label>
 
@@ -773,6 +915,10 @@ const saveData = async (e) => {
                   Diproses
                 </option>
 
+                <option value="Disiapkan">
+                  Disiapkan
+                </option>
+
                 <option value="Dikirim">
                   Dikirim
                 </option>
@@ -787,7 +933,7 @@ const saveData = async (e) => {
                   display: "flex",
                   justifyContent: "flex-end",
                   gap: 12,
-                  marginTop: 25,
+                  marginTop: 30,
                 }}
               >
                 <button
@@ -795,21 +941,15 @@ const saveData = async (e) => {
                   onClick={() => {
                     setShowModal(false);
                     setEditId(null);
-
-                    setForm({
-                      sekolah_id: "",
-                      menu_id: "",
-                      tanggal: "",
-                      jumlah_porsi: "",
-                      status: "Diproses",
-                    });
                   }}
                   style={{
-                    padding: "12px 22px",
-                    border: 0,
+                    minWidth: 100,
+                    height: 48,
+                    border: "none",
                     borderRadius: 12,
-                    background: "#374151",
+                    background: "#334155",
                     color: "#fff",
+                    fontWeight: 600,
                     cursor: "pointer",
                   }}
                 >
@@ -819,13 +959,19 @@ const saveData = async (e) => {
                 <button
                   type="submit"
                   style={{
-                    padding: "12px 22px",
-                    border: 0,
+                    minWidth: 140,
+                    height: 48,
+                    border: "none",
                     borderRadius: 12,
                     background:
                       "linear-gradient(135deg,#2563eb,#06b6d4)",
                     color: "#fff",
+                    fontSize: 14,
+                    fontWeight: 600,
                     cursor: "pointer",
+                    transition: "0.2s",
+                    boxShadow:
+                      "0 4px 14px rgba(37,99,235,.35)",
                   }}
                 >
                   {editId
