@@ -1,3 +1,22 @@
+import {
+    MapContainer,
+    TileLayer,
+    Marker,
+    useMap
+} from "react-leaflet";
+
+
+delete L.Icon.Default.prototype._getIconUrl;
+
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl:
+        "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
+    iconUrl:
+        "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
+    shadowUrl:
+        "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
+});
+
 import { useEffect, useState } from "react";
 import axios from "axios";
 import SidebarSPPG from "../../components/SidebarSPPG";
@@ -12,6 +31,17 @@ Trash2,
 MapPin
 } from "lucide-react";
 
+function ChangeMapView({ center }) {
+
+    const map = useMap();
+
+    useEffect(() => {
+        map.setView(center, 16);
+    }, [center]);
+
+    return null;
+}
+
 export default function SekolahSPPG() {
     const user = JSON.parse(localStorage.getItem("user"));
 
@@ -23,18 +53,29 @@ export default function SekolahSPPG() {
     const [search, setSearch] = useState("");
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-    const [form, setForm] = useState({
-        nama_sekolah: "",
-        alamat: "",
-        jumlah_siswa: "",
-        latitude: "",
-        longitude: "",
-    });
+    const [searchLocation, setSearchLocation] =
+    useState("");
 
-    useEffect(() => {
-        fetchData();
-    }, []);
+    const [latitude, setLatitude] =
+            useState("");
 
+    const [longitude, setLongitude] =
+            useState("");
+
+    const [position, setPosition] =
+            useState([-7.6498, 112.6878]);
+
+
+const [form, setForm] = useState({
+    nama_sekolah: "",
+    jenjang: "",
+    alamat: "",
+    jumlah_siswa: "",
+});
+
+useEffect(() => {
+    fetchData();
+}, []);
     const fetchData = async () => {
     try {
         console.log("fetchData jalan");
@@ -60,82 +101,137 @@ export default function SekolahSPPG() {
         console.log("ERROR:", e);
     }
 };
-    const saveData = async (e) => {
-    e.preventDefault();
+
+const searchMapLocation = async () => {
+
+    if (!searchLocation) return;
 
     try {
-        const data = {
-            ...form,
-        };
 
+        const res = await axios.get(
+            "https://nominatim.openstreetmap.org/search",
+            {
+        params:{
+    q:`${searchLocation}, Indonesia`,
+    format:"json",
+    limit:5
+        }
+            }
+        );
+
+        if(res.data.length){
+
+            const lat =
+                Number(res.data[0].lat);
+
+            const lng =
+                Number(res.data[0].lon);
+
+            setPosition([lat,lng]);
+
+            setLatitude(
+                lat.toFixed(8)
+            );
+
+            setLongitude(
+                lng.toFixed(8)
+            );
+
+        }
+
+    } catch(err){
+
+        console.log(err);
+
+    }
+};
+
+const saveData = async (e) => {
+    e.preventDefault();
+
+    if (
+    !form.nama_sekolah ||
+    !form.jenjang ||
+    !form.alamat ||
+    !form.jumlah_siswa
+) {
+    alert("Semua field wajib diisi");
+    return;
+}
+
+    const token = localStorage.getItem("token");
+
+    console.log("DATA KIRIM:", form);
+
+    try {
+        const payload = {
+            nama_sekolah: form.nama_sekolah,
+            jenjang: form.jenjang,
+            alamat: form.alamat,
+            jumlah_siswa: Number(form.jumlah_siswa),
+            latitude: latitude,
+            longitude: longitude,
+};
         if (editId) {
-            // Update
             await axios.put(
                 `/api/sppg/sekolah/${editId}`,
-                data,
+                payload,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
                 }
             );
-
-            alert("Data sekolah berhasil diperbarui.");
         } else {
-            // Tambah
-            const token = localStorage.getItem("token");
-
-                await axios.post(
-                    "/api/sppg/sekolah",
-                    data,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    }
-                );
-
-            alert("Data sekolah berhasil ditambahkan.");
+            await axios.post(
+                "/api/sppg/sekolah",
+                payload,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
         }
 
-        // Refresh tabel
         await fetchData();
 
-        // Reset form
-        setForm({
-            nama_sekolah: "",
-            alamat: "",
-            jumlah_siswa: "",
-            latitude: "",
-            longitude: "",
-        });
-
-        // Keluar dari mode edit
+        setShowModal(false);
         setEditId(null);
 
-        // Tutup modal
-        setShowModal(false);
+        setForm({
+            nama_sekolah: "",
+            jenjang: "",
+            alamat: "",
+            jumlah_siswa: "",
+        });
 
     } catch (err) {
-        console.error(err);
+        console.log("ERROR:", err.response?.data || err.message);
 
-        alert(
-            err.response?.data?.message ||
-            "Gagal menyimpan data."
-        );
+        alert(err.response?.data?.message || "Gagal simpan data");
     }
 };
 
-    const editData = (item) => {
+  const editData = (item) => {
     setEditId(item.id);
 
     setForm({
-        nama_sekolah: item.nama_sekolah || "",
-        alamat: item.alamat || "",
-        jumlah_siswa: item.jumlah_siswa || "",
-        latitude: item.latitude || "",
-        longitude: item.longitude || "",
-    });
+    nama_sekolah: item.nama_sekolah || "",
+    jenjang: item.jenjang || "",
+    alamat: item.alamat || "",
+    jumlah_siswa: item.jumlah_siswa || "",
+});
+
+setLatitude(item.latitude || "");
+setLongitude(item.longitude || "");
+
+if(item.latitude && item.longitude){
+    setPosition([
+        Number(item.latitude),
+        Number(item.longitude)
+    ]);
+}
 
     setShowModal(true);
 };
@@ -453,6 +549,21 @@ onClick={()=>{
 
 setEditId(null);
 
+setLatitude("");
+setLongitude("");
+
+setPosition([
+    -7.6498,
+    112.6878
+]);
+
+setForm({
+    nama_sekolah:"",
+    jenjang:"",
+    alamat:"",
+    jumlah_siswa:"",
+});
+
 setShowModal(true);
 
 }}
@@ -758,28 +869,34 @@ Tambah Sekolah
 
                 {showModal && (
     <div
-        style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,.65)",
-            backdropFilter: "blur(6px)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 999,
-        }}
-    >
-        <form
-            onSubmit={saveData}
-            style={{
-                width: 620,
-                background: "#111827",
-                borderRadius: 22,
-                padding: 30,
-                border: "1px solid rgba(255,255,255,.08)",
-                boxShadow: "0 20px 50px rgba(0,0,0,.4)",
-            }}
-        >
+style={{
+    position:"fixed",
+    inset:0,
+    background:"rgba(0,0,0,.65)",
+    backdropFilter:"blur(6px)",
+    display:"flex",
+    justifyContent:"center",
+    alignItems:"center",
+    padding:20,
+    zIndex:999,
+}}
+>
+<form
+    onSubmit={saveData}
+    style={{
+        width: "90%",
+        maxWidth: 700,
+        maxHeight: "90vh",
+        overflowY: "auto",
+        background: "#111827",
+        borderRadius: 22,
+        padding: 25,
+        border: "1px solid rgba(255,255,255,.08)",
+        boxShadow: "0 20px 50px rgba(0,0,0,.4)",
+
+        scrollbarWidth:"thin",
+    }}
+>
             {/* Header */}
 
             <div
@@ -838,91 +955,223 @@ Tambah Sekolah
                 style={inputStyle}
             />
 
-            {/* Alamat */}
-
             <label
-                style={{
-                    color: "#cbd5e1",
-                    fontSize: 14,
-                }}
-            >
-                Alamat
-            </label>
+    style={{
+        color:"#cbd5e1",
+        fontSize:14
+    }}
+>
+    Jenjang Sekolah
+</label>
 
-            <textarea
-                rows={4}
-                value={form.alamat}
-                onChange={(e) =>
-                    setForm({
-                        ...form,
-                        alamat: e.target.value,
-                    })
-                }
-                placeholder="Masukkan alamat sekolah"
-                style={{
-                    ...inputStyle,
-                    resize: "none",
-                }}
-            />
+<select
+    value={form.jenjang}
+    onChange={(e)=>
+        setForm({
+            ...form,
+            jenjang:e.target.value
+        })
+    }
+    style={inputStyle}
+>
+    <option value="">
+        Pilih Jenjang
+    </option>
 
-            {/* Grid */}
+    <option value="TK">TK</option>
+    <option value="SD">SD</option>
+    <option value="SMP">SMP</option>
+    <option value="SMA">SMA</option>
+    <option value="SMK">SMK</option>
+</select>
 
-            {/* Latitude & Longitude */}
+            {/* ALAMAT */}
+<label
+    style={{
+        color: "#cbd5e1",
+        fontSize: 14,
+    }}
+>
+    Alamat
+</label>
+
+<textarea
+    rows={4}
+    value={form.alamat}
+    onChange={(e) =>
+        setForm({
+            ...form,
+            alamat: e.target.value,
+        })
+    }
+    placeholder="Masukkan alamat sekolah"
+    style={{
+        ...inputStyle,
+        resize: "none",
+    }}
+/>
+<label
+    style={{
+        color:"#cbd5e1",
+        fontSize:14,
+    }}
+>
+    Cari Lokasi Sekolah
+</label>
 
 <div
     style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 18,
-        marginBottom: 18,
+        display:"flex",
+        gap:10,
+        marginTop:8,
+        marginBottom:15,
     }}
 >
-    <div>
-        <label
+    <input
+        value={searchLocation}
+        onChange={(e)=>
+            setSearchLocation(e.target.value)
+        }
+        placeholder="Cari lokasi pada peta..."
+        style={{
+            ...inputStyle,
+            marginBottom:0,
+        }}
+    />
+
+    <button
+        type="button"
+        onClick={searchMapLocation}
+        style={{
+            border:0,
+            borderRadius:12,
+            padding:"0 20px",
+            background:"#2563eb",
+            color:"#fff",
+            cursor:"pointer",
+            fontWeight:600,
+        }}
+    >
+        Cari
+    </button>
+</div>
+
+<div
+    style={{
+        height:250,
+        overflow:"hidden",
+        borderRadius:16,
+        border:"1px solid #374151",
+        marginBottom:20,
+    }}
+>
+    <MapContainer
+        center={position}
+        zoom={15}
+        style={{
+            height:"100%",
+            width:"100%",
+        }}
+    >
+
+        <ChangeMapView center={position} />
+        <TileLayer
+            attribution="&copy; OpenStreetMap"
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+
+        <Marker
+            draggable
+            position={position}
+            eventHandlers={{
+                dragend:(e)=>{
+
+                    const latlng =
+                        e.target.getLatLng();
+
+                    setPosition([
+                        latlng.lat,
+                        latlng.lng
+                    ]);
+
+                    setLatitude(
+                        latlng.lat.toFixed(8)
+                    );
+
+                    setLongitude(
+                        latlng.lng.toFixed(8)
+                    );
+
+                }
+            }}
+        />
+    </MapContainer>
+</div>
+<div
+    style={{
+        display:"grid",
+        gridTemplateColumns:"1fr 1fr",
+        gap:15,
+        marginBottom:20,
+    }}
+>
+
+    <div
+        style={{
+            background:"#0f172a",
+            padding:15,
+            borderRadius:12,
+        }}
+    >
+        <div
             style={{
-                color: "#cbd5e1",
-                fontSize: 14,
+                color:"#94a3b8",
+                fontSize:12,
             }}
         >
             Latitude
-        </label>
+        </div>
 
-        <input
-            value={form.latitude}
-            onChange={(e) =>
-                setForm({
-                    ...form,
-                    latitude: e.target.value,
-                })
-            }
-            placeholder="-7.123456"
-            style={inputStyle}
-        />
+        <div
+            style={{
+                color:"#fff",
+                marginTop:5,
+                fontWeight:600,
+            }}
+        >
+            {latitude || "-"}
+        </div>
     </div>
 
-    <div>
-        <label
+    <div
+        style={{
+            background:"#0f172a",
+            padding:15,
+            borderRadius:12,
+        }}
+    >
+        <div
             style={{
-                color: "#cbd5e1",
-                fontSize: 14,
+                color:"#94a3b8",
+                fontSize:12,
             }}
         >
             Longitude
-        </label>
+        </div>
 
-        <input
-            value={form.longitude}
-            onChange={(e) =>
-                setForm({
-                    ...form,
-                    longitude: e.target.value,
-                })
-            }
-            placeholder="112.654321"
-            style={inputStyle}
-        />
+        <div
+            style={{
+                color:"#fff",
+                marginTop:5,
+                fontWeight:600,
+            }}
+        >
+            {longitude || "-"}
+        </div>
     </div>
+
 </div>
+
 
 {/* Jumlah Siswa */}
 
@@ -942,13 +1191,14 @@ Tambah Sekolah
         onChange={(e) =>
             setForm({
                 ...form,
-                jumlah_siswa: e.target.value,
+                jumlah_siswa: Number(e.target.value),
             })
         }
         placeholder="Masukkan jumlah siswa"
         style={inputStyle}
     />
 </div>
+
             {/* Button */}
 
             <div
@@ -962,17 +1212,16 @@ Tambah Sekolah
                 <button
     type="button"
     onClick={() => {
-        setShowModal(false);
-        setEditId(null);
+    setShowModal(false);
+    setEditId(null);
 
-        setForm({
-            nama_sekolah: "",
-            alamat: "",
-            jumlah_siswa: "",
-            latitude: "",
-            longitude: "",
-        });
-    }}
+    setForm({
+        nama_sekolah: "",
+        jenjang: "",
+        alamat: "",
+        jumlah_siswa: "",
+    });
+}}
     style={{
         padding: "12px 22px",
         borderRadius: 12,
@@ -1008,4 +1257,4 @@ Tambah Sekolah
             </div>
         </div>
     );
-}
+} 
