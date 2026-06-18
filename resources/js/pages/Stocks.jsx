@@ -72,9 +72,9 @@ const fetchStocks = async () => {
             search.toLowerCase()
         );
                     const stockStatus =
-    item.qty <= item.minimum_stock
-        ? "Low Stock"
-        : "Normal";
+                        item.qty <= item.minimum_stock
+                            ? "Low Stock"
+                            : "Normal";
 
 const matchStatus =
     statusFilter === "All" ||

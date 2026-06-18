@@ -7,11 +7,12 @@ use App\Models\User;
 
 class Stock extends Model
 {
-    protected $fillable=[
+    protected $fillable = [
+        'owner_id',
         'name',
         'qty',
         'unit',
-        'minimum_stock'
+        'minimum_stock',
     ];
 
     public function menus()

@@ -355,31 +355,9 @@ Route::get('/klien/lacak/{order_id}', [TrackingController::class, 'show']);
 |--------------------------------------------------------------------------
 */
 
-Route::prefix('owner')->group(function () {
-
-    Route::get(
-        '/orders/{ownerId}',
-        [OrderController::class, 'ownerOrders']
-    );
-    Route::get(
-        '/menus',
-        [OwnerMenuController::class, 'index']
-    );
-
-    Route::post(
-        '/menus',
-        [OwnerMenuController::class, 'store']
-    );
-
-    Route::put(
-        '/menus/{id}',
-        [OwnerMenuController::class, 'update']
-    );
-
-    Route::delete(
-        '/menus/{id}',
-        [OwnerMenuController::class, 'destroy']
-    );
+Route::middleware('auth:sanctum')
+    ->prefix('owner')
+    ->group(function () {
 
     Route::get(
         '/stocks',
@@ -401,7 +379,7 @@ Route::prefix('owner')->group(function () {
         [OwnerStockController::class,'destroy']
     );
 
-    });
+}); 
 /*
 |--------------------------------------------------------------------------
 | SPPG

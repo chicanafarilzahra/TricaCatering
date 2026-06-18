@@ -172,7 +172,19 @@ export default function StocksOwner(){
 
     const fetchStocks = async () => {
     try {
-        const res = await axios.get("/api/owner/stocks");
+        const token =
+            localStorage.getItem("token");
+
+        const res = await axios.get(
+            "/api/owner/stocks",
+            {
+                headers: {
+                    Authorization:
+                        `Bearer ${token}`,
+                },
+            }
+        );
+
         setStocks(res.data);
     } catch (err) {
         console.log(err);

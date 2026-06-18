@@ -5,13 +5,14 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Stock;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class OwnerStockController extends Controller
 {
     public function index()
-    {
-        return Stock::latest()->get();
-    }
+{
+    dd(Auth::id());
+}
 
     public function store(Request $request)
     {
@@ -23,6 +24,7 @@ class OwnerStockController extends Controller
         ]);
 
         $stock = Stock::create([
+            'owner_id' => Auth::id(),
             'name' => $request->name,
             'qty' => $request->qty,
             'unit' => $request->unit,
