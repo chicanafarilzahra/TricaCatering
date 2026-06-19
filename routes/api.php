@@ -364,6 +364,16 @@ Route::middleware('auth:sanctum')
         [OwnerStockController::class,'index']
     );
 
+    Route::get(
+        '/stocks/owner/{id}',
+        [AdminStockController::class, 'detailOwner']
+    );
+
+    Route::get(
+        '/stocks/sppg/{id}',
+        [AdminStockController::class, 'detailSPPG']
+    );
+
     Route::post(
         '/stocks',
         [OwnerStockController::class,'store']

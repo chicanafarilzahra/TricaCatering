@@ -189,25 +189,43 @@ export default function StocksOwner(){
     } catch (err) {
         console.log(err);
     }
-};
+};  
 
 const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-        if (editId) {
-    await axios.put(
-        `/api/owner/stocks/${editId}`,
-        form
-    );
-} else {
-    await axios.post(
-        "/api/owner/stocks",
-        form
-    );
-}
-        setEditId(null);
+        const token =
+            localStorage.getItem("token");
 
+        if (editId) {
+
+            await axios.put(
+                `/api/owner/stocks/${editId}`,
+                form,
+                {
+                    headers: {
+                        Authorization:
+                            `Bearer ${token}`,
+                    },
+                }
+            );
+
+        } else {
+
+            await axios.post(
+                "/api/owner/stocks",
+                form,
+                {
+                    headers: {
+                        Authorization:
+                            `Bearer ${token}`,
+                    },
+                }
+            );
+        }
+
+        setEditId(null);
         setShowModal(false);
 
         setForm({
@@ -218,9 +236,16 @@ const handleSubmit = async (e) => {
         });
 
         fetchStocks();
+
     } catch (err) {
-        console.log(err);
-    }
+    console.log(
+        JSON.stringify(
+            err.response?.data,
+            null,
+            2
+        )
+    );
+}
 };
 
 const handleEdit = (item) => {
@@ -242,9 +267,18 @@ const handleDelete = async (id) => {
 
     try {
 
-        await axios.delete(
-            `/api/owner/stocks/${id}`
-        );
+        const token =
+    localStorage.getItem("token");
+
+await axios.delete(
+    `/api/owner/stocks/${id}`,
+    {
+        headers: {
+            Authorization:
+                `Bearer ${token}`,
+        },
+    }
+);
 
         fetchStocks();
 

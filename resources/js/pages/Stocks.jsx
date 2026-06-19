@@ -30,6 +30,9 @@ export default function Stocks() {
 
     const [stocks, setStocks] = useState([]);
 
+    const [selectedGroup, setSelectedGroup] =
+    useState(null);
+
 useEffect(() => {
     fetchStocks();
 }, []);
@@ -38,6 +41,11 @@ const fetchStocks = async () => {
     try {
         const res = await axios.get(
             "http://localhost:8000/api/stocks"
+        );
+
+        console.log(
+            "API STOCKS",
+            JSON.stringify(res.data, null, 2)
         );
 
         setStocks(res.data);
@@ -145,6 +153,28 @@ const matchStatus =
             bg: "rgba(16,185,129,0.12)",
         },
     ];
+    const groupedStocks = Object.values(
+    stocks.reduce((acc, item) => {
+
+        const key =
+            item.source +
+            "-" +
+            item.tempat;
+
+        if (!acc[key]) {
+            acc[key] = {
+                source: item.source,
+                tempat: item.tempat,
+                items: [],
+            };
+        }
+
+        acc[key].items.push(item);
+
+        return acc;
+
+    }, {})
+);
 
     return (
         <AdminLayout>
@@ -658,10 +688,7 @@ const matchStatus =
                                 {[
                                     "Sumber",
                                     "Nama Tempat",
-                                    "Bahan",
-                                    "Qty",
-                                    "Unit",
-                                    "Status",
+                                    "Aksi",
                                 ].map(
                                     (
                                         item,
@@ -696,125 +723,296 @@ const matchStatus =
                         </thead>
 
                         <tbody>
-                            {filteredStocks.length >
-                            0 ? (
-                                filteredStocks.map(
-                                    (
-                                        item,
-                                        index
-                                    ) => (
-                                        <tr
-                                            key={
-                                                index
-                                            }
-                                            style={{
-                                                borderBottom:
-                                                    "1px solid rgba(255,255,255,0.05)",
-                                            }}
-                                        >
-                                            <td
-    style={{
-        padding: "20px",
-        color: "white",
-    }}
->
-    {item.source}
-</td>
+    {groupedStocks.map(
+        (group, index) => (
+            <tr
+                key={index}
+                style={{
+                    borderBottom:
+                        "1px solid rgba(255,255,255,0.05)",
+                }}
+            >
+                <td
+                    style={{
+                        padding: "20px",
+                        color: "white",
+                    }}
+                >
+                    {group.source}
+                </td>
 
-<td
-    style={{
-        padding: "20px",
-        color: "#cbd5e1",
-    }}
->
-    {item.tempat}
-</td>
+                <td
+                    style={{
+                        padding: "20px",
+                        color: "#cbd5e1",
+                    }}
+                >
+                    {group.tempat}
+                </td>
 
-<td
-    style={{
-        padding: "20px",
-        color: "#cbd5e1",
-    }}
->
-    {item.name}
-</td>
-
-<td
-    style={{
-        padding: "20px",
-        color: "#cbd5e1",
-    }}
->
-    {item.qty}
-</td>
-
-<td
-    style={{
-        padding: "20px",
-        color: "#cbd5e1",
-    }}
->
-    {item.unit}
-</td>
-
-<td
-    style={{
-        padding: "20px",
-    }}
->
-    <span
-        style={{
-            padding: "8px 14px",
-            borderRadius: "999px",
-            fontSize: "12px",
-            fontWeight: "700",
-            background:
-                item.qty <=
-                item.minimum_stock
-                    ? "rgba(239,68,68,0.15)"
-                    : "rgba(16,185,129,0.15)",
-            color:
-                item.qty <=
-                item.minimum_stock
-                    ? "#ef4444"
-                    : "#10b981",
-        }}
-    >
-        {item.qty <=
-        item.minimum_stock
-            ? "Low Stock"
-            : "Normal"}
-    </span>
-</td>
-                                        </tr>
-                                    )
-                                )
-                            ) : (
-                                <tr>
-                                    <td
-                                        colSpan={
-                                            6
-                                        }
-                                        style={{
-                                            padding:
-                                                "80px 20px",
-                                            textAlign:
-                                                "center",
-                                            color:
-                                                "#64748b",
-                                            fontSize:
-                                                "15px",
-                                        }}
-                                    >
-                                        Stock tidak
-                                        ditemukan
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
+                <td
+                    style={{
+                        padding: "20px",
+                    }}
+                >
+                    <button
+                        onClick={() =>
+                            setSelectedGroup(group)
+                        }
+                        style={{
+                            background: "#2563eb",
+                            border: "none",
+                            color: "white",
+                            padding:
+                                "10px 16px",
+                            borderRadius:
+                                "10px",
+                            cursor:
+                                "pointer",
+                        }}
+                    >
+                        Lihat Stock (
+                        {group.items.length}
+                        )
+                    </button>
+                </td>
+            </tr>
+        )
+    )}
+</tbody>
                     </table>
                 </div>
             </div>
+
+            {selectedGroup && (
+    <div
+        style={{
+            position: "fixed",
+            inset: 0,
+            background:
+                "rgba(0,0,0,.7)",
+            display: "flex",
+            justifyContent:
+                "center",
+            alignItems:
+                "center",
+            zIndex: 9999,
+        }}
+    >
+        <div
+            style={{
+                width: "900px",
+                maxWidth: "95%",
+                maxHeight: "80vh",
+                overflowY: "auto",
+                background:
+                    "#0f172a",
+                borderRadius:
+                    "20px",
+                padding: "24px",
+            }}
+        >
+            <div
+                style={{
+                    display: "flex",
+                    justifyContent:
+                        "space-between",
+                    alignItems:
+                        "center",
+                    marginBottom:
+                        "20px",
+                }}
+            >
+                <div>
+                    <h2
+                        style={{
+                            color:
+                                "white",
+                            margin: 0,
+                        }}
+                    >
+                        {
+                            selectedGroup.tempat
+                        }
+                    </h2>
+
+                    <p
+                        style={{
+                            color:
+                                "#94a3b8",
+                            margin:
+                                "6px 0 0",
+                        }}
+                    >
+                        {
+                            selectedGroup.source
+                        }
+                    </p>
+                </div>
+
+                <button
+                    onClick={() =>
+                        setSelectedGroup(
+                            null
+                        )
+                    }
+                    style={{
+                        background:
+                            "#ef4444",
+                        border: "none",
+                        color:
+                            "white",
+                        padding:
+                            "10px 14px",
+                        borderRadius:
+                            "10px",
+                        cursor:
+                            "pointer",
+                    }}
+                >
+                    Tutup
+                </button>
+            </div>
+
+            <table
+                style={{
+                    width: "100%",
+                    borderCollapse:
+                        "collapse",
+                }}
+            >
+                <thead>
+                    <tr>
+                        <th
+                            style={{
+                                padding:
+                                    "12px",
+                                color:
+                                    "#94a3b8",
+                                textAlign:
+                                    "left",
+                            }}
+                        >
+                            Bahan
+                        </th>
+
+                        <th
+                            style={{
+                                padding:
+                                    "12px",
+                                color:
+                                    "#94a3b8",
+                                textAlign:
+                                    "left",
+                            }}
+                        >
+                            Qty
+                        </th>
+
+                        <th
+                            style={{
+                                padding:
+                                    "12px",
+                                color:
+                                    "#94a3b8",
+                                textAlign:
+                                    "left",
+                            }}
+                        >
+                            Unit
+                        </th>
+
+                        <th
+                            style={{
+                                padding:
+                                    "12px",
+                                color:
+                                    "#94a3b8",
+                                textAlign:
+                                    "left",
+                            }}
+                        >
+                            Status
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {selectedGroup.items.map(
+                        (item) => (
+                            <tr
+                                key={
+                                    item.id
+                                }
+                            >
+                                <td
+                                    style={{
+                                        padding:
+                                            "12px",
+                                        color:
+                                            "white",
+                                    }}
+                                >
+                                    {
+                                        item.name
+                                    }
+                                </td>
+
+                                <td
+                                    style={{
+                                        padding:
+                                            "12px",
+                                        color:
+                                            "white",
+                                    }}
+                                >
+                                    {
+                                        item.qty
+                                    }
+                                </td>
+
+                                <td
+                                    style={{
+                                        padding:
+                                            "12px",
+                                        color:
+                                            "white",
+                                    }}
+                                >
+                                    {
+                                        item.unit
+                                    }
+                                </td>
+
+                                <td
+                                    style={{
+                                        padding:
+                                            "12px",
+                                    }}
+                                >
+                                    <span
+                                        style={{
+                                            color:
+                                                item.qty <=
+                                                item.minimum_stock
+                                                    ? "#ef4444"
+                                                    : "#10b981",
+                                        }}
+                                    >
+                                        {item.qty <=
+                                        item.minimum_stock
+                                            ? "Low Stock"
+                                            : "Normal"}
+                                    </span>
+                                </td>
+                            </tr>
+                        )
+                    )}
+                </tbody>
+            </table>
+        </div>
+    </div>
+)}
         </AdminLayout>
     );
 }

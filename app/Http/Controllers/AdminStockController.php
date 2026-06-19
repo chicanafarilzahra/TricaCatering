@@ -11,37 +11,68 @@ class AdminStockController extends Controller
 
     public function index()
 {
-    $ownerStocks = \App\Models\Stock::with('owner')
-        ->get()
-        ->map(function ($item) {
-            return [
-                'id' => $item->id,
-                'name' => $item->name,
-                'qty' => $item->qty,
-                'unit' => $item->unit,
-                'minimum_stock' => $item->minimum_stock,
-                'source' => 'Owner',
-                'tempat' => $item->owner?->nama_catering,
-            ];
-        });
+    $owners = \App\Models\User::where(
+        'role',
+        'owner'
+    )
+    ->whereNotNull('nama_catering')
+    ->get()
+    ->map(function ($owner) {
 
-    $sppgStocks = \App\Models\StockSPPG::with('sppg')
-        ->get()
-        ->map(function ($item) {
-            return [
-                'id' => $item->id,
-                'name' => $item->name,
-                'qty' => $item->qty,
-                'unit' => $item->unit,
-                'minimum_stock' => $item->minimum_stock,
-                'source' => 'SPPG',
-                'tempat' => $item->sppg?->nama_sppg,
-            ];
-        });
+        return [
+            'id' => $owner->id,
+            'tempat' => $owner->nama_catering,
+            'source' => 'Owner',
+            'jumlah_bahan' => Stock::where(
+                'owner_id',
+                $owner->id
+            )->count(),
+        ];
 
-    return $ownerStocks
-        ->concat($sppgStocks)
+    });
+
+    $sppgs = \App\Models\User::where(
+        'role',
+        'operator_sppg'
+    )
+    ->whereNotNull('nama_sppg')
+    ->get()
+    ->map(function ($sppg) {
+
+        return [
+            'id' => $sppg->id,
+            'tempat' => $sppg->nama_sppg,
+            'source' => 'SPPG',
+            'jumlah_bahan' => StockSPPG::where(
+                'sppg_id',
+                $sppg->id
+            )->count(),
+        ];
+
+    });
+
+    return $owners
+        ->concat($sppgs)
         ->values();
+}
+
+public function detailOwner($id)
+{
+    return response()->json([
+        'owner_id' => $id,
+        'data' => Stock::where(
+            'owner_id',
+            $id
+        )->get()
+    ]);
+}
+
+public function detailSPPG($id)
+{
+    return StockSPPG::where(
+        'sppg_id',
+        $id
+    )->get();
 }
 
     public function store(Request $request)

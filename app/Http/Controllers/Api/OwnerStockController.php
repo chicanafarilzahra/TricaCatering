@@ -11,7 +11,10 @@ class OwnerStockController extends Controller
 {
     public function index()
 {
-    dd(Auth::id());
+    return Stock::where(
+        'owner_id',
+        Auth::id()
+    )->get();
 }
 
     public function store(Request $request)
