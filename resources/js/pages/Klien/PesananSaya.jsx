@@ -154,4 +154,13 @@ function InfoCard({ title, value, color = "#ffffff" }) {
       <div style={{ color, fontSize: "21px", fontWeight: "800", lineHeight: 1.4 }}>{value}</div>
     </div>
   );
+
+  <button
+    onClick={() =>
+        window.location.href =
+        `/klien/tracking/${order.id}`
+    }
+>
+    Lacak Pesanan
+</button>
 }
