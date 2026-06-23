@@ -54,4 +54,9 @@ class User extends Authenticatable
         'owner_id'
     );
 }
+public function paymentAccounts()
+{
+    return $this->hasMany(PaymentAccount::class, 'owner_id');
+}
+
 }

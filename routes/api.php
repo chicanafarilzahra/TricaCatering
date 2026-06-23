@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\TrackingController;
 
 use App\Http\Controllers\Api\OwnerMenuController;
 use App\Http\Controllers\Api\OwnerStockController;
+use App\Http\Controllers\Api\OwnerPaymentAccountController;
 
 use App\Http\Controllers\SPPG\DashboardSPPGController;
 use App\Http\Controllers\SPPG\MenuHarianController;
@@ -313,7 +314,7 @@ Route::get(
 
 Route::get('/klien/menus', function () {
 
-    return \App\Models\Menu::with('owner')
+    return \App\Models\Menu::with('owner.paymentAccounts')
         ->where('is_active', true)
         ->get()
         ->map(function ($menu) {
@@ -327,15 +328,27 @@ Route::get('/klien/menus', function () {
                 'image' => $menu->image,
 
                 'category' => $menu->jenis_catering,
-
-                // TAMBAHKAN INI
                 'min_porsi' => $menu->min_porsi,
 
-                // owner
+                // PENTING: dibutuhkan saat submit pesanan
+                'catering_id' => $menu->owner_id,
+
                 'owner' => $menu->owner?->nama_catering,
                 'ownerAddress' => $menu->owner?->alamat_catering,
                 'cateringLat' => $menu->owner?->latitude,
                 'cateringLng' => $menu->owner?->longitude,
+
+                // PENTING: ini yang ditampilkan di form pemesanan klien
+                'payment_accounts' => $menu->owner?->paymentAccounts->map(function ($acc) {
+                    return [
+                        'id' => $acc->id,
+                        'type' => $acc->type,
+                        'provider_name' => $acc->provider_name,
+                        'account_number' => $acc->account_number,
+                        'account_name' => $acc->account_name,
+                        'is_default' => $acc->is_default,
+                    ];
+                }) ?? [],
 
             ];
 
@@ -355,9 +368,11 @@ Route::get('/klien/lacak/{order_id}', [TrackingController::class, 'show']);
 |--------------------------------------------------------------------------
 */
 
+
 Route::middleware('auth:sanctum')
     ->prefix('owner')
     ->group(function () {
+        
 
     Route::get(
         '/stocks',
@@ -388,6 +403,17 @@ Route::middleware('auth:sanctum')
         '/stocks/{id}',
         [OwnerStockController::class,'destroy']
     );
+
+    Route::get('/menus', [OwnerMenuController::class, 'index']);
+    Route::post('/menus', [OwnerMenuController::class, 'store']);
+    Route::put('/menus/{id}', [OwnerMenuController::class, 'update']);
+    Route::delete('/menus/{id}', [OwnerMenuController::class, 'destroy']);
+
+    Route::get('/payment-accounts', [OwnerPaymentAccountController::class, 'index']);
+    Route::post('/payment-accounts', [OwnerPaymentAccountController::class, 'store']);
+    Route::put('/payment-accounts/{id}', [OwnerPaymentAccountController::class, 'update']);
+    Route::put('/payment-accounts/{id}/set-default', [OwnerPaymentAccountController::class, 'setDefault']);
+    Route::delete('/payment-accounts/{id}', [OwnerPaymentAccountController::class, 'destroy']);
 
 }); 
 /*

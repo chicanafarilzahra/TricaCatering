@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 
 import OwnerLayout from "../../layouts/OwnerLayout";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 /* =========================================
    SMALL STAT CARD
@@ -198,6 +200,33 @@ function AnalyticsCard({
    DASHBOARD OWNER
 ========================================= */
 export default function DashboardOwner() {
+
+    const [stats, setStats] = useState({
+    totalOrders: 0,
+    customers: 0,
+    packages: 0,
+    revenue: 0,
+});
+
+useEffect(() => {
+    fetchDashboard();
+}, []);
+
+const fetchDashboard = async () => {
+    try {
+        const token = localStorage.getItem("token");
+
+        const res = await axios.get("/api/owner/dashboard", {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        setStats(res.data);
+    } catch (err) {
+        console.log(err);
+    }
+};
     return (
         <OwnerLayout>
             {/* HERO */}
@@ -277,7 +306,7 @@ export default function DashboardOwner() {
             >
                 <StatCard
                     title="Total Orders"
-                    value={0}
+                    value={stats.totalOrders}
                     icon={
                         <ShoppingCart
                             size={22}
@@ -288,7 +317,7 @@ export default function DashboardOwner() {
 
                 <StatCard
                     title="Customers"
-                    value={0}
+                   value={stats.customers} 
                     icon={
                         <Users size={22} />
                     }
@@ -297,7 +326,7 @@ export default function DashboardOwner() {
 
                 <StatCard
                     title="Packages"
-                    value={0}
+                  value={stats.packages}
                     icon={
                         <Package
                             size={22}
@@ -308,7 +337,7 @@ export default function DashboardOwner() {
 
                 <StatCard
                     title="Revenue"
-                    value="Rp 0"
+                    value={`Rp ${Number(stats.revenue).toLocaleString("id-ID")}`}
                     icon={
                         <DollarSign
                             size={22}

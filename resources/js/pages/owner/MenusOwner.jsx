@@ -45,29 +45,29 @@ export default function MenusOwner() {
        FETCH MENUS
     ========================= */
 
-    const fetchMenus = async () => {
-        try {
-           const user = JSON.parse(
-    localStorage.getItem("user")
-);
+const fetchMenus = async () => {
+    try {
+        const user = JSON.parse(localStorage.getItem("user"));
+        const token = localStorage.getItem("token");
 
-const res = await axios.get(
-    "/api/owner/menus",
-    {
-        params: {
-            owner_id: user.id
-        }
+        const res = await axios.get("/api/owner/menus", {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: "application/json",
+            },
+            params: {
+                owner_id: user.id,
+            },
+        });
+
+        setMenus(res.data);
+    } catch (error) {
+        console.log("ERROR =", error);
+        console.log("DATA =", error.response?.data);
+
+        alert(JSON.stringify(error.response?.data));
     }
-);
-
-            setMenus(res.data);
-        } catch (error) {
-    console.log("ERROR =", error);
-    console.log("DATA =", error.response?.data);
-
-    alert(JSON.stringify(error.response?.data));
-}
-    };
+};
 
     useEffect(() => {
         fetchMenus();
