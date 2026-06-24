@@ -14,7 +14,10 @@ import {
     useMemo,
     useRef,
     useState,
+    useEffect,
 } from "react";
+
+import axios from "axios";
 
 import AdminLayout from "../layouts/AdminLayout";
 
@@ -30,7 +33,65 @@ export default function SPPG() {
     const [statusFilter, setStatusFilter] =
         useState("All");
 
-    const sppgData = [];
+    const [distribusi, setDistribusi] =
+    useState([]);
+
+    useEffect(() => {
+    fetchDistribusi();
+}, []);
+
+const fetchDistribusi = async () => {
+    try {
+        const token =
+            localStorage.getItem("token");
+
+        const res = await axios.get(
+            "http://localhost:8000/api/sppg/distribusi",
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: "application/json",
+                },
+            }
+        );
+
+        console.log(
+            JSON.stringify(
+                res.data,
+                null,
+                2
+            )
+        );
+
+        setDistribusi(res.data);
+    } catch (error) {
+        console.error(
+            "Gagal mengambil distribusi:",
+            error.response?.data ||
+                error.message
+        );
+    }
+};
+
+const sppgData = Array.isArray(distribusi)
+    ? distribusi
+    : [];
+
+const totalSchools =
+    new Set(
+        sppgData.map(
+            item =>
+                item.sekolah?.nama
+        )
+    ).size;
+
+const totalPackages =
+    new Set(
+        sppgData.map(
+            item =>
+                item.menu?.name
+        )
+    ).size;
 
     const filteredData = useMemo(() => {
         let data = [...sppgData];
@@ -47,8 +108,8 @@ export default function SPPG() {
         if (search) {
             data = data.filter((item) =>
                 [
-                    item.school,
-                    item.package,
+                    item.sekolah?.nama,
+                    item.menu?.name,
                     item.status,
                 ]
                     .join(" ")
@@ -70,7 +131,7 @@ export default function SPPG() {
     const stats = [
         {
             title: "Schools",
-            value: sppgData.length,
+            value: totalSchools,
             icon: <School size={22} />,
             color: "#3b82f6",
             bg: "rgba(59,130,246,0.12)",
@@ -78,70 +139,72 @@ export default function SPPG() {
 
         {
             title: "Packages",
-            value: sppgData.length,
+            value: totalPackages,
             icon: <Package size={22} />,
             color: "#8b5cf6",
             bg: "rgba(139,92,246,0.12)",
         },
 
         {
-            title: "Deliveries",
-            value: sppgData.filter(
-                (item) =>
-                    item.status ===
-                    "On Delivery"
-            ).length,
-            icon: <Truck size={22} />,
-            color: "#10b981",
-            bg: "rgba(16,185,129,0.12)",
-        },
+    title: "Deliveries",
+    value: sppgData.filter(
+        (item) =>
+            item.status ===
+            "on_delivery"
+    ).length,
+    icon: <Truck size={22} />,
+    color: "#10b981",
+    bg: "rgba(16,185,129,0.12)",
+},
 
-        {
-            title: "Completed",
-            value: sppgData.filter(
-                (item) =>
-                    item.status ===
-                    "Completed"
-            ).length,
-            icon: (
-                <CheckCircle2 size={22} />
-            ),
-            color: "#f59e0b",
-            bg: "rgba(245,158,11,0.12)",
-        },
+{
+    title: "Completed",
+    value: sppgData.filter(
+        (item) =>
+            item.status ===
+            "delivered"
+    ).length,
+    icon: (
+        <CheckCircle2 size={22} />
+    ),
+    color: "#f59e0b",
+    bg: "rgba(245,158,11,0.12)",
+},
     ];
 
-    const getStatusStyle = (status) => {
-        switch (status) {
-            case "Completed":
-                return {
-                    background:
-                        "rgba(16,185,129,0.14)",
-                    color: "#34d399",
-                };
+    const getStatusStyle = (
+    status
+) => {
+    switch (status) {
+        case "delivered":
+            return {
+                background:
+                    "rgba(16,185,129,0.14)",
+                color: "#34d399",
+            };
 
-            case "On Delivery":
-                return {
-                    background:
-                        "rgba(59,130,246,0.14)",
-                    color: "#60a5fa",
-                };
+        case "on_delivery":
+            return {
+                background:
+                    "rgba(59,130,246,0.14)",
+                color: "#60a5fa",
+            };
 
-            case "Pending":
-                return {
-                    background:
-                        "rgba(245,158,11,0.14)",
-                    color: "#fbbf24",
-                };
+        case "pending":
+            return {
+                background:
+                    "rgba(245,158,11,0.14)",
+                color: "#fbbf24",
+            };
 
-            default:
-                return {
-                    background:
-                        "rgba(148,163,184,0.14)",
-                    color: "#cbd5e1",
-                };
-        }
-    };
+        default:
+            return {
+                background:
+                    "rgba(148,163,184,0.14)",
+                color: "#cbd5e1",
+            };
+    }
+};
 
     return (
         <AdminLayout>
@@ -627,47 +690,21 @@ export default function SPPG() {
                                             "pointer",
                                     }}
                                 >
-                                    <option
-                                        value="All"
-                                        style={{
-                                            color:
-                                                "black",
-                                        }}
-                                    >
-                                        All
-                                        Status
-                                    </option>
+                                    <option value="All">
+    All Status
+</option>
 
-                                    <option
-                                        value="Completed"
-                                        style={{
-                                            color:
-                                                "black",
-                                        }}
-                                    >
-                                        Completed
-                                    </option>
+<option value="delivered">
+    Delivered
+</option>
 
-                                    <option
-                                        value="On Delivery"
-                                        style={{
-                                            color:
-                                                "black",
-                                        }}
-                                    >
-                                        On
-                                        Delivery
-                                    </option>
+<option value="on_delivery">
+    On Delivery
+</option>
 
-                                    <option
-                                        value="Pending"
-                                        style={{
-                                            color:
-                                                "black",
-                                        }}
-                                    >
-                                        Pending
-                                    </option>
+<option value="pending">
+    Pending
+</option>
                                 </select>
                             )}
                         </div>
@@ -759,7 +796,7 @@ export default function SPPG() {
                                                 }}
                                             >
                                                 {
-                                                    item.school
+                                                    item.sekolah?.nama
                                                 }
                                             </td>
 
@@ -772,7 +809,7 @@ export default function SPPG() {
                                                 }}
                                             >
                                                 {
-                                                    item.package
+                                                    item.menu?.name
                                                 }
                                             </td>
 
@@ -785,7 +822,7 @@ export default function SPPG() {
                                                 }}
                                             >
                                                 {
-                                                    item.totalMeals
+                                                    item.jumlah_porsi
                                                 }
                                             </td>
 
@@ -798,7 +835,7 @@ export default function SPPG() {
                                                 }}
                                             >
                                                 {
-                                                    item.deliveryDate
+                                                    item.tanggal_distribusi
                                                 }
                                             </td>
 

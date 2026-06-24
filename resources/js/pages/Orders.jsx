@@ -1,5 +1,4 @@
-// resources/js/pages/Orders.jsx
-
+import axios from "axios";
 import {
     ShoppingCart,
     Clock3,
@@ -13,6 +12,7 @@ import {
 import {
     useMemo,
     useState,
+    useEffect,
 } from "react";
 
 import { useNavigate } from "react-router-dom";
@@ -32,7 +32,24 @@ export default function Orders() {
         useState("All");
 
     // DATA DARI API/BACKEND
-    const orders = [];
+    const [orders, setOrders] = useState([]);
+
+    useEffect(() => {
+    fetchOrders();
+}, []);
+
+const fetchOrders = async () => {
+    try {
+        const res = await axios.get(
+            "http://localhost:8000/api/orders"
+        );
+
+        setOrders(res.data);
+        console.log(orders);
+    } catch (err) {
+        console.log(err);
+    }
+};
 
     // FILTER DATA
     const filteredOrders = useMemo(() => {
@@ -44,7 +61,7 @@ export default function Orders() {
                 item.customer_name
                     ?.toLowerCase()
                     .includes(keyword) ||
-                item.package_name
+                item.menu?.name
                     ?.toLowerCase()
                     .includes(keyword) ||
                 item.status
@@ -73,26 +90,33 @@ export default function Orders() {
         orders.length;
 
     const pendingOrders =
-        orders.filter(
-            (item) =>
-                item.status ===
-                "Pending"
-        ).length;
+    orders.filter(
+        (item) =>
+            item.status === "pending"
+    ).length;
+   const confirmedOrders =
+    orders.filter(
+        (item) =>
+            item.status === "confirmed"
+    ).length;
 
-    const completedOrders =
-        orders.filter(
-            (item) =>
-                item.status ===
-                "Completed"
-        ).length;
+const deliveryOrders =
+    orders.filter(
+        (item) =>
+            item.status === "on_delivery"
+    ).length;
+
+const completedOrders =
+    orders.filter(
+        (item) =>
+            item.status === "delivered"
+    ).length;
 
     const revenue =
         orders.reduce(
             (total, item) =>
                 total +
-                Number(
-                    item.total || 0
-                ),
+                Number(item.total_price || 0),
             0
         );
 
@@ -142,39 +166,39 @@ export default function Orders() {
     },
 ];
 
-    const getStatusStyle = (
-        status
-    ) => {
-        switch (status) {
-            case "Completed":
-                return {
-                    background:
-                        "rgba(16,185,129,0.15)",
-                    color: "#34d399",
-                };
+    const getStatusStyle = (status) => {
+    switch (status) {
+        case "delivered":
+            return {
+                background: "rgba(16,185,129,0.15)",
+                color: "#34d399",
+            };
 
-            case "Pending":
-                return {
-                    background:
-                        "rgba(245,158,11,0.15)",
-                    color: "#fbbf24",
-                };
+        case "confirmed":
+            return {
+                background: "rgba(59,130,246,0.15)",
+                color: "#60a5fa",
+            };
 
-            case "Cancelled":
-                return {
-                    background:
-                        "rgba(239,68,68,0.15)",
-                    color: "#f87171",
-                };
+        case "on_delivery":
+            return {
+                background: "rgba(245,158,11,0.15)",
+                color: "#fbbf24",
+            };
 
-            default:
-                return {
-                    background:
-                        "rgba(148,163,184,0.15)",
-                    color: "#cbd5e1",
-                };
-        }
-    };
+        case "pending":
+            return {
+                background: "rgba(239,68,68,0.15)",
+                color: "#f87171",
+            };
+
+        default:
+            return {
+                background: "rgba(148,163,184,0.15)",
+                color: "#cbd5e1",
+            };
+    }
+};
 
     return (
         <AdminLayout>
@@ -668,12 +692,15 @@ export default function Orders() {
                                         "0 20px 40px rgba(0,0,0,0.35)",
                                 }}
                             >
-                                {[
+                                {
+                                [
                                     "All",
-                                    "Pending",
-                                    "Completed",
-                                    "Cancelled",
-                                ].map(
+                                    "pending",
+                                    "confirmed",
+                                    "on_delivery",
+                                    "delivered",
+                                ]
+                                .map(
                                     (
                                         item,
                                         index
@@ -825,7 +852,7 @@ export default function Orders() {
                                                 }}
                                             >
                                                 {
-                                                    order.package_name
+                                                    order.menu?.name
                                                 }
                                             </td>
 
@@ -881,10 +908,8 @@ export default function Orders() {
                                             >
                                                 Rp{" "}
                                                 {Number(
-                                                    order.total
-                                                ).toLocaleString(
-                                                    "id-ID"
-                                                )}
+                                                    order.total_price
+                                                ).toLocaleString("id-ID")}
                                             </td>
                                         </tr>
                                     )

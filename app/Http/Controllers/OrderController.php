@@ -98,7 +98,7 @@ public function kirim(int $id)
     $order = Order::findOrFail($id);
 
     $order->update([
-        'status' => 'Dikirim'
+        'status' => 'on_delivery'
     ]);
 
     return response()->json([
@@ -116,4 +116,55 @@ public function ownerOrders(int $ownerId)
         ->get();
 
     return response()->json($orders);
-}}
+}
+public function productions()
+{
+    return Order::with('menu')
+        ->whereIn('status', [
+            'confirmed',
+            'on_delivery',
+            'delivered'
+        ])
+        ->latest()
+        ->get()
+        ->map(function ($order) {
+
+            return [
+
+                'id' => $order->id,
+
+                'code' =>
+                    'PROD-' . str_pad(
+                        $order->id,
+                        4,
+                        '0',
+                        STR_PAD_LEFT
+                    ),
+
+                'package' =>
+                    $order->menu?->name,
+
+                'quantity' =>
+                    $order->quantity,
+
+                'date' =>
+                    $order->order_date,
+
+                'status' =>
+                    $order->status,
+            ];
+        });
+}
+public function approve(int $id)
+{
+    $order = Order::findOrFail($id);
+
+    $order->update([
+        'status' => 'confirmed'
+    ]);
+
+    return response()->json([
+        'message' => 'Order approved'
+    ]);
+}
+}

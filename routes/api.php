@@ -193,6 +193,17 @@ Route::apiResource(
     AdminStockController::class
 );
 
+Route::get(
+        '/stocks/owner/{id}',
+        [AdminStockController::class, 'detailOwner']
+    );
+
+    Route::get(
+        '/stocks/sppg/{id}',
+        [AdminStockController::class, 'detailSPPG']
+    );
+
+
 Route::apiResource(
     'packages',
     PackageController::class
@@ -379,16 +390,6 @@ Route::middleware('auth:sanctum')
         [OwnerStockController::class,'index']
     );
 
-    Route::get(
-        '/stocks/owner/{id}',
-        [AdminStockController::class, 'detailOwner']
-    );
-
-    Route::get(
-        '/stocks/sppg/{id}',
-        [AdminStockController::class, 'detailSPPG']
-    );
-
     Route::post(
         '/stocks',
         [OwnerStockController::class,'store']
@@ -416,6 +417,11 @@ Route::middleware('auth:sanctum')
     Route::delete('/payment-accounts/{id}', [OwnerPaymentAccountController::class, 'destroy']);
 
 }); 
+
+Route::get(
+    '/distribusi',
+    [DistribusiController::class,'index']
+);
 /*
 |--------------------------------------------------------------------------
 | SPPG

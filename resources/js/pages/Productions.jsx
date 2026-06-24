@@ -1,6 +1,4 @@
-// TANPA DATA DUMMY
-// tinggal tambahkan API/backend nanti
-
+import axios from "axios";
 import {
     Factory,
     PackageCheck,
@@ -15,6 +13,7 @@ import {
     useMemo,
     useRef,
     useState,
+    useEffect,
 } from "react";
 
 import AdminLayout from "../layouts/AdminLayout";
@@ -31,8 +30,32 @@ export default function Productions() {
     const [selectedFilter, setSelectedFilter] =
         useState("All Productions");
 
-    // DATA DARI API / BACKEND
-    const productions = [];
+    const [productions, setProductions] =
+    useState([]);
+
+    useEffect(() => {
+    fetchProductions();
+}, []);
+
+const fetchProductions = async () => {
+
+    try {
+
+        const res =
+            await axios.get(
+                "http://localhost:8000/api/productions"
+            );
+
+        setProductions(
+            res.data
+        );
+
+    } catch (err) {
+
+        console.log(err);
+
+    }
+};
 
     // FILTER DATA
     const filteredProductions =
@@ -85,33 +108,18 @@ export default function Productions() {
         },
 
         {
-            title: "In Progress",
-            value:
-                productions.filter(
-                    (item) =>
-                        item.status ===
-                        "In Progress"
-                ).length,
-            icon: <Clock3 size={22} />,
-            color: "#f59e0b",
-            bg: "rgba(245,158,11,0.12)",
-        },
+    title: "Confirmed",
+    value: productions.filter(
+        item => item.status === "confirmed"
+    ).length,
+},
 
-        {
-            title: "Completed",
-            value:
-                productions.filter(
-                    (item) =>
-                        item.status ===
-                        "Completed"
-                ).length,
-            icon: (
-                <BadgeCheck size={22} />
-            ),
-            color: "#10b981",
-            bg: "rgba(16,185,129,0.12)",
-        },
-
+       {
+    title: "Delivered",
+    value: productions.filter(
+        item => item.status === "delivered"
+    ).length,
+},
         {
             title:
                 "Packages Produced",
@@ -131,39 +139,44 @@ export default function Productions() {
         },
     ];
 
-    const getStatusStyle = (
-        status
-    ) => {
-        switch (status) {
-            case "Completed":
-                return {
-                    background:
-                        "rgba(16,185,129,0.15)",
-                    color: "#34d399",
-                };
+    const getStatusStyle = (status) => {
+    switch (status) {
+        case "confirmed":
+            return {
+                background:
+                    "rgba(59,130,246,0.15)",
+                color: "#60a5fa",
+            };
 
-            case "In Progress":
-                return {
-                    background:
-                        "rgba(245,158,11,0.15)",
-                    color: "#fbbf24",
-                };
+        case "on_delivery":
+            return {
+                background:
+                    "rgba(245,158,11,0.15)",
+                color: "#fbbf24",
+            };
 
-            case "Pending":
-                return {
-                    background:
-                        "rgba(239,68,68,0.15)",
-                    color: "#f87171",
-                };
+        case "delivered":
+            return {
+                background:
+                    "rgba(16,185,129,0.15)",
+                color: "#34d399",
+            };
 
-            default:
-                return {
-                    background:
-                        "rgba(148,163,184,0.15)",
-                    color: "#cbd5e1",
-                };
-        }
-    };
+        case "pending":
+            return {
+                background:
+                    "rgba(239,68,68,0.15)",
+                color: "#f87171",
+            };
+
+        default:
+            return {
+                background:
+                    "rgba(148,163,184,0.15)",
+                color: "#cbd5e1",
+            };
+    }
+};
 
     return (
         <AdminLayout>
@@ -558,81 +571,64 @@ export default function Productions() {
                         </button>
 
                         {/* FILTER MENU */}
-                        {filterOpen && (
-                            <div
-                                style={{
-                                    position:
-                                        "absolute",
-                                    top: "62px",
-                                    right: 0,
-                                    width:
-                                        "220px",
-                                    background:
-                                        "#0f172a",
-                                    border:
-                                        "1px solid rgba(255,255,255,0.08)",
-                                    borderRadius:
-                                        "18px",
-                                    padding:
-                                        "14px",
-                                    zIndex: 10,
-                                }}
-                            >
-                                {[
-                                    "All Productions",
-                                    "In Progress",
-                                    "Completed",
-                                    "Pending",
-                                ].map(
-                                    (
-                                        item,
-                                        index
-                                    ) => (
-                                        <button
-                                            key={
-                                                index
-                                            }
-                                            onClick={() => {
-                                                setSelectedFilter(
-                                                    item
-                                                );
-
-                                                setFilterOpen(
-                                                    false
-                                                );
-                                            }}
-                                            style={{
-                                                width:
-                                                    "100%",
-                                                height:
-                                                    "44px",
-                                                border:
-                                                    "none",
-                                                borderRadius:
-                                                    "12px",
-                                                background:
-                                                    selectedFilter ===
-                                                    item
-                                                        ? "rgba(59,130,246,0.18)"
-                                                        : "transparent",
-                                                color:
-                                                    "#e2e8f0",
-                                                textAlign:
-                                                    "left",
-                                                padding:
-                                                    "0 14px",
-                                                cursor:
-                                                    "pointer",
-                                            }}
-                                        >
-                                            {
-                                                item
-                                            }
-                                        </button>
-                                    )
-                                )}
-                            </div>
-                        )}
+                       {filterOpen && (
+    <div
+        style={{
+            position: "absolute",
+            top: "62px",
+            right: 0,
+            width: "220px",
+            background: "#0f172a",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: "18px",
+            padding: "14px",
+            zIndex: 10,
+        }}
+    >
+        {[
+            {
+                label: "All Productions",
+                value: "All Productions",
+            },
+            {
+                label: "Confirmed",
+                value: "confirmed",
+            },
+            {
+                label: "On Delivery",
+                value: "on_delivery",
+            },
+            {
+                label: "Delivered",
+                value: "delivered",
+            },
+        ].map((item, index) => (
+            <button
+                key={index}
+                onClick={() => {
+                    setSelectedFilter(item.value);
+                    setFilterOpen(false);
+                }}
+                style={{
+                    width: "100%",
+                    height: "44px",
+                    border: "none",
+                    borderRadius: "12px",
+                    background:
+                        selectedFilter === item.value
+                            ? "rgba(59,130,246,0.18)"
+                            : "transparent",
+                    color: "#e2e8f0",
+                    textAlign: "left",
+                    padding: "0 14px",
+                    cursor: "pointer",
+                }}
+            >
+                {item.label}
+            </button>
+        ))}
+    </div>
+)}
                     </div>
                 </div>
 
