@@ -1,4 +1,3 @@
-
 // resources/js/pages/owner/RevenueOwner.jsx
 
 import { useState, useEffect } from "react";
@@ -180,16 +179,16 @@ function EmptyState({ title, subtitle, icon }) {
 const BANK_LIST = [
     "BCA", "BNI", "BRI", "Mandiri", "BTN",
     "CIMB Niaga", "Danamon", "Permata", "Maybank", "OCBC NISP",
-    "BSI", "Muamalat", "Lainnya",
+    "BSI", "Muamalat", "Other",
 ];
 
 const EWALLET_LIST = [
     "GoPay", "OVO", "Dana", "ShopeePay", "LinkAja",
-    "Jenius", "Sakuku", "Astrapay", "Lainnya",
+    "Jenius", "Sakuku", "Astrapay", "Other",
 ];
 
 const TYPE_TABS = [
-    { key: "bank", label: "Rekening Bank", icon: <Building2 size={15} /> },
+    { key: "bank", label: "Bank Account", icon: <Building2 size={15} /> },
     { key: "ewallet", label: "E-Wallet", icon: <Smartphone size={15} /> },
 ];
 
@@ -229,10 +228,10 @@ function AccountCard({ account, onDelete, onSetDefault, onEdit }) {
     return (
         <div
             style={{
-                background: account.isDefault
+                background: account.is_default
                     ? "linear-gradient(145deg, rgba(30,41,59,0.95), rgba(15,23,42,0.98))"
                     : "rgba(15,23,42,0.6)",
-                border: account.isDefault
+                border: account.is_default
                     ? `1px solid ${ACCENT[account.type]}55`
                     : "1px solid rgba(148,163,184,0.08)",
                 borderRadius: "18px",
@@ -294,7 +293,7 @@ function AccountCard({ account, onDelete, onSetDefault, onEdit }) {
                         {account.provider_name}
                     </span>
                     <Badge type={account.type} />
-                    {account.isDefault && (
+                    {account.is_default && (
                         <span
                             style={{
                                 display: "inline-flex",
@@ -310,7 +309,7 @@ function AccountCard({ account, onDelete, onSetDefault, onEdit }) {
                             }}
                         >
                             <CheckCircle size={11} />
-                            Utama
+                            Default
                         </span>
                     )}
                 </div>
@@ -324,7 +323,7 @@ function AccountCard({ account, onDelete, onSetDefault, onEdit }) {
                 >
                     {account.account_number}
                 </div>
-                {account.accountName && (
+                {account.account_name && (
                     <div
                         style={{
                             fontSize: "12px",
@@ -332,7 +331,7 @@ function AccountCard({ account, onDelete, onSetDefault, onEdit }) {
                             marginTop: "2px",
                         }}
                     >
-                        a.n. {account.account_name}
+                        Account holder: {account.account_name}
                     </div>
                 )}
             </div>
@@ -342,7 +341,7 @@ function AccountCard({ account, onDelete, onSetDefault, onEdit }) {
                 {!account.is_default && (
                     <button
                         onClick={() => onSetDefault(account.id)}
-                        title="Jadikan utama"
+                        title="Set as default"
                         style={{
                             background: "rgba(34,197,94,0.10)",
                             border: "1px solid rgba(34,197,94,0.20)",
@@ -381,7 +380,7 @@ function AccountCard({ account, onDelete, onSetDefault, onEdit }) {
                 </button>
                 <button
                     onClick={() => onDelete(account.id)}
-                    title="Hapus"
+                    title="Delete"
                     style={{
                         background: "rgba(239,68,68,0.10)",
                         border: "1px solid rgba(239,68,68,0.20)",
@@ -407,26 +406,27 @@ function AccountCard({ account, onDelete, onSetDefault, onEdit }) {
 
 function AccountFormModal({ editData, onClose, onSave }) {
     const [type, setType] = useState(editData?.type ?? "bank");
-    const [provider, setProvider] = useState(editData?.provider ?? "");
+    const [provider, setProvider] = useState(editData?.provider_name ?? "");
     const [customProvider, setCustomProvider] = useState(
-        editData?.provider && ![...BANK_LIST, ...EWALLET_LIST].includes(editData.provider)
-            ? editData.provider
+        editData?.provider_name &&
+            ![...BANK_LIST, ...EWALLET_LIST].includes(editData.provider_name)
+            ? editData.provider_name
             : ""
     );
-    const [accountNumber, setAccountNumber] = useState(editData?.accountNumber ?? "");
-    const [accountName, setAccountName] = useState(editData?.accountName ?? "");
+    const [accountNumber, setAccountNumber] = useState(editData?.account_number ?? "");
+    const [accountName, setAccountName] = useState(editData?.account_name ?? "");
     const [errors, setErrors] = useState({});
 
     const providerList = type === "bank" ? BANK_LIST : EWALLET_LIST;
-    const isCustom = provider === "Lainnya";
+    const isCustom = provider === "Other" || !!customProvider;
 
     const validate = () => {
         const e = {};
         const finalProvider = isCustom ? customProvider.trim() : provider;
-        if (!finalProvider) e.provider = "Pilih atau isi nama penyedia.";
-        if (!accountNumber.trim()) e.accountNumber = "Nomor rekening / akun wajib diisi.";
+        if (!finalProvider) e.provider = "Please select or enter a provider name.";
+        if (!accountNumber.trim()) e.accountNumber = "Account number is required.";
         if (type === "bank" && !accountName.trim())
-            e.accountName = "Nama pemilik rekening wajib diisi.";
+            e.accountName = "Account holder name is required.";
         return e;
     };
 
@@ -509,10 +509,10 @@ function AccountFormModal({ editData, onClose, onSave }) {
                                 color: "#ffffff",
                             }}
                         >
-                            {editData ? "Edit Akun Pembayaran" : "Tambah Akun Pembayaran"}
+                            {editData ? "Edit Payment Account" : "Add Payment Account"}
                         </h3>
                         <p style={{ margin: "6px 0 0", fontSize: "13px", color: "#64748b" }}>
-                            Rekening bank atau e-wallet untuk menerima pembayaran klien
+                            Bank account or e-wallet to receive payments from clients
                         </p>
                     </div>
                     <button
@@ -536,7 +536,7 @@ function AccountFormModal({ editData, onClose, onSave }) {
 
                 {/* Type Tabs */}
                 <div style={{ marginBottom: "22px" }}>
-                    <span style={labelStyle}>Jenis Akun</span>
+                    <span style={labelStyle}>Account Type</span>
                     <div
                         style={{
                             display: "flex",
@@ -582,14 +582,14 @@ function AccountFormModal({ editData, onClose, onSave }) {
                 {/* Provider Select */}
                 <div style={{ marginBottom: "18px" }}>
                     <label style={labelStyle}>
-                        {type === "bank" ? "Nama Bank" : "Nama E-Wallet"}
+                        {type === "bank" ? "Bank Name" : "E-Wallet Name"}
                     </label>
                     <select
                         value={provider}
                         onChange={(e) => { setProvider(e.target.value); setErrors((prev) => ({ ...prev, provider: null })); }}
                         style={{ ...inputStyle(errors.provider), cursor: "pointer" }}
                     >
-                        <option value="">-- Pilih {type === "bank" ? "Bank" : "E-Wallet"} --</option>
+                        <option value="">-- Select {type === "bank" ? "Bank" : "E-Wallet"} --</option>
                         {providerList.map((p) => (
                             <option key={p} value={p}>{p}</option>
                         ))}
@@ -602,14 +602,14 @@ function AccountFormModal({ editData, onClose, onSave }) {
                 </div>
 
                 {/* Custom Provider */}
-                {isCustom && (
+                {provider === "Other" && (
                     <div style={{ marginBottom: "18px" }}>
                         <label style={labelStyle}>
-                            {type === "bank" ? "Nama Bank Lainnya" : "Nama E-Wallet Lainnya"}
+                            {type === "bank" ? "Other Bank Name" : "Other E-Wallet Name"}
                         </label>
                         <input
                             type="text"
-                            placeholder={`Tulis nama ${type === "bank" ? "bank" : "e-wallet"}...`}
+                            placeholder={`Enter the ${type === "bank" ? "bank" : "e-wallet"} name...`}
                             value={customProvider}
                             onChange={(e) => setCustomProvider(e.target.value)}
                             style={inputStyle(false)}
@@ -620,14 +620,14 @@ function AccountFormModal({ editData, onClose, onSave }) {
                 {/* Account Number */}
                 <div style={{ marginBottom: "18px" }}>
                     <label style={labelStyle}>
-                        {type === "bank" ? "Nomor Rekening" : "Nomor Akun / Telepon"}
+                        {type === "bank" ? "Account Number" : "Account / Phone Number"}
                     </label>
                     <input
                         type="text"
                         placeholder={
                             type === "bank"
-                                ? "Contoh: 1234 5678 9012"
-                                : "Contoh: 08123456789"
+                                ? "e.g. 1234 5678 9012"
+                                : "e.g. 08123456789"
                         }
                         value={accountNumber}
                         onChange={(e) => { setAccountNumber(e.target.value); setErrors((prev) => ({ ...prev, accountNumber: null })); }}
@@ -643,11 +643,11 @@ function AccountFormModal({ editData, onClose, onSave }) {
                 {/* Account Name */}
                 <div style={{ marginBottom: "28px" }}>
                     <label style={labelStyle}>
-                        Nama Pemilik {type === "bank" ? "(wajib)" : "(opsional)"}
+                        Account Holder Name {type === "bank" ? "(required)" : "(optional)"}
                     </label>
                     <input
                         type="text"
-                        placeholder="Nama sesuai rekening / akun"
+                        placeholder="Name as registered on the account"
                         value={accountName}
                         onChange={(e) => { setAccountName(e.target.value); setErrors((prev) => ({ ...prev, accountName: null })); }}
                         style={inputStyle(errors.accountName)}
@@ -675,7 +675,7 @@ function AccountFormModal({ editData, onClose, onSave }) {
                             cursor: "pointer",
                         }}
                     >
-                        Batal
+                        Cancel
                     </button>
                     <button
                         onClick={handleSave}
@@ -693,7 +693,7 @@ function AccountFormModal({ editData, onClose, onSave }) {
                             boxShadow: "0 8px 24px rgba(59,130,246,0.35)",
                         }}
                     >
-                        {editData ? "Simpan Perubahan" : "Tambah Akun"}
+                        {editData ? "Save Changes" : "Add Account"}
                     </button>
                 </div>
             </div>
@@ -703,122 +703,103 @@ function AccountFormModal({ editData, onClose, onSave }) {
 
 // ─── Payment Accounts Manager ─────────────────────────────────────────────────
 
-let _nextId = 1;
-
 function PaymentAccountsSection() {
     const [accounts, setAccounts] = useState([]);
-    const token = localStorage.getItem("token");
+    const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editData, setEditData] = useState(null);
     const [activeFilter, setActiveFilter] = useState("all");
 
-const loadAccounts = async () => {
-    try {
-        const token = localStorage.getItem("token");
+    const getToken = () => localStorage.getItem("token");
 
-        const res = await axios.get(
-            "/api/owner/payment-accounts",
-            {
+    const loadAccounts = async () => {
+        try {
+            const res = await axios.get("/api/owner/payment-accounts", {
                 headers: {
-                    Authorization: `Bearer ${token}`,
+                    Authorization: `Bearer ${getToken()}`,
                     Accept: "application/json",
                 },
-            }
-        );
+            });
 
-        console.log("RESPONSE:", res);
-        console.log("DATA:", res.data);
-
-        setAccounts(Array.isArray(res.data) ? res.data : []);
-    } catch (err) {
-        console.error("ERROR LOAD ACCOUNTS:", err);
-    }
-};
-
-const handleSave = async (data) => {
-    try {
-
-        if (editData) {
-
-            await axios.put(
-    `/api/owner/payment-accounts/${editData.id}`,
-    data,
-    {
-        headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-        },
-    }
-);
-
-        } else {
-
-            await axios.post("/api/owner/payment-accounts", data, {
-    headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-    },
-});
-
+            setAccounts(Array.isArray(res.data) ? res.data : (res.data?.data ?? []));
+        } catch (err) {
+            console.error("ERROR LOAD ACCOUNTS:", err);
+        } finally {
+            setLoading(false);
         }
+    };
 
-        await loadAccounts();
+    // ✅ FIX: fetch accounts on mount so they persist across refresh
+    useEffect(() => {
+        loadAccounts();
+    }, []);
 
-        setShowModal(false);
-        setEditData(null);
+    const handleSave = async (data) => {
+        try {
+            if (editData) {
+                await axios.put(
+                    `/api/owner/payment-accounts/${editData.id}`,
+                    data,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${getToken()}`,
+                            Accept: "application/json",
+                        },
+                    }
+                );
+            } else {
+                await axios.post("/api/owner/payment-accounts", data, {
+                    headers: {
+                        Authorization: `Bearer ${getToken()}`,
+                        Accept: "application/json",
+                    },
+                });
+            }
 
-    } catch (err) {
-        console.error(err);
-        alert("Failed to save payment account");
-    }
-};
+            await loadAccounts();
+            setShowModal(false);
+            setEditData(null);
+        } catch (err) {
+            console.error(err);
+            alert("Failed to save payment account");
+        }
+    };
 
-const handleDelete = async (id) => {
+    const handleDelete = async (id) => {
+        if (!confirm("Delete this payment account?")) return;
 
-    if (!confirm("Delete this payment account?")) return;
+        try {
+            await axios.delete(`/api/owner/payment-accounts/${id}`, {
+                headers: {
+                    Authorization: `Bearer ${getToken()}`,
+                    Accept: "application/json",
+                },
+            });
+            await loadAccounts();
+        } catch (err) {
+            console.error(err);
+            alert("Failed to delete payment account");
+        }
+    };
 
-    try {
-
-        await axios.delete(`/api/owner/payment-accounts/${id}`, {
-    headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-    },
-});
-
-        await loadAccounts();
-
-    } catch (err) {
-
-        console.error(err);
-        alert("Failed to delete payment account");
-
-    }
-};
-
-const handleSetDefault = async (id) => {
-
-    try {
-
-        await axios.put(
-    `/api/owner/payment-accounts/${id}/set-default`,
-    {},
-    {
-        headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-        },
-    }
-);
-        await loadAccounts();
-
-    } catch (err) {
-
-        console.error(err);
-        alert("Failed to set default account");
-
-    }
-};
+    const handleSetDefault = async (id) => {
+        try {
+            await axios.put(
+                `/api/owner/payment-accounts/${id}/set-default`,
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${getToken()}`,
+                        Accept: "application/json",
+                    },
+                }
+            );
+            await loadAccounts();
+        } catch (err) {
+            console.error(err);
+            alert("Failed to set default account");
+        }
+    };
 
     const handleEdit = (account) => {
         setEditData(account);
@@ -839,8 +820,8 @@ const handleSetDefault = async (id) => {
     return (
         <>
             <SectionCard
-                title="Akun Pembayaran"
-                subtitle="Daftarkan rekening bank dan e-wallet sebagai metode pembayaran yang ditampilkan kepada klien."
+                title="Payment Accounts"
+                subtitle="Register bank accounts and e-wallets as payment methods shown to clients."
             >
                 {/* Top bar */}
                 <div
@@ -865,7 +846,7 @@ const handleSetDefault = async (id) => {
                         }}
                     >
                         {[
-                            { key: "all", label: "Semua" },
+                            { key: "all", label: "All" },
                             { key: "bank", label: "Bank" },
                             { key: "ewallet", label: "E-Wallet" },
                         ].map((f) => (
@@ -922,12 +903,25 @@ const handleSetDefault = async (id) => {
                         }}
                     >
                         <Plus size={16} />
-                        Tambah Akun
+                        Add Account
                     </button>
                 </div>
 
                 {/* Account list */}
-                {filtered.length === 0 ? (
+                {loading ? (
+                    <div
+                        style={{
+                            minHeight: "120px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "#64748b",
+                            fontSize: "14px",
+                        }}
+                    >
+                        Loading accounts...
+                    </div>
+                ) : filtered.length === 0 ? (
                     <div
                         style={{
                             minHeight: "200px",
@@ -965,7 +959,7 @@ const handleSetDefault = async (id) => {
                                 color: "#ffffff",
                             }}
                         >
-                            Belum ada akun terdaftar
+                            No accounts registered yet
                         </p>
                         <p
                             style={{
@@ -976,8 +970,8 @@ const handleSetDefault = async (id) => {
                                 lineHeight: 1.7,
                             }}
                         >
-                            Tambahkan rekening bank atau e-wallet agar klien dapat
-                            melakukan pembayaran dengan mudah.
+                            Add a bank account or e-wallet so clients can easily
+                            make payments.
                         </p>
                     </div>
                 ) : (
@@ -995,7 +989,7 @@ const handleSetDefault = async (id) => {
                 )}
 
                 {/* Info note */}
-                {accounts.length > 0 && (
+                {!loading && accounts.length > 0 && (
                     <div
                         style={{
                             marginTop: "18px",
@@ -1008,9 +1002,9 @@ const handleSetDefault = async (id) => {
                             lineHeight: 1.6,
                         }}
                     >
-                        💡 Akun bertanda <strong style={{ color: "#4ade80" }}>Utama</strong>{" "}
-                        akan ditampilkan sebagai metode pembayaran prioritas kepada klien.
-                        Gunakan tombol ✓ untuk mengubah akun utama.
+                        💡 Accounts marked <strong style={{ color: "#4ade80" }}>Default</strong>{" "}
+                        will be shown as the priority payment method to clients.
+                        Use the ✓ button to change the default account.
                     </div>
                 )}
             </SectionCard>
@@ -1092,7 +1086,7 @@ export default function RevenueOwner() {
                 />
             </div>
 
-            {/* ✅ Payment Accounts — NEW SECTION */}
+            {/* Payment Accounts */}
             <PaymentAccountsSection />
 
             {/* Monthly Revenue */}

@@ -19,6 +19,7 @@ use App\Http\Controllers\LaporanHarianController;
 use App\Http\Controllers\KlienController;
 use App\Http\Controllers\Api\CourierController;
 use App\Http\Controllers\Api\TrackingController;
+use App\Http\Controllers\Klien\InvoiceKlienController;
 
 use App\Http\Controllers\Api\OwnerMenuController;
 use App\Http\Controllers\Api\OwnerStockController;
@@ -372,6 +373,25 @@ Route::get('klien/orders', [KlienController::class, 'pesananSaya']); // histori
 Route::post('/kurir/update-lokasi', [CourierController::class, 'updateLocation']);
 Route::get('/klien/lacak/{order_id}', [TrackingController::class, 'show']);
 
+Route::prefix('klien')->group(function () {
+ 
+    // Invoice list & detail
+    Route::get('invoice',              [InvoiceKlienController::class, 'index']);
+    Route::get('invoice/{id}',         [InvoiceKlienController::class, 'show']);
+ 
+    // Payment channels (bank/ewallet) untuk invoice tertentu
+    Route::get('invoice/{id}/payment-channels', [InvoiceKlienController::class, 'paymentChannels']);
+ 
+    // Kirim bukti pembayaran
+    Route::post('invoice/{id}/pay',    [InvoiceKlienController::class, 'pay']);
+ 
+    // Riwayat pembayaran
+    Route::get('invoice/{id}/payments',[InvoiceKlienController::class, 'payments']);
+ 
+    // Download PDF
+    Route::get('invoice/{id}/pdf',     [InvoiceKlienController::class, 'downloadPdf']);
+});
+
 
 /*
 |--------------------------------------------------------------------------
@@ -384,6 +404,19 @@ Route::middleware('auth:sanctum')
     ->prefix('owner')
     ->group(function () {
         
+        Route::get('/dashboard', function () {
+
+        $ownerId = auth()->id();
+
+        return response()->json([
+            'total_orders' => \App\Models\Order::where('owner_id', $ownerId)->count(),
+            'pending' => \App\Models\Order::where('owner_id', $ownerId)->where('status','pending')->count(),
+            'processed' => \App\Models\Order::where('owner_id', $ownerId)->where('status','Diproses')->count(),
+            'sent' => \App\Models\Order::where('owner_id', $ownerId)->where('status','Dikirim')->count(),
+        ]);
+
+    });
+
 
     Route::get(
         '/stocks',
@@ -409,6 +442,11 @@ Route::middleware('auth:sanctum')
     Route::post('/menus', [OwnerMenuController::class, 'store']);
     Route::put('/menus/{id}', [OwnerMenuController::class, 'update']);
     Route::delete('/menus/{id}', [OwnerMenuController::class, 'destroy']);
+ 
+
+    Route::get('/orders', [OrderController::class, 'ownerOrders']);
+    Route::put('/orders/{id}/process', [OrderController::class, 'process']);
+    Route::put('/orders/{id}/send', [OrderController::class, 'send']);
 
     Route::get('/payment-accounts', [OwnerPaymentAccountController::class, 'index']);
     Route::post('/payment-accounts', [OwnerPaymentAccountController::class, 'store']);

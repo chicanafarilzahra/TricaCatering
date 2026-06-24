@@ -15,23 +15,28 @@ class OrderController extends Controller
         ->get();
 }
 
+public function ownerOrders()
+{
+    $ownerId = auth()->id();
+
+    return Order::with('menu')
+        ->where('owner_id', $ownerId)
+        ->latest()
+        ->get();
+}
+
 public function store(Request $request)
 {
     try {
 
-        $validated = $request->validate([
-            'client_id' => 'required',
-            'customer_name' => 'required',
-            'phone' => 'required',
-            'menu_id' => 'required',
-            'quantity' => 'required',
-            'total_price' => 'required',
-        ]);
+        $menu = \App\Models\Menu::findOrFail($request->menu_id);
 
         $order = Order::create([
             'client_id' => $request->client_id,
             'customer_name' => $request->customer_name,
             'phone' => $request->phone,
+
+            'owner_id' => $menu->owner_id, // ✅ INI YANG PENTING
 
             'type' => $request->type,
             'menu_id' => $request->menu_id,
@@ -63,7 +68,6 @@ public function store(Request $request)
         ], 500);
     }
 }
-
    public function show(int $id)
 {
     return Order::findOrFail($id);
@@ -106,22 +110,67 @@ public function kirim(int $id)
     ]);
 }
 
-public function ownerOrders(int $ownerId)
+public function approve(int $id)
 {
-    $orders = Order::with('menu')
-        ->whereHas('menu', function ($query) use ($ownerId) {
-            $query->where('owner_id', $ownerId);
-        })
-        ->latest()
-        ->get();
+    $order = Order::findOrFail($id);
 
-    return response()->json($orders);
+    $order->update([
+        'status' => 'approved'
+    ]);
+
+    return response()->json([
+        'message' => 'Order approved',
+        'data' => $order
+    ]);
 }
+
+public function reject(int $id)
+{
+    $order = Order::findOrFail($id);
+
+    $order->update([
+        'status' => 'rejected'
+    ]);
+
+    return response()->json([
+        'message' => 'Order rejected',
+        'data' => $order
+    ]);
+}
+
+public function process(int $id)
+{
+    $order = Order::findOrFail($id);
+
+    $order->update([
+        'status' => 'processed'
+    ]);
+
+    return response()->json([
+        'message' => 'Order processed'
+    ]);
+}
+
+public function send(int $id)
+{
+    $order = Order::findOrFail($id);
+
+    $order->update([
+        'status' => 'sent'
+    ]);
+
+    return response()->json([
+        'message' => 'Order sent'
+    ]);
+}
+
 public function productions()
 {
     return Order::with('menu')
         ->whereIn('status', [
             'confirmed',
+            'approved',
+            'processed',
             'on_delivery',
             'delivered'
         ])
@@ -130,7 +179,6 @@ public function productions()
         ->map(function ($order) {
 
             return [
-
                 'id' => $order->id,
 
                 'code' =>
@@ -141,30 +189,10 @@ public function productions()
                         STR_PAD_LEFT
                     ),
 
-                'package' =>
-                    $order->menu?->name,
-
-                'quantity' =>
-                    $order->quantity,
-
-                'date' =>
-                    $order->order_date,
-
-                'status' =>
-                    $order->status,
+                'package' => $order->menu?->name,
+                'quantity' => $order->quantity,
+                'date' => $order->order_date,
+                'status' => $order->status,
             ];
         });
-}
-public function approve(int $id)
-{
-    $order = Order::findOrFail($id);
-
-    $order->update([
-        'status' => 'confirmed'
-    ]);
-
-    return response()->json([
-        'message' => 'Order approved'
-    ]);
-}
 }

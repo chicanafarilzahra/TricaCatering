@@ -259,16 +259,19 @@ export default function OrdersOwner() {
   const [trackingOrder,   setTrackingOrder]    = useState(null);
 
   // ── fetch ──
-  const getOrders = useCallback(async () => {
-    try {
-      const user    = JSON.parse(localStorage.getItem("user"));
-      const ownerId = user?.id;
-      const res     = await axios.get(`/api/owner/orders/${ownerId}`);
-      setOrders(res.data);
-    } catch (err) {
-      console.error(err);
-    }
-  }, []);
+const getOrders = useCallback(async () => {
+  try {
+    const res = await axios.get("/api/owner/orders", {
+  headers: {
+    Authorization: `Bearer ${localStorage.getItem("token")}`,
+    Accept: "application/json",
+  },
+});
+    setOrders(res.data);
+  } catch (err) {
+    console.error(err);
+  }
+}, []);
 
   useEffect(() => { getOrders(); }, [getOrders]);
 

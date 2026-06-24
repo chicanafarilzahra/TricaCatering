@@ -124,7 +124,7 @@ class KlienController extends Controller
         'phone' => $request->phone,
         'address' => $request->address,
         'order_date' => now()->format('Y-m-d'),
-
+        'owner_id' => $request->owner_id,
         'type' => $request->type,
         'menu_id' => $request->menu_id,
         'quantity' => $request->quantity,

@@ -8,14 +8,14 @@ class Order extends Model
 {
     protected $table = 'orders'; // pastikan ini sesuai nama tabel di DB
    protected $fillable = [
+    'owner_id',
     'client_id',
     'customer_name',
     'phone',
-    'order_date',
     'address',
+    'order_date',
     'total_price',
     'status',
-
     'type',
     'menu_id',
     'quantity',
@@ -27,7 +27,6 @@ class Order extends Model
     'lng',
     'courier_fee',
 ];
-
 
     public function courierLocation() {
         return $this->hasOne(CourierLocation::class);
