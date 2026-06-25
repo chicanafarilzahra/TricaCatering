@@ -84,7 +84,7 @@ useEffect(() => {
         console.log("token:", token);
 
         const res = await axios.get(
-            "/api/sppg/sekolah",
+            "/sppg/sekolah",
             {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -184,7 +184,7 @@ const saveData = async (e) => {
             );
         } else {
             await axios.post(
-                "/api/sppg/sekolah",
+                "/sppg/sekolah",
                 payload,
                 {
                     headers: {

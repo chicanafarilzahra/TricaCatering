@@ -50,7 +50,7 @@ const fetchMenus = async () => {
         const user = JSON.parse(localStorage.getItem("user"));
         const token = localStorage.getItem("token");
 
-        const res = await axios.get("/api/owner/menus", {
+        const res = await axios.get("/owner/menus", {
             headers: {
                 Authorization: `Bearer ${token}`,
                 Accept: "application/json",
@@ -205,7 +205,7 @@ if (editingId) {
 else {
 
     await axios.post(
-        "/api/owner/menus",
+        "/owner/menus",
         data,
         {
             headers: {

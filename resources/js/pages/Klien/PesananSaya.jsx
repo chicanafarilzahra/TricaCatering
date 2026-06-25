@@ -348,7 +348,7 @@ export default function PesananSaya() {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get("/api/klien/orders");
+      const res = await axios.get("/klien/orders");
       const raw = Array.isArray(res.data) ? res.data : (res.data?.data || []);
       const sorted = [...raw].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       setPesanan(sorted);

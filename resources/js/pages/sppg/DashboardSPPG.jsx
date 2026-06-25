@@ -43,7 +43,7 @@ export default function DashboardSPPG() {
         const token = localStorage.getItem("token");
 
         const res = await axios.get(
-            "/api/sppg/dashboard",
+            "/sppg/dashboard",
             {
                 headers:{
                     Authorization:`Bearer ${token}`

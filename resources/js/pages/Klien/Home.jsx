@@ -30,7 +30,7 @@ export default function HomeKlien() {
     }
 
     axios
-      .get("/api/klien/pesanan")
+      .get("/klien/pesanan")
       .then((res) => {
         setOrders(res.data || []);
       })

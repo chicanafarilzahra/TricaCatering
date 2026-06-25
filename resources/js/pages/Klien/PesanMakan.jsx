@@ -72,7 +72,7 @@ export default function PesanMakan() {
     useEffect(() => {
         const load = async () => {
             try {
-                const res = await axios.get("/api/klien/menus");
+                const res = await axios.get("/klien/menus");
                 setMenus(res.data);
             } catch (err) {
                 console.error(err);
@@ -252,7 +252,7 @@ export default function PesanMakan() {
     /*
     |--------------------------------------------------------------------------
     | DATA PEMBAYARAN (REAL, MILIK CATERING YANG DIPILIH)
-    | Diharapkan endpoint /api/klien/menus menyertakan field
+    | Diharapkan endpoint /klien/menus menyertakan field
     | `payment_accounts` pada setiap menu/catering, contoh:
     | payment_accounts: [
     |   { id, type: 'bank', provider_name: 'BCA', account_number: '1234567890', account_name: 'CV Dapur Bahagia' },
@@ -322,7 +322,7 @@ export default function PesanMakan() {
                 : selectedMenu.price * Number(form.jumlah) + courierFeeCalc;
 
         try {
-            await axios.post("/api/klien/orders", {
+            await axios.post("/klien/orders", {
                 client_id: user.id,
                 customer_name: form.nama,
                 phone: form.phone,

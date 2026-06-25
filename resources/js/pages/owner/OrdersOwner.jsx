@@ -261,16 +261,11 @@ export default function OrdersOwner() {
   // ── fetch ──
 const getOrders = useCallback(async () => {
   try {
-    const res = await axios.get("/api/owner/orders", {
-  headers: {
-    Authorization: `Bearer ${localStorage.getItem("token")}`,
-    Accept: "application/json",
-  },
-});
-    setOrders(res.data);
-  } catch (err) {
-    console.error(err);
-  }
+    const res = await axios.get("/owner/orders");
+setOrders(res.data.data ?? []);
+} catch (err) {
+  console.error(err);
+}
 }, []);
 
   useEffect(() => { getOrders(); }, [getOrders]);
@@ -289,7 +284,7 @@ const getOrders = useCallback(async () => {
   // ── notify client (fire & forget) ──
   const notifyClient = async (orderId, type, extra = {}) => {
     try {
-      await axios.post(`/api/notifications/client`, { order_id: orderId, type, ...extra });
+      await axios.post(`/notifications/client`, { order_id: orderId, type, ...extra });
     } catch (e) {
       console.error("Notif error:", e);
     }
@@ -299,7 +294,7 @@ const getOrders = useCallback(async () => {
   const approveOrder = async (id) => {
     setLoading(id, "approve");
     try {
-      await axios.put(`/api/orders/${id}/approve`);
+      await axios.put(`/orders/${id}/approve`);
       await notifyClient(id, "approved");
       pushToast("✅ Pesanan Disetujui", `Order #${id} berhasil disetujui dan langsung diproses.`, "#22c55e");
       getOrders();
@@ -314,7 +309,7 @@ const getOrders = useCallback(async () => {
   const rejectOrder = async (id) => {
     setLoading(id, "reject");
     try {
-      await axios.put(`/api/orders/${id}/reject`);
+      await axios.put(`/orders/${id}/reject`);
       await notifyClient(id, "rejected");
       pushToast("🚫 Pesanan Ditolak", `Order #${id} telah ditolak.`, "#ef4444");
       getOrders();
@@ -329,7 +324,7 @@ const getOrders = useCallback(async () => {
   const processOrder = async (id) => {
     setLoading(id, "process");
     try {
-      await axios.put(`/api/orders/${id}/process`);
+      await axios.put(`/owner/orders/${id}/process`);
       await notifyClient(id, "processed");
       pushToast("👨‍🍳 Sedang Diproses", `Order #${id} sedang disiapkan di dapur.`, "#3b82f6");
       getOrders();
@@ -346,7 +341,7 @@ const getOrders = useCallback(async () => {
     try {
       // hitung estimasi (mock: bisa diganti dengan kalkulasi jarak real)
       const estimasi = 15 + Math.floor(Math.random() * 20); // 15–35 menit
-      await axios.put(`/api/orders/${order.id}/send`, { estimasi });
+      await axios.put(`/owner/orders/${order.id}/send`, { estimasi });
       await notifyClient(order.id, "sent", { estimasi });
       pushToast("🚚 Pesanan Dikirim", `Order #${order.id} dikirim! Estimasi tiba: ${estimasi} menit.`, "#a855f7");
       getOrders();

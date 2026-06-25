@@ -93,10 +93,21 @@ import LaporanSPPG from "./pages/sppg/LaporanSPPG";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
+// Tambahkan ini setelah semua import
+import axios from "axios";
+
+axios.defaults.baseURL = "/api";
+axios.defaults.headers.common["X-Requested-With"] = "XMLHttpRequest";
+
+const _token = localStorage.getItem("auth_token");
+if (_token) {
+    axios.defaults.headers.common["Authorization"] = `Bearer ${_token}`;
+}
+
 function App() {
 
     const token =
-        localStorage.getItem("token");
+        localStorage.getItem("auth_token");
 
     return (
 

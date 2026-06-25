@@ -24,7 +24,7 @@ export default function LaporanHarian({ onLogout }) {
 
   const fetchLaporan = async () => {
     try {
-      const res = await axios.get("/api/kurir/laporan_harian");
+      const res = await axios.get("/kurir/laporan_harian");
       setOrders(res.data);
     } catch (err) {
       console.error(err);
@@ -62,7 +62,7 @@ export default function LaporanHarian({ onLogout }) {
           fd.append("photo", formData.foto);
         }
 
-      await axios.post("/api/kurir/laporan_harian", fd, {
+      await axios.post("/kurir/laporan_harian", fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 

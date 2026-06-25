@@ -158,7 +158,7 @@ export default function DeliveriesOwner() {
         try {
             const res =
                 await axios.get(
-                    "/api/owner/deliveries"
+                    "/owner/deliveries"
                 );
 
             setDeliveries(

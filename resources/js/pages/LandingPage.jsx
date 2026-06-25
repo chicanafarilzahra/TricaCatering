@@ -32,11 +32,12 @@ export default function LandingPage() {
   // =========================
   // GET MENU OWNER
   // =========================
-  useEffect(() => {
+// ✅ SESUDAH
+useEffect(() => {
   fetch("/api/menus")
     .then((res) => res.json())
     .then((data) => {
-      setMenus(data);
+      setMenus(Array.isArray(data) ? data : data.data ?? []);
       setLoadingMenu(false);
     })
     .catch((err) => {

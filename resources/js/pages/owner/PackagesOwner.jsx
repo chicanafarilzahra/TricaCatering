@@ -164,7 +164,7 @@ export default function PackagesOwner() {
         try {
             const res =
                 await axios.get(
-                    "/api/owner/packages"
+                    "/owner/packages"
                 );
 
             setPackages(res.data);

@@ -714,7 +714,7 @@ function PaymentAccountsSection() {
 
     const loadAccounts = async () => {
         try {
-            const res = await axios.get("/api/owner/payment-accounts", {
+            const res = await axios.get("/owner/payment-accounts", {
                 headers: {
                     Authorization: `Bearer ${getToken()}`,
                     Accept: "application/json",
@@ -748,7 +748,7 @@ function PaymentAccountsSection() {
                     }
                 );
             } else {
-                await axios.post("/api/owner/payment-accounts", data, {
+                await axios.post("/owner/payment-accounts", data, {
                     headers: {
                         Authorization: `Bearer ${getToken()}`,
                         Accept: "application/json",

@@ -176,7 +176,7 @@ export default function StocksOwner(){
             localStorage.getItem("token");
 
         const res = await axios.get(
-            "/api/owner/stocks",
+            "/owner/stocks",
             {
                 headers: {
                     Authorization:
@@ -214,7 +214,7 @@ const handleSubmit = async (e) => {
         } else {
 
             await axios.post(
-                "/api/owner/stocks",
+                "/owner/stocks",
                 form,
                 {
                     headers: {

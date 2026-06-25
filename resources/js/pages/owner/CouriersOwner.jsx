@@ -164,7 +164,7 @@ export default function CouriersOwner() {
         try {
             const res =
                 await axios.get(
-                    "/api/owner/couriers"
+                    "/owner/couriers"
                 );
 
             setCouriers(

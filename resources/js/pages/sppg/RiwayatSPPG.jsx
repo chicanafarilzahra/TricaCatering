@@ -28,7 +28,7 @@ export default function RiwayatSPPG() {
     const loadData = async () => {
         try {
             const res = await axios.get(
-                "/api/sppg/riwayat"
+                "/sppg/riwayat"
             );
 
             setSummary(res.data.summary);

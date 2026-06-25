@@ -215,35 +215,14 @@ Route::apiResource(
     OrderController::class
 );
 
-Route::put(
-    '/orders/{id}/approve',
-    [OrderController::class, 'approve']
-);
+Route::put('/orders/{id}/approve',  [OrderController::class, 'approve'])->middleware('auth:sanctum');
+Route::put('/orders/{id}/reject',   [OrderController::class, 'reject'])->middleware('auth:sanctum');
+Route::put('/orders/{id}/kirim',    [OrderController::class, 'kirim'])->middleware('auth:sanctum');
+Route::put('/orders/{id}/dispatch', [OrderController::class, 'dispatch'])->middleware('auth:sanctum');
 
-Route::put(
-    '/orders/{id}/reject',
-    [OrderController::class, 'reject']
-);
-
-Route::put(
-    '/orders/{id}/kirim',
-    [OrderController::class, 'kirim']
-);
-
-Route::get(
-    '/productions',
-    [OrderController::class, 'productions']
-);
-
-Route::get(
-    '/deliveries',
-    [OrderController::class, 'deliveries']
-);
-
-Route::get(
-    '/reports',
-    [OrderController::class, 'reports']
-);
+    Route::get('/productions', [OrderController::class, 'productions']);
+    Route::get('/deliveries',  [OrderController::class, 'deliveries']);
+    Route::get('/reports',     [OrderController::class, 'reports']);
 
 Route::get(
     '/users',

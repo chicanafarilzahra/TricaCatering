@@ -30,7 +30,7 @@ export default function LaporanSPPG() {
     const loadLaporan = async () => {
         try {
             const res = await axios.get(
-                "/api/sppg/laporan"
+                "/sppg/laporan"
             );
 
             setSummary(res.data.summary);

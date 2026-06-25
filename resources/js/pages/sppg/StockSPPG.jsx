@@ -44,7 +44,7 @@ export default function StockSPPG() {
                 localStorage.getItem("token");
 
             const res = await axios.get(
-                "/api/sppg/stocks",
+                "/sppg/stocks",
                 {
                     headers: {
                         Authorization:
@@ -66,7 +66,7 @@ export default function StockSPPG() {
                 localStorage.getItem("token");
 
             await axios.post(
-                "/api/sppg/stocks",
+                "/sppg/stocks",
                 form,
                 {
                     headers: {

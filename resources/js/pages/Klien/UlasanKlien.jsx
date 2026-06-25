@@ -151,7 +151,7 @@ function EditModal({ ulasan, onClose, onSaved }) {
     if (!rating) { alert("Rating wajib diisi."); return; }
     setLoading(true);
     try {
-      await axios.put(`/api/klien/ulasan/${ulasan.id}`, { rating, komentar, tags });
+      await axios.put(`/klien/ulasan/${ulasan.id}`, { rating, komentar, tags });
       onSaved();
     } catch (err) {
       console.error(err);
@@ -396,7 +396,7 @@ export default function RiwayatUlasanKlien() {
   const getUlasan = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      const res = await axios.get("/api/klien/ulasan");
+      const res = await axios.get("/klien/ulasan");
       const raw = Array.isArray(res.data) ? res.data : (res.data?.data || []);
       setUlasan([...raw].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
     } catch (err) {
@@ -447,7 +447,7 @@ export default function RiwayatUlasanKlien() {
     if (!deleteTarget) return;
     setDeleteLoading(true);
     try {
-      await axios.delete(`/api/klien/ulasan/${deleteTarget.id}`);
+      await axios.delete(`/klien/ulasan/${deleteTarget.id}`);
       setDeleteTarget(null);
       await getUlasan();
     } catch (err) {

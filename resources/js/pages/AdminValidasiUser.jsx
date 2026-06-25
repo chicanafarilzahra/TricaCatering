@@ -43,7 +43,7 @@ export default function AdminValidasiUser() {
         try {
             const res =
                 await axios.get(
-                    "/api/users"
+                    "/users"
                 );
 
             setUsers(res.data);

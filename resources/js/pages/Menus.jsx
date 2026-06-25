@@ -40,7 +40,7 @@ export default function Menus() {
 
     const fetchMenus = async () => {
     try {
-        const res = await axios.get("/api/menus");
+        const res = await axios.get("/menus");
 
         console.log("DATA MENU:", res.data);
 

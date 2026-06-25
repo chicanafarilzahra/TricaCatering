@@ -17,7 +17,7 @@ export default function PengirimanAktif({ onLogout }) {
 
   useEffect(() => {
     axios
-      .get("/api/kurir/orders")
+      .get("/kurir/orders")
       .then((res) => setOrders(res.data))
       .catch((err) => console.error(err));
   }, []);

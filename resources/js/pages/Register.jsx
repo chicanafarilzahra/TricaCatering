@@ -111,7 +111,7 @@ export default function Register() {
 
     try {
         await axios.post(
-    "/api/register",
+    "/register",
     {
         name,
         email,

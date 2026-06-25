@@ -42,7 +42,7 @@ export default function DistribusiSPPG() {
 const fetchDistribusi = async () => {
   try {
     const res = await axios.get(
-      "/api/sppg/distribusi",
+      "/sppg/distribusi",
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -67,7 +67,7 @@ const fetchDistribusi = async () => {
 const fetchSekolah = async () => {
   try {
     const res = await axios.get(
-      "/api/sppg/sekolah",
+      "/sppg/sekolah",
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -148,7 +148,7 @@ const labelStyle = {
 const fetchMenu = async () => {
   try {
     const res = await axios.get(
-      "/api/sppg/menus",
+      "/sppg/menus",
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -178,7 +178,7 @@ const saveData = async (e) => {
       );
     } else {
       await axios.post(
-        "/api/sppg/distribusi",
+        "/sppg/distribusi",
         form,
         {
           headers: {

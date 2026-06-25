@@ -23,7 +23,7 @@ export default function JadwalPengiriman({ onLogout }) {
     if (storedUser) setUser(JSON.parse(storedUser));
 
     axios
-      .get("/api/kurir/orders")
+      .get("/kurir/orders")
       .then((res) => setOrders(res.data))
       .catch((err) => console.error(err));
   }, []);

@@ -222,7 +222,7 @@ function ViewDetail({ invoice, onBack, onBayar, onRiwayat }) {
   const remaining = totalAmount - dpAmount;
 
   const handleDownloadPDF = () => {
-    window.open(`/api/klien/invoice/${invoice.id}/pdf`, "_blank");
+    window.open(`/klien/invoice/${invoice.id}/pdf`, "_blank");
   };
 
   return (
@@ -382,7 +382,7 @@ function ViewPembayaran({ invoice, onBack, onSuccess }) {
   useEffect(() => {
     const fetchChannels = async () => {
       try {
-        const res = await axios.get(`/api/klien/invoice/${invoice.id}/payment-channels`);
+        const res = await axios.get(`/klien/invoice/${invoice.id}/payment-channels`);
         setPaymentChannels(res.data);
       } catch {
         // fallback empty
@@ -411,7 +411,7 @@ function ViewPembayaran({ invoice, onBack, onSuccess }) {
       fd.append("note", catatan);
       fd.append("type", isPelunasan ? "pelunasan" : (invoice.is_dp ? "dp" : "full"));
 
-      await axios.post(`/api/klien/invoice/${invoice.id}/pay`, fd, {
+      await axios.post(`/klien/invoice/${invoice.id}/pay`, fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       onSuccess(invoice);
@@ -654,7 +654,7 @@ function ViewRiwayat({ invoice, onBack }) {
   useEffect(() => {
     const fetch = async () => {
       try {
-        const res = await axios.get(`/api/klien/invoice/${invoice.id}/payments`);
+        const res = await axios.get(`/klien/invoice/${invoice.id}/payments`);
         setPayments(res.data.data || []);
       } catch {
         setPayments([]);
@@ -821,7 +821,7 @@ export default function InvoiceKlien() {
   const loadInvoices = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("/api/klien/invoice");
+      const res = await axios.get("/klien/invoice");
       setInvoices(res.data.data || []);
       setTotalTagihan(res.data.total_tagihan || 0);
     } catch (e) {

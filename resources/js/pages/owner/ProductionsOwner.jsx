@@ -164,7 +164,7 @@ export default function ProductionsOwner() {
         try {
             const res =
                 await axios.get(
-                    "/api/owner/productions"
+                    "/owner/productions"
                 );
 
             setProductions(res.data);

@@ -18,12 +18,12 @@ export default function Login() {
         setLoading(true);
 
         try {
-            const response = await axios.post("/api/login", {
+            const response = await axios.post("/login", {
                 email,
                 password,
             });
 
-            localStorage.setItem("token", response.data.token);
+            localStorage.setItem("auth_token", response.data.token);
             localStorage.setItem("user", JSON.stringify(response.data.user));
 
             axios.defaults.headers.common[
