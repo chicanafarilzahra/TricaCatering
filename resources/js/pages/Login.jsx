@@ -13,52 +13,72 @@ export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    async function handleLogin(e) {
-        e.preventDefault();
-        setLoading(true);
+async function handleLogin(e) {
+    e.preventDefault();
+    setLoading(true);
 
-        try {
-            const response = await axios.post("/login", {
-                email,
-                password,
-            });
+    try {
+        const response = await axios.post(
+            "http://127.0.0.1:8000/api/login",
+            { email, password }
+        );
 
-            localStorage.setItem("auth_token", response.data.token);
-            localStorage.setItem("user", JSON.stringify(response.data.user));
+        console.log("LOGIN RESPONSE:", response.data);
 
-            axios.defaults.headers.common[
+        const role =
+            (response.data.user.role || "").toLowerCase();
+
+        // simpan auth
+        localStorage.setItem(
+            "auth_token",
+            response.data.token
+        );
+
+        localStorage.setItem(
+            "user",
+            JSON.stringify(response.data.user)
+        );
+
+        axios.defaults.headers.common[
             "Authorization"
         ] = `Bearer ${response.data.token}`;
 
-            const role = response.data.user?.role?.toLowerCase();
+        // 🔥 PAKAI NAVIGATE (INI KUNCI)
+        const go = (path) => navigate("/" + path);
 
-            switch (role) {
-                case "owner":
-                    navigate("/owner");
-                    break;
-                case "admin":
-                    navigate("/dashboard");
-                    break;
-                case "kurir":
-                    navigate("/kurir");
-                    break;
-                case "klien":
-                    navigate("/klien");
-                    break;
-                case "operator_sppg":
-                    navigate("/sppg/dashboard");
-                    break;
-                default:
-                    navigate("/dashboard");
-                    break;
-            }
-        } catch (error) {
-            alert(error.response?.data?.message || "Login gagal");
-        } finally {
-            setLoading(false);
+        switch (role) {
+            case "admin":
+                go("dashboard");
+                break;
+
+            case "owner":
+                go("owner");
+                break;
+
+            case "kurir":
+                go("kurir");
+                break;
+
+            case "klien":
+                go("klien");
+                break;
+
+            case "operator_sppg":
+                go("sppg/dashboard");
+                break;
+
+            default:
+                alert("Role tidak dikenal: " + role);
         }
+    } catch (error) {
+        alert(
+            error.response?.data?.message ||
+                "Login gagal"
+        );
+    } finally {
+        setLoading(false);
     }
-
+}
     return (
         <div
             style={{

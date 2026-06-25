@@ -4,10 +4,8 @@ export default function ProtectedRoute({
     children,
     role,
 }) {
-
-    const token =
-        localStorage.getItem("token");
-
+    
+        const token = localStorage.getItem("auth_token"); // hapus underscore
     const user = JSON.parse(
         localStorage.getItem("user")
     );
