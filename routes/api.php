@@ -525,6 +525,11 @@ Route::get(
         [MenuHarianController::class,'index']
     );
 
+    Route::post(
+        '/menu-harian',
+        [MenuHarianController::class,'store']
+    );
+
     Route::get(
     '/stocks',
     [StocksSPPGController::class, 'index']

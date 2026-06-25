@@ -9,9 +9,13 @@ import {
     Clock3,
     Activity,
     ArrowUpRight,
+    Store,
+    School,
 } from "lucide-react";
 
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 import AdminLayout from "../layouts/AdminLayout";
 
@@ -57,43 +61,56 @@ export default function Dashboard() {
     const recentOrders =
         orders.slice(0, 5);
 
+    const [dashboardData, setDashboardData] =
+        useState({
+            customers: 0,
+            kurirs: 0,
+            owners: 0,
+            sppgs: 0,
+        });
+
+    useEffect(() => {
+        fetchStats();
+    }, []);
+
+    const fetchStats = async () => {
+        try {
+            const res = await axios.get(
+                "http://localhost:8000/api/dashboard-stats"
+            );
+
+            setDashboardData(res.data);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     const stats = [
         {
-            title: "Total Orders",
-            value: totalOrders,
-            icon: (
-                <ShoppingCart size={22} />
-            ),
+            title: "Customers",
+            value: dashboardData.customers,
+            icon: <Users size={22} />,
             color: "#3b82f6",
             bg: "rgba(59,130,246,0.12)",
         },
-
         {
-            title: "Customers",
-            value: totalCustomers,
-            icon: (
-                <Users size={22} />
-            ),
+            title: "Kurirs",
+            value: dashboardData.kurirs,
+            icon: <Truck size={22} />,
             color: "#8b5cf6",
             bg: "rgba(139,92,246,0.12)",
         },
-
         {
-            title: "Deliveries",
-            value: totalDeliveries,
-            icon: (
-                <Truck size={22} />
-            ),
+            title: "Owners",
+            value: dashboardData.owners,
+            icon: <Store size={22} />,
             color: "#10b981",
             bg: "rgba(16,185,129,0.12)",
         },
-
         {
-            title: "Packages",
-            value: totalPackages,
-            icon: (
-                <Package size={22} />
-            ),
+            title: "SPPG",
+            value: dashboardData.sppgs,
+            icon: <School size={22} />,
             color: "#f59e0b",
             bg: "rgba(245,158,11,0.12)",
         },
