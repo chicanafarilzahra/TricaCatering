@@ -15,671 +15,562 @@ import {
 } from "react-icons/fa";
 
 export default function LandingPage() {
-
-  // =========================
-  // MENU STATE
-  // =========================
   const [menus, setMenus] = useState([]);
   const [loadingMenu, setLoadingMenu] = useState(true);
-
-
   const [stats, setStats] = useState({
-  customers: 0,
-  kurirs: 0,
-  owners: 0,
-  orders: 0,
-});
-  // =========================
-  // GET MENU OWNER
-  // =========================
-// ✅ SESUDAH
-useEffect(() => {
-  fetch("/api/menus")
-    .then((res) => res.json())
-    .then((data) => {
-      setMenus(Array.isArray(data) ? data : data.data ?? []);
-      setLoadingMenu(false);
-    })
-    .catch((err) => {
-      console.log(err);
-      setLoadingMenu(false);
-    });
-}, []);
+    customers: 0,
+    kurirs: 0,
+    owners: 0,
+    sppgs: 0,
+  });
 
-useEffect(() => {
-  fetch("/api/dashboard-stats")
-    .then((res) => res.json())
-    .then((data) => {
-      console.log("Dashboard Stats:", data);
-      setStats(data);
-    })
-    .catch((err) => {
-      console.log(err);
-    });
-}, []);
+  useEffect(() => {
+    fetch("/api/menus")
+      .then((res) => res.json())
+      .then((data) => {
+        setMenus(Array.isArray(data) ? data : data.data ?? []);
+        setLoadingMenu(false);
+      })
+      .catch((err) => {
+        console.log(err);
+        setLoadingMenu(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/dashboard-stats")
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("Dashboard Stats:", data);
+        setStats(data);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }, []);
 
   return (
     <div
       style={{
         width: "100%",
         minHeight: "100vh",
-        background:
-          "linear-gradient(180deg,#071028,#0f172a,#111827)",
+        background: "#070d1a",
         overflowX: "hidden",
         color: "white",
         margin: 0,
         padding: 0,
       }}
     >
-      {/* GLOBAL STYLE */}
       <style>{`
-        *{
-          margin:0;
-          padding:0;
-          box-sizing:border-box;
+        *, *::before, *::after {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
         }
 
-        html,body,#root{
-          width:100%;
-          min-height:100%;
-          background:#071028;
-          overflow-x:hidden;
-          font-family:Inter,sans-serif;
-          scroll-behavior:smooth;
+        html, body, #root {
+          width: 100%;
+          min-height: 100%;
+          background: #070d1a;
+          overflow-x: hidden;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+          scroll-behavior: smooth;
         }
 
-        body::-webkit-scrollbar{
-          display:none;
+        body::-webkit-scrollbar { display: none; }
+        body { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .wrap {
+          width: 100%;
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 0 48px;
         }
 
-        body{
-          -ms-overflow-style:none;
-          scrollbar-width:none;
+        .glass {
+          background: rgba(255,255,255,0.04);
+          backdrop-filter: blur(16px);
+          border: 1px solid rgba(255,255,255,0.07);
         }
 
-        .container{
-          width:100%;
-          padding-left:7%;
-          padding-right:7%;
+        .card-hover {
+          transition: transform 0.28s ease, box-shadow 0.28s ease;
+        }
+        .card-hover:hover {
+          transform: translateY(-6px);
+          box-shadow: 0 24px 60px rgba(0,0,0,0.4);
         }
 
-        .glass{
-          background:rgba(255,255,255,0.05);
-          backdrop-filter:blur(14px);
-          border:1px solid rgba(255,255,255,0.06);
+        .menu-grid-3 {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 26px;
         }
 
-        .hero-grid{
-          display:grid;
-          grid-template-columns:1.1fr 1fr;
-          gap:60px;
-          align-items:center;
+        .feature-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 24px;
         }
 
-        .menu-grid{
-          display:grid;
-          grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-          gap:24px;
+        .role-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 24px;
         }
 
-        .role-grid{
-          display:grid;
-          grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
-          gap:26px;
+        .step-line {
+          width: 1px;
+          background: linear-gradient(to bottom, rgba(37,99,235,0.5), transparent);
+          margin: 0 22px;
+          min-height: 28px;
         }
 
-        .feature-grid{
-          display:grid;
-          grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-          gap:24px;
+        @media (max-width: 1024px) {
+          .wrap { padding: 0 32px; }
+          .menu-grid-3 { grid-template-columns: repeat(2, 1fr); }
+          .feature-grid { grid-template-columns: repeat(2, 1fr); }
+          .role-grid { grid-template-columns: repeat(2, 1fr); }
         }
 
-        .hero-title{
-          font-size:72px;
-          line-height:1.05;
-          font-weight:900;
-        }
-
-        .section-title{
-          font-size:52px;
-          font-weight:800;
-        }
-
-        .floating-card:hover{
-          transform:translateY(-8px);
-        }
-
-        .floating-card{
-          transition:0.3s ease;
-        }
-
-        @media(max-width:992px){
-          .hero-grid{
-            grid-template-columns:1fr;
-          }
-
-          .hero-title{
-            font-size:52px;
-          }
-
-          .section-title{
-            font-size:38px;
-          }
-        }
-
-        @media(max-width:768px){
-
-          .container{
-            padding-left:5%;
-            padding-right:5%;
-          }
-
-          .hero-title{
-            font-size:42px;
-          }
-
-          .section-title{
-            font-size:30px;
-          }
-
-          .menu-grid{
-            grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
-          }
-
-          .hero-buttons{
-            flex-direction:column;
-          }
-
-          .hero-buttons a{
-            width:100%;
-            text-align:center;
-          }
-
+        @media (max-width: 640px) {
+          .wrap { padding: 0 20px; }
+          .menu-grid-3 { grid-template-columns: 1fr; }
+          .feature-grid { grid-template-columns: 1fr; }
+          .role-grid { grid-template-columns: 1fr; }
         }
       `}</style>
 
-      {/* NAVBAR */}
-      <div
+      {/* ── NAVBAR ── */}
+      <header
         style={{
-          width: "100%",
           position: "sticky",
           top: 0,
           zIndex: 100,
-          backdropFilter: "blur(14px)",
-          background: "rgba(7,16,40,0.8)",
-          borderBottom:
-            "1px solid rgba(255,255,255,0.05)",
+          background: "rgba(7,13,26,0.85)",
+          backdropFilter: "blur(20px)",
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
         }}
       >
         <div
-          className="container"
+          className="wrap"
           style={{
-            height: "84px",
+            height: "72px",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
           }}
         >
-          <h2
-            style={{
-              fontSize: "30px",
-              fontWeight: "900",
-            }}
-          >
-            TriCa Catering
-          </h2>
+          {/* Logo */}
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <div
+              style={{
+                width: "36px",
+                height: "36px",
+                borderRadius: "10px",
+                background: "linear-gradient(135deg,#2563eb,#60a5fa)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: "900",
+                fontSize: "18px",
+              }}
+            >
+              T
+            </div>
+            <span style={{ fontSize: "18px", fontWeight: "800", letterSpacing: "-0.4px" }}>
+              TriCa Catering
+            </span>
+          </div>
 
-          <div
-            style={{
-              display: "flex",
-              gap: "14px",
-            }}
-          >
+          {/* Nav buttons */}
+          <div style={{ display: "flex", gap: "10px" }}>
             <Link
               to="/login"
               style={{
-                padding: "12px 24px",
-                borderRadius: "14px",
-                background:
-                  "rgba(255,255,255,0.08)",
-                color: "white",
+                padding: "10px 22px",
+                borderRadius: "10px",
+                background: "transparent",
+                border: "1px solid rgba(255,255,255,0.12)",
+                color: "#cbd5e1",
                 textDecoration: "none",
-                fontWeight: "700",
+                fontWeight: "600",
+                fontSize: "14px",
+                transition: "all 0.2s",
               }}
             >
               Login
             </Link>
-
             <Link
               to="/register"
               style={{
-                padding: "12px 24px",
-                borderRadius: "14px",
-                background:
-                  "linear-gradient(135deg,#2563eb,#3b82f6)",
+                padding: "10px 22px",
+                borderRadius: "10px",
+                background: "linear-gradient(135deg,#2563eb,#3b82f6)",
                 color: "white",
                 textDecoration: "none",
-                fontWeight: "800",
-                boxShadow:
-                  "0 10px 30px rgba(37,99,235,0.35)",
+                fontWeight: "700",
+                fontSize: "14px",
+                boxShadow: "0 6px 20px rgba(37,99,235,0.3)",
               }}
             >
-              Register
+              Daftar Sekarang
             </Link>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* HERO */}
-<section
-  className="container"
-  style={{
-    paddingTop: "70px",
-    paddingBottom: "70px",
-  }}
->
-  <div
-    className="hero-grid"
-    style={{
-      alignItems: "center",
-      gap: "40px",
-    }}
-  >
-    {/* LEFT */}
-    <div>
-      <div
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "10px",
-          padding: "10px 18px",
-          borderRadius: "999px",
-          background:
-            "rgba(59,130,246,0.15)",
-          color: "#60a5fa",
-          marginBottom: "24px",
-          fontWeight: "700",
-        }}
-      >
-        <FaCheckCircle />
-        Sistem Catering Modern
-      </div>
-
-      <h1
-        className="hero-title"
-        style={{
-          maxWidth: "760px",
-          letterSpacing: "-2px",
-        }}
-      >
-        Platform Digital
-        Catering Modern
-        untuk Bisnis , SPPG 
-        & Delivery
-      </h1>
-
-      <p
-        style={{
-          marginTop: "22px",
-          fontSize: "18px",
-          color: "#94a3b8",
-          lineHeight: "1.9",
-          maxWidth: "640px",
-        }}
-      >
-        Pesan catering harian,
-        acara kantor, hingga
-        kebutuhan event dengan
-        lebih cepat, praktis,
-        dan terorganisir dalam
-        satu platform digital
-        modern.
-      </p>
-
-      <div
-        className="hero-buttons"
-        style={{
-          display: "flex",
-          gap: "16px",
-          marginTop: "34px",
-          flexWrap: "wrap",
-        }}
-      >
-        <Link
-          to="/register"
-          style={{
-            padding: "18px 32px",
-            borderRadius: "18px",
-            background:
-              "linear-gradient(135deg,#2563eb,#3b82f6)",
-            color: "white",
-            textDecoration: "none",
-            fontWeight: "800",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "12px",
-            boxShadow:
-              "0 18px 40px rgba(37,99,235,0.35)",
-          }}
-        >
-          Pesan Catering
-          <FaArrowRight />
-        </Link>
-
-<button
-    onClick={() => {
-        const section =
-            document.getElementById(
-                "menus"
-            );
-
-        section?.scrollIntoView({
-            behavior: "smooth",
-        });
-    }}
-    style={{
-        padding: "18px 32px",
-        borderRadius: "18px",
-        background:
-            "rgba(255,255,255,0.07)",
-        border:
-            "1px solid rgba(255,255,255,0.08)",
-        color: "white",
-        textDecoration: "none",
-        fontWeight: "800",
-        backdropFilter: "blur(12px)",
-        transition: "0.2s",
-        cursor: "pointer",
-    }}
->
-    Lihat Menu
-</button>
-      </div>
-    </div>
-
-    {/* RIGHT */}
-    <div
-      className="glass"
-      style={{
-        borderRadius: "34px",
-        padding: "24px",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          height: "500px",
-          borderRadius: "30px",
-          overflow: "hidden",
-          position: "relative",
-          background:
-            "url('/storage/images/hero.jpg') center/cover",
-        }}
-      >
-        <div    
-          style={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "linear-gradient(to top,rgba(7,16,40,0.96),rgba(7,16,40,0.12))",
-          }}
-        />
-
-        {/* FLOATING STATS */}
+      {/* ── HERO ── */}
+      <section className="wrap" style={{ paddingTop: "96px", paddingBottom: "96px" }}>
         <div
           style={{
-            position: "absolute",
-            bottom: "22px",
-            left: "22px",
-            right: "22px",
-          }}
-        >
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(2,1fr)",
-              gap: "16px",
-            }}
-          >
-            <StatCard
-  icon={<FaUsers />}
-  title="Customer"
-  value={stats.customers}
-/>
-
-<StatCard
-  icon={<FaTruck />}
-  title="Kurir"
-  value={stats.kurirs}
-/>
-
-<StatCard
-  icon={<FaStore />}
-  title="Owner"
-  value={stats.owners}
-/>
-
-<StatCard
-  icon={<FaClipboardList />}
-  title="SPPG"
-  value={stats.sppgs}
-/>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-            {/* MENU SECTION */}
-      <section
-        id="menus"
-        className="container"
-        style={{
-          paddingBottom: "100px",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent:
-              "space-between",
+            display: "grid",
+            gridTemplateColumns: "1.1fr 1fr",
+            gap: "64px",
             alignItems: "center",
-            marginBottom: "34px",
-            flexWrap: "wrap",
-            gap: "20px",
           }}
         >
+          {/* Left */}
           <div>
-            <h2 className="section-title">
-              Menu Catering
-            </h2>
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "8px 16px",
+                borderRadius: "999px",
+                background: "rgba(37,99,235,0.12)",
+                border: "1px solid rgba(37,99,235,0.25)",
+                color: "#60a5fa",
+                marginBottom: "28px",
+                fontWeight: "600",
+                fontSize: "13px",
+                letterSpacing: "0.3px",
+              }}
+            >
+              <FaCheckCircle size={12} />
+              Sistem Catering Modern
+            </div>
+
+            <h1
+              style={{
+                fontSize: "clamp(40px, 5vw, 66px)",
+                lineHeight: "1.06",
+                fontWeight: "900",
+                letterSpacing: "-2px",
+                color: "#f8fafc",
+                marginBottom: "24px",
+              }}
+            >
+              Platform Digital
+              <br />
+              <span
+                style={{
+                  background: "linear-gradient(90deg,#60a5fa,#a78bfa)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+              >
+                Catering Modern
+              </span>
+              <br />
+              untuk Bisnis & Delivery
+            </h1>
 
             <p
               style={{
-                color: "#94a3b8",
-                marginTop: "12px",
                 fontSize: "16px",
+                color: "#64748b",
+                lineHeight: "1.85",
+                maxWidth: "520px",
+                marginBottom: "36px",
               }}
             >
-              Data menu otomatis
-              terupdate ketika owner
-              menambahkan menu baru.
+              Pesan catering harian, acara kantor, hingga kebutuhan event dengan
+              lebih cepat, praktis, dan terorganisir dalam satu platform digital.
+            </p>
+
+            <div style={{ display: "flex", gap: "14px", flexWrap: "wrap" }}>
+              <Link
+                to="/register"
+                style={{
+                  padding: "15px 28px",
+                  borderRadius: "12px",
+                  background: "linear-gradient(135deg,#2563eb,#3b82f6)",
+                  color: "white",
+                  textDecoration: "none",
+                  fontWeight: "700",
+                  fontSize: "15px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  boxShadow: "0 12px 30px rgba(37,99,235,0.32)",
+                }}
+              >
+                Pesan Catering <FaArrowRight size={13} />
+              </Link>
+
+              <button
+                onClick={() => {
+                  document.getElementById("menus")?.scrollIntoView({ behavior: "smooth" });
+                }}
+                style={{
+                  padding: "15px 28px",
+                  borderRadius: "12px",
+                  background: "transparent",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  color: "#cbd5e1",
+                  fontWeight: "600",
+                  fontSize: "15px",
+                  cursor: "pointer",
+                }}
+              >
+                Lihat Menu
+              </button>
+            </div>
+          </div>
+
+          {/* Right — Stats Panel */}
+          <div
+            className="glass"
+            style={{
+              borderRadius: "28px",
+              padding: "28px",
+            }}
+          >
+            {/* Hero image */}
+            <div
+              style={{
+                width: "100%",
+                height: "280px",
+                borderRadius: "18px",
+                overflow: "hidden",
+                background: "url('/storage/images/hero.jpg') center/cover",
+                marginBottom: "20px",
+                position: "relative",
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background: "linear-gradient(to top,rgba(7,13,26,0.7),transparent)",
+                }}
+              />
+            </div>
+
+            {/* Stats grid */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2,1fr)",
+                gap: "14px",
+              }}
+            >
+              <StatCard icon={<FaUsers />} title="Customer" value={stats.customers} />
+              <StatCard icon={<FaTruck />} title="Kurir" value={stats.kurirs} />
+              <StatCard icon={<FaStore />} title="Owner" value={stats.owners} />
+              <StatCard icon={<FaClipboardList />} title="SPPG" value={stats.sppgs} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── DIVIDER ── */}
+      <div className="wrap">
+        <div style={{ height: "1px", background: "rgba(255,255,255,0.05)" }} />
+      </div>
+
+      {/* ── MENU SECTION ── */}
+      <section id="menus" className="wrap" style={{ paddingTop: "80px", paddingBottom: "80px" }}>
+        {/* Header */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-end",
+            marginBottom: "40px",
+            flexWrap: "wrap",
+            gap: "16px",
+          }}
+        >
+          <div>
+            <p
+              style={{
+                fontSize: "12px",
+                fontWeight: "700",
+                letterSpacing: "1.5px",
+                textTransform: "uppercase",
+                color: "#3b82f6",
+                marginBottom: "10px",
+              }}
+            >
+              Menu Tersedia
+            </p>
+            <h2
+              style={{
+                fontSize: "clamp(28px,3.5vw,44px)",
+                fontWeight: "800",
+                letterSpacing: "-1px",
+                color: "#f1f5f9",
+              }}
+            >
+              Pilihan Menu Catering
+            </h2>
+            <p style={{ color: "#475569", marginTop: "10px", fontSize: "15px" }}>
+              Menu terupdate otomatis saat owner menambahkan menu baru.
             </p>
           </div>
 
           <Link
             to="/login"
             style={{
-              padding: "14px 24px",
-              borderRadius: "14px",
-              background:
-                "rgba(255,255,255,0.08)",
-              color: "white",
+              padding: "12px 22px",
+              borderRadius: "10px",
+              border: "1px solid rgba(255,255,255,0.1)",
+              color: "#94a3b8",
               textDecoration: "none",
-              fontWeight: "700",
+              fontWeight: "600",
+              fontSize: "14px",
+              whiteSpace: "nowrap",
             }}
           >
-            Lihat Semua Menu
+            Lihat Semua →
           </Link>
         </div>
 
-        {/* MENU GRID */}
-        <div className="menu-grid">
-
+        {/* Grid 3 columns, 2 rows = 6 items */}
+        <div className="menu-grid-3">
           {loadingMenu ? (
-
-            <h3
-              style={{
-                color: "#94a3b8",
-              }}
-            >
-              Loading menu...
-            </h3>
-
+            <p style={{ color: "#475569" }}>Loading menu...</p>
           ) : menus.length > 0 ? (
-
             menus.slice(0, 6).map((menu) => (
-
               <div
                 key={menu.id}
-                className="glass floating-card"
+                className="glass card-hover"
                 style={{
-                  borderRadius: "24px",
+                  borderRadius: "20px",
                   overflow: "hidden",
                   display: "flex",
                   flexDirection: "column",
-                  height: "100%",
                 }}
               >
+                {/* Image */}
+                <div style={{ position: "relative", height: "200px", overflow: "hidden" }}>
+                  <img
+                    src={
+                      menu.image
+                        ? `/storage/${menu.image}`
+                        : "https://via.placeholder.com/500x300?text=Menu+Catering"
+                    }
+                    alt={menu.name || "Menu Catering"}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      transition: "transform 0.4s ease",
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.transform = "scale(1.06)"}
+                    onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+                  />
+                </div>
 
-                {/* IMAGE */}
-                <img
-                  src={
-                    menu.image
-                      ? `/storage/${menu.image}`
-                      : "https://via.placeholder.com/500x300?text=Menu+Catering"
-                  }
-                  alt={menu.nama_menu}
+                {/* Content */}
+                <div
                   style={{
-                    width: "100%",
-                    height: "220px",
-                    objectFit: "cover",
+                    padding: "20px 22px 22px",
+                    display: "flex",
+                    flexDirection: "column",
+                    flex: 1,
                   }}
-                />
+                >
+                  <h3
+                    style={{
+                      fontSize: "17px",
+                      fontWeight: "700",
+                      color: "#f1f5f9",
+                      marginBottom: "8px",
+                      lineHeight: "1.35",
+                    }}
+                  >
+                    {menu.name || "Menu Catering"}
+                  </h3>
 
-                {/* CONTENT */}
-<div
-  style={{
-    padding: "20px",
-    display: "flex",
-    flexDirection: "column",
-    flex: 1,
-  }}
->
-  {/* NAMA MENU */}
-  <h3
-  style={{
-    fontSize: "22px",
-    marginBottom: "12px",
-    fontWeight: "800",
-    minHeight: "60px",
-  }}
->
-  {menu.name || "Menu Catering"}
-</h3>
+                  <p
+                    style={{
+                      color: "#64748b",
+                      fontSize: "13px",
+                      lineHeight: "1.7",
+                      flex: 1,
+                      marginBottom: "18px",
+                      overflow: "hidden",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: "vertical",
+                    }}
+                  >
+                    {menu.description || "Menu catering tersedia"}
+                  </p>
 
-  {/* DESKRIPSI */}
-  <p
-  style={{
-    color: "#94a3b8",
-    lineHeight: "1.7",
-    flex: 1,
-    overflow: "hidden",
-    display: "-webkit-box",
-    WebkitLineClamp: 4,
-    WebkitBoxOrient: "vertical",
-    minHeight: "110px",
-  }}
->
-  {menu.description || "Menu catering tersedia"}
-</p>
-
-  {/* BUTTON */}
-  <Link
-  to="/login"
-  style={{
-    marginTop: "auto",
-    width: "100%",
-    padding: "14px",
-    borderRadius: "14px",
-    background:
-      "linear-gradient(135deg,#2563eb,#3b82f6)",
-    color: "white",
-    textDecoration: "none",
-    fontWeight: "800",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-  }}
->
-  Pesan
-</Link>
-</div>
-</div>
-
+                  <Link
+                    to="/login"
+                    style={{
+                      display: "block",
+                      textAlign: "center",
+                      padding: "11px",
+                      borderRadius: "10px",
+                      background: "linear-gradient(135deg,#2563eb,#3b82f6)",
+                      color: "white",
+                      textDecoration: "none",
+                      fontWeight: "700",
+                      fontSize: "13px",
+                    }}
+                  >
+                    Pesan Sekarang
+                  </Link>
+                </div>
+              </div>
             ))
-
           ) : (
-
-            <h3
-              style={{
-                color: "#94a3b8",
-              }}
-            >
-              Belum ada menu tersedia
-            </h3>
-
+            <p style={{ color: "#475569" }}>Belum ada menu tersedia.</p>
           )}
-
         </div>
       </section>
 
-      {/* FEATURES */}
-      <section
-        className="container"
-        style={{
-          paddingBottom: "100px",
-        }}
-      >
-        <div
-          style={{
-            textAlign: "center",
-            marginBottom: "60px",
-          }}
-        >
-          <h2 className="section-title">
-            Kenapa TriCa Catering?
-          </h2>
+      {/* ── DIVIDER ── */}
+      <div className="wrap">
+        <div style={{ height: "1px", background: "rgba(255,255,255,0.05)" }} />
+      </div>
 
+      {/* ── FEATURES ── */}
+      <section className="wrap" style={{ paddingTop: "80px", paddingBottom: "80px" }}>
+        <div style={{ textAlign: "center", marginBottom: "52px" }}>
           <p
             style={{
-              color: "#94a3b8",
-              marginTop: "18px",
-              fontSize: "17px",
-              lineHeight: "1.9",
-              maxWidth: "850px",
-              marginInline: "auto",
+              fontSize: "12px",
+              fontWeight: "700",
+              letterSpacing: "1.5px",
+              textTransform: "uppercase",
+              color: "#3b82f6",
+              marginBottom: "12px",
             }}
           >
-            Sistem catering modern
-            dengan dashboard realtime,
-            delivery tracking, dan
-            monitoring operasional
-            yang memudahkan seluruh
-            proses bisnis catering.
+            Keunggulan
+          </p>
+          <h2
+            style={{
+              fontSize: "clamp(26px,3.5vw,42px)",
+              fontWeight: "800",
+              letterSpacing: "-1px",
+              color: "#f1f5f9",
+              marginBottom: "14px",
+            }}
+          >
+            Kenapa TriCa Catering?
+          </h2>
+          <p style={{ color: "#475569", fontSize: "15px", maxWidth: "520px", margin: "0 auto", lineHeight: "1.8" }}>
+            Sistem modern dengan dashboard realtime, delivery tracking,
+            dan monitoring operasional yang terintegrasi.
           </p>
         </div>
 
@@ -689,13 +580,11 @@ useEffect(() => {
             title="Menu Variatif"
             desc="Kelola berbagai kategori menu catering secara modern dan realtime."
           />
-
           <FeatureCard
             icon={<FaTruck />}
             title="Delivery Tracking"
             desc="Pantau pengiriman kurir dan rute delivery langsung dari dashboard."
           />
-
           <FeatureCard
             icon={<FaClipboardList />}
             title="Monitoring Produksi"
@@ -704,388 +593,380 @@ useEffect(() => {
         </div>
       </section>
 
-      {/* ROLE SECTION */}
-      <section
-        className="container"
-        style={{
-          paddingBottom: "120px",
-        }}
-      >
-        <div
-          style={{
-            textAlign: "center",
-            marginBottom: "60px",
-          }}
-        >
-          <h2 className="section-title">
-            Satu Platform untuk
-            Semua Kebutuhan Catering
+      {/* ── DIVIDER ── */}
+      <div className="wrap">
+        <div style={{ height: "1px", background: "rgba(255,255,255,0.05)" }} />
+      </div>
+
+      {/* ── ROLE SECTION ── */}
+      <section className="wrap" style={{ paddingTop: "80px", paddingBottom: "80px" }}>
+        <div style={{ textAlign: "center", marginBottom: "52px" }}>
+          <p
+            style={{
+              fontSize: "12px",
+              fontWeight: "700",
+              letterSpacing: "1.5px",
+              textTransform: "uppercase",
+              color: "#3b82f6",
+              marginBottom: "12px",
+            }}
+          >
+            Untuk Siapa
+          </p>
+          <h2
+            style={{
+              fontSize: "clamp(26px,3.5vw,42px)",
+              fontWeight: "800",
+              letterSpacing: "-1px",
+              color: "#f1f5f9",
+            }}
+          >
+            Satu Platform untuk Semua Kebutuhan
           </h2>
         </div>
 
         <div className="role-grid">
           <RoleCard
             icon={<FaStore />}
-            title="Kelola Bisnis Catering Anda"
+            title="Owner Catering"
             desc="Kelola operasional catering dengan sistem yang praktis, cepat, dan terintegrasi."
             button="Daftarkan Catering Anda"
           />
-
           <RoleCard
             icon={<FaTruck />}
-            title="Sistem Kurir Delivery"
-            desc="Daftar menjadi kurir untuk mengantarkan pesanan klien dan pantau jadwal pengiriman, rute harian, dan status antar secara realtime."
+            title="Kurir Delivery"
+            desc="Pantau jadwal pengiriman, rute harian, dan status antar secara realtime."
             button="Gabung Sebagai Kurir"
           />
-
           <RoleCard
             icon={<FaClipboardList />}
-            title="Sistem Operator SPPG"
-            desc="Pantau seluruh aktivitas SPPG dengan sistem yang aman dan optimalkan proses distribusi."
+            title="Operator SPPG"
+            desc="Pantau seluruh aktivitas SPPG dan optimalkan proses distribusi dengan aman."
             button="Daftar Sebagai Operator"
           />
         </div>
       </section>
 
-      {/* PANDUAN PENDAFTARAN */}
-<section
-  className="container"
-  style={{
-    paddingBottom: "100px",
-  }}
->
-  <div
-    style={{
-      textAlign: "center",
-      marginBottom: "50px",
-    }}
-  >
-    <h2 className="section-title">
-      Panduan Pendaftaran Owner, Kurir & Operator SPPG
-    </h2>
-
-    <p
-      style={{
-        color: "#94a3b8",
-        marginTop: "15px",
-        fontSize: "17px",
-      }}
-    >
-      Ikuti langkah berikut agar akun dapat digunakan.
-    </p>
-  </div>
-
-  <div
-    className="glass"
-    style={{
-      borderRadius: "30px",
-      padding: "40px",
-    }}
-  >
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "25px",
-      }}
-    >
-      <div style={{ display: "flex", gap: "20px" }}>
-        <div
-          style={{
-            width: "45px",
-            height: "45px",
-            borderRadius: "50%",
-            background: "#2563eb",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontWeight: "bold",
-          }}
-        >
-          1
-        </div>
-
-        <div>
-          <h3 style={{ marginBottom: "8px" }}>
-            Lakukan Registrasi
-          </h3>
-
-          <p style={{ color: "#94a3b8", lineHeight: "1.8" }}>
-            Daftarkan akun sebagai <b>Owner</b>,
-            <b> Kurir</b>, atau <b>Operator SPPG </b>
-            menggunakan email yang masih aktif dan data yang benar.
-          </p>
-        </div>
+      {/* ── DIVIDER ── */}
+      <div className="wrap">
+        <div style={{ height: "1px", background: "rgba(255,255,255,0.05)" }} />
       </div>
 
-      <div style={{ display: "flex", gap: "20px" }}>
-        <div
-          style={{
-            width: "45px",
-            height: "45px",
-            borderRadius: "50%",
-            background: "#2563eb",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontWeight: "bold",
-          }}
-        >
-          2
-        </div>
-
-        <div>
-          <h3 style={{ marginBottom: "8px" }}>
-            Tunggu Validasi Admin
-          </h3>
-
-          <p style={{ color: "#94a3b8", lineHeight: "1.8" }}>
-            Setelah registrasi, akun akan masuk ke proses
-            verifikasi oleh Admin TriCa Catering. Mohon menunggu
-            hingga proses validasi selesai.
+      {/* ── PANDUAN PENDAFTARAN ── */}
+      <section className="wrap" style={{ paddingTop: "80px", paddingBottom: "80px" }}>
+        <div style={{ textAlign: "center", marginBottom: "52px" }}>
+          <p
+            style={{
+              fontSize: "12px",
+              fontWeight: "700",
+              letterSpacing: "1.5px",
+              textTransform: "uppercase",
+              color: "#3b82f6",
+              marginBottom: "12px",
+            }}
+          >
+            Cara Bergabung
+          </p>
+          <h2
+            style={{
+              fontSize: "clamp(24px,3.5vw,40px)",
+              fontWeight: "800",
+              letterSpacing: "-1px",
+              color: "#f1f5f9",
+              marginBottom: "12px",
+            }}
+          >
+            Panduan Pendaftaran
+          </h2>
+          <p style={{ color: "#475569", fontSize: "15px" }}>
+            Untuk Owner, Kurir & Operator SPPG
           </p>
         </div>
-      </div>
 
-      <div style={{ display: "flex", gap: "20px" }}>
         <div
           style={{
-            width: "45px",
-            height: "45px",
-            borderRadius: "50%",
-            background: "#2563eb",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontWeight: "bold",
+            maxWidth: "680px",
+            margin: "0 auto",
           }}
         >
-          3
+          {[
+            {
+              step: 1,
+              color: "#2563eb",
+              title: "Lakukan Registrasi",
+              desc: (
+                <>
+                  Daftarkan akun sebagai <strong style={{ color: "#e2e8f0" }}>Owner</strong>,{" "}
+                  <strong style={{ color: "#e2e8f0" }}>Kurir</strong>, atau{" "}
+                  <strong style={{ color: "#e2e8f0" }}>Operator SPPG</strong> menggunakan
+                  email yang aktif dan data yang benar.
+                </>
+              ),
+            },
+            {
+              step: 2,
+              color: "#2563eb",
+              title: "Tunggu Validasi Admin",
+              desc: "Setelah registrasi, akun akan masuk ke proses verifikasi oleh Admin TriCa Catering. Mohon menunggu hingga proses validasi selesai.",
+            },
+            {
+              step: 3,
+              color: "#2563eb",
+              title: "Pantau Email",
+              desc: "Pantau inbox email yang digunakan saat registrasi. Jika disetujui, Anda akan menerima pemberitahuan dari TriCa Catering.",
+            },
+            {
+              step: 4,
+              color: "#22c55e",
+              title: "Login dan Mulai Menggunakan Sistem",
+              desc: "Setelah menerima email persetujuan, login menggunakan akun yang telah didaftarkan dan mulai gunakan fitur sesuai peran Anda.",
+            },
+          ].map(({ step, color, title, desc }, i, arr) => (
+            <div key={step}>
+              <div style={{ display: "flex", gap: "20px", alignItems: "flex-start" }}>
+                {/* Number + line */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <div
+                    style={{
+                      width: "42px",
+                      height: "42px",
+                      borderRadius: "50%",
+                      background: color,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: "800",
+                      fontSize: "15px",
+                      flexShrink: 0,
+                      boxShadow: `0 4px 16px ${color}55`,
+                    }}
+                  >
+                    {step}
+                  </div>
+                  {i < arr.length - 1 && (
+                    <div
+                      style={{
+                        width: "1px",
+                        flex: 1,
+                        minHeight: "32px",
+                        background: "rgba(37,99,235,0.25)",
+                        margin: "8px 0",
+                      }}
+                    />
+                  )}
+                </div>
+
+                {/* Content */}
+                <div style={{ paddingBottom: i < arr.length - 1 ? "8px" : "0" }}>
+                  <h3
+                    style={{
+                      fontSize: "16px",
+                      fontWeight: "700",
+                      color: "#f1f5f9",
+                      marginBottom: "8px",
+                      paddingTop: "8px",
+                    }}
+                  >
+                    {title}
+                  </h3>
+                  <p style={{ color: "#64748b", lineHeight: "1.8", fontSize: "14px", marginBottom: "24px" }}>
+                    {desc}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {/* Note */}
+          <div
+            style={{
+              marginTop: "8px",
+              padding: "16px 20px",
+              borderRadius: "12px",
+              background: "rgba(37,99,235,0.08)",
+              border: "1px solid rgba(37,99,235,0.18)",
+              color: "#94a3b8",
+              fontSize: "14px",
+              lineHeight: "1.8",
+            }}
+          >
+            <strong style={{ color: "#60a5fa" }}>Catatan:</strong> Role{" "}
+            <strong style={{ color: "#e2e8f0" }}>Klien</strong> tidak memerlukan validasi
+            admin dan dapat langsung menggunakan sistem setelah registrasi.
+          </div>
         </div>
+      </section>
 
-        <div>
-          <h3 style={{ marginBottom: "8px" }}>
-            Pantau Email
-          </h3>
-
-          <p style={{ color: "#94a3b8", lineHeight: "1.8" }}>
-            Pantau inbox email yang digunakan saat registrasi.
-            Jika akun disetujui, Anda akan menerima pemberitahuan
-            dari TriCa Catering.
-          </p>
-        </div>
-      </div>
-
-      <div style={{ display: "flex", gap: "20px" }}>
+      {/* ── CTA BANNER ── */}
+      <section className="wrap" style={{ paddingBottom: "80px" }}>
         <div
           style={{
-            width: "45px",
-            height: "45px",
-            borderRadius: "50%",
-            background: "#22c55e",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontWeight: "bold",
+            borderRadius: "24px",
+            background: "linear-gradient(135deg,rgba(37,99,235,0.18),rgba(99,102,241,0.12))",
+            border: "1px solid rgba(37,99,235,0.2)",
+            padding: "56px 48px",
+            textAlign: "center",
           }}
         >
-          4
-        </div>
-
-        <div>
-          <h3 style={{ marginBottom: "8px" }}>
-            Login dan Mulai Menggunakan Sistem
-          </h3>
-
-          <p style={{ color: "#94a3b8", lineHeight: "1.8" }}>
-            Setelah menerima email persetujuan, silakan login
-            menggunakan akun yang telah didaftarkan dan mulai
-            menggunakan fitur sesuai peran Anda.
+          <h2
+            style={{
+              fontSize: "clamp(24px,3vw,38px)",
+              fontWeight: "800",
+              letterSpacing: "-0.8px",
+              marginBottom: "14px",
+              color: "#f1f5f9",
+            }}
+          >
+            Siap memulai dengan TriCa Catering?
+          </h2>
+          <p style={{ color: "#64748b", fontSize: "15px", marginBottom: "30px" }}>
+            Daftarkan diri Anda sekarang dan nikmati kemudahan sistem catering modern.
           </p>
+          <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
+            <Link
+              to="/register"
+              style={{
+                padding: "14px 28px",
+                borderRadius: "12px",
+                background: "linear-gradient(135deg,#2563eb,#3b82f6)",
+                color: "white",
+                textDecoration: "none",
+                fontWeight: "700",
+                fontSize: "15px",
+                boxShadow: "0 10px 28px rgba(37,99,235,0.3)",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              Daftar Sekarang <FaArrowRight size={13} />
+            </Link>
+            <Link
+              to="/login"
+              style={{
+                padding: "14px 28px",
+                borderRadius: "12px",
+                border: "1px solid rgba(255,255,255,0.1)",
+                color: "#94a3b8",
+                textDecoration: "none",
+                fontWeight: "600",
+                fontSize: "15px",
+              }}
+            >
+              Sudah punya akun
+            </Link>
+          </div>
         </div>
-      </div>
-    </div>
+      </section>
 
-    <div
-      style={{
-        marginTop: "35px",
-        padding: "18px",
-        borderRadius: "16px",
-        background: "rgba(59,130,246,0.12)",
-        color: "#cbd5e1",
-        lineHeight: "1.8",
-      }}
-    >
-      <b>Catatan:</b> Role <b>Klien</b> tidak memerlukan validasi
-      admin dan dapat langsung menggunakan sistem setelah
-      melakukan registrasi.
-    </div>
-  </div>
-</section>
-
-      {/* FOOTER */}
+      {/* ── FOOTER ── */}
       <footer
         style={{
-          borderTop:
-            "1px solid rgba(255,255,255,0.05)",
-          padding: "40px 7%",
+          borderTop: "1px solid rgba(255,255,255,0.05)",
+          padding: "32px 48px",
           textAlign: "center",
-          color: "#94a3b8",
+          color: "#334155",
+          fontSize: "14px",
         }}
       >
-        © 2026 TriCa Catering —
-        Modern Catering Management
-        System
+        © 2026 TriCa Catering — Modern Catering Management System
       </footer>
     </div>
   );
 }
 
-/* ========================= */
+/* ── Sub-components ── */
 
-function StatCard({
-  icon,
-  title,
-  value,
-}) {
+function StatCard({ icon, title, value }) {
   return (
     <div
-      className="glass"
       style={{
-        borderRadius: "18px",
-        padding: "18px",
+        background: "rgba(255,255,255,0.05)",
+        border: "1px solid rgba(255,255,255,0.07)",
+        borderRadius: "14px",
+        padding: "16px 18px",
       }}
     >
-      <div
-        style={{
-          fontSize: "22px",
-          color: "#60a5fa",
-          marginBottom: "14px",
-        }}
-      >
-        {icon}
-      </div>
-
-      <div
-        style={{
-          color: "#cbd5e1",
-          fontSize: "14px",
-        }}
-      >
-        {title}
-      </div>
-
-      <div
-        style={{
-          fontSize: "30px",
-          fontWeight: "900",
-          marginTop: "6px",
-        }}
-      >
-        {value}
-      </div>
+      <div style={{ fontSize: "18px", color: "#3b82f6", marginBottom: "10px" }}>{icon}</div>
+      <div style={{ color: "#64748b", fontSize: "12px", fontWeight: "600", letterSpacing: "0.3px", textTransform: "uppercase" }}>{title}</div>
+      <div style={{ fontSize: "26px", fontWeight: "900", color: "#f1f5f9", marginTop: "4px" }}>{value}</div>
     </div>
   );
 }
 
-function FeatureCard({
-  icon,
-  title,
-  desc,
-}) {
+function FeatureCard({ icon, title, desc }) {
   return (
     <div
-      className="glass floating-card"
+      className="glass card-hover"
       style={{
-        borderRadius: "28px",
-        padding: "34px",
+        borderRadius: "20px",
+        padding: "32px",
       }}
     >
       <div
         style={{
-          width: "72px",
-          height: "72px",
-          borderRadius: "22px",
-          background:
-            "rgba(59,130,246,0.15)",
+          width: "52px",
+          height: "52px",
+          borderRadius: "14px",
+          background: "rgba(37,99,235,0.12)",
+          border: "1px solid rgba(37,99,235,0.18)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           color: "#60a5fa",
-          fontSize: "28px",
-          marginBottom: "24px",
+          fontSize: "22px",
+          marginBottom: "22px",
         }}
       >
         {icon}
       </div>
-
-      <h3
-        style={{
-          fontSize: "28px",
-          marginBottom: "14px",
-        }}
-      >
-        {title}
-      </h3>
-
-      <p
-        style={{
-          color: "#94a3b8",
-          lineHeight: "1.9",
-        }}
-      >
-        {desc}
-      </p>
+      <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#f1f5f9", marginBottom: "10px" }}>{title}</h3>
+      <p style={{ color: "#64748b", lineHeight: "1.75", fontSize: "14px" }}>{desc}</p>
     </div>
   );
 }
 
-function RoleCard({
-  icon,
-  title,
-  desc,
-  button,
-}) {
+function RoleCard({ icon, title, desc, button }) {
   return (
     <div
-      className="glass floating-card"
+      className="glass card-hover"
       style={{
-        borderRadius: "30px",
-        padding: "38px",
+        borderRadius: "20px",
+        padding: "32px",
         display: "flex",
         flexDirection: "column",
-        minHeight: "100%",
         position: "relative",
         overflow: "hidden",
       }}
     >
+      {/* Decorative glow */}
       <div
         style={{
           position: "absolute",
-          width: "220px",
-          height: "220px",
+          width: "180px",
+          height: "180px",
           borderRadius: "50%",
-          background:
-            "rgba(59,130,246,0.12)",
-          top: "-80px",
-          right: "-80px",
-          filter: "blur(20px)",
+          background: "rgba(37,99,235,0.08)",
+          top: "-60px",
+          right: "-60px",
+          filter: "blur(30px)",
+          pointerEvents: "none",
         }}
       />
 
       <div
         style={{
-          width: "76px",
-          height: "76px",
-          borderRadius: "24px",
-          background:
-            "rgba(59,130,246,0.15)",
+          width: "52px",
+          height: "52px",
+          borderRadius: "14px",
+          background: "rgba(37,99,235,0.12)",
+          border: "1px solid rgba(37,99,235,0.18)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           color: "#60a5fa",
-          fontSize: "30px",
-          marginBottom: "26px",
+          fontSize: "22px",
+          marginBottom: "20px",
           position: "relative",
           zIndex: 2,
         }}
@@ -1095,9 +976,10 @@ function RoleCard({
 
       <h3
         style={{
-          fontSize: "30px",
-          lineHeight: "1.3",
-          marginBottom: "18px",
+          fontSize: "18px",
+          fontWeight: "700",
+          color: "#f1f5f9",
+          marginBottom: "10px",
           position: "relative",
           zIndex: 2,
         }}
@@ -1107,10 +989,11 @@ function RoleCard({
 
       <p
         style={{
-          color: "#94a3b8",
-          lineHeight: "1.9",
+          color: "#64748b",
+          lineHeight: "1.75",
+          fontSize: "14px",
           flex: 1,
-          marginBottom: "34px",
+          marginBottom: "24px",
           position: "relative",
           zIndex: 2,
         }}
@@ -1121,21 +1004,18 @@ function RoleCard({
       <Link
         to="/register"
         style={{
-          width: "100%",
-          minHeight: "58px",
-          borderRadius: "16px",
-          background:
-            "linear-gradient(135deg,#2563eb,#3b82f6)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          textDecoration: "none",
+          display: "block",
+          textAlign: "center",
+          padding: "13px",
+          borderRadius: "10px",
+          background: "linear-gradient(135deg,#2563eb,#3b82f6)",
           color: "white",
-          fontWeight: "800",
+          textDecoration: "none",
+          fontWeight: "700",
+          fontSize: "14px",
           position: "relative",
           zIndex: 2,
-          boxShadow:
-            "0 14px 35px rgba(37,99,235,0.35)",
+          boxShadow: "0 8px 24px rgba(37,99,235,0.28)",
         }}
       >
         {button}

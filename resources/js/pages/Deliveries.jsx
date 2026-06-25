@@ -1,5 +1,4 @@
 // resources/js/pages/Deliveries.jsx
-
 import {
     Truck,
     Clock3,
@@ -9,830 +8,366 @@ import {
     Filter,
     ArrowUpRight,
 } from "lucide-react";
-
-import {
-    useMemo,
-    useRef,
-    useState,
-} from "react";
-
+import { useMemo, useRef, useState } from "react";
 import AdminLayout from "../layouts/AdminLayout";
 
 export default function Deliveries() {
-    const deliveryListRef =
-        useRef(null);
+    const deliveryListRef = useRef(null);
+    const [search, setSearch] = useState("");
+    const [statusFilter, setStatusFilter] = useState("All");
 
-    const [search, setSearch] =
-        useState("");
-
-    const [statusFilter, setStatusFilter] =
-        useState("All");
-
-    // TANPA DATA DUMMY
     const deliveries = [];
 
-    const filteredDeliveries =
-        useMemo(() => {
-            return deliveries.filter(
-                (delivery) => {
-                    const matchSearch =
-                        delivery.orderCode
-                            ?.toLowerCase()
-                            .includes(
-                                search.toLowerCase()
-                            ) ||
-                        delivery.customer
-                            ?.toLowerCase()
-                            .includes(
-                                search.toLowerCase()
-                            ) ||
-                        delivery.courier
-                            ?.toLowerCase()
-                            .includes(
-                                search.toLowerCase()
-                            );
-
-                    const matchStatus =
-                        statusFilter ===
-                            "All" ||
-                        delivery.status ===
-                            statusFilter;
-
-                    return (
-                        matchSearch &&
-                        matchStatus
-                    );
-                }
-            );
-        }, [search, statusFilter]);
+    const filteredDeliveries = useMemo(() => {
+        return deliveries.filter((delivery) => {
+            const matchSearch =
+                delivery.orderCode?.toLowerCase().includes(search.toLowerCase()) ||
+                delivery.customer?.toLowerCase().includes(search.toLowerCase()) ||
+                delivery.courier?.toLowerCase().includes(search.toLowerCase());
+            const matchStatus = statusFilter === "All" || delivery.status === statusFilter;
+            return matchSearch && matchStatus;
+        });
+    }, [search, statusFilter]);
 
     const stats = [
         {
             title: "Total Deliveries",
-            value:
-                deliveries.length,
-            icon: (
-                <Truck size={22} />
-            ),
+            value: deliveries.length,
+            icon: <Truck size={22} />,
             color: "#3b82f6",
-            bg: "rgba(59,130,246,0.12)",
+            bg: "rgba(59,130,246,0.15)",
         },
-
         {
             title: "On Delivery",
-            value:
-                deliveries.filter(
-                    (d) =>
-                        d.status ===
-                        "On Delivery"
-                ).length,
-            icon: (
-                <Clock3 size={22} />
-            ),
+            value: deliveries.filter((d) => d.status === "On Delivery").length,
+            icon: <Clock3 size={22} />,
             color: "#f59e0b",
-            bg: "rgba(245,158,11,0.12)",
+            bg: "rgba(245,158,11,0.15)",
         },
-
         {
             title: "Delivered",
-            value:
-                deliveries.filter(
-                    (d) =>
-                        d.status ===
-                        "Delivered"
-                ).length,
-            icon: (
-                <CheckCircle2 size={22} />
-            ),
+            value: deliveries.filter((d) => d.status === "Delivered").length,
+            icon: <CheckCircle2 size={22} />,
             color: "#10b981",
-            bg: "rgba(16,185,129,0.12)",
+            bg: "rgba(16,185,129,0.15)",
         },
-
         {
             title: "Completed",
-            value:
-                deliveries.filter(
-                    (d) =>
-                        d.status ===
-                        "Completed"
-                ).length,
-            icon: (
-                <PackageCheck size={22} />
-            ),
+            value: deliveries.filter((d) => d.status === "Completed").length,
+            icon: <PackageCheck size={22} />,
             color: "#8b5cf6",
-            bg: "rgba(139,92,246,0.12)",
+            bg: "rgba(139,92,246,0.15)",
         },
     ];
 
+    const getStatusStyle = (status) => {
+        switch (status) {
+            case "On Delivery": return { background: "rgba(245,158,11,0.15)", color: "#fbbf24" };
+            case "Delivered":   return { background: "rgba(16,185,129,0.15)", color: "#34d399" };
+            case "Completed":   return { background: "rgba(139,92,246,0.15)", color: "#a78bfa" };
+            default:            return { background: "rgba(148,163,184,0.15)", color: "#cbd5e1" };
+        }
+    };
+
     return (
         <AdminLayout>
-            {/* HERO */}
-            <div
-                style={{
-                    width: "100%",
-                    borderRadius:
-                        "32px",
-                    padding: "38px",
-                    background:
-                        "linear-gradient(135deg,#0f172a 0%,#111827 45%,#1e293b 100%)",
-                    border:
-                        "1px solid rgba(255,255,255,0.06)",
-                    position:
-                        "relative",
-                    overflow:
-                        "hidden",
-                    marginBottom:
-                        "30px",
-                    boxSizing:
-                        "border-box",
-                }}
-            >
-                {/* GLOW */}
-                <div
-                    style={{
-                        position:
-                            "absolute",
-                        top: "-120px",
-                        right:
-                            "-80px",
-                        width: "260px",
-                        height:
-                            "260px",
-                        borderRadius:
-                            "999px",
-                        background:
-                            "rgba(59,130,246,0.16)",
-                        filter:
-                            "blur(100px)",
-                    }}
-                />
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+                .del-root, .del-root * {
+                    font-family: 'Inter', system-ui, sans-serif;
+                    box-sizing: border-box;
+                }
+                .stat-card {
+                    transition: transform .2s ease, box-shadow .2s ease;
+                    cursor: default;
+                }
+                .stat-card:hover {
+                    transform: translateY(-3px);
+                    box-shadow: 0 16px 48px rgba(0,0,0,.35);
+                }
+            `}</style>
 
-                <div
-                    style={{
-                        position:
-                            "relative",
-                        zIndex: 2,
-                        display:
-                            "flex",
-                        justifyContent:
-                            "space-between",
-                        alignItems:
-                            "center",
-                        flexWrap:
-                            "wrap",
-                        gap: "24px",
-                    }}
-                >
-                    <div>
-                        <div
-                            style={{
-                                display:
-                                    "inline-flex",
-                                alignItems:
-                                    "center",
-                                gap: "8px",
-                                padding:
-                                    "8px 16px",
-                                borderRadius:
-                                    "999px",
-                                background:
-                                    "rgba(59,130,246,0.12)",
-                                border:
-                                    "1px solid rgba(59,130,246,0.18)",
-                                color:
-                                    "#60a5fa",
-                                fontSize:
-                                    "13px",
-                                fontWeight:
-                                    "600",
-                                marginBottom:
-                                    "20px",
-                            }}
-                        >
-                            <Truck
-                                size={15}
-                            />
-                            Delivery
-                            Tracking
+            <div className="del-root">
+
+                {/* HERO */}
+                <div style={{
+                    width: "100%",
+                    borderRadius: "32px",
+                    padding: "42px",
+                    background: "linear-gradient(135deg,#0f172a 0%,#111827 45%,#1e293b 100%)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    position: "relative",
+                    overflow: "hidden",
+                    marginBottom: "32px",
+                }}>
+                    <div style={{
+                        position: "absolute", top: "-120px", right: "-80px",
+                        width: "280px", height: "280px", borderRadius: "999px",
+                        background: "rgba(59,130,246,0.18)", filter: "blur(120px)",
+                    }} />
+
+                    <div style={{
+                        position: "relative", zIndex: 2,
+                        display: "flex", justifyContent: "space-between",
+                        alignItems: "center", flexWrap: "wrap", gap: "24px",
+                    }}>
+                        <div>
+                            <div style={{
+                                display: "inline-flex", alignItems: "center", gap: "8px",
+                                padding: "8px 16px", borderRadius: "999px",
+                                background: "rgba(59,130,246,0.12)",
+                                border: "1px solid rgba(59,130,246,0.18)",
+                                color: "#60a5fa", fontSize: "13px", fontWeight: "600",
+                                marginBottom: "20px",
+                            }}>
+                                <Truck size={15} />
+                                Delivery Tracking
+                            </div>
+
+                            <h1 style={{
+                                margin: 0, color: "white", fontSize: "42px",
+                                fontWeight: "800", lineHeight: 1.2, letterSpacing: "-1px",
+                            }}>
+                                Delivery<br />Overview
+                            </h1>
+
+                            <p style={{
+                                margin: "18px 0 0", color: "#94a3b8",
+                                fontSize: "15px", lineHeight: "30px", maxWidth: "720px",
+                            }}>
+                                Pantau seluruh aktivitas pengiriman catering secara realtime
+                                dengan dashboard modern yang clean, elegant, dan profesional.
+                            </p>
                         </div>
 
-                        <h1
+                        <button
+                            onClick={() => deliveryListRef.current?.scrollIntoView({ behavior: "smooth" })}
                             style={{
-                                margin: 0,
-                                color:
-                                    "white",
-                                fontSize:
-                                    "42px",
-                                fontWeight:
-                                    "800",
-                                lineHeight:
-                                    1.2,
-                                letterSpacing:
-                                    "-1px",
+                                height: "56px", padding: "0 24px", border: "none",
+                                borderRadius: "16px",
+                                background: "linear-gradient(135deg,#2563eb,#3b82f6)",
+                                color: "white", fontWeight: "700", fontSize: "14px",
+                                display: "flex", alignItems: "center", gap: "10px",
+                                cursor: "pointer", boxShadow: "0 12px 30px rgba(37,99,235,0.35)",
+                                transition: "all .2s ease",
                             }}
                         >
-                            Delivery
-                            Overview
-                        </h1>
-
-                        <p
-                            style={{
-                                margin:
-                                    "18px 0 0",
-                                color:
-                                    "#94a3b8",
-                                fontSize:
-                                    "15px",
-                                lineHeight:
-                                    "30px",
-                                maxWidth:
-                                    "720px",
-                            }}
-                        >
-                            Pantau
-                            seluruh
-                            aktivitas
-                            pengiriman
-                            catering
-                            secara
-                            realtime
-                            dengan
-                            dashboard
-                            modern yang
-                            clean,
-                            elegant,
-                            dan
-                            profesional.
-                        </p>
+                            View Reports
+                            <ArrowUpRight size={18} />
+                        </button>
                     </div>
-
-                    {/* BUTTON */}
-                    <button
-                        onClick={() => {
-                            deliveryListRef.current?.scrollIntoView(
-                                {
-                                    behavior:
-                                        "smooth",
-                                }
-                            );
-                        }}
-                        style={{
-                            height:
-                                "56px",
-                            padding:
-                                "0 24px",
-                            border:
-                                "none",
-                            borderRadius:
-                                "16px",
-                            background:
-                                "linear-gradient(135deg,#2563eb,#3b82f6)",
-                            color:
-                                "white",
-                            fontWeight:
-                                "700",
-                            display:
-                                "flex",
-                            alignItems:
-                                "center",
-                            gap: "10px",
-                            cursor:
-                                "pointer",
-                            boxShadow:
-                                "0 12px 30px rgba(37,99,235,0.35)",
-                        }}
-                    >
-                        View Reports
-                        <ArrowUpRight
-                            size={18}
-                        />
-                    </button>
                 </div>
-            </div>
 
-            {/* STATS */}
-            <div
-                style={{
+                {/* STATS — 4 kolom 1 baris */}
+                <div style={{
                     display: "grid",
-                    gridTemplateColumns:
-                        "repeat(4,minmax(0,1fr))",
-                    gap: "22px",
-                    marginBottom:
-                        "30px",
-                }}
-            >
-                {stats.map(
-                    (item, index) => (
-                        <div
-                            key={index}
-                            style={{
-                                background:
-                                    "linear-gradient(180deg,#111827 0%,#0f172a 100%)",
-                                border:
-                                    "1px solid rgba(255,255,255,0.06)",
-                                borderRadius:
-                                    "26px",
-                                padding:
-                                    "24px",
-                                position:
-                                    "relative",
-                                overflow:
-                                    "hidden",
-                                minWidth: 0,
-                            }}
-                        >
-                            <div
-                                style={{
-                                    position:
-                                        "absolute",
-                                    top: "-45px",
-                                    right:
-                                        "-45px",
-                                    width:
-                                        "130px",
-                                    height:
-                                        "130px",
-                                    borderRadius:
-                                        "999px",
-                                    background:
-                                        item.bg,
-                                }}
-                            />
+                    gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                    gap: "16px",
+                    marginBottom: "24px",
+                }}>
+                    {stats.map((item, index) => (
+                        <div key={index} className="stat-card" style={{
+                            background: "linear-gradient(160deg,#0f172a 0%,#0d1117 100%)",
+                            border: `1px solid ${item.bg.replace("0.15", "0.25")}`,
+                            borderRadius: "20px",
+                            padding: "24px",
+                            position: "relative",
+                            overflow: "hidden",
+                            cursor: "default",
+                        }}>
+                            {/* Accent Line */}
+                            <div style={{
+                                position: "absolute", top: 0, left: "24px", right: "24px",
+                                height: "2px",
+                                background: `linear-gradient(90deg, ${item.color}, transparent)`,
+                            }} />
 
-                            <div
-                                style={{
-                                    position:
-                                        "relative",
-                                    zIndex: 2,
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        width:
-                                            "58px",
-                                        height:
-                                            "58px",
-                                        borderRadius:
-                                            "18px",
-                                        background:
-                                            item.bg,
-                                        color:
-                                            item.color,
-                                        display:
-                                            "flex",
-                                        alignItems:
-                                            "center",
-                                        justifyContent:
-                                            "center",
-                                        marginBottom:
-                                            "18px",
-                                    }}
-                                >
-                                    {
-                                        item.icon
-                                    }
+                            {/* Glow */}
+                            <div style={{
+                                position: "absolute", top: "-40px", right: "-40px",
+                                width: "110px", height: "110px", borderRadius: "999px",
+                                background: item.bg, filter: "blur(30px)",
+                            }} />
+
+                            <div style={{ position: "relative", zIndex: 2 }}>
+                                {/* Icon */}
+                                <div style={{
+                                    width: "44px", height: "44px", borderRadius: "14px",
+                                    background: item.bg, color: item.color,
+                                    display: "flex", alignItems: "center",
+                                    justifyContent: "center", marginBottom: "20px",
+                                }}>
+                                    {item.icon}
                                 </div>
 
-                                <div
-                                    style={{
-                                        color:
-                                            "#94a3b8",
-                                        fontSize:
-                                            "14px",
-                                        marginBottom:
-                                            "10px",
-                                    }}
-                                >
-                                    {
-                                        item.title
-                                    }
+                                {/* Value */}
+                                <div style={{
+                                    color: "white", fontSize: "36px", fontWeight: "800",
+                                    lineHeight: 1, letterSpacing: "-1px", marginBottom: "8px",
+                                }}>
+                                    {item.value}
                                 </div>
 
-                                <div
-                                    style={{
-                                        color:
-                                            "white",
-                                        fontSize:
-                                            "34px",
-                                        fontWeight:
-                                            "800",
-                                    }}
-                                >
-                                    {
-                                        item.value
-                                    }
+                                {/* Title */}
+                                <div style={{ color: "#475569", fontSize: "13px", fontWeight: "500" }}>
+                                    {item.title}
                                 </div>
                             </div>
                         </div>
-                    )
-                )}
-            </div>
-
-            {/* TABLE */}
-            <div
-                ref={deliveryListRef}
-                style={{
-                    background:
-                        "linear-gradient(180deg,#111827 0%,#0f172a 100%)",
-                    border:
-                        "1px solid rgba(255,255,255,0.06)",
-                    borderRadius:
-                        "30px",
-                    padding: "30px",
-                    overflow:
-                        "hidden",
-                }}
-            >
-                {/* HEADER */}
-                <div
-                    style={{
-                        display: "flex",
-                        justifyContent:
-                            "space-between",
-                        alignItems:
-                            "center",
-                        flexWrap:
-                            "wrap",
-                        gap: "18px",
-                        marginBottom:
-                            "28px",
-                    }}
-                >
-                    <div>
-                        <h2
-                            style={{
-                                margin: 0,
-                                color:
-                                    "white",
-                                fontSize:
-                                    "26px",
-                                fontWeight:
-                                    "700",
-                            }}
-                        >
-                            Delivery
-                            List
-                        </h2>
-
-                        <p
-                            style={{
-                                margin:
-                                    "8px 0 0",
-                                color:
-                                    "#94a3b8",
-                                fontSize:
-                                    "14px",
-                            }}
-                        >
-                            Delivery and
-                            shipment
-                            data
-                        </p>
-                    </div>
-
-                    {/* ACTION */}
-                    <div
-                        style={{
-                            display:
-                                "flex",
-                            alignItems:
-                                "center",
-                            gap: "12px",
-                            flexWrap:
-                                "wrap",
-                        }}
-                    >
-                        {/* SEARCH */}
-                        <div
-                            style={{
-                                height:
-                                    "50px",
-                                minWidth:
-                                    "250px",
-                                border:
-                                    "1px solid rgba(255,255,255,0.06)",
-                                background:
-                                    "rgba(255,255,255,0.04)",
-                                borderRadius:
-                                    "16px",
-                                display:
-                                    "flex",
-                                alignItems:
-                                    "center",
-                                padding:
-                                    "0 16px",
-                                gap: "10px",
-                            }}
-                        >
-                            <Search
-                                size={18}
-                                color="#94a3b8"
-                            />
-
-                            <input
-                                type="text"
-                                value={
-                                    search
-                                }
-                                onChange={(
-                                    e
-                                ) =>
-                                    setSearch(
-                                        e
-                                            .target
-                                            .value
-                                    )
-                                }
-                                placeholder="Search deliveries..."
-                                style={{
-                                    flex: 1,
-                                    background:
-                                        "transparent",
-                                    border:
-                                        "none",
-                                    outline:
-                                        "none",
-                                    color:
-                                        "white",
-                                    fontSize:
-                                        "14px",
-                                }}
-                            />
-                        </div>
-
-                        {/* FILTER */}
-                        <select
-                            value={
-                                statusFilter
-                            }
-                            onChange={(
-                                e
-                            ) =>
-                                setStatusFilter(
-                                    e
-                                        .target
-                                        .value
-                                )
-                            }
-                            style={{
-                                height:
-                                    "50px",
-                                padding:
-                                    "0 20px",
-                                border:
-                                    "1px solid rgba(255,255,255,0.06)",
-                                borderRadius:
-                                    "16px",
-                                background:
-                                    "rgba(255,255,255,0.04)",
-                                color:
-                                    "white",
-                                fontWeight:
-                                    "600",
-                                cursor:
-                                    "pointer",
-                                outline:
-                                    "none",
-                            }}
-                        >
-                            <option
-                                value="All"
-                                style={{
-                                    color:
-                                        "black",
-                                }}
-                            >
-                                All
-                            </option>
-
-                            <option
-                                value="On Delivery"
-                                style={{
-                                    color:
-                                        "black",
-                                }}
-                            >
-                                On Delivery
-                            </option>
-
-                            <option
-                                value="Delivered"
-                                style={{
-                                    color:
-                                        "black",
-                                }}
-                            >
-                                Delivered
-                            </option>
-
-                            <option
-                                value="Completed"
-                                style={{
-                                    color:
-                                        "black",
-                                }}
-                            >
-                                Completed
-                            </option>
-                        </select>
-                    </div>
+                    ))}
                 </div>
 
-                {/* TABLE */}
-                <div
-                    style={{
-                        width: "100%",
-                        overflowX:
-                            "auto",
-                    }}
-                >
-                    <table
-                        style={{
-                            width: "100%",
-                            borderCollapse:
-                                "collapse",
-                            minWidth:
-                                "900px",
-                        }}
-                    >
-                        <thead>
-                            <tr>
-                                {[
-                                    "Order Code",
-                                    "Customer",
-                                    "Courier",
-                                    "Delivery Date",
-                                    "Status",
-                                ].map(
-                                    (
-                                        item,
-                                        index
-                                    ) => (
-                                        <th
-                                            key={
-                                                index
-                                            }
-                                            style={{
-                                                textAlign:
-                                                    "left",
-                                                padding:
-                                                    "18px 20px",
-                                                color:
-                                                    "#94a3b8",
-                                                fontSize:
-                                                    "13px",
-                                                fontWeight:
-                                                    "600",
-                                                borderBottom:
-                                                    "1px solid rgba(255,255,255,0.06)",
-                                            }}
-                                        >
-                                            {
-                                                item
-                                            }
+                {/* TABLE SECTION */}
+                <div ref={deliveryListRef} style={{
+                    background: "linear-gradient(180deg,#111827 0%,#0f172a 100%)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    borderRadius: "30px",
+                    padding: "30px",
+                    overflow: "hidden",
+                }}>
+                    {/* Header */}
+                    <div style={{
+                        display: "flex", justifyContent: "space-between",
+                        alignItems: "center", flexWrap: "wrap", gap: "18px",
+                        marginBottom: "28px",
+                    }}>
+                        <div>
+                            <h2 style={{ margin: 0, color: "white", fontSize: "26px", fontWeight: "700" }}>
+                                Delivery List
+                            </h2>
+                            <p style={{ margin: "8px 0 0", color: "#94a3b8", fontSize: "14px" }}>
+                                Delivery and shipment data
+                            </p>
+                        </div>
+
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+                            {/* Search */}
+                            <div style={{
+                                height: "50px", minWidth: "260px",
+                                border: "1px solid rgba(255,255,255,0.06)",
+                                background: "rgba(255,255,255,0.04)",
+                                borderRadius: "16px", display: "flex",
+                                alignItems: "center", padding: "0 16px", gap: "10px",
+                            }}>
+                                <Search size={18} color="#94a3b8" />
+                                <input
+                                    type="text"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    placeholder="Search deliveries..."
+                                    style={{
+                                        flex: 1, background: "transparent",
+                                        border: "none", outline: "none",
+                                        color: "white", fontSize: "14px",
+                                    }}
+                                />
+                            </div>
+
+                            {/* Filter */}
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                style={{
+                                    height: "50px", padding: "0 18px",
+                                    border: "1px solid rgba(255,255,255,0.06)",
+                                    borderRadius: "16px",
+                                    background: "rgba(255,255,255,0.04)",
+                                    color: "white", fontWeight: "600",
+                                    fontSize: "14px", cursor: "pointer", outline: "none",
+                                    minWidth: "150px",
+                                }}
+                            >
+                                <option value="All" style={{ color: "black" }}>All Status</option>
+                                <option value="On Delivery" style={{ color: "black" }}>On Delivery</option>
+                                <option value="Delivered" style={{ color: "black" }}>Delivered</option>
+                                <option value="Completed" style={{ color: "black" }}>Completed</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Table */}
+                    <div style={{ width: "100%", overflowX: "auto", borderRadius: "16px" }}>
+                        <table style={{
+                            width: "100%", borderCollapse: "separate",
+                            borderSpacing: 0, minWidth: "900px",
+                        }}>
+                            <thead>
+                                <tr style={{ background: "rgba(255,255,255,0.03)" }}>
+                                    {["Order Code", "Customer", "Courier", "Delivery Date", "Status"].map((col, index) => (
+                                        <th key={index} style={{
+                                            textAlign: "left", padding: "16px",
+                                            color: "#94a3b8", fontSize: "12px",
+                                            fontWeight: "700", textTransform: "uppercase",
+                                            letterSpacing: ".08em",
+                                            borderBottom: "1px solid rgba(255,255,255,.06)",
+                                            ...(index === 0 && { borderTopLeftRadius: "14px" }),
+                                            ...(index === 4 && { borderTopRightRadius: "14px" }),
+                                        }}>
+                                            {col}
                                         </th>
-                                    )
-                                )}
-                            </tr>
-                        </thead>
+                                    ))}
+                                </tr>
+                            </thead>
 
-                        <tbody>
-                            {filteredDeliveries.length >
-                            0 ? (
-                                filteredDeliveries.map(
-                                    (
-                                        delivery,
-                                        index
-                                    ) => (
+                            <tbody>
+                                {filteredDeliveries.length > 0 ? (
+                                    filteredDeliveries.map((delivery, index) => (
                                         <tr
-                                            key={
-                                                index
-                                            }
-                                            style={{
-                                                borderBottom:
-                                                    "1px solid rgba(255,255,255,0.05)",
-                                            }}
+                                            key={index}
+                                            style={{ transition: "all .2s ease" }}
+                                            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,.025)")}
+                                            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                                         >
-                                            <td
-                                                style={{
-                                                    padding:
-                                                        "20px",
-                                                    color:
-                                                        "white",
-                                                }}
-                                            >
-                                                {
-                                                    delivery.orderCode
-                                                }
+                                            <td style={{ padding: "16px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                                                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                                    <div style={{
+                                                        width: "36px", height: "36px", borderRadius: "10px",
+                                                        background: "rgba(59,130,246,.15)", color: "#60a5fa",
+                                                        display: "flex", alignItems: "center",
+                                                        justifyContent: "center", fontWeight: "700", fontSize: "13px",
+                                                    }}>
+                                                        {delivery.orderCode?.charAt(0)?.toUpperCase()}
+                                                    </div>
+                                                    <span style={{ color: "white", fontWeight: "600", fontSize: "14px" }}>
+                                                        {delivery.orderCode}
+                                                    </span>
+                                                </div>
                                             </td>
-
-                                            <td
-                                                style={{
-                                                    padding:
-                                                        "20px",
-                                                    color:
-                                                        "#cbd5e1",
-                                                }}
-                                            >
-                                                {
-                                                    delivery.customer
-                                                }
+                                            <td style={{ padding: "16px", color: "#cbd5e1", fontSize: "14px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                                                {delivery.customer}
                                             </td>
-
-                                            <td
-                                                style={{
-                                                    padding:
-                                                        "20px",
-                                                    color:
-                                                        "#cbd5e1",
-                                                }}
-                                            >
-                                                {
-                                                    delivery.courier
-                                                }
+                                            <td style={{ padding: "16px", color: "#cbd5e1", fontSize: "14px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                                                {delivery.courier}
                                             </td>
-
-                                            <td
-                                                style={{
-                                                    padding:
-                                                        "20px",
-                                                    color:
-                                                        "#cbd5e1",
-                                                }}
-                                            >
-                                                {
-                                                    delivery.date
-                                                }
+                                            <td style={{ padding: "16px", color: "#94a3b8", fontSize: "14px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                                                {delivery.date}
                                             </td>
-
-                                            <td
-                                                style={{
-                                                    padding:
-                                                        "20px",
-                                                }}
-                                            >
-                                                <span
-                                                    style={{
-                                                        padding:
-                                                            "8px 14px",
-                                                        borderRadius:
-                                                            "999px",
-                                                        fontSize:
-                                                            "12px",
-                                                        fontWeight:
-                                                            "700",
-                                                        background:
-                                                            delivery.status ===
-                                                            "Completed"
-                                                                ? "rgba(139,92,246,0.15)"
-                                                                : delivery.status ===
-                                                                  "Delivered"
-                                                                ? "rgba(16,185,129,0.15)"
-                                                                : "rgba(245,158,11,0.15)",
-                                                        color:
-                                                            delivery.status ===
-                                                            "Completed"
-                                                                ? "#8b5cf6"
-                                                                : delivery.status ===
-                                                                  "Delivered"
-                                                                ? "#10b981"
-                                                                : "#f59e0b",
-                                                    }}
-                                                >
-                                                    {
-                                                        delivery.status
-                                                    }
+                                            <td style={{ padding: "16px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                                                <span style={{
+                                                    padding: "6px 14px", borderRadius: "999px",
+                                                    fontSize: "12px", fontWeight: "700",
+                                                    ...getStatusStyle(delivery.status),
+                                                }}>
+                                                    {delivery.status}
                                                 </span>
                                             </td>
                                         </tr>
-                                    )
-                                )
-                            ) : (
-                                <tr>
-                                    <td
-                                        colSpan={
-                                            5
-                                        }
-                                        style={{
-                                            padding:
-                                                "80px 20px",
-                                            textAlign:
-                                                "center",
-                                            color:
-                                                "#64748b",
-                                            fontSize:
-                                                "15px",
-                                        }}
-                                    >
-                                        Belum ada
-                                        data
-                                        delivery
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={5} style={{
+                                            padding: "80px 20px", textAlign: "center",
+                                            color: "#64748b", fontSize: "15px",
+                                        }}>
+                                            Belum ada data delivery
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
+
             </div>
         </AdminLayout>
     );

@@ -54,6 +54,60 @@ export default function MenuHarianSPPG() {
         }
     };
 
+    const handleSaveMenu = async () => {
+    try {
+
+        const formData = new FormData();
+
+        formData.append(
+            "nama_menu",
+            form.nama_menu
+        );
+
+        formData.append(
+            "deskripsi",
+            form.deskripsi
+        );
+
+        formData.append(
+            "kalori",
+            form.kalori
+        );
+
+        formData.append(
+            "protein",
+            form.protein
+        );
+
+        formData.append(
+            "lemak",
+            form.lemak
+        );
+
+        formData.append(
+            "karbohidrat",
+            form.karbo
+        );
+
+        await axios.post(
+            "/sppg/menus",
+            formData
+        );
+
+        alert("Menu berhasil disimpan");
+
+        loadData();
+
+        setOpenModal(false);
+
+    } catch (err) {
+
+        console.log(err);
+
+        alert("Gagal menyimpan menu");
+    }
+};
+
     const handleChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });
     };
@@ -324,9 +378,12 @@ export default function MenuHarianSPPG() {
                     Batal
                 </button>
 
-                <button style={btnSave}>
-                    Simpan Menu
-                </button>
+                <button
+    style={btnSave}
+    onClick={handleSaveMenu}
+>
+    Simpan Menu
+</button>
             </div>
 
         </div>

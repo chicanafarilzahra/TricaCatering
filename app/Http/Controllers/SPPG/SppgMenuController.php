@@ -20,23 +20,25 @@ class SppgMenuController extends Controller
 }
 
     public function store(Request $request)
-    {
-        $request->validate([
-            'nama_menu' => 'required',
-        ]);
+{
+    dd($request->all());
 
-        return SppgMenu::create([
-            'sppg_id' => Auth::id(),
-            'nama_menu' => $request->nama_menu,
-            'deskripsi' => $request->deskripsi,
-            'harga' => $request->harga,
-            'kalori' => $request->kalori,
-            'protein' => $request->protein,
-            'karbohidrat' => $request->karbohidrat,
-            'lemak' => $request->lemak,
-            'is_active' => true,
-        ]);
-    }
+    $request->validate([
+        'nama_menu' => 'required',
+    ]);
+
+    return SppgMenu::create([
+        'sppg_id' => Auth::id(),
+        'nama_menu' => $request->nama_menu,
+        'deskripsi' => $request->deskripsi,
+        'harga' => $request->harga,
+        'kalori' => $request->kalori,
+        'protein' => $request->protein,
+        'karbohidrat' => $request->karbohidrat,
+        'lemak' => $request->lemak,
+        'is_active' => true,
+    ]);
+}
 
     public function update(Request $request, $id)
 {

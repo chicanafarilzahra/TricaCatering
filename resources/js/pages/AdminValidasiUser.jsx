@@ -172,240 +172,224 @@ const filteredUsers =
 
     return (
         <AdminLayout>
-            {/* HERO */}
-            <div
-    style={{
-    width: "100%",
-    borderRadius: "32px",
-    padding: "36px",
-    background:
-        "linear-gradient(135deg,#0f172a 0%,#111827 45%,#1e293b 100%)",
-    border:
-        "1px solid rgba(255,255,255,0.06)",
-    marginBottom: "28px",
-    position: "relative",
-    overflow: "hidden",
-    boxSizing: "border-box",
-}}
->   
-                <div
-                    style={{
-                        position:
-                            "absolute",
-                        top: "-100px",
-                        right: "-50px",
-                        width:
-                            "220px",
-                        height:
-                            "220px",
-                        borderRadius:
-                            "999px",
-                        background:
-                            "rgba(59,130,246,0.15)",
-                        filter:
-                            "blur(90px)",
-                    }}
-                />
+            <style>{`
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-                <div
+.validasi-root *{
+    font-family:'Inter',sans-serif;
+}
+`}</style>
+            <div className="validasi-root">
+    <div
+        style={{
+            fontFamily: "Inter, sans-serif",
+        }}
+    >
+
+           {/* HERO */}
+<div
+    style={{
+        position: "relative",
+        borderRadius: "24px",
+        padding: "40px",
+        background:
+            "linear-gradient(135deg,#0d1117 0%,#0f172a 60%,#131c2e 100%)",
+        border:
+            "1px solid rgba(255,255,255,.07)",
+        overflow: "hidden",
+        marginBottom: "24px",
+    }}
+>
+    {/* Grid Texture */}
+    <div
+        style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage:
+                "radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
+            pointerEvents: "none",
+        }}
+    />
+
+    {/* Glow */}
+    <div
+        style={{
+            position: "absolute",
+            top: "-80px",
+            right: "60px",
+            width: "300px",
+            height: "300px",
+            borderRadius: "999px",
+            background:
+                "rgba(59,130,246,0.12)",
+            filter: "blur(90px)",
+            pointerEvents: "none",
+        }}
+    />
+
+    <div
+        style={{
+            position: "absolute",
+            bottom: "-60px",
+            right: "-40px",
+            width: "200px",
+            height: "200px",
+            borderRadius: "999px",
+            background:
+                "rgba(139,92,246,0.1)",
+            filter: "blur(70px)",
+            pointerEvents: "none",
+        }}
+    />
+
+    <div
+        style={{
+            position: "relative",
+            zIndex: 2,
+        }}
+    >
+        <div
+            style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "6px 14px",
+                borderRadius: "999px",
+                background:
+                    "rgba(59,130,246,0.1)",
+                border:
+                    "1px solid rgba(59,130,246,0.22)",
+                color: "#60a5fa",
+                fontSize: "12px",
+                fontWeight: "600",
+                letterSpacing: "0.04em",
+                textTransform: "uppercase",
+                marginBottom: "22px",
+            }}
+        >
+            <ShieldCheck size={14} />
+            User Validation
+        </div>
+
+        <h1
+            style={{
+                margin: 0,
+                fontSize:
+                    "clamp(28px,3.5vw,44px)",
+                lineHeight: 1.15,
+                color: "white",
+                fontWeight: "800",
+                letterSpacing: "-1.5px",
+                maxWidth: "650px",
+            }}
+        >
+            Kelola proses
+            <br />
+            <span
+                style={{
+                    background:
+                        "linear-gradient(90deg,#60a5fa,#a78bfa)",
+                    WebkitBackgroundClip:
+                        "text",
+                    WebkitTextFillColor:
+                        "transparent",
+                }}
+            >
+                validasi pengguna
+            </span>
+        </h1>
+
+        <p
+            style={{
+                margin: "16px 0 0",
+                color: "#64748b",
+                fontSize: "15px",
+                lineHeight: "1.8",
+                maxWidth: "580px",
+            }}
+        >
+            Kelola pendaftaran Owner,
+            Kurir, dan Operator SPPG
+            yang menunggu persetujuan
+            admin secara cepat dan
+            terpusat.
+        </p>
+    </div>
+</div>
+
+{/* STATS GRID */}
+<div
     style={{
         display: "grid",
         gridTemplateColumns:
-            "repeat(auto-fit,minmax(220px,1fr))",
-        gap: "18px",
-        marginBottom: "28px",
+            "repeat(4, minmax(0,1fr))",
+        gap: "16px",
+        marginBottom: "24px",
     }}
->
-    {[
-        {
-            title: "Owner",
-            value: ownerCount,
-            icon: <Store />,
-        },
-        {
-            title: "Kurir",
-            value: kurirCount,
-            icon: <Truck />,
-        },
-        {
-            title: "Operator SPPG",
-            value: sppgCount,
-            icon: (
-                <ClipboardList />
-            ),
-        },
-        {
-            title: "Rejected",
-            value: rejectedCount,
-            icon: <UserX />,
-        },
-    ].map((item) => (
-        <div
-            key={item.title}
-            style={{
-                background:
-                    "#111827",
-                border:
-                    "1px solid rgba(255,255,255,.06)",
-                borderRadius:
-                    "24px",
-                padding: "24px",
-            }}
-        >
-            <div
-                style={{
-                    display: "flex",
-                    justifyContent:
-                        "space-between",
-                    alignItems:
-                        "center",
-                }}
-            >
-                <div>
-                    <div
-                        style={{
-                            color:
-                                "#94a3b8",
-                            fontSize:
-                                "14px",
-                        }}
-                    >
-                        {item.title}
-                    </div>
-
-                    <h2
-                        style={{
-                            color:
-                                "white",
-                            margin:
-                                "8px 0 0",
-                        }}
-                    >
-                        {item.value}
-                    </h2>
-                </div>
-
-                <div
-                    style={{
-                        color:
-                            "#60a5fa",
-                    }}
-                >
-                    {item.icon}
-                </div>
-            </div>
-        </div>
-    ))}
-</div>
-
-                <div
-                    style={{
-                        position:
-                            "relative",
-                        zIndex: 2,
-                    }}
-                >
-                    <div
-                        style={{
-                            display:
-                                "inline-flex",
-                            alignItems:
-                                "center",
-                            gap: "8px",
-                            padding:
-                                "8px 16px",
-                            borderRadius:
-                                "999px",
-                            background:
-                                "rgba(59,130,246,0.12)",
-                            color:
-                                "#60a5fa",
-                            marginBottom:
-                                "18px",
-                            fontSize:
-                                "13px",
-                            fontWeight:
-                                "600",
-                        }}
-                    >
-                        <ShieldCheck
-                            size={16}
-                        />
-                        User Validation
-                    </div>
-
-                    <h1
-                        style={{
-                            margin: 0,
-                            color:
-                                "white",
-                            fontSize:
-                                "40px",
-                            fontWeight:
-                                "800",
-                        }}
-                    >
-                        Validasi User
-                    </h1>
-
-                    <p
-                        style={{
-                            color:
-                                "#94a3b8",
-                            marginTop:
-                                "12px",
-                            lineHeight:
-                                "28px",
-                        }}
-                    >
-                        Kelola pendaftaran
-                        Owner, Kurir, dan
-                        Operator SPPG yang
-                        menunggu persetujuan
-                        admin.
-                    </p>
-                </div>
-            </div>
+></div>
 
             {/* CARD */}
 <div
     style={{
-    width: "100%",
-    boxSizing: "border-box",
-    background:
-        "linear-gradient(180deg,#111827 0%,#0f172a 100%)",
-    border:
-        "1px solid rgba(255,255,255,0.06)",
-    borderRadius: "30px",
-    padding: "28px",
-}}
+        width: "100%",
+        boxSizing: "border-box",
+        background:
+            "linear-gradient(160deg,#0f172a 0%,#0d1117 100%)",
+        border:
+            "1px solid rgba(255,255,255,0.07)",
+        borderRadius: "20px",
+        padding: "28px",
+        position: "relative",
+        overflowX: "auto",
+        overflowY: "hidden",
+    }}
 >
+    <div
+    style={{
+        position: "absolute",
+        top: "-40px",
+        right: "-40px",
+        width: "140px",
+        height: "140px",
+        borderRadius: "999px",
+        background:
+            "rgba(59,130,246,0.08)",
+        filter: "blur(40px)",
+        pointerEvents: "none",
+    }}
+/>
+    <div
+        style={{
+            position: "absolute",
+            top: 0,
+            left: "24px",
+            right: "24px",
+            height: "2px",
+            background:
+                "linear-gradient(90deg,#3b82f6,transparent)",
+        }}
+    />
                 <div
-                    style={{
-                        display: "flex",
-                        alignItems:
-                            "center",
-                        gap: "12px",
-                        marginBottom:
-                            "24px",
-                    }}
-                >
+        style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            marginBottom: "24px",
+        }}
+    >
                     <div
-                        style={{
-                            width: "52px",
-                            height: "52px",
-                            borderRadius:
-                                "16px",
-                            background:
-                                "rgba(59,130,246,0.12)",
-                            display:
-                                "flex",
-                            alignItems:
-                                "center",
-                            justifyContent:
-                                "center",
-                        }}
-                    >
+            style={{
+                width: "52px",
+                height: "52px",
+                borderRadius: "16px",
+                background:
+                    "rgba(59,130,246,0.12)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+            }}
+        >
                         <Users
                             color="#60a5fa"
                             size={22}
@@ -431,10 +415,8 @@ const filteredUsers =
                                     "#94a3b8",
                             }}
                         >
-                            Total{" "}
-                            {filteredUsers.length}
-                            {" "}
-                            user
+                            Total {filteredUsers.length} user
+                
                         </p>
                     </div>
                 </div>
@@ -556,57 +538,62 @@ const filteredUsers =
                         Loading...
                     </div>
                 ) : (
-                    <div
-                        style={{
-                            overflowX:
-                                "auto",
-                        }}
-                    >
-                        <table
-                            style={{
-                                width:
-                                    "100%",
-                                borderCollapse:
-                                    "collapse",
-                            }}
-                        >
-                            <thead>
-                                <tr>
-                                    {[
-                                        "Nama",
-                                        "Email",
-                                        "Role",
-                                        "Nama Tempat",
-                                        "Alamat",
-                                        "Status",
-                                        "Aksi",
-                                    ].map(
-                                        (
-                                            item
-                                        ) => (
-                                            <th
-                                                key={
-                                                    item
-                                                }
-                                                style={{
-                                                    color:
-                                                        "#94a3b8",
-                                                    textAlign:
-                                                        "left",
-                                                    padding:
-                                                        "16px",
-                                                    borderBottom:
-                                                        "1px solid rgba(255,255,255,0.06)",
-                                                }}
-                                            >
-                                                {
-                                                    item
-                                                }
-                                            </th>
-                                        )
-                                    )}
-                                </tr>
-                            </thead>
+                   <div
+    style={{
+        overflowX: "auto",
+        overflowY: "hidden",
+        borderRadius: "16px",
+        border:
+            "1px solid rgba(255,255,255,0.06)",
+    }}
+>
+    <table
+    style={{
+        width: "100%",
+        borderCollapse: "collapse",
+        tableLayout: "fixed",
+    }}
+>
+                            <thead
+    style={{
+        background: "rgba(255,255,255,0.03)",
+    }}
+>
+    <tr>
+        {[
+            "Nama",
+            "Email",
+            "Role",
+            "Nama Tempat",
+            "Alamat",
+            "Status",
+            "Aksi",
+        ].map((item, index, arr) => (
+            <th
+                key={item}
+                style={{
+                    color: "#94a3b8",
+                    textAlign: "left",
+                    padding: "14px 16px",
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    borderBottom:
+                        "1px solid rgba(255,255,255,0.06)",
+
+                    borderTopLeftRadius:
+                        index === 0 ? "12px" : "0",
+
+                    borderTopRightRadius:
+                        index === arr.length - 1
+                            ? "12px"
+                            : "0",
+                }}
+            >
+                {item}
+            </th>
+        ))}
+    </tr>
+</thead>
 
                             <tbody>
                                 {filteredUsers.map(
@@ -619,48 +606,102 @@ const filteredUsers =
                                             }
                                         >
                                             <td
-                                                style={{
-                                                    padding:
-                                                        "16px",
-                                                    color:
-                                                        "white",
-                                                }}
-                                            >
-                                                {
-                                                    user.name
-                                                }
-                                            </td>
+    style={{
+        padding:"14px 16px",
+        color:"#cbd5e1",
+        fontSize:"13px",
+        maxWidth:"140px",
+        overflow:"hidden",
+        textOverflow:"ellipsis",
+        whiteSpace:"nowrap",
+    }}
+>
+    <div
+        style={{
+            display:"flex",
+            alignItems:"center",
+            gap:"12px",
+        }}
+    >
+        <div
+            style={{
+                width:"38px",
+                height:"38px",
+                borderRadius:"12px",
+                background:
+                "rgba(59,130,246,.15)",
+                color:"#60a5fa",
+                display:"flex",
+                alignItems:"center",
+                justifyContent:"center",
+                fontWeight:"700",
+            }}
+        >
+            {user.name.charAt(0)}
+        </div>
+
+        <div>
+            <div
+                style={{
+                    color:"white",
+                    fontWeight:"600",
+                }}
+            >
+                {user.name}
+            </div>
+
+            <div
+                style={{
+                    color:"#64748b",
+                    fontSize:"12px",
+                }}
+            >
+                ID #{user.id}
+            </div>
+        </div>
+    </div>
+</td>
 
                                             <td
-                                                style={{
-                                                    padding:
-                                                        "16px",
-                                                    color:
-                                                        "#cbd5e1",
-                                                }}
-                                            >
+    style={{
+        padding:"14px 16px",
+        color:"#cbd5e1",
+        fontSize:"13px",
+        maxWidth:"220px",
+        overflow:"hidden",
+        textOverflow:"ellipsis",
+        whiteSpace:"nowrap",
+    }}
+>
                                                 {
                                                     user.email
                                                 }
                                             </td>
 
-                                            <td
-                                                style={{
-                                                    padding:
-                                                        "16px",
-                                                    color:
-                                                        "#cbd5e1",
-                                                }}
-                                            >
-                                                {
-                                                    user.role
-                                                }
-                                            </td>
+                                            <td style={{ 
+                                                padding:"18px 16px",
+                                                fontSize: "14px",
+                                                }}>
+    <span
+        style={{
+            padding:"6px 12px",
+            borderRadius:"999px",
+            background:
+            "rgba(59,130,246,.15)",
+            color:"#60a5fa",
+            fontSize:"12px",
+            fontWeight:"600",
+        }}
+    >
+        {user.role}
+    </span>
+</td>
 
                                             <td
     style={{
-        padding:"16px",
+        padding:"18px 16px",
         color:"#cbd5e1",
+        fontSize: "14px",
     }}
 >
 {
@@ -676,10 +717,18 @@ user.role==="owner"
 
 <td
     style={{
-        padding:"16px",
-        color:"#cbd5e1",
+        padding: "14px 16px",
+        color: "#cbd5e1",
+        fontSize: "13px",
+        fontWeight: "400",
+        maxWidth: "180px",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
+        lineHeight: "1.4",
     }}
 >
+    
 {
 user.role==="owner"
 ? user.alamat_catering
@@ -693,8 +742,8 @@ user.role==="owner"
 
                                             <td
                                                 style={{
-                                                    padding:
-                                                        "16px",
+                                                    padding:"18px 16px",
+                                                    fontSize: "14px",
                                                 }}
                                             >
                                                 <span
@@ -732,78 +781,78 @@ user.role==="owner"
                                             </td>
 
                                             <td
-                                                style={{
-                                                    padding:
-                                                        "16px",
-                                                }}
-                                            >
+    style={{
+        padding: "18px 16px",
+        fontSize: "14px",
+        minWidth: "90px",
+    }}
+>
                                                 {user.status === "pending" ? (
 
     <div
+    style={{
+        display: "flex",
+        gap: "8px",
+    }}
+>
+    <button
+        title="Approve"
         style={{
+            width: "36px",
+            height: "36px",
+            borderRadius: "10px",
+            border: "1px solid rgba(34,197,94,.2)",
+            background: "rgba(34,197,94,.12)",
+            color: "#4ade80",
+            cursor: "pointer",
             display: "flex",
-            gap: "10px",
+            alignItems: "center",
+            justifyContent: "center",
         }}
     >
-        <button
-            onClick={() =>
-                approveUser(user.id)
-            }
-            style={{
-                border: "none",
-                background: "#22c55e",
-                color: "white",
-                padding: "10px 14px",
-                borderRadius: "12px",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-            }}
-        >
-            <CheckCircle size={16} />
-            Approve
-        </button>
+        <CheckCircle size={16} />
+    </button>
 
-        <button
-            onClick={() =>
-                rejectUser(user.id)
-            }
-            style={{
-                border: "none",
-                background: "#ef4444",
-                color: "white",
-                padding: "10px 14px",
-                borderRadius: "12px",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-            }}
-        >
-            <XCircle size={16} />
-            Reject
-        </button>
-    </div>
+    <button
+        title="Reject"
+        style={{
+            width: "36px",
+            height: "36px",
+            borderRadius: "10px",
+            border: "1px solid rgba(239,68,68,.2)",
+            background: "rgba(239,68,68,.12)",
+            color: "#f87171",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+        }}
+    >
+        <XCircle size={16} />
+    </button>
+</div>
 
 ) : (
 
     <button
-        onClick={() =>
-            deleteUser(user.id)
-        }
-        style={{
-            border: "none",
-            background: "#ef4444",
-            color: "white",
-            padding: "10px 14px",
-            borderRadius: "12px",
-            cursor: "pointer",
-        }}
-    >
-        Hapus
-    </button>
-
+    onClick={() =>
+        deleteUser(user.id)
+    }
+    style={{
+        border:
+            "1px solid rgba(239,68,68,.25)",
+        background:
+            "rgba(239,68,68,.12)",
+        color: "#f87171",
+        padding: "8px 12px",
+        borderRadius: "10px",
+        cursor: "pointer",
+        fontSize: "13px",
+        fontWeight: "600",
+    }}
+>
+    Hapus
+</button>
 )}
                                             </td>
                                         </tr>
@@ -813,6 +862,8 @@ user.role==="owner"
                         </table>
                     </div>
                 )}
+            </div>
+            </div>
             </div>
         </AdminLayout>
     );

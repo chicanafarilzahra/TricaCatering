@@ -1,5 +1,7 @@
 // resources/js/pages/Reports.jsx
 
+import axios from "axios";
+
 import {
     FileBarChart2,
     TrendingUp,
@@ -15,6 +17,7 @@ import {
     useMemo,
     useRef,
     useState,
+    useEffect,
 } from "react";
 
 import AdminLayout from "../layouts/AdminLayout";
@@ -29,8 +32,24 @@ export default function Reports() {
     const [filter, setFilter] =
         useState("All");
 
-    // TANPA DATA DUMMY
-    const reports = [];
+    // DATA DARI API/BACKEND
+    const [reports, setReports] = useState([]);
+
+    useEffect(() => {
+        fetchReports();
+    }, []);
+
+    const fetchReports = async () => {
+        try {
+            const res = await axios.get(
+                "http://localhost:8000/api/reports"
+            );
+
+            setReports(res.data);
+        } catch (err) {
+            console.log(err);
+        }
+    };
 
     const filteredReports =
         useMemo(() => {
@@ -193,6 +212,20 @@ export default function Reports() {
 
     return (
         <AdminLayout>
+            <style>{`
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+.reports-root, .reports-root * {
+    font-family: 'Inter', system-ui, sans-serif;
+    box-sizing: border-box;
+}
+.stat-card:hover{
+    transform: translateY(-3px);
+    box-shadow: 0 16px 48px rgba(0,0,0,.35);
+}
+`}</style>
+
+            <div className="reports-root">
+
             {/* HERO */}
             <div
                 style={{
@@ -381,45 +414,75 @@ export default function Reports() {
                     display: "grid",
                     gridTemplateColumns:
                         "repeat(4,minmax(0,1fr))",
-                    gap: "22px",
+                    gap: "16px",
                     marginBottom:
-                        "30px",
+                        "24px",
                 }}
             >
                 {stats.map(
                     (item, index) => (
                         <div
                             key={index}
+                            className="stat-card"
                             style={{
                                 background:
-                                    "linear-gradient(180deg,#111827 0%,#0f172a 100%)",
-                                border:
-                                    "1px solid rgba(255,255,255,0.06)",
+                                    "linear-gradient(160deg,#0f172a 0%,#0d1117 100%)",
+                                border: `1px solid ${item.bg.replace(
+                                    "0.12",
+                                    "0.25"
+                                )}`,
                                 borderRadius:
-                                    "26px",
+                                    "20px",
                                 padding:
                                     "24px",
                                 position:
                                     "relative",
                                 overflow:
                                     "hidden",
+                                cursor:
+                                    "default",
+                                transition:
+                                    "transform .2s ease, box-shadow .2s ease",
                             }}
                         >
+                            {/* Accent Line */}
                             <div
                                 style={{
                                     position:
                                         "absolute",
-                                    top: "-45px",
+                                    top: 0,
+                                    left:
+                                        "24px",
                                     right:
-                                        "-45px",
-                                    width:
-                                        "130px",
+                                        "24px",
                                     height:
-                                        "130px",
+                                        "2px",
+                                    background: `linear-gradient(
+                                        90deg,
+                                        ${item.color},
+                                        transparent
+                                    )`,
+                                }}
+                            />
+
+                            {/* Glow */}
+                            <div
+                                style={{
+                                    position:
+                                        "absolute",
+                                    top: "-40px",
+                                    right:
+                                        "-40px",
+                                    width:
+                                        "110px",
+                                    height:
+                                        "110px",
                                     borderRadius:
                                         "999px",
                                     background:
                                         item.bg,
+                                    filter:
+                                        "blur(30px)",
                                 }}
                             />
 
@@ -430,14 +493,15 @@ export default function Reports() {
                                     zIndex: 2,
                                 }}
                             >
+                                {/* Icon */}
                                 <div
                                     style={{
                                         width:
-                                            "58px",
+                                            "44px",
                                         height:
-                                            "58px",
+                                            "44px",
                                         borderRadius:
-                                            "18px",
+                                            "14px",
                                         background:
                                             item.bg,
                                         color:
@@ -449,7 +513,7 @@ export default function Reports() {
                                         justifyContent:
                                             "center",
                                         marginBottom:
-                                            "18px",
+                                            "20px",
                                     }}
                                 >
                                     {
@@ -457,33 +521,40 @@ export default function Reports() {
                                     }
                                 </div>
 
-                                <div
-                                    style={{
-                                        color:
-                                            "#94a3b8",
-                                        fontSize:
-                                            "14px",
-                                        marginBottom:
-                                            "10px",
-                                    }}
-                                >
-                                    {
-                                        item.title
-                                    }
-                                </div>
-
+                                {/* Value */}
                                 <div
                                     style={{
                                         color:
                                             "white",
                                         fontSize:
-                                            "34px",
+                                            "36px",
                                         fontWeight:
                                             "800",
+                                        lineHeight: 1,
+                                        letterSpacing:
+                                            "-1px",
+                                        marginBottom:
+                                            "8px",
                                     }}
                                 >
                                     {
                                         item.value
+                                    }
+                                </div>
+
+                                {/* Title */}
+                                <div
+                                    style={{
+                                        color:
+                                            "#475569",
+                                        fontSize:
+                                            "13px",
+                                        fontWeight:
+                                            "500",
+                                    }}
+                                >
+                                    {
+                                        item.title
                                     }
                                 </div>
                             </div>
@@ -915,6 +986,7 @@ export default function Reports() {
                     </table>
                 </div>
             </div>
+            </div>
         </AdminLayout>
     );
-}   
+}
