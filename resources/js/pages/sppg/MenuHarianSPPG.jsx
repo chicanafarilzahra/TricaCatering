@@ -39,109 +39,20 @@ export default function MenuHarianSPPG() {
     }, []);
 
     const loadData = async () => {
-    try {
-        const token =
-            localStorage.getItem("token");
+        try {
+            const res = await axios.get("/sppg/menu-harian");
 
-        const res = await axios.get(
-            "http://localhost:8000/api/sppg/menu-harian",
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    Accept: "application/json",
-                },
+            setMenu(res.data?.menu_harian || null);
+            setGizi(res.data?.gizi || null);
+            setWeekly(res.data?.menu_mingguan || []);
+
+            if (res.data?.menu_harian?.tanggal) {
+                setDate(res.data.menu_harian.tanggal);
             }
-        );
-
-        setMenu(res.data?.menu_harian || null);
-        setGizi(res.data?.gizi || null);
-        setWeekly(res.data?.menu_mingguan || []);
-    } catch (err) {
-        console.log(err);
-    }
-};
-
-const saveMenu = async () => {
-    try {
-        const token =
-            localStorage.getItem("token");
-
-        const formData = new FormData();
-
-        formData.append(
-            "nama_menu",
-            form.nama_menu
-        );
-
-        formData.append(
-            "kategori",
-            form.kategori
-        );
-
-        formData.append(
-            "deskripsi",
-            form.deskripsi
-        );
-
-        formData.append(
-            "tanggal",
-            date
-        );
-
-        formData.append(
-            "kalori",
-            form.kalori
-        );
-
-        formData.append(
-            "protein",
-            form.protein
-        );
-
-        formData.append(
-            "lemak",
-            form.lemak
-        );
-
-        formData.append(
-    "karbohidrat",
-    form.karbo
-);
-
-        formData.append(
-            "serat",
-            form.serat
-        );
-
-        if (form.gambar) {
-            formData.append(
-                "gambar",
-                form.gambar
-            );
+        } catch (err) {
+            console.log(err);
         }
-
-        await axios.post(
-            "http://localhost:8000/api/sppg/menus",
-            formData,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type":
-                        "multipart/form-data",
-                },
-            }
-        );
-
-        alert("Menu berhasil disimpan");
-
-        setOpenModal(false);
-
-        loadData();
-    } catch (err) {
-        console.log(err);
-        alert("Gagal menyimpan menu");
-    }
-};
+    };
 
     const handleChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });
@@ -413,12 +324,9 @@ const saveMenu = async () => {
                     Batal
                 </button>
 
-                <button
-    style={btnSave}
-    onClick={saveMenu}
->
-    Simpan Menu
-</button>
+                <button style={btnSave}>
+                    Simpan Menu
+                </button>
             </div>
 
         </div>
