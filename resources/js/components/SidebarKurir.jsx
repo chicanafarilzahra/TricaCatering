@@ -1,311 +1,310 @@
 // resources/js/components/SidebarKurir.jsx
 
-import { Link, useLocation } from "react-router-dom";
+import {
+    LayoutDashboard,
+    CalendarDays,
+    Truck,
+    MapPinned,
+    ClipboardList,
+    LogOut,
+    ChevronRight,
+} from "lucide-react";
 
 import {
-    FaHome,
-    FaCalendarAlt,
-    FaTruck,
-    FaMapMarkedAlt,
-    FaClipboardList,
-    FaSignOutAlt,
-} from "react-icons/fa";
+    useRef,
+    useLayoutEffect,
+} from "react";
 
-export default function SidebarKurir({
-    onLogout,
-}) {
-    const location =
-        useLocation();
+import {
+    NavLink,
+    useLocation,
+    useNavigate,
+} from "react-router-dom";
 
-    const menuStyle = (path) => ({
-        display: "flex",
-        alignItems: "center",
-        gap: "14px",
+const SCROLL_KEY = "sidebar_kurir_scroll_pos";
 
-        width: "100%",
+export default function SidebarKurir({ onLogout }) {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const scrollRef = useRef(null);
 
-        padding: "14px 16px",
+    const user = JSON.parse(localStorage.getItem("user"));
 
-        borderRadius: "14px",
+    /* =========================
+       PRESERVE SCROLL POSITION
+       (Sidebar remounts on every page navigation
+        since each page wraps itself in its layout,
+        so we restore the saved scroll position
+        before the browser paints to avoid the
+        "jump back to top" effect)
+    ========================= */
+    useLayoutEffect(() => {
+        const saved = sessionStorage.getItem(SCROLL_KEY);
+        if (saved && scrollRef.current) {
+            scrollRef.current.scrollTop = parseInt(saved, 10) || 0;
+        }
+    }, []);
 
-        textDecoration:
-            "none",
+    const handleSidebarScroll = (e) => {
+        sessionStorage.setItem(SCROLL_KEY, e.currentTarget.scrollTop);
+    };
 
-        color:
-            location.pathname ===
-            path
-                ? "#ffffff"
-                : "#94a3b8",
-
-        background:
-            location.pathname ===
-            path
-                ? "linear-gradient(90deg, rgba(37,99,235,0.35), rgba(59,130,246,0.18))"
-                : "transparent",
-
-        border:
-            location.pathname ===
-            path
-                ? "1px solid rgba(96,165,250,0.18)"
-                : "1px solid transparent",
-
-        fontWeight:
-            location.pathname ===
-            path
-                ? "700"
-                : "500",
-
-        fontSize: "14px",
-
-        boxSizing:
-            "border-box",
-
-        transition:
-            "all 0.22s ease",
-    });
-
+    /* =========================
+       LOGOUT
+    ========================= */
     const handleLogout = () => {
         if (onLogout) {
             onLogout();
             return;
         }
 
-        localStorage.removeItem(
-            "token"
-        );
-
-        localStorage.removeItem(
-            "user"
-        );
-
-        window.location.href =
-            "/#/login";
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        sessionStorage.removeItem(SCROLL_KEY);
+        navigate("/login");
     };
 
+    const menus = [
+        {
+            title: "MAIN MENU",
+            items: [
+                { label: "Home", path: "/kurir", icon: <LayoutDashboard size={17} /> },
+            ],
+        },
+        {
+            title: "PENGIRIMAN",
+            items: [
+                { label: "Jadwal Pengiriman", path: "/kurir/jadwal", icon: <CalendarDays size={17} /> },
+                { label: "Pengiriman Aktif", path: "/kurir/aktif", icon: <Truck size={17} /> },
+                { label: "Rute Hari Ini", path: "/kurir/rute", icon: <MapPinned size={17} /> },
+            ],
+        },
+        {
+            title: "LAPORAN",
+            items: [
+                { label: "Laporan Harian", path: "/kurir/laporan", icon: <ClipboardList size={17} /> },
+            ],
+        },
+    ];
+
     return (
-        <aside
-            style={{
-                width: "100%",
+        <>
+            <style>{`
+                .sidebar-root * { box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; }
+
+                .nav-item {
+                    height: 44px;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 0 14px;
+                    border-radius: 12px;
+                    font-size: 13.5px;
+                    font-weight: 500;
+                    color: #64748b;
+                    border: 1px solid transparent;
+                    text-decoration: none;
+                    transition: color 0.15s ease, background 0.15s ease;
+                    cursor: pointer;
+                    position: relative;
+                }
+                .nav-item:hover {
+                    color: #cbd5e1;
+                    background: rgba(255,255,255,0.04);
+                }
+                .nav-item.active {
+                    color: white;
+                    background: rgba(255,255,255,0.07);
+                    border-color: rgba(255,255,255,0.08);
+                    font-weight: 600;
+                }
+                .nav-item.active::before {
+                    content: '';
+                    position: absolute;
+                    left: 0; top: 10px; bottom: 10px;
+                    width: 3px;
+                    border-radius: 0 3px 3px 0;
+                    background: linear-gradient(180deg, #06b6d4, #3b82f6);
+                }
+                .nav-icon-wrap {
+                    width: 32px; height: 32px;
+                    border-radius: 9px;
+                    display: flex; align-items: center; justify-content: center;
+                    flex-shrink: 0;
+                    transition: background 0.15s ease;
+                }
+                .nav-item.active .nav-icon-wrap {
+                    background: linear-gradient(135deg, #06b6d4, #3b82f6);
+                    box-shadow: 0 6px 16px rgba(6,182,212,0.28);
+                    color: white;
+                }
+
+                .logout-btn {
+                    width: 100%;
+                    height: 48px;
+                    border: 1px solid rgba(239,68,68,0.18);
+                    border-radius: 14px;
+                    background: rgba(239,68,68,0.07);
+                    color: #f87171;
+                    display: flex; align-items: center; justify-content: center; gap: 10px;
+                    cursor: pointer;
+                    font-size: 13.5px; font-weight: 600;
+                    transition: all 0.2s ease;
+                    font-family: 'Inter', system-ui, sans-serif;
+                }
+                .logout-btn:hover {
+                    background: linear-gradient(135deg, #ef4444, #dc2626);
+                    color: white;
+                    border-color: transparent;
+                    box-shadow: 0 10px 28px rgba(239,68,68,0.28);
+                    transform: translateY(-1px);
+                }
+
+                .sidebar-scroll::-webkit-scrollbar { width: 0px; }
+            `}</style>
+
+            <div className="sidebar-root" style={{
+                width: "260px",
                 height: "100vh",
-
+                position: "fixed",
+                top: 0, left: 0,
+                background: "#080f1e",
+                borderRight: "1px solid rgba(255,255,255,0.06)",
                 display: "flex",
+                flexDirection: "column",
+                zIndex: 100,
+            }}>
+                {/* ── TOP: Logo + User ── */}
+                <div style={{ padding: "24px 18px 20px", flexShrink: 0 }}>
+                    {/* Logo */}
+                    <div style={{
+                        display: "flex", alignItems: "center", gap: "12px",
+                        padding: "0 4px", marginBottom: "24px",
+                    }}>
+                        <div style={{
+                            width: "40px", height: "40px", borderRadius: "14px",
+                            background: "linear-gradient(135deg,#06b6d4,#3b82f6)",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            color: "#fff", fontWeight: "800", fontSize: "17px",
+                            boxShadow: "0 8px 20px rgba(6,182,212,0.30)",
+                            flexShrink: 0,
+                        }}>
+                            T
+                        </div>
+                        <div>
+                            <div style={{
+                                color: "#fff", fontWeight: "700",
+                                fontSize: "15px", letterSpacing: "-0.3px",
+                            }}>
+                                TriCa Catering
+                            </div>
+                            <div style={{ color: "#334155", fontSize: "11.5px", marginTop: "2px" }}>
+                                Kurir Panel
+                            </div>
+                        </div>
+                    </div>
 
-                flexDirection:
-                    "column",
+                    {/* Divider */}
+                    <div style={{ height: "1px", background: "rgba(255,255,255,0.05)", marginBottom: "20px" }} />
 
-                justifyContent:
-                    "space-between",
-
-                padding:
-                    "24px 16px",
-
-                boxSizing:
-                    "border-box",
-
-                background:
-                    "linear-gradient(180deg,#08101f 0%, #0f172a 45%, #111827 100%)",
-
-                borderRight:
-                    "1px solid rgba(255,255,255,0.05)",
-
-                overflow: "hidden",
-            }}
-        >
-            {/* TOP */}
-            <div>
-                {/* LOGO */}
-                <div
-                    style={{
-                        padding:
-                            "0 6px",
-                        marginBottom:
-                            "36px",
-                    }}
-                >
-                    <h1
-                        style={{
-                            margin: 0,
-
-                            fontSize:
-                                "28px",
-
-                            fontWeight:
-                                "800",
-
-                            color:
-                                "#ffffff",
-
-                            letterSpacing:
-                                "-0.8px",
-                        }}
-                    >
-                        TricaCatering
-                    </h1>
-
-                    <p
-                        style={{
-                            margin:
-                                "8px 0 0",
-
-                            color:
-                                "#64748b",
-
-                            fontSize:
-                                "13px",
-
-                            fontWeight:
-                                "500",
-                        }}
-                    >
-                        Kurir Panel
-                    </p>
+                    {/* User card */}
+                    <div style={{
+                        display: "flex", alignItems: "center", gap: "12px",
+                        padding: "12px 14px",
+                        background: "rgba(255,255,255,0.03)",
+                        border: "1px solid rgba(255,255,255,0.06)",
+                        borderRadius: "14px",
+                    }}>
+                        <div style={{
+                            width: "38px", height: "38px", borderRadius: "12px",
+                            background: "linear-gradient(135deg,#06b6d4,#3b82f6)",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            color: "#fff", fontWeight: "700", fontSize: "15px",
+                            flexShrink: 0,
+                            boxShadow: "0 6px 16px rgba(6,182,212,0.25)",
+                        }}>
+                            {user?.name?.charAt(0)?.toUpperCase() || "K"}
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                            <div style={{
+                                color: "#e2e8f0", fontWeight: "600", fontSize: "13.5px",
+                                whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                            }}>
+                                {user?.name || "Kurir"}
+                            </div>
+                            <div style={{
+                                color: "#334155", fontSize: "11.5px", marginTop: "2px",
+                                textTransform: "capitalize",
+                            }}>
+                                {user?.role || "kurir"}
+                            </div>
+                        </div>
+                        <div style={{
+                            marginLeft: "auto",
+                            width: "7px", height: "7px", borderRadius: "999px",
+                            background: "#22c55e",
+                            boxShadow: "0 0 0 2px rgba(34,197,94,0.2)",
+                            flexShrink: 0,
+                        }} />
+                    </div>
                 </div>
 
-                {/* MENU */}
-                <nav
-                    style={{
-                        display:
-                            "flex",
-
-                        flexDirection:
-                            "column",
-
-                        gap: "8px",
-                    }}
-                >
-                    <Link
-                        to="/kurir"
-                        style={menuStyle(
-                            "/kurir"
-                        )}
-                    >
-                        <FaHome
-                            size={15}
-                        />
-                        Home
-                    </Link>
-
-                    <Link
-                        to="/kurir/jadwal"
-                        style={menuStyle(
-                            "/kurir/jadwal"
-                        )}
-                    >
-                        <FaCalendarAlt
-                            size={15}
-                        />
-                        Jadwal
-                        Pengiriman
-                    </Link>
-
-                    <Link
-                        to="/kurir/aktif"
-                        style={menuStyle(
-                            "/kurir/aktif"
-                        )}
-                    >
-                        <FaTruck
-                            size={15}
-                        />
-                        Pengiriman
-                        Aktif
-                    </Link>
-
-                    <Link
-                        to="/kurir/rute"
-                        style={menuStyle(
-                            "/kurir/rute"
-                        )}
-                    >
-                        <FaMapMarkedAlt
-                            size={15}
-                        />
-                        Rute Hari Ini
-                    </Link>
-
-                    <Link
-                        to="/kurir/laporan"
-                        style={menuStyle(
-                            "/kurir/laporan"
-                        )}
-                    >
-                        <FaClipboardList
-                            size={15}
-                        />
-                        Laporan
-                        Harian
-                    </Link>
-                </nav>
-            </div>
-
-            {/* BOTTOM */}
-            <div>
-                <button
-                    onClick={
-                        handleLogout
-                    }
-                    style={{
-                        width: "100%",
-
-                        height: "48px",
-
-                        border: "none",
-
-                        borderRadius:
-                            "14px",
-
-                        background:
-                            "linear-gradient(90deg,#dc2626,#ef4444)",
-
-                        color:
-                            "white",
-
-                        display: "flex",
-
-                        alignItems:
-                            "center",
-
-                        justifyContent:
-                            "center",
-
-                        gap: "10px",
-
-                        fontSize:
-                            "14px",
-
-                        fontWeight:
-                            "700",
-
-                        cursor:
-                            "pointer",
-
-                        boxShadow:
-                            "0 10px 25px rgba(239,68,68,0.25)",
-                    }}
-                >
-                    <FaSignOutAlt />
-                    Logout
-                </button>
-
+                {/* ── MENUS ── */}
                 <div
+                    ref={scrollRef}
+                    className="sidebar-scroll"
+                    onScroll={handleSidebarScroll}
                     style={{
-                        marginTop:
-                            "18px",
-
-                        textAlign:
-                            "center",
-
-                        color:
-                            "#64748b",
-
-                        fontSize:
-                            "12px",
+                        flex: 1, overflowY: "auto", overflowX: "hidden",
+                        padding: "0 12px",
                     }}
                 >
-                    © 2026
-                    TricaCatering
+                    {menus.map((group, index) => (
+                        <div key={index} style={{ marginBottom: "24px" }}>
+                            <div style={{
+                                color: "#1e293b",
+                                fontSize: "10.5px", fontWeight: "700",
+                                letterSpacing: "0.1em",
+                                padding: "0 6px", marginBottom: "8px",
+                            }}>
+                                {group.title}
+                            </div>
+
+                            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                                {group.items.map((item, i) => {
+                                    const active = location.pathname === item.path;
+                                    return (
+                                        <NavLink
+                                            key={i}
+                                            to={item.path}
+                                            style={{ textDecoration: "none" }}
+                                        >
+                                            <div className={`nav-item${active ? " active" : ""}`}>
+                                                <div className="nav-icon-wrap">
+                                                    {item.icon}
+                                                </div>
+                                                <span style={{ flex: 1 }}>{item.label}</span>
+                                                {active && (
+                                                    <ChevronRight size={14} style={{ opacity: 0.5 }} />
+                                                )}
+                                            </div>
+                                        </NavLink>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* ── LOGOUT ── */}
+                <div style={{ padding: "16px 18px 24px", flexShrink: 0 }}>
+                    <div style={{ height: "1px", background: "rgba(255,255,255,0.05)", marginBottom: "16px" }} />
+                    <button className="logout-btn" onClick={handleLogout}>
+                        <LogOut size={16} />
+                        Logout
+                    </button>
                 </div>
             </div>
-        </aside>
+        </>
     );
 }

@@ -3,680 +3,355 @@
 import {
     LayoutDashboard,
     ShoppingCart,
-    Package,
     Users,
-    FileBarChart2,
     DollarSign,
     LogOut,
-    Factory,
     Boxes,
     Truck,
     ChevronRight,
     UtensilsCrossed,
 } from "lucide-react";
 
-import {
-    NavLink,
-    useLocation,
-    useNavigate,
-} from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useRef } from "react";
 
-import {
-    useEffect,
-    useRef,
-} from "react";
+/* ─── design tokens ─── */
+const token = {
+    sidebar:          "#0d1526",
+    border:           "rgba(255,255,255,0.06)",
+    activeBg:         "#1a2d50",
+    activeBorder:     "rgba(59,130,246,0.25)",
+    activeColor:      "#93c5fd",
+    mutedColor:       "#4b5f7a",
+    hoverBg:          "rgba(255,255,255,0.04)",
+    hoverColor:       "#94a3b8",
+    groupTitle:       "#2d3f56",
+    textPrimary:      "#e2e8f0",
+    logoutBg:         "rgba(239,68,68,0.08)",
+    logoutBorder:     "rgba(239,68,68,0.15)",
+    logoutColor:      "#fca5a5",
+    logoutHoverBg:    "rgba(239,68,68,0.18)",
+    logoutHoverColor: "#ffffff",
+    accentBlue:       "#2563eb",
+    accentBlueDark:   "#1d4ed8",
+    radius: {
+        sm: "8px",
+        md: "12px",
+        lg: "14px",
+    },
+};
 
+/* ─── menu config ─── */
+const MENUS = [
+    {
+        title: "OVERVIEW",
+        items: [
+            { label: "Dashboard",  path: "/owner",            icon: <LayoutDashboard size={16} /> },
+        ],
+    },
+    {
+        title: "BISNIS",
+        items: [
+            { label: "Pesanan",    path: "/owner/orders",     icon: <ShoppingCart size={16} /> },
+            { label: "Pelanggan",  path: "/owner/customers",  icon: <Users size={16} /> },
+            { label: "Menu",       path: "/owner/menus",      icon: <UtensilsCrossed size={16} /> },
+        ],
+    },
+    {
+        title: "OPERASIONAL",
+        items: [
+            { label: "Stok",       path: "/owner/stocks",     icon: <Boxes size={16} /> },
+            { label: "Kurir",      path: "/owner/couriers",   icon: <Truck size={16} /> },
+            { label: "Pengiriman", path: "/owner/deliveries", icon: <Truck size={16} /> },
+        ],
+    },
+    {
+        title: "KEUANGAN",
+        items: [
+            { label: "Keuangan",   path: "/owner/revenue",    icon: <DollarSign size={16} /> },
+        ],
+    },
+];
+
+/* ─── component ─── */
 export default function SidebarOwner() {
-    const location = useLocation();
-
-    const navigate = useNavigate();
-
-    const user = JSON.parse(
-        localStorage.getItem("user") || "{}"
-    );
-
+    const location   = useLocation();
+    const navigate   = useNavigate();
     const sidebarRef = useRef(null);
 
-    /* =========================
-       RESTORE SCROLL POSITION
-    ========================= */
+    const user    = JSON.parse(localStorage.getItem("user") || "{}");
+    const initial = (user?.name?.charAt(0) ?? "O").toUpperCase();
+
+    /* scroll restore */
     useEffect(() => {
-        const savedScroll =
-            sessionStorage.getItem(
-                "sidebar-owner-scroll"
-            );
-
-        // kalau baru login / pertama buka
-        // sidebar tetap di atas
-        if (
-            location.pathname === "/owner" &&
-            sidebarRef.current
-        ) {
+        const saved = sessionStorage.getItem("sidebar-owner-scroll");
+        if (location.pathname === "/owner" && sidebarRef.current) {
             sidebarRef.current.scrollTop = 0;
-
-            sessionStorage.removeItem(
-                "sidebar-owner-scroll"
-            );
-
+            sessionStorage.removeItem("sidebar-owner-scroll");
             return;
         }
-
-        // restore scroll kalau pindah menu
-        if (
-            sidebarRef.current &&
-            savedScroll
-        ) {
-            sidebarRef.current.scrollTop =
-                parseInt(savedScroll, 10);
+        if (sidebarRef.current && saved) {
+            sidebarRef.current.scrollTop = parseInt(saved, 10);
         }
     }, [location.pathname]);
 
-    /* =========================
-       SAVE SCROLL POSITION
-    ========================= */
     const handleScroll = () => {
         if (sidebarRef.current) {
-            sessionStorage.setItem(
-                "sidebar-owner-scroll",
-                sidebarRef.current.scrollTop
-            );
+            sessionStorage.setItem("sidebar-owner-scroll", sidebarRef.current.scrollTop);
         }
     };
 
-    /* =========================
-       HANDLE MENU CLICK
-    ========================= */
     const handleMenuClick = () => {
         if (sidebarRef.current) {
-            sessionStorage.setItem(
-                "sidebar-owner-scroll",
-                sidebarRef.current.scrollTop
-            );
+            sessionStorage.setItem("sidebar-owner-scroll", sidebarRef.current.scrollTop);
         }
     };
 
-    /* =========================
-       LOGOUT
-    ========================= */
     const handleLogout = () => {
         localStorage.removeItem("token");
-
         localStorage.removeItem("user");
-
-        sessionStorage.removeItem(
-            "sidebar-owner-scroll"
-        );
-
-        // logout langsung ke landing page
+        sessionStorage.removeItem("sidebar-owner-scroll");
         navigate("/");
     };
 
-    /* =========================
-       MENU OWNER
-    ========================= */
-    const menus = [
-        {
-            title: "OVERVIEW",
-            items: [
-                {
-                    label: "Dashboard",
-                    path: "/owner",
-                    icon: (
-                        <LayoutDashboard size={18} />
-                    ),
-                },
-            ],
+    const isActive = (path) => location.pathname === path;
+
+    /* ─── styles ─── */
+    const s = {
+        sidebar: {
+            width:          "260px",
+            minWidth:       "260px",
+            height:         "100vh",
+            position:       "fixed",
+            top:            0,
+            left:           0,
+            zIndex:         999,
+            overflowY:      "auto",
+            overflowX:      "hidden",
+            boxSizing:      "border-box",
+            padding:        "20px 14px 24px",
+            display:        "flex",
+            flexDirection:  "column",
+            background:     token.sidebar,
+            borderRight:    `1px solid ${token.border}`,
+            scrollbarWidth: "none",
+            msOverflowStyle:"none",
+            fontFamily:     "'Inter', system-ui, -apple-system, sans-serif",
         },
-
-        {
-            title: "BUSINESS",
-            items: [
-                {
-                    label: "Orders",
-                    path: "/owner/orders",
-                    icon: (
-                        <ShoppingCart size={18} />
-                    ),
-                },
-
-                {
-                    label: "Customers",
-                    path: "/owner/customers",
-                    icon: (
-                        <Users size={18} />
-                    ),
-                },
-
-                {
-                    label: "Menus",
-                    path: "/owner/menus",
-                    icon: (
-                        <UtensilsCrossed size={18} />
-                    ),
-                },
-
-                {
-                    label: "Packages",
-                    path: "/owner/packages",
-                    icon: (
-                        <Package size={18} />
-                    ),
-                },
-            ],
+        logoRow: {
+            display:       "flex",
+            alignItems:    "center",
+            gap:           "12px",
+            padding:       "4px 6px",
+            marginBottom:  "20px",
         },
-
-        {
-            title: "OPERATIONS",
-            items: [
-                {
-                    label: "Productions",
-                    path: "/owner/productions",
-                    icon: (
-                        <Factory size={18} />
-                    ),
-                },
-
-                {
-                    label: "Stocks",
-                    path: "/owner/stocks",
-                    icon: (
-                        <Boxes size={18} />
-                    ),
-                },
-
-                {
-                    label: "Couriers",
-                    path: "/owner/couriers",
-                    icon: (
-                        <Truck size={18} />
-                    ),
-                },
-
-                {
-                    label: "Deliveries",
-                    path: "/owner/deliveries",
-                    icon: (
-                        <Truck size={18} />
-                    ),
-                },
-            ],
+        logoIcon: {
+            width:          "40px",
+            height:         "40px",
+            borderRadius:   token.radius.md,
+            background:     `linear-gradient(135deg, ${token.accentBlue}, ${token.accentBlueDark})`,
+            display:        "flex",
+            alignItems:     "center",
+            justifyContent: "center",
+            color:          "white",
+            fontSize:       "17px",
+            fontWeight:     "700",
+            flexShrink:     0,
         },
-
-        {
-            title: "FINANCIAL",
-            items: [
-                {
-                    label: "Revenue",
-                    path: "/owner/revenue",
-                    icon: (
-                        <DollarSign size={18} />
-                    ),
-                },
-
-                {
-                    label: "Reports",
-                    path: "/owner/reports",
-                    icon: (
-                        <FileBarChart2 size={18} />
-                    ),
-                },
-            ],
+        logoName: {
+            color:         "white",
+            fontSize:      "15px",
+            fontWeight:    "700",
+            letterSpacing: "-0.3px",
         },
-    ];
+        logoSub: {
+            fontSize:      "10px",
+            fontWeight:    "600",
+            color:         token.groupTitle,
+            letterSpacing: "1.1px",
+            textTransform: "uppercase",
+            marginTop:     "3px",
+        },
+        userCard: {
+            background:    "rgba(255,255,255,0.04)",
+            border:        "1px solid rgba(255,255,255,0.07)",
+            borderRadius:  token.radius.lg,
+            padding:       "12px 14px",
+            marginBottom:  "22px",
+            display:       "flex",
+            alignItems:    "center",
+            gap:           "12px",
+        },
+        userAvatar: {
+            width:          "36px",
+            height:         "36px",
+            borderRadius:   "10px",
+            background:     `linear-gradient(135deg, ${token.accentBlue}, ${token.accentBlueDark})`,
+            display:        "flex",
+            alignItems:     "center",
+            justifyContent: "center",
+            color:          "white",
+            fontSize:       "14px",
+            fontWeight:     "700",
+            flexShrink:     0,
+        },
+        userName: {
+            color:         token.textPrimary,
+            fontSize:      "13px",
+            fontWeight:    "600",
+            whiteSpace:    "nowrap",
+            overflow:      "hidden",
+            textOverflow:  "ellipsis",
+        },
+        userRole: {
+            fontSize:      "11px",
+            color:         token.mutedColor,
+            textTransform: "capitalize",
+            marginTop:     "2px",
+        },
+        group: {
+            marginBottom: "20px",
+        },
+        groupTitle: {
+            fontSize:      "10px",
+            fontWeight:    "700",
+            color:         token.groupTitle,
+            letterSpacing: "1.3px",
+            textTransform: "uppercase",
+            padding:       "0 10px",
+            marginBottom:  "6px",
+        },
+        navItems: {
+            display:       "flex",
+            flexDirection: "column",
+            gap:           "2px",
+        },
+        bottomSection: {
+            marginTop:   "auto",
+            paddingTop:  "16px",
+            borderTop:   `1px solid ${token.border}`,
+        },
+        logoutBtn: {
+            width:        "100%",
+            height:       "42px",
+            display:      "flex",
+            alignItems:   "center",
+            gap:          "10px",
+            padding:      "0 14px",
+            borderRadius: token.radius.lg,
+            background:   token.logoutBg,
+            border:       `1px solid ${token.logoutBorder}`,
+            color:        token.logoutColor,
+            fontSize:     "13px",
+            fontWeight:   "600",
+            cursor:       "pointer",
+            transition:   "all 0.2s ease",
+            letterSpacing:"0.1px",
+            fontFamily:   "'Inter', system-ui, -apple-system, sans-serif",
+        },
+    };
 
-    const isActive = (path) =>
-        location.pathname === path;
+    const navItemStyle = (active) => ({
+        display:      "flex",
+        alignItems:   "center",
+        gap:          "10px",
+        padding:      "0 12px",
+        height:       "40px",
+        borderRadius: token.radius.md,
+        fontSize:     "13px",
+        fontWeight:   active ? "600" : "500",
+        color:        active ? token.activeColor : token.mutedColor,
+        background:   active ? token.activeBg : "transparent",
+        border:       `1px solid ${active ? token.activeBorder : "transparent"}`,
+        textDecoration: "none",
+        transition:   "all 0.18s ease",
+        cursor:       "pointer",
+        boxSizing:    "border-box",
+    });
 
     return (
-        <aside
-            ref={sidebarRef}
-            onScroll={handleScroll}
-            style={{
-                width: "285px",
-                height: "100vh",
-                position: "fixed",
-                top: 0,
-                left: 0,
-                zIndex: 999,
-                overflowY: "auto",
-                overflowX: "hidden",
-                boxSizing: "border-box",
-                padding: "24px 18px",
+        <aside ref={sidebarRef} onScroll={handleScroll} style={s.sidebar}>
 
-                display: "flex",
-                flexDirection: "column",
-                justifyContent:
-                    "space-between",
-
-                background:
-                    "linear-gradient(180deg,#020617 0%,#0f172a 55%,#111827 100%)",
-
-                borderRight:
-                    "1px solid rgba(148,163,184,0.08)",
-
-                boxShadow:
-                    "12px 0 40px rgba(0,0,0,0.45)",
-
-                scrollbarWidth: "none",
-                msOverflowStyle: "none",
-            }}
-        >
-            {/* TOP */}
-            <div>
-                {/* LOGO */}
-                <div
-                    style={{
-                        marginBottom: "28px",
-                        padding: "4px 6px",
-                    }}
-                >
-                    <div
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "14px",
-                        }}
-                    >
-                        <div
-                            style={{
-                                width: "54px",
-                                height: "54px",
-                                borderRadius: "18px",
-
-                                background:
-                                    "linear-gradient(135deg,#2563eb,#1d4ed8)",
-
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent:
-                                    "center",
-
-                                color: "white",
-                                fontSize: "20px",
-                                fontWeight: "800",
-
-                                boxShadow:
-                                    "0 14px 35px rgba(37,99,235,0.35)",
-                            }}
-                        >
-                            T
-                        </div>
-
-                        <div>
-                            <div
-                                style={{
-                                    color: "white",
-                                    fontSize: "21px",
-                                    fontWeight: "800",
-                                    letterSpacing:
-                                        "-0.4px",
-                                }}
-                            >
-                                TriCa Catering
-                            </div>
-
-                            <div
-                                style={{
-                                    marginTop: "4px",
-                                    fontSize: "11px",
-                                    fontWeight: "700",
-                                    color: "#64748b",
-                                    letterSpacing:
-                                        "1.2px",
-                                    textTransform:
-                                        "uppercase",
-                                }}
-                            >
-                                Owner Dashboard
-                            </div>
-                        </div>
-                    </div>
+            {/* ── Logo ── */}
+            <div style={s.logoRow}>
+                <div style={s.logoIcon}>T</div>
+                <div>
+                    <div style={s.logoName}>TriCa Catering</div>
+                    <div style={s.logoSub}>Owner Panel</div>
                 </div>
-
-                {/* USER CARD */}
-                <div
-                    style={{
-                        background:
-                            "rgba(15,23,42,0.75)",
-
-                        border:
-                            "1px solid rgba(148,163,184,0.08)",
-
-                        borderRadius: "22px",
-
-                        padding: "18px",
-
-                        marginBottom: "30px",
-
-                        backdropFilter:
-                            "blur(12px)",
-                    }}
-                >
-                    <div
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "14px",
-                        }}
-                    >
-                        <div
-                            style={{
-                                width: "48px",
-                                height: "48px",
-                                borderRadius: "16px",
-
-                                background:
-                                    "linear-gradient(135deg,#2563eb,#1e40af)",
-
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent:
-                                    "center",
-
-                                color: "white",
-                                fontSize: "18px",
-                                fontWeight: "700",
-
-                                boxShadow:
-                                    "0 10px 25px rgba(37,99,235,0.28)",
-                            }}
-                        >
-                            {user?.name
-                                ?.charAt(0)
-                                ?.toUpperCase() || "O"}
-                        </div>
-
-                        <div
-                            style={{
-                                minWidth: 0,
-                            }}
-                        >
-                            <div
-                                style={{
-                                    color: "white",
-                                    fontWeight: "700",
-                                    fontSize: "15px",
-
-                                    whiteSpace:
-                                        "nowrap",
-
-                                    overflow:
-                                        "hidden",
-
-                                    textOverflow:
-                                        "ellipsis",
-                                }}
-                            >
-                                {user?.name ||
-                                    "Owner"}
-                            </div>
-
-                            <div
-                                style={{
-                                    marginTop: "4px",
-                                    color: "#94a3b8",
-                                    fontSize: "12px",
-                                    fontWeight: "600",
-                                    textTransform:
-                                        "capitalize",
-                                }}
-                            >
-                                {user?.role ||
-                                    "owner"}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* MENU */}
-                {menus.map(
-                    (group, groupIndex) => (
-                        <div
-                            key={groupIndex}
-                            style={{
-                                marginBottom:
-                                    "26px",
-                            }}
-                        >
-                            <div
-                                style={{
-                                    padding:
-                                        "0 14px",
-
-                                    marginBottom:
-                                        "10px",
-
-                                    fontSize:
-                                        "11px",
-
-                                    fontWeight:
-                                        "700",
-
-                                    color:
-                                        "#475569",
-
-                                    letterSpacing:
-                                        "1.4px",
-
-                                    textTransform:
-                                        "uppercase",
-                                }}
-                            >
-                                {group.title}
-                            </div>
-
-                            <div
-                                style={{
-                                    display:
-                                        "flex",
-
-                                    flexDirection:
-                                        "column",
-
-                                    gap: "6px",
-                                }}
-                            >
-                                {group.items.map(
-                                    (
-                                        item,
-                                        index
-                                    ) => {
-                                        const active =
-                                            isActive(
-                                                item.path
-                                            );
-
-                                        return (
-                                            <NavLink
-                                                key={
-                                                    index
-                                                }
-                                                to={
-                                                    item.path
-                                                }
-                                                onClick={
-                                                    handleMenuClick
-                                                }
-                                                style={{
-                                                    textDecoration:
-                                                        "none",
-                                                }}
-                                            >
-                                                <div
-                                                    style={{
-                                                        height:
-                                                            "50px",
-
-                                                        display:
-                                                            "flex",
-
-                                                        alignItems:
-                                                            "center",
-
-                                                        gap: "12px",
-
-                                                        padding:
-                                                            "0 16px",
-
-                                                        borderRadius:
-                                                            "16px",
-
-                                                        background:
-                                                            active
-                                                                ? "linear-gradient(135deg,#2563eb,#1d4ed8)"
-                                                                : "transparent",
-
-                                                        color:
-                                                            active
-                                                                ? "white"
-                                                                : "#94a3b8",
-
-                                                        fontWeight:
-                                                            active
-                                                                ? "700"
-                                                                : "500",
-
-                                                        fontSize:
-                                                            "14px",
-
-                                                        border:
-                                                            active
-                                                                ? "1px solid rgba(255,255,255,0.08)"
-                                                                : "1px solid transparent",
-
-                                                        boxShadow:
-                                                            active
-                                                                ? "0 12px 28px rgba(37,99,235,0.25)"
-                                                                : "none",
-
-                                                        transition:
-                                                            "all 0.25s ease",
-                                                    }}
-                                                >
-                                                    {
-                                                        item.icon
-                                                    }
-
-                                                    <span
-                                                        style={{
-                                                            flex: 1,
-                                                        }}
-                                                    >
-                                                        {
-                                                            item.label
-                                                        }
-                                                    </span>
-
-                                                    {active && (
-                                                        <ChevronRight
-                                                            size={
-                                                                16
-                                                            }
-                                                        />
-                                                    )}
-                                                </div>
-                                            </NavLink>
-                                        );
-                                    }
-                                )}
-                            </div>
-                        </div>
-                    )
-                )}
             </div>
 
-            {/* LOGOUT */}
-            <button
-                onClick={handleLogout}
-                onMouseEnter={(e) => {
-                    e.currentTarget.style.transform =
-                        "translateY(-2px)";
+            {/* ── User card ── */}
+            <div style={s.userCard}>
+                <div style={s.userAvatar}>{initial}</div>
+                <div style={{ minWidth: 0 }}>
+                    <div style={s.userName}>{user?.name ?? "Owner"}</div>
+                    <div style={s.userRole}>{user?.role ?? "owner"}</div>
+                </div>
+            </div>
 
-                    e.currentTarget.style.boxShadow =
-                        "0 14px 30px rgba(239,68,68,0.28)";
+            {/* ── Menu groups ── */}
+            {MENUS.map((group, gi) => (
+                <div key={gi} style={s.group}>
+                    <div style={s.groupTitle}>{group.title}</div>
+                    <div style={s.navItems}>
+                        {group.items.map((item, ii) => {
+                            const active = isActive(item.path);
+                            return (
+                                <NavLink
+                                    key={ii}
+                                    to={item.path}
+                                    onClick={handleMenuClick}
+                                    style={navItemStyle(active)}
+                                    onMouseEnter={(e) => {
+                                        if (!active) {
+                                            e.currentTarget.style.background = token.hoverBg;
+                                            e.currentTarget.style.color = token.hoverColor;
+                                        }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        if (!active) {
+                                            e.currentTarget.style.background = "transparent";
+                                            e.currentTarget.style.color = token.mutedColor;
+                                        }
+                                    }}
+                                >
+                                    <span style={{ display: "flex", alignItems: "center", flexShrink: 0, opacity: active ? 1 : 0.7 }}>
+                                        {item.icon}
+                                    </span>
+                                    <span style={{ flex: 1, letterSpacing: "0.1px" }}>
+                                        {item.label}
+                                    </span>
+                                    {active && (
+                                        <ChevronRight size={14} style={{ opacity: 0.6, flexShrink: 0 }} />
+                                    )}
+                                </NavLink>
+                            );
+                        })}
+                    </div>
+                </div>
+            ))}
 
-                    e.currentTarget.style.background =
-                        "linear-gradient(135deg,#ef4444,#dc2626)";
-
-                    e.currentTarget.style.color =
-                        "#fff";
-                }}
-                onMouseLeave={(e) => {
-                    e.currentTarget.style.transform =
-                        "translateY(0px)";
-
-                    e.currentTarget.style.boxShadow =
-                        "none";
-
-                    e.currentTarget.style.background =
-                        "rgba(239,68,68,0.10)";
-
-                    e.currentTarget.style.color =
-                        "#fca5a5";
-                }}
-                style={{
-                    height: "56px",
-
-                    border:
-                        "1px solid rgba(239,68,68,0.20)",
-
-                    borderRadius: "18px",
-
-                    background:
-                        "rgba(239,68,68,0.10)",
-
-                    color: "#fca5a5",
-
-                    display: "flex",
-
-                    alignItems: "center",
-
-                    justifyContent:
-                        "center",
-
-                    gap: "12px",
-
-                    cursor: "pointer",
-
-                    fontSize: "14px",
-
-                    fontWeight: "700",
-
-                    backdropFilter:
-                        "blur(12px)",
-
-                    transition:
-                        "all 0.25s ease",
-
-                    marginTop: "20px",
-
-                    width: "100%",
-
-                    letterSpacing: "0.3px",
-                }}
-            >
-                <div
-                    style={{
-                        width: "34px",
-                        height: "34px",
-                        borderRadius: "12px",
-
-                        background:
-                            "rgba(255,255,255,0.10)",
-
-                        display: "flex",
-
-                        alignItems: "center",
-
-                        justifyContent:
-                            "center",
+            {/* ── Logout ── */}
+            <div style={s.bottomSection}>
+                <button
+                    onClick={handleLogout}
+                    style={s.logoutBtn}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.background    = token.logoutHoverBg;
+                        e.currentTarget.style.color         = token.logoutHoverColor;
+                        e.currentTarget.style.borderColor   = "rgba(239,68,68,0.35)";
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background    = token.logoutBg;
+                        e.currentTarget.style.color         = token.logoutColor;
+                        e.currentTarget.style.borderColor   = token.logoutBorder;
                     }}
                 >
-                    <LogOut size={20} />
-                </div>
-
-                Logout
-            </button>
+                    <LogOut size={15} style={{ flexShrink: 0, opacity: 0.85 }} />
+                    Logout
+                </button>
+            </div>
         </aside>
     );
 }

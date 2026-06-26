@@ -1,149 +1,217 @@
 // resources/js/components/NavbarOwner.jsx
 
-import {
-    Bell,
-    UserCircle,
-} from "lucide-react";
+import { Bell, Settings, ChevronDown, UserCircle } from "lucide-react";
+import { useState } from "react";
 
-export default function NavbarOwner() {
-    const user = JSON.parse(
-        localStorage.getItem("user")
-    );
+/* ─── design tokens ─── */
+const token = {
+    navBg: "#0d1526",
+    border: "rgba(255,255,255,0.06)",
+    textPrimary: "#e2e8f0",
+    textMuted: "#64748b",
+    textSecondary: "#94a3b8",
+    iconBg: "rgba(255,255,255,0.05)",
+    iconBorder: "rgba(255,255,255,0.07)",
+    iconHover: "rgba(255,255,255,0.09)",
+    userBg: "rgba(255,255,255,0.04)",
+    accentBlue: "#2563eb",
+    accentBlueDark: "#1d4ed8",
+    notifDot: "#ef4444",
+};
+
+/* ─── reusable icon button ─── */
+function IconBtn({ children, badge = false, title }) {
+    const [hovered, setHovered] = useState(false);
 
     return (
         <div
+            title={title}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
             style={{
-                height: "80px",
+                position: "relative",
+                width: "36px",
+                height: "36px",
+                borderRadius: "10px",
+                background: hovered ? token.iconHover : token.iconBg,
+                border: `1px solid ${token.iconBorder}`,
                 display: "flex",
                 alignItems: "center",
-                justifyContent:
-                    "space-between",
-                padding: "0 32px",
-                borderBottom:
-                    "1px solid rgba(255,255,255,0.06)",
-                background:
-                    "rgba(15,23,42,0.85)",
-                backdropFilter:
-                    "blur(12px)",
-                position: "sticky",
-                top: 0,
-                zIndex: 100,
+                justifyContent: "center",
+                color: hovered ? token.textPrimary : token.textSecondary,
+                cursor: "pointer",
+                transition: "all 0.18s ease",
+                flexShrink: 0,
             }}
         >
-            {/* LEFT */}
-            <div>
-                <h1
+            {children}
+            {badge && (
+                <span
                     style={{
-                        margin: 0,
-                        fontSize: "26px",
-                        fontWeight: "700",
-                        color: "white",
+                        position: "absolute",
+                        top: "7px",
+                        right: "7px",
+                        width: "7px",
+                        height: "7px",
+                        borderRadius: "50%",
+                        background: token.notifDot,
+                        border: `1.5px solid ${token.navBg}`,
                     }}
-                >
-                    Owner Dashboard
-                </h1>
+                />
+            )}
+        </div>
+    );
+}
 
-                <p
-                    style={{
-                        margin:
-                            "4px 0 0",
-                        fontSize: "13px",
-                        color:
-                            "#94a3b8",
-                    }}
-                >
-                    Welcome back,{" "}
-                    {user?.name}
+/* ─── component ─── */
+export default function NavbarOwner() {
+    const [userHovered, setUserHovered] = useState(false);
+
+    const user = JSON.parse(localStorage.getItem("user") ?? "{}");
+    const initial = (user?.name?.charAt(0) ?? "O").toUpperCase();
+
+    /* page title from pathname */
+    const path = window.location.pathname;
+    const segment = path.split("/").filter(Boolean).at(-1) ?? "dashboard";
+    const pageTitle =
+        segment.charAt(0).toUpperCase() + segment.slice(1);
+
+    const s = {
+        nav: {
+            height: "64px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "0 28px",
+            background: token.navBg,
+            borderBottom: `1px solid ${token.border}`,
+            position: "sticky",
+            top: 0,
+            zIndex: 100,
+            boxSizing: "border-box",
+            fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+        },
+        left: {
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+        },
+        pageTitle: {
+            margin: 0,
+            fontSize: "17px",
+            fontWeight: "700",
+            color: token.textPrimary,
+            letterSpacing: "-0.3px",
+        },
+        pageSub: {
+            margin: "2px 0 0",
+            fontSize: "12px",
+            color: token.textMuted,
+            fontWeight: "400",
+        },
+        right: {
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+        },
+        divider: {
+            width: "1px",
+            height: "22px",
+            background: token.border,
+            margin: "0 2px",
+        },
+        userChip: {
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "5px 10px 5px 6px",
+            borderRadius: "10px",
+            background: userHovered
+                ? "rgba(255,255,255,0.07)"
+                : token.userBg,
+            border: `1px solid ${token.iconBorder}`,
+            cursor: "pointer",
+            transition: "all 0.18s ease",
+        },
+        userAvatar: {
+            width: "28px",
+            height: "28px",
+            borderRadius: "8px",
+            background: `linear-gradient(135deg, ${token.accentBlue}, ${token.accentBlueDark})`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "white",
+            fontSize: "12px",
+            fontWeight: "700",
+            flexShrink: 0,
+        },
+        userName: {
+            color: token.textPrimary,
+            fontSize: "13px",
+            fontWeight: "600",
+            whiteSpace: "nowrap",
+        },
+        userRole: {
+            color: token.textMuted,
+            fontSize: "10px",
+            textTransform: "capitalize",
+            marginTop: "1px",
+        },
+        chevron: {
+            color: token.textMuted,
+            flexShrink: 0,
+            transition: "transform 0.2s ease",
+        },
+    };
+
+    return (
+        <header style={s.nav}>
+            {/* ── Left: page title ── */}
+            <div style={s.left}>
+                <h1 style={s.pageTitle}>{pageTitle}</h1>
+                <p style={s.pageSub}>
+                    Welcome back, {user?.name ?? "Owner"}
                 </p>
             </div>
 
-            {/* RIGHT */}
-            <div
-                style={{
-                    display: "flex",
-                    alignItems:
-                        "center",
-                    gap: "18px",
-                }}
-            >
-                {/* Notification */}
-                <div
-                    style={{
-                        width: "42px",
-                        height: "42px",
-                        borderRadius:
-                            "14px",
-                        background:
-                            "rgba(255,255,255,0.05)",
-                        display:
-                            "flex",
-                        alignItems:
-                            "center",
-                        justifyContent:
-                            "center",
-                        color:
-                            "#cbd5e1",
-                        cursor:
-                            "pointer",
-                    }}
-                >
-                    <Bell size={18} />
-                </div>
+            {/* ── Right: actions ── */}
+            <div style={s.right}>
+                {/* Notification bell */}
+                <IconBtn badge title="Notifications">
+                    <Bell size={16} />
+                </IconBtn>
 
-                {/* User */}
-                <div
-                    style={{
-                        display:
-                            "flex",
-                        alignItems:
-                            "center",
-                        gap: "10px",
-                        padding:
-                            "6px 12px",
-                        borderRadius:
-                            "14px",
-                        background:
-                            "rgba(255,255,255,0.04)",
-                    }}
-                >
-                    <UserCircle
-                        size={28}
-                        color="#e2e8f0"
-                    />
+                {/* Settings */}
+                <IconBtn title="Settings">
+                    <Settings size={16} />
+                </IconBtn>
 
+                {/* Divider */}
+                <div style={s.divider} />
+
+                {/* User chip */}
+                <div
+                    style={s.userChip}
+                    onMouseEnter={() => setUserHovered(true)}
+                    onMouseLeave={() => setUserHovered(false)}
+                >
+                    <div style={s.userAvatar}>{initial}</div>
                     <div>
-                        <div
-                            style={{
-                                color:
-                                    "white",
-                                fontSize:
-                                    "14px",
-                                fontWeight:
-                                    "600",
-                            }}
-                        >
-                            {
-                                user?.name
-                            }
-                        </div>
-
-                        <div
-                            style={{
-                                color:
-                                    "#94a3b8",
-                                fontSize:
-                                    "11px",
-                                textTransform:
-                                    "capitalize",
-                            }}
-                        >
-                            {
-                                user?.role
-                            }
-                        </div>
+                        <div style={s.userName}>{user?.name ?? "Owner"}</div>
+                        <div style={s.userRole}>{user?.role ?? "owner"}</div>
                     </div>
+                    <ChevronDown
+                        size={13}
+                        style={{
+                            ...s.chevron,
+                            transform: userHovered
+                                ? "rotate(180deg)"
+                                : "rotate(0deg)",
+                        }}
+                    />
                 </div>
             </div>
-        </div>
+        </header>
     );
 }

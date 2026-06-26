@@ -1,9 +1,11 @@
 <?php
 
 namespace App\Models;
+use App\Models\User;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\User;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Menu extends Model
 {
@@ -11,24 +13,38 @@ class Menu extends Model
     'owner_id',
     'name',
     'description',
-    'price',
     'category',
-    'stock',
+    'price',
+    'min_pax',
+    'status',
     'image',
     'is_active',
-    'jenis_catering',
-    'min_porsi',
 ];
-    public function owner()
+
+    protected $casts = [
+        'price'   => 'decimal:2',
+        'min_pax' => 'integer',
+    ];
+
+    /* ── relations ── */
+
+    public function ingredients(): HasMany
     {
-        return $this->belongsTo(User::class, 'owner_id');
+        return $this->hasMany(MenuIngredient::class);
     }
 
-    public function bahans()
+    public function owner(): BelongsTo
 {
-    return $this->belongsToMany(
-        Stock::class,
-        'menu_bahan'
-    )->withPivot('qty');
+    return $this->belongsTo(User::class, 'owner_id');
 }
+
+    /* ── appended ── */
+
+    protected $appends = ['ingredients_count'];
+
+    public function getIngredientsCountAttribute(): int
+    {
+        // uses already-loaded relation to avoid N+1
+        return $this->ingredients->count();
+    }
 }

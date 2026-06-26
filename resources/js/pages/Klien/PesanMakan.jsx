@@ -113,28 +113,32 @@ export default function PesanMakan() {
     */
 
     useEffect(() => {
-        if (geoTimerRef.current) clearTimeout(geoTimerRef.current);
-        if (!form.alamat) return;
+    console.log("🔍 form.alamat berubah:", form.alamat);   // TAMBAHIN
+    if (geoTimerRef.current) clearTimeout(geoTimerRef.current);
+    if (!form.alamat) return;
 
-        geoTimerRef.current = setTimeout(() => {
-            fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(form.alamat)}`
-            )
-                .then((r) => r.json())
-                .then((data) => {
-                    if (data && data[0]) {
-                        setClientLocation({
-                            lat: parseFloat(data[0].lat),
-                            lng: parseFloat(data[0].lon),
-                        });
-                    }
-                })
-                .catch(() => {});
-        }, 1200);
+    geoTimerRef.current = setTimeout(() => {
+        console.log("📡 mengirim request geocode...");   // TAMBAHIN
+        axios.get("/klien/geocode", { params: { q: form.alamat } })
+            .then((res) => {
+                console.log("✅ response geocode:", res.data);   // TAMBAHIN
+                if (res.data?.found) {
+                    setClientLocation({
+                        lat: res.data.lat,
+                        lng: res.data.lng,
+                    });
+                } else {
+                    setClientLocation(null);
+                }
+            })
+            .catch((err) => {
+                console.error("❌ Geocode error:", err.response?.data || err.message);
+                setClientLocation(null);
+            });
+    }, 1200);
 
-        return () => clearTimeout(geoTimerRef.current);
-    }, [form.alamat]);
-
+    return () => clearTimeout(geoTimerRef.current);
+}, [form.alamat]);
     /*
     |--------------------------------------------------------------------------
     | HITUNG JARAK
@@ -142,23 +146,31 @@ export default function PesanMakan() {
     */
 
     useEffect(() => {
-        if (!clientLocation || !selectedMenu?.cateringLat || !selectedMenu?.cateringLng) return;
-
-        const start = `${selectedMenu.cateringLng},${selectedMenu.cateringLat}`;
-        const end   = `${clientLocation.lng},${clientLocation.lat}`;
-
-        fetch(
-            `https://router.project-osrm.org/route/v1/driving/${start};${end}?overview=false`
-        )
-            .then((r) => r.json())
-            .then((data) => {
-                if (data.routes?.length) {
-                    setDistanceKm(data.routes[0].distance / 1000);
-                    setDurationMinute(Math.round(data.routes[0].duration / 60));
-                }
-            })
-            .catch(() => {});
-    }, [clientLocation, selectedMenu]);
+    console.log("🚚 cek jarak — clientLocation:", clientLocation, "selectedMenu:", selectedMenu);
+    if (!clientLocation || !selectedMenu?.cateringLat || !selectedMenu?.cateringLng) {
+        console.log("⛔ berhenti — data belum lengkap");
+        return;
+    }
+    console.log("📡 mengirim request route...");
+    axios.get("/klien/route", {
+        params: {
+            from_lat: selectedMenu.cateringLat,
+            from_lng: selectedMenu.cateringLng,
+            to_lat: clientLocation.lat,
+            to_lng: clientLocation.lng,
+        },
+    })
+        .then((res) => {
+            console.log("✅ response route:", res.data);
+            if (res.data?.found) {
+                setDistanceKm(res.data.distance_km);
+                setDurationMinute(res.data.duration_minute);
+            }
+        })
+        .catch((err) => {
+            console.error("❌ Route error:", err.response?.data || err.message);
+        });
+}, [clientLocation, selectedMenu]);
 
     /*
     |--------------------------------------------------------------------------
@@ -252,13 +264,6 @@ export default function PesanMakan() {
     /*
     |--------------------------------------------------------------------------
     | DATA PEMBAYARAN (REAL, MILIK CATERING YANG DIPILIH)
-    | Diharapkan endpoint /klien/menus menyertakan field
-    | `payment_accounts` pada setiap menu/catering, contoh:
-    | payment_accounts: [
-    |   { id, type: 'bank', provider_name: 'BCA', account_number: '1234567890', account_name: 'CV Dapur Bahagia' },
-    |   { id, type: 'ewallet', provider_name: 'GoPay', account_number: '0812xxxxxxx', account_name: 'CV Dapur Bahagia' },
-    | ]
-    | Jika field ini belum ada di backend, sesuaikan key di bawah.
     |--------------------------------------------------------------------------
     */
 
@@ -378,12 +383,18 @@ export default function PesanMakan() {
                                 title: "Catering Harian",
                                 desc: "Catering harian untuk makan siang dan makan malam dengan sistem langganan harian.",
                                 icon: "🗓",
+                                accent: "#3b82f6",
+                                bg: "rgba(59,130,246,0.08)",
+                                border: "rgba(59,130,246,0.2)",
                             },
                             {
                                 id: "insidentil",
                                 title: "Catering Insidentil",
                                 desc: "Catering khusus acara seperti ulang tahun, rapat, gathering, dan pernikahan.",
                                 icon: "🎉",
+                                accent: "#8b5cf6",
+                                bg: "rgba(139,92,246,0.08)",
+                                border: "rgba(139,92,246,0.2)",
                             },
                         ].map((item) => (
                             <TypeCard key={item.id} item={item} onSelect={setSelectedType} />
@@ -447,7 +458,7 @@ export default function PesanMakan() {
                         </select>
                     </div>
 
-                    {/* Menu per Catering — masing-masing catering punya kelompoknya sendiri */}
+                    {/* Menu per Catering */}
                     <div className="hide-scrollbar" style={styles.menuScrollArea}>
                         {filteredMenus.length === 0 ? (
                             <div style={styles.emptyState}>
@@ -484,7 +495,7 @@ export default function PesanMakan() {
                     </div>
                 </div>
 
-                {/* ===== RIGHT: ORDER PANEL (lebih besar, scroll sendiri) ===== */}
+                {/* ===== RIGHT: ORDER PANEL ===== */}
                 <div style={styles.orderPanel}>
                     <div style={styles.orderHeader}>
                         <FaShoppingCart style={{ color: "#60a5fa" }} />
@@ -504,7 +515,6 @@ export default function PesanMakan() {
                             </div>
                         ) : (
                             <>
-                                {/* Selected Menu Info + Hapus Menu */}
                                 <div style={styles.selectedMenuCard}>
                                     <img
                                         src={selectedMenu.image ? `/storage/${selectedMenu.image}` : "/no-image.png"}
@@ -529,7 +539,6 @@ export default function PesanMakan() {
                                     </button>
                                 </div>
 
-                                {/* Catering Owner */}
                                 <InfoBox>
                                     <div style={{ color: "#fff", fontSize: 12 }}>
                                         <strong>{selectedMenu.owner}</strong>
@@ -539,7 +548,6 @@ export default function PesanMakan() {
                                     </div>
                                 </InfoBox>
 
-                                {/* FORM */}
                                 <SectionLabel>Data Pemesan</SectionLabel>
                                 <div style={styles.inpRow}>
                                     <FormInput
@@ -638,7 +646,6 @@ export default function PesanMakan() {
                                     placeholder="Jl. Contoh No.1, Kota..."
                                 />
 
-                                {/* Ringkasan */}
                                 <SectionLabel>Ringkasan Pesanan</SectionLabel>
                                 <InfoBox>
                                     <SummaryRow label="Harga Produk" value={`Rp ${hargaProduk.toLocaleString("id-ID")}`} yellow />
@@ -659,7 +666,6 @@ export default function PesanMakan() {
                                     )}
                                 </InfoBox>
 
-                                {/* PEMBAYARAN — data rekening/e-wallet asli milik catering ini */}
                                 <SectionLabel>Metode Pembayaran</SectionLabel>
                                 <div style={styles.payMethodGrid}>
                                     <PayMethodBtn
@@ -723,7 +729,6 @@ export default function PesanMakan() {
                                     placeholder="Tidak pedas, alergi kacang..."
                                 />
 
-                                {/* Submit */}
                                 <button onClick={handleSubmit} style={styles.submitBtn}>
                                     <FaShoppingCart /> Kirim Pesanan
                                 </button>
@@ -744,15 +749,27 @@ export default function PesanMakan() {
 
 function PageWrapper({ children }) {
     return (
-        <div style={{ width: "100%", height: "100vh", background: "#071028", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <div style={{ width: "100%", height: "100vh", background: "#020817", display: "flex", flexDirection: "column", overflow: "hidden" }}>
             <style>{`
-                * { margin:0; padding:0; box-sizing:border-box; font-family:'Times New Roman',serif; font-weight:700; }
-                html, body, #root { height:100%; margin:0; padding:0; background:#071028; overflow:hidden; }
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+                * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter', system-ui, sans-serif; }
+                html, body, #root { height:100%; margin:0; padding:0; background:#020817; overflow:hidden; }
                 .hide-scrollbar { scrollbar-width:none; -ms-overflow-style:none; }
                 .hide-scrollbar::-webkit-scrollbar { display:none; width:0; height:0; }
                 input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); }
                 input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(1); }
-                select option { background:#0f172a; color:#fff; }
+                select option { background:#0d1117; color:#fff; }
+
+                .type-card:hover {
+                    transform: translateY(-3px);
+                    box-shadow: 0 16px 48px rgba(0,0,0,0.35);
+                }
+                .menu-card:hover {
+                    transform: translateY(-2px);
+                }
+                .pay-method-btn:hover, .pay-option-btn:hover {
+                    border-color: rgba(59,130,246,0.35) !important;
+                }
             `}</style>
             {children}
         </div>
@@ -763,7 +780,7 @@ function ScrollArea({ children }) {
     return (
         <div
             className="hide-scrollbar"
-            style={{ flex: 1, overflowY: "auto", padding: "28px" }}
+            style={{ flex: 1, overflowY: "auto", padding: "30px" }}
         >
             {children}
         </div>
@@ -773,18 +790,28 @@ function ScrollArea({ children }) {
 function SectionHeader({ title, sub }) {
     return (
         <div style={{ marginBottom: 28 }}>
-            <h1 style={{ color: "#fff", fontSize: 32, marginBottom: 8 }}>{title}</h1>
-            <p style={{ color: "#94a3b8", fontSize: 15 }}>{sub}</p>
+            <h1 style={{ color: "#fff", fontSize: 32, fontWeight: 800, letterSpacing: "-1px", marginBottom: 8 }}>{title}</h1>
+            <p style={{ color: "#64748b", fontSize: 14 }}>{sub}</p>
         </div>
     );
 }
 
 function TypeCard({ item, onSelect }) {
     return (
-        <div style={styles.typeCard}>
-            <div style={styles.typeIcon}>{item.icon}</div>
-            <h2 style={{ color: "#fff", fontSize: 24, marginBottom: 10 }}>{item.title}</h2>
-            <p style={{ color: "#94a3b8", lineHeight: 1.7, fontSize: 14, flex: 1 }}>{item.desc}</p>
+        <div className="type-card" style={{ ...styles.typeCard, border: `1px solid ${item.border}`, transition: "transform .2s ease, box-shadow .2s ease" }}>
+            <div style={{
+                position: "absolute", top: 0, left: "28px", right: "28px",
+                height: "2px", borderRadius: "0 0 4px 4px",
+                background: `linear-gradient(90deg, ${item.accent}, transparent)`,
+            }} />
+            <div style={{
+                position: "absolute", top: "-40px", right: "-40px",
+                width: "110px", height: "110px", borderRadius: "999px",
+                background: item.bg, filter: "blur(30px)", pointerEvents: "none",
+            }} />
+            <div style={{ ...styles.typeIcon, background: item.bg, border: `1px solid ${item.border}` }}>{item.icon}</div>
+            <h2 style={{ color: "#fff", fontSize: 22, fontWeight: 700, letterSpacing: "-0.3px", marginBottom: 10 }}>{item.title}</h2>
+            <p style={{ color: "#64748b", lineHeight: 1.7, fontSize: 13.5, flex: 1 }}>{item.desc}</p>
             <button onClick={() => onSelect(item.id)} style={styles.selectBtn}>
                 Pilih Catering
             </button>
@@ -795,11 +822,13 @@ function TypeCard({ item, onSelect }) {
 function MenuCard({ menu, selected, onSelect }) {
     return (
         <div
+            className="menu-card"
             onClick={onSelect}
             style={{
                 ...styles.menuCard,
-                border: selected ? "2px solid #2563eb" : "1px solid rgba(255,255,255,0.06)",
-                boxShadow: selected ? "0 0 0 3px rgba(37,99,235,0.2)" : "none",
+                border: selected ? "1.5px solid #3b82f6" : "1px solid rgba(255,255,255,0.07)",
+                boxShadow: selected ? "0 0 0 3px rgba(59,130,246,0.15)" : "none",
+                transition: "transform .15s ease, box-shadow .15s ease",
             }}
         >
             <div style={{ position: "relative" }}>
@@ -816,14 +845,14 @@ function MenuCard({ menu, selected, onSelect }) {
             </div>
             <div style={{ padding: "14px" }}>
                 <div style={styles.catTag}>{menu.category}</div>
-                <div style={{ color: "#fff", fontSize: 14, marginBottom: 4 }}>{menu.name}</div>
+                <div style={{ color: "#fff", fontSize: 14, fontWeight: 600, marginBottom: 4 }}>{menu.name}</div>
                 <div style={{ color: "#fbbf24", fontSize: 11, marginBottom: 6 }}>Min. {menu.min_porsi} porsi</div>
-                <div style={{ color: "#22c55e", fontSize: 17 }}>
+                <div style={{ color: "#34d399", fontSize: 17, fontWeight: 700 }}>
                     Rp {menu.price.toLocaleString("id-ID")}
                 </div>
                 <button
                     onClick={(e) => { e.stopPropagation(); onSelect(); }}
-                    style={{ ...styles.addBtn, background: selected ? "#16a34a" : "linear-gradient(90deg,#2563eb,#3b82f6)" }}
+                    style={{ ...styles.addBtn, background: selected ? "#16a34a" : "linear-gradient(135deg,#3b82f6,#60a5fa)" }}
                 >
                     {selected ? <><FaCheck /> Dipilih</> : "+ Pilih Menu"}
                 </button>
@@ -834,7 +863,7 @@ function MenuCard({ menu, selected, onSelect }) {
 
 function Chip({ icon, text, color }) {
     return (
-        <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.06)", borderRadius: 10, padding: "6px 12px", fontSize: 12, color }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "6px 12px", fontSize: 12, fontWeight: 600, color }}>
             {icon} {text}
         </div>
     );
@@ -842,7 +871,7 @@ function Chip({ icon, text, color }) {
 
 function InfoBox({ children }) {
     return (
-        <div style={{ background: "#0f172a", borderRadius: 14, padding: "14px 16px", marginBottom: 14 }}>
+        <div style={{ background: "linear-gradient(160deg, #0f172a 0%, #0d1117 100%)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "14px 16px", marginBottom: 14 }}>
             {children}
         </div>
     );
@@ -850,7 +879,7 @@ function InfoBox({ children }) {
 
 function SectionLabel({ children }) {
     return (
-        <div style={{ color: "#64748b", fontSize: 11, letterSpacing: ".5px", textTransform: "uppercase", marginBottom: 8, marginTop: 4 }}>
+        <div style={{ color: "#475569", fontWeight: 700, fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10, marginTop: 6 }}>
             {children}
         </div>
     );
@@ -859,21 +888,21 @@ function SectionLabel({ children }) {
 function FormInput({ label, ...props }) {
     return (
         <div style={{ marginBottom: 12 }}>
-            <label style={{ display: "block", color: "#94a3b8", fontSize: 12, marginBottom: 6 }}>{label}</label>
+            <label style={{ display: "block", color: "#64748b", fontSize: 12, fontWeight: 500, marginBottom: 6 }}>{label}</label>
             <input
                 {...props}
                 style={{
                     width: "100%",
                     height: 46,
                     borderRadius: 12,
-                    border: "1px solid rgba(255,255,255,0.06)",
-                    background: "#0f172a",
+                    border: "1px solid rgba(255,255,255,0.07)",
+                    background: "#0d1117",
                     padding: "0 14px",
                     color: "#fff",
                     outline: "none",
                     fontSize: 13,
                     fontFamily: "inherit",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     opacity: props.readOnly ? 0.6 : 1,
                 }}
             />
@@ -883,9 +912,9 @@ function FormInput({ label, ...props }) {
 
 function SummaryRow({ label, value, yellow }) {
     return (
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 8, color: "#94a3b8" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 8, color: "#64748b" }}>
             <span>{label}</span>
-            <span style={{ color: yellow ? "#fbbf24" : "#fff" }}>{value}</span>
+            <span style={{ color: yellow ? "#fbbf24" : "#fff", fontWeight: 600 }}>{value}</span>
         </div>
     );
 }
@@ -893,14 +922,15 @@ function SummaryRow({ label, value, yellow }) {
 function PayMethodBtn({ icon, label, active, onClick }) {
     return (
         <button
+            className="pay-method-btn"
             onClick={onClick}
             style={{
                 flex: 1,
                 height: 56,
-                background: active ? "rgba(37,99,235,0.15)" : "#0f172a",
-                border: active ? "1.5px solid #2563eb" : "1px solid rgba(255,255,255,0.06)",
+                background: active ? "rgba(59,130,246,0.12)" : "#0d1117",
+                border: active ? "1.5px solid #3b82f6" : "1px solid rgba(255,255,255,0.07)",
                 borderRadius: 14,
-                color: active ? "#60a5fa" : "#94a3b8",
+                color: active ? "#60a5fa" : "#64748b",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
@@ -908,6 +938,7 @@ function PayMethodBtn({ icon, label, active, onClick }) {
                 gap: 4,
                 cursor: "pointer",
                 fontSize: 11,
+                fontWeight: 600,
                 transition: "all .2s",
             }}
         >
@@ -920,19 +951,20 @@ function PayMethodBtn({ icon, label, active, onClick }) {
 function PayOptionBtn({ label, sub, active, onClick }) {
     return (
         <button
+            className="pay-option-btn"
             onClick={onClick}
             style={{
-                background: active ? "rgba(37,99,235,0.15)" : "#0f172a",
-                border: active ? "1.5px solid #2563eb" : "1px solid rgba(255,255,255,0.06)",
+                background: active ? "rgba(59,130,246,0.12)" : "#0d1117",
+                border: active ? "1.5px solid #3b82f6" : "1px solid rgba(255,255,255,0.07)",
                 borderRadius: 10,
-                color: active ? "#60a5fa" : "#94a3b8",
+                color: active ? "#60a5fa" : "#64748b",
                 padding: "8px 10px",
                 cursor: "pointer",
                 fontSize: 12,
                 textAlign: "left",
                 transition: "all .2s",
                 fontFamily: "inherit",
-                fontWeight: 700,
+                fontWeight: 600,
             }}
         >
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -940,7 +972,7 @@ function PayOptionBtn({ label, sub, active, onClick }) {
                 <span>{label}</span>
             </div>
             {sub && (
-                <div style={{ fontSize: 10, color: active ? "#93c5fd" : "#64748b", marginTop: 2, fontWeight: 600 }}>
+                <div style={{ fontSize: 10, color: active ? "#93c5fd" : "#475569", marginTop: 2, fontWeight: 500 }}>
                     {sub}
                 </div>
             )}
@@ -958,40 +990,44 @@ const styles = {
     typeGrid: {
         display: "grid",
         gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))",
-        gap: 22,
+        gap: 16,
     },
     typeCard: {
-        background: "#182338",
-        borderRadius: 24,
+        background: "linear-gradient(160deg, #0f172a 0%, #0d1117 100%)",
+        borderRadius: 20,
         padding: "28px",
-        border: "1px solid rgba(255,255,255,0.05)",
         display: "flex",
         flexDirection: "column",
         gap: 0,
+        position: "relative",
+        overflow: "hidden",
     },
     typeIcon: {
-        width: 64,
-        height: 64,
-        borderRadius: 18,
-        background: "rgba(37,99,235,0.15)",
+        width: 56,
+        height: 56,
+        borderRadius: 16,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontSize: 28,
+        fontSize: 26,
         marginBottom: 18,
+        position: "relative",
+        zIndex: 2,
     },
     selectBtn: {
         marginTop: 22,
         width: "100%",
-        height: 50,
+        height: 48,
         border: "none",
         borderRadius: 14,
-        background: "linear-gradient(90deg,#2563eb,#3b82f6)",
+        background: "linear-gradient(135deg,#3b82f6,#60a5fa)",
         color: "#fff",
-        fontSize: 15,
+        fontSize: 14,
         cursor: "pointer",
         fontFamily: "inherit",
         fontWeight: 700,
+        position: "relative",
+        zIndex: 2,
     },
 
     /* POS */
@@ -1018,10 +1054,10 @@ const styles = {
     },
     backBtn: {
         height: 38,
-        border: "none",
+        border: "1px solid rgba(255,255,255,0.08)",
         padding: "0 14px",
         borderRadius: 10,
-        background: "rgba(255,255,255,0.07)",
+        background: "rgba(255,255,255,0.04)",
         color: "#fff",
         display: "flex",
         alignItems: "center",
@@ -1029,12 +1065,14 @@ const styles = {
         cursor: "pointer",
         fontSize: 13,
         fontFamily: "inherit",
-        fontWeight: 700,
+        fontWeight: 600,
         flexShrink: 0,
     },
     menuTitle: {
         color: "#fff",
-        fontSize: 20,
+        fontSize: 18,
+        fontWeight: 700,
+        letterSpacing: "-0.3px",
         flex: 1,
     },
     infoChips: {
@@ -1049,8 +1087,8 @@ const styles = {
     },
     searchBox: {
         flex: 1,
-        background: "#182338",
-        border: "1px solid rgba(255,255,255,0.06)",
+        background: "#0d1117",
+        border: "1px solid rgba(255,255,255,0.07)",
         borderRadius: 12,
         display: "flex",
         alignItems: "center",
@@ -1066,11 +1104,11 @@ const styles = {
         fontSize: 13,
         outline: "none",
         fontFamily: "inherit",
-        fontWeight: 700,
+        fontWeight: 500,
     },
     sortSelect: {
-        background: "#182338",
-        border: "1px solid rgba(255,255,255,0.06)",
+        background: "#0d1117",
+        border: "1px solid rgba(255,255,255,0.07)",
         borderRadius: 12,
         padding: "0 12px",
         height: 40,
@@ -1079,7 +1117,7 @@ const styles = {
         outline: "none",
         cursor: "pointer",
         fontFamily: "inherit",
-        fontWeight: 700,
+        fontWeight: 500,
     },
     menuScrollArea: {
         flex: 1,
@@ -1099,7 +1137,8 @@ const styles = {
         width: 30,
         height: 30,
         borderRadius: 9,
-        background: "rgba(37,99,235,0.15)",
+        background: "rgba(59,130,246,0.12)",
+        border: "1px solid rgba(59,130,246,0.2)",
         color: "#60a5fa",
         display: "flex",
         alignItems: "center",
@@ -1112,11 +1151,10 @@ const styles = {
         gap: 16,
     },
     menuCard: {
-        background: "#182338",
+        background: "linear-gradient(160deg, #0f172a 0%, #0d1117 100%)",
         borderRadius: 18,
         overflow: "hidden",
         cursor: "pointer",
-        transition: "transform .15s",
     },
     menuCardImg: {
         width: "100%",
@@ -1130,6 +1168,7 @@ const styles = {
         background: "#16a34a",
         color: "#fff",
         fontSize: 10,
+        fontWeight: 600,
         padding: "3px 8px",
         borderRadius: 20,
         display: "flex",
@@ -1138,9 +1177,11 @@ const styles = {
     },
     catTag: {
         display: "inline-block",
-        background: "rgba(37,99,235,0.15)",
+        background: "rgba(59,130,246,0.12)",
+        border: "1px solid rgba(59,130,246,0.2)",
         color: "#60a5fa",
         fontSize: 10,
+        fontWeight: 600,
         padding: "2px 8px",
         borderRadius: 6,
         marginBottom: 6,
@@ -1154,13 +1195,13 @@ const styles = {
         borderRadius: 9,
         color: "#fff",
         fontSize: 12,
+        fontWeight: 600,
         cursor: "pointer",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         gap: 6,
         fontFamily: "inherit",
-        fontWeight: 700,
         transition: "background .2s",
     },
     emptyState: {
@@ -1169,13 +1210,12 @@ const styles = {
         alignItems: "center",
         justifyContent: "center",
         height: "300px",
-        color: "#64748b",
+        color: "#475569",
     },
 
-    /* Order panel — diperbesar dari 360 ke 430, dan punya scroll-area sendiri */
     orderPanel: {
         width: 430,
-        background: "#182338",
+        background: "linear-gradient(160deg, #0f172a 0%, #0d1117 100%)",
         borderLeft: "1px solid rgba(255,255,255,0.06)",
         display: "flex",
         flexDirection: "column",
@@ -1191,9 +1231,11 @@ const styles = {
     },
     menuBadge: {
         marginLeft: "auto",
-        background: "rgba(37,99,235,0.2)",
+        background: "rgba(59,130,246,0.15)",
+        border: "1px solid rgba(59,130,246,0.25)",
         color: "#60a5fa",
         fontSize: 11,
+        fontWeight: 600,
         padding: "3px 10px",
         borderRadius: 20,
     },
@@ -1208,10 +1250,11 @@ const styles = {
         alignItems: "center",
         justifyContent: "center",
         height: "100%",
-        color: "#64748b",
+        color: "#475569",
     },
     selectedMenuCard: {
-        background: "#0f172a",
+        background: "#0d1117",
+        border: "1px solid rgba(255,255,255,0.06)",
         borderRadius: 14,
         padding: "12px",
         display: "flex",
@@ -1231,7 +1274,7 @@ const styles = {
         height: 36,
         borderRadius: 10,
         border: "1px solid rgba(239,68,68,0.3)",
-        background: "rgba(239,68,68,0.12)",
+        background: "rgba(239,68,68,0.1)",
         color: "#f87171",
         display: "flex",
         alignItems: "center",
@@ -1255,6 +1298,7 @@ const styles = {
         display: "flex",
         justifyContent: "space-between",
         fontSize: 15,
+        fontWeight: 700,
         color: "#fff",
     },
     payMethodGrid: {
@@ -1269,11 +1313,11 @@ const styles = {
         marginBottom: 14,
     },
     noAccountNote: {
-        background: "#0f172a",
+        background: "#0d1117",
         border: "1px dashed rgba(255,255,255,0.1)",
         borderRadius: 12,
         padding: "10px 12px",
-        color: "#64748b",
+        color: "#475569",
         fontSize: 12,
         marginBottom: 14,
     },
@@ -1282,9 +1326,9 @@ const styles = {
         height: 50,
         border: "none",
         borderRadius: 14,
-        background: "linear-gradient(90deg,#2563eb,#3b82f6)",
+        background: "linear-gradient(135deg,#3b82f6,#60a5fa)",
         color: "#fff",
-        fontSize: 15,
+        fontSize: 14,
         cursor: "pointer",
         display: "flex",
         alignItems: "center",

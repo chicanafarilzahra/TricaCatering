@@ -1,187 +1,404 @@
 // resources/js/pages/Kurir/JadwalPengiriman.jsx
-
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-
-import {
-  FaTruck,
-  FaCheckCircle,
-  FaClock,
-  FaMoneyBillWave,
-  FaBell,
-} from "react-icons/fa";
-
+import { FaTruck, FaCheckCircle, FaClock, FaMoneyBillWave, FaBell } from "react-icons/fa";
 import SidebarKurir from "../../components/SidebarKurir";
-import NavbarKurir from "../../components/NavbarKurir";
 
-export default function JadwalPengiriman({ onLogout }) {
-  const [orders, setOrders] = useState([]);
-  const [user, setUser] = useState(null);
+/* ── Design tokens ────────────────────────────────────────────
+   Same system as Kurir/Home.jsx — deep navy base, cool slate
+   surface, blue accent. Kept identical so both pages read as
+   one product instead of two different builds.
+─────────────────────────────────────────────────────────────── */
+const T = {
+    bg:       "#060D1F",
+    surface:  "#0C1529",
+    card:     "#101D35",
+    border:   "rgba(255,255,255,0.06)",
+    borderMd: "rgba(255,255,255,0.10)",
+    text:     "#F0F4FF",
+    sub:      "#8B9FC0",
+    muted:    "#3D5070",
+    blue:     "#3B82F6",
+    blueGlow: "rgba(59,130,246,0.15)",
+    green:    "#22C55E",
+    amber:    "#F59E0B",
+    font:     "'Inter', system-ui, -apple-system, sans-serif",
+};
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) setUser(JSON.parse(storedUser));
-
-    axios
-      .get("/kurir/orders")
-      .then((res) => setOrders(res.data))
-      .catch((err) => console.error(err));
-  }, []);
-
-  const totalPengiriman = orders.length;
-  const selesai = orders.filter((o) => o.status === "delivered").length;
-  const dikirim = orders.filter((o) => o.status === "on_delivery").length;
-  const totalBiaya = orders.reduce((sum, o) => sum + (o.delivery_fee || 0), 0);
-
-  const getStatus = (status) => {
+function statusMeta(status) {
     switch (status) {
-      case "pending":
-        return { text: "Menunggu", bg: "rgba(59,130,246,0.18)", color: "#60a5fa" };
-      case "on_delivery":
-        return { text: "Dikirim", bg: "rgba(245,158,11,0.18)", color: "#fbbf24" };
-      case "delivered":
-        return { text: "Selesai", bg: "rgba(34,197,94,0.18)", color: "#4ade80" };
-      default:
-        return { text: "Unknown", bg: "rgba(255,255,255,0.1)", color: "#cbd5e1" };
+        case "delivered":
+            return { label: "Selesai",   bg: "rgba(34,197,94,0.12)",  border: "rgba(34,197,94,0.25)",  color: "#4ADE80" };
+        case "on_delivery":
+            return { label: "Dikirim",   bg: "rgba(59,130,246,0.12)", border: "rgba(59,130,246,0.28)", color: "#60A5FA" };
+        case "dispatched":
+            return { label: "Disiapkan", bg: "rgba(168,85,247,0.12)", border: "rgba(168,85,247,0.28)", color: "#C084FC" };
+        default:
+            return { label: "Menunggu",  bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.25)", color: "#FCD34D" };
     }
-  };
-
-  return (
-    <div style={{ position: "fixed", inset: 0, display: "flex", overflow: "hidden", background: "#071028" }}>
-      {/* SIDEBAR */}
-      <div style={{ width: "260px", height: "100%", flexShrink: 0 }}>
-        <SidebarKurir onLogout={onLogout} />
-      </div>
-
-      {/* MAIN */}
-      <div style={{ flex: 1, minWidth: 0, height: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        {/* NAVBAR */}
-        <div style={{
-          height: "78px",
-          flexShrink: 0,
-          width: "100%",               // full width main content
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          position: "sticky",
-          top: 0,
-          zIndex: 1000,
-          background: "linear-gradient(90deg,#17306a 0%,#1f3f8b 100%)",
-          padding: "0 24px",
-          boxShadow: "0 4px 18px rgba(0,0,0,0.25)",
-          borderBottom: "1px solid rgba(255,255,255,0.05)",
-          boxSizing: "border-box"
-        }}>
-          <div>
-            <h1 style={{ color: "#fff", fontSize: 28, fontWeight: 700, margin: 0 }}>
-              Jadwal Pengiriman
-            </h1>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <div style={{
-              width: 44,
-              height: 44,
-              borderRadius: 12,
-              background: "rgba(255,255,255,0.08)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer"
-            }}>
-              <FaBell style={{ color: "#fff", fontSize: 16 }} />
-            </div>
-          </div>
-        </div>
-
-        {/* CONTENT */}
-        <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "24px", background: "#071028", color: "#ffffff" }}>
-          {/* HEADER */}
-          <div style={{ marginBottom: "24px" }}>
-            <h2 style={{ margin: 0, fontSize: "34px", fontWeight: "800", color: "#ffffff" }}>
-              Jadwal Pengiriman
-            </h2>
-            <p style={{ marginTop: "8px", color: "#94a3b8", fontSize: "15px" }}>
-              Pantau seluruh jadwal pengiriman kurir hari ini.
-            </p>
-          </div>
-
-          {/* STAT CARD */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))", gap: "16px", marginBottom: "24px" }}>
-            <StatCard title="Total Pengiriman" value={totalPengiriman} icon={<FaTruck size={26} />} />
-            <StatCard title="Sedang Dikirim" value={dikirim} icon={<FaClock size={26} />} />
-            <StatCard title="Selesai" value={selesai} icon={<FaCheckCircle size={26} />} />
-            <StatCard title="Total Biaya" value={`Rp ${totalBiaya.toLocaleString()}`} icon={<FaMoneyBillWave size={26} />} />
-          </div>
-
-          {/* TABLE */}
-          <div style={{ background: "#182338", borderRadius: "18px", padding: "20px", boxShadow: "0 8px 25px rgba(0,0,0,0.25)", overflow: "hidden" }}>
-            <h3 style={{ marginTop: 0, marginBottom: "18px", fontSize: "22px", fontWeight: "700", color: "#ffffff" }}>Delivery Schedule</h3>
-            <div style={{ width: "100%", overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", color: "#f8fafc" }}>
-                <thead>
-                  <tr style={{ background: "rgba(255,255,255,0.05)" }}>
-                    <th style={thStyle}>No</th>
-                    <th style={thStyle}>Klien</th>
-                    <th style={thStyle}>Pesanan</th>
-                    <th style={thStyle}>Biaya</th>
-                    <th style={thStyle}>Waktu</th>
-                    <th style={thStyle}>Status</th>
-                    <th style={thStyle}>Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {orders.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} style={{ textAlign: "center", padding: "32px", color: "#94a3b8" }}>
-                        Tidak ada jadwal pengiriman.
-                      </td>
-                    </tr>
-                  ) : (
-                    orders.map((o, idx) => {
-                      const status = getStatus(o.status);
-                      return (
-                        <tr key={o.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                          <td style={tdStyle}>{idx + 1}</td>
-                          <td style={tdStyle}>{o.client?.name}</td>
-                          <td style={tdStyle}>{o.menu?.name} ({o.quantity} porsi)</td>
-                          <td style={tdStyle}>Rp {(o.delivery_fee || 0).toLocaleString()}</td>
-                          <td style={tdStyle}>{o.delivery_time}</td>
-                          <td style={tdStyle}>
-                            <span style={{ padding: "8px 14px", borderRadius: "999px", fontSize: "12px", fontWeight: "700", background: status.bg, color: status.color }}>
-                              {status.text}
-                            </span>
-                          </td>
-                          <td style={tdStyle}>
-                            {o.status === "pending" && (
-                              <button style={{ border: "none", padding: "9px 14px", borderRadius: "10px", background: "linear-gradient(135deg,#2563eb,#3b82f6)", color: "#fff", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>
-                                Konfirmasi
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 }
 
-const StatCard = ({ title, value, icon }) => (
-  <div style={{ background: "#182338", borderRadius: "16px", padding: "18px", display: "flex", flexDirection: "column", gap: "12px", boxShadow: "0 4px 20px rgba(0,0,0,0.25)" }}>
-    <div style={{ width: "52px", height: "52px", borderRadius: "14px", background: "rgba(59,130,246,0.18)", display: "flex", alignItems: "center", justifyContent: "center", color: "#3b82f6" }}>
-      {icon}
-    </div>
-    <div style={{ fontSize: "14px", color: "#94a3b8" }}>{title}</div>
-    <div style={{ fontSize: "30px", fontWeight: "800", color: "#ffffff" }}>{value}</div>
-  </div>
-);
+/* ── StatCard (mirrors Home.jsx) ─────────────────────────────── */
+function StatCard({ title, value, icon, accentColor, bar }) {
+    return (
+        <div style={{
+            background: T.card,
+            border: `0.5px solid ${T.border}`,
+            borderRadius: "14px",
+            padding: "20px 22px",
+            position: "relative",
+            overflow: "hidden",
+            flex: 1,
+            minWidth: 0,
+            fontFamily: T.font,
+        }}>
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "2px", background: bar }} />
+            <div style={{
+                position: "absolute", top: "-30px", right: "-30px",
+                width: "90px", height: "90px", borderRadius: "50%",
+                background: accentColor + "18", filter: "blur(24px)",
+                pointerEvents: "none",
+            }} />
+            <div style={{ position: "relative", zIndex: 1 }}>
+                <div style={{
+                    width: "36px", height: "36px", borderRadius: "10px",
+                    background: accentColor + "18",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: accentColor, fontSize: "16px", marginBottom: "16px",
+                }}>
+                    {icon}
+                </div>
+                <div style={{
+                    fontSize: "11px", fontWeight: 600, color: T.muted,
+                    textTransform: "uppercase", letterSpacing: ".7px", marginBottom: "6px",
+                }}>
+                    {title}
+                </div>
+                <div style={{ fontSize: "28px", fontWeight: 800, color: T.text, letterSpacing: "-1px", lineHeight: 1 }}>
+                    {value}
+                </div>
+            </div>
+        </div>
+    );
+}
 
-const thStyle = { padding: "14px 10px", textAlign: "left", color: "#cbd5e1", fontSize: "13px", fontWeight: "700" };
-const tdStyle = { padding: "16px 10px", fontSize: "14px", color: "#f8fafc" };
+/* ── Main ─────────────────────────────────────────────────── */
+export default function JadwalPengiriman({ onLogout }) {
+    const [orders, setOrders] = useState([]);
+    const [user,   setUser]   = useState(null);
+
+    useEffect(() => {
+        const stored = localStorage.getItem("user");
+        if (stored) setUser(JSON.parse(stored));
+        axios.get("/kurir/orders")
+            .then((res) => setOrders(res.data))
+            .catch((err) => console.error(err));
+    }, []);
+
+    const totalPengiriman = orders.length;
+    const selesai         = orders.filter((o) => o.status === "delivered").length;
+    const dikirim         = orders.filter((o) => o.status === "on_delivery").length;
+    const menunggu        = orders.filter((o) => o.status === "pending").length;
+    const totalBiaya      = orders.reduce((sum, o) => sum + (o.delivery_fee || 0), 0);
+
+    return (
+        <div style={{
+            position: "fixed", inset: 0,
+            display: "flex", overflow: "hidden",
+            background: T.bg, fontFamily: T.font,
+        }}>
+            {/* SIDEBAR */}
+            <div style={{ width: "260px", height: "100%", flexShrink: 0 }}>
+                <SidebarKurir onLogout={onLogout} />
+            </div>
+
+            {/* MAIN */}
+            <div style={{ flex: 1, minWidth: 0, height: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+
+                {/* ── NAVBAR ── */}
+                <div style={{
+                    height: "64px", flexShrink: 0,
+                    background: T.surface,
+                    borderBottom: `0.5px solid ${T.border}`,
+                    display: "flex", alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "0 28px",
+                    boxShadow: "0 1px 0 rgba(255,255,255,0.03)",
+                }}>
+                    <div>
+                        <div style={{ fontSize: "11px", fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: ".8px", marginBottom: "2px" }}>
+                            Kurir · Jadwal
+                        </div>
+                        <div style={{ fontSize: "15px", fontWeight: 700, color: T.text }}>
+                            Jadwal Pengiriman
+                        </div>
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <div style={{
+                            width: "38px", height: "38px", borderRadius: "10px",
+                            background: T.card, border: `0.5px solid ${T.borderMd}`,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            cursor: "pointer", color: T.sub, fontSize: "16px",
+                            position: "relative",
+                        }}>
+                            <FaBell />
+                            {menunggu > 0 && (
+                                <span style={{
+                                    position: "absolute", top: "7px", right: "7px",
+                                    width: "7px", height: "7px", borderRadius: "50%",
+                                    background: T.amber, boxShadow: `0 0 6px ${T.amber}`,
+                                }} />
+                            )}
+                        </div>
+
+                        <div style={{
+                            width: "38px", height: "38px", borderRadius: "10px",
+                            background: "linear-gradient(135deg,#3B82F6,#6366F1)",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: "14px", fontWeight: 700, color: "#fff",
+                        }}>
+                            {user?.name?.charAt(0)?.toUpperCase() || "K"}
+                        </div>
+                    </div>
+                </div>
+
+                {/* ── CONTENT ── */}
+                <div style={{
+                    flex: 1, overflowY: "auto", overflowX: "hidden",
+                    padding: "28px 28px 40px",
+                    background: T.bg,
+                }}>
+
+                    {/* ── Hero strip ── */}
+                    <div style={{
+                        position: "relative",
+                        borderRadius: "16px",
+                        padding: "24px 28px",
+                        background: T.surface,
+                        border: `0.5px solid ${T.border}`,
+                        marginBottom: "20px",
+                        overflow: "hidden",
+                    }}>
+                        <div style={{
+                            position: "absolute", top: "-40px", right: "40px",
+                            width: "200px", height: "200px", borderRadius: "50%",
+                            background: "rgba(59,130,246,0.08)", filter: "blur(60px)",
+                            pointerEvents: "none",
+                        }} />
+                        <div style={{ position: "relative", zIndex: 1 }}>
+                            <div style={{
+                                display: "inline-flex", alignItems: "center", gap: "6px",
+                                padding: "4px 12px", borderRadius: "999px",
+                                background: T.blueGlow,
+                                border: "0.5px solid rgba(59,130,246,0.25)",
+                                color: "#60A5FA", fontSize: "11px", fontWeight: 700,
+                                letterSpacing: ".5px", textTransform: "uppercase",
+                                marginBottom: "10px",
+                            }}>
+                                <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#60A5FA", display: "inline-block" }} />
+                                Hari ini
+                            </div>
+                            <div style={{ fontSize: "22px", fontWeight: 800, color: T.text, letterSpacing: "-.5px", lineHeight: 1.2 }}>
+                                {dikirim > 0
+                                    ? <>{dikirim} pengiriman <span style={{ color: "#60A5FA" }}>sedang berjalan</span></>
+                                    : <>Pantau seluruh jadwal <span style={{ color: "#60A5FA" }}>pengiriman kurir</span></>
+                                }
+                            </div>
+                            <div style={{ marginTop: "6px", fontSize: "13px", color: T.sub }}>
+                                {totalPengiriman} total pesanan · {selesai} selesai · {menunggu} menunggu konfirmasi
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ── 4 Stat Cards ── */}
+                    <div style={{ display: "flex", gap: "14px", marginBottom: "22px" }}>
+                        <StatCard
+                            title="Total Pengiriman"
+                            value={totalPengiriman}
+                            icon={<FaTruck />}
+                            accentColor="#3B82F6"
+                            bar="linear-gradient(90deg,#3B82F6,#6366F1)"
+                        />
+                        <StatCard
+                            title="Sedang Dikirim"
+                            value={dikirim}
+                            icon={<FaClock />}
+                            accentColor="#F59E0B"
+                            bar="linear-gradient(90deg,#F59E0B,#FBBF24)"
+                        />
+                        <StatCard
+                            title="Selesai"
+                            value={selesai}
+                            icon={<FaCheckCircle />}
+                            accentColor="#22C55E"
+                            bar="linear-gradient(90deg,#22C55E,#10B981)"
+                        />
+                        <StatCard
+                            title="Total Biaya"
+                            value={`Rp ${totalBiaya.toLocaleString("id-ID")}`}
+                            icon={<FaMoneyBillWave />}
+                            accentColor="#A855F7"
+                            bar="linear-gradient(90deg,#A855F7,#6366F1)"
+                        />
+                    </div>
+
+                    {/* ── Table ── */}
+                    <div style={{
+                        background: T.surface,
+                        border: `0.5px solid ${T.border}`,
+                        borderRadius: "16px",
+                        overflow: "hidden",
+                    }}>
+                        <div style={{
+                            padding: "18px 24px",
+                            borderBottom: `0.5px solid ${T.border}`,
+                            display: "flex", alignItems: "center", justifyContent: "space-between",
+                        }}>
+                            <div>
+                                <div style={{ fontSize: "15px", fontWeight: 700, color: T.text }}>Delivery Schedule</div>
+                                <div style={{ fontSize: "12px", color: T.muted, marginTop: "2px" }}>
+                                    Seluruh jadwal pengiriman yang ditugaskan kepada Anda
+                                </div>
+                            </div>
+                            <div style={{
+                                padding: "5px 12px", borderRadius: "8px",
+                                background: T.blueGlow,
+                                border: "0.5px solid rgba(59,130,246,0.25)",
+                                fontSize: "12px", fontWeight: 700, color: "#60A5FA",
+                            }}>
+                                {totalPengiriman} Pesanan
+                            </div>
+                        </div>
+
+                        <div style={{ overflowX: "auto" }}>
+                            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "760px" }}>
+                                <thead>
+                                    <tr>
+                                        {["No", "Klien", "Pesanan", "Biaya", "Waktu", "Status", "Aksi"].map((h) => (
+                                            <th key={h} style={{
+                                                padding: "11px 20px",
+                                                textAlign: "left",
+                                                fontSize: "11px", fontWeight: 600,
+                                                color: T.muted,
+                                                textTransform: "uppercase", letterSpacing: ".6px",
+                                                borderBottom: `0.5px solid ${T.border}`,
+                                                whiteSpace: "nowrap",
+                                            }}>
+                                                {h}
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {orders.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={7} style={{
+                                                padding: "56px 20px",
+                                                textAlign: "center",
+                                                color: T.muted, fontSize: "13px",
+                                            }}>
+                                                <div style={{
+                                                    width: "48px", height: "48px", borderRadius: "14px",
+                                                    background: T.card, border: `0.5px solid ${T.border}`,
+                                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                                    color: T.muted, fontSize: "20px",
+                                                    margin: "0 auto 12px",
+                                                }}>
+                                                    <FaTruck />
+                                                </div>
+                                                Tidak ada jadwal pengiriman
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        orders.map((o, idx) => {
+                                            const sm = statusMeta(o.status);
+                                            const isActive = o.status === "on_delivery" || o.status === "dispatched";
+                                            return (
+                                                <tr
+                                                    key={o.id}
+                                                    style={{
+                                                        borderBottom: `0.5px solid rgba(255,255,255,0.03)`,
+                                                        transition: "background 0.15s",
+                                                        position: "relative",
+                                                    }}
+                                                    onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.02)"}
+                                                    onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                                                >
+                                                    <td style={{ padding: "14px 20px", color: T.muted, fontSize: "13px", position: "relative" }}>
+                                                        {isActive && (
+                                                            <div style={{
+                                                                position: "absolute", left: 0, top: "20%", bottom: "20%",
+                                                                width: "2px", borderRadius: "2px",
+                                                                background: T.blue,
+                                                                boxShadow: `0 0 8px ${T.blue}`,
+                                                            }} />
+                                                        )}
+                                                        {idx + 1}
+                                                    </td>
+                                                    <td style={{ padding: "14px 20px" }}>
+                                                        <div style={{ fontWeight: 600, color: T.text, fontSize: "13px" }}>
+                                                            {o.client?.name || "—"}
+                                                        </div>
+                                                    </td>
+                                                    <td style={{ padding: "14px 20px" }}>
+                                                        <div style={{ fontSize: "13px", color: T.text, fontWeight: 500 }}>
+                                                            {o.menu?.name || "—"}
+                                                        </div>
+                                                        <div style={{ fontSize: "11px", color: T.muted, marginTop: "2px" }}>
+                                                            {o.quantity} porsi
+                                                        </div>
+                                                    </td>
+                                                    <td style={{ padding: "14px 20px", fontSize: "13px", fontWeight: 700, color: "#34D399", whiteSpace: "nowrap" }}>
+                                                        Rp {(o.delivery_fee || 0).toLocaleString("id-ID")}
+                                                    </td>
+                                                    <td style={{ padding: "14px 20px", fontSize: "13px", color: T.sub, whiteSpace: "nowrap" }}>
+                                                        {o.delivery_time || "—"}
+                                                    </td>
+                                                    <td style={{ padding: "14px 20px" }}>
+                                                        <span style={{
+                                                            display: "inline-flex", alignItems: "center",
+                                                            padding: "4px 11px", borderRadius: "20px",
+                                                            fontSize: "11px", fontWeight: 700,
+                                                            background: sm.bg,
+                                                            border: `0.5px solid ${sm.border}`,
+                                                            color: sm.color,
+                                                            textTransform: "uppercase", letterSpacing: ".4px",
+                                                        }}>
+                                                            {sm.label}
+                                                        </span>
+                                                    </td>
+                                                    <td style={{ padding: "14px 20px", whiteSpace: "nowrap" }}>
+                                                        {o.status === "pending" && (
+                                                            <button style={{
+                                                                border: "0.5px solid rgba(59,130,246,0.35)",
+                                                                padding: "7px 14px",
+                                                                borderRadius: "8px",
+                                                                background: T.blueGlow,
+                                                                color: "#60A5FA",
+                                                                fontSize: "12px",
+                                                                fontWeight: 700,
+                                                                cursor: "pointer",
+                                                                transition: "background 0.15s",
+                                                            }}
+                                                            onMouseEnter={(e) => e.currentTarget.style.background = "rgba(59,130,246,0.28)"}
+                                                            onMouseLeave={(e) => e.currentTarget.style.background = T.blueGlow}
+                                                            >
+                                                                Konfirmasi
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    );
+}

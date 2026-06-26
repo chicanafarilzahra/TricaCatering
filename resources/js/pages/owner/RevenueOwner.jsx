@@ -1,699 +1,429 @@
 // resources/js/pages/owner/RevenueOwner.jsx
+// ✅ Gabungan Revenue + Reports — hapus ReportsOwner.jsx
 
 import { useState, useEffect } from "react";
 import axios from "axios";
-
 import {
-    DollarSign,
-    TrendingUp,
-    Calendar,
-    Wallet,
-    Plus,
-    Trash2,
-    CreditCard,
-    Smartphone,
-    CheckCircle,
-    X,
-    Building2,
-    Edit2,
+    DollarSign, TrendingUp, Calendar, Wallet,
+    Plus, Trash2, CreditCard, Smartphone,
+    CheckCircle, X, Building2, Edit2,
+    LayoutDashboard, ShoppingBag,
+    BarChart3, Package, FileBarChart2,
 } from "lucide-react";
-
 import OwnerLayout from "../../layouts/OwnerLayout";
 
-// ─── Reusable UI primitives ──────────────────────────────────────────────────
+/* ── font injection ─────────────────────────────────────────── */
+if (typeof document !== "undefined" && !document.getElementById("inter-font")) {
+    const l = document.createElement("link");
+    l.id   = "inter-font";
+    l.rel  = "stylesheet";
+    l.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap";
+    document.head.appendChild(l);
+}
 
-function MetricCard({ title, value = 0, icon, color = "#60a5fa" }) {
+/* ── tokens ─────────────────────────────────────────────────── */
+const C = {
+    bg:      "#080C14",
+    surface: "#0F1623",
+    card:    "#141E30",
+    border:  "rgba(255,255,255,0.07)",
+    borderMd:"rgba(255,255,255,0.10)",
+    text:    "#F8FAFC",
+    muted:   "#64748B",
+    sub:     "#94A3B8",
+    font:    "'Inter', system-ui, -apple-system, sans-serif",
+};
+
+const bars = {
+    green:  "linear-gradient(90deg,#10b981,#34d399)",
+    blue:   "linear-gradient(90deg,#3b82f6,#60a5fa)",
+    amber:  "linear-gradient(90deg,#f59e0b,#fbbf24)",
+    indigo: "linear-gradient(90deg,#6366f1,#818cf8)",
+    purple: "linear-gradient(90deg,#8b5cf6,#a78bfa)",
+};
+
+/* ── shared input style ─────────────────────────────────────── */
+const inp = (err = false) => ({
+    width: "100%", height: "40px",
+    borderRadius: "8px",
+    border: `0.5px solid ${err ? "rgba(239,68,68,.50)" : C.borderMd}`,
+    background: C.card,
+    padding: "0 12px",
+    color: C.text,
+    fontFamily: C.font,
+    fontSize: "13.5px",
+    outline: "none",
+    boxSizing: "border-box",
+});
+
+const getToken = () =>
+    localStorage.getItem("auth_token") || localStorage.getItem("token");
+
+/* ── StatCard ───────────────────────────────────────────────── */
+function StatCard({ label, value, icon: Icon, bar }) {
     return (
-        <div
-            style={{
-                background:
-                    "linear-gradient(145deg, rgba(15,23,42,0.95), rgba(30,41,59,0.95))",
-                border: "1px solid rgba(148,163,184,0.08)",
-                borderRadius: "22px",
-                padding: "22px",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                boxShadow: "0 16px 40px rgba(0,0,0,0.30)",
-            }}
-        >
-            <div>
-                <div
-                    style={{
-                        fontSize: "12px",
-                        color: "#94a3b8",
-                        fontWeight: "700",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.7px",
-                        marginBottom: "10px",
-                    }}
-                >
-                    {title}
+        <div style={{
+            background: C.surface, border: `0.5px solid ${C.border}`,
+            borderRadius: "12px", padding: "18px 20px",
+            position: "relative", overflow: "hidden", fontFamily: C.font,
+        }}>
+            <div style={{
+                position: "absolute", top: 0, left: 0, right: 0,
+                height: "2px", background: bar,
+            }} />
+            <div style={{
+                fontSize: "11px", fontWeight: 600, color: C.muted,
+                textTransform: "uppercase", letterSpacing: ".7px", marginBottom: "10px",
+            }}>{label}</div>
+            <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
+                <div style={{
+                    fontSize: "22px", fontWeight: 800, color: C.text,
+                    letterSpacing: "-0.8px", lineHeight: 1,
+                }}>{value ?? "—"}</div>
+                <div style={{
+                    width: "38px", height: "38px", borderRadius: "9px",
+                    background: C.card, border: `0.5px solid ${C.border}`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: C.muted, flexShrink: 0,
+                }}>
+                    <Icon size={18} strokeWidth={1.7} />
                 </div>
-                <div
-                    style={{
-                        fontSize: "32px",
-                        fontWeight: "800",
-                        color: "#ffffff",
-                        lineHeight: 1,
-                    }}
-                >
-                    {value}
-                </div>
-            </div>
-            <div
-                style={{
-                    width: "56px",
-                    height: "56px",
-                    borderRadius: "18px",
-                    background: "rgba(59,130,246,0.12)",
-                    border: "1px solid rgba(59,130,246,0.18)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color,
-                }}
-            >
-                {icon}
             </div>
         </div>
     );
 }
 
-function SectionCard({ title, subtitle, children }) {
+/* ── FieldLabel ─────────────────────────────────────────────── */
+function FieldLabel({ children, mt = true }) {
     return (
-        <div
-            style={{
-                background:
-                    "linear-gradient(145deg, rgba(15,23,42,0.96), rgba(30,41,59,0.96))",
-                border: "1px solid rgba(148,163,184,0.08)",
-                borderRadius: "24px",
-                padding: "28px",
-                boxShadow: "0 18px 45px rgba(0,0,0,0.28)",
-                marginBottom: "24px",
-            }}
-        >
-            <div style={{ marginBottom: "22px" }}>
-                <h2
-                    style={{
-                        margin: 0,
-                        fontSize: "22px",
-                        fontWeight: "700",
-                        color: "#ffffff",
-                    }}
-                >
-                    {title}
-                </h2>
-                <p
-                    style={{
-                        margin: "8px 0 0",
-                        color: "#94a3b8",
-                        fontSize: "14px",
-                        lineHeight: "1.7",
-                    }}
-                >
-                    {subtitle}
-                </p>
+        <div style={{
+            fontSize: "11px", fontWeight: 600, color: C.muted,
+            textTransform: "uppercase", letterSpacing: ".6px",
+            marginBottom: "5px", marginTop: mt ? "13px" : 0,
+        }}>{children}</div>
+    );
+}
+
+/* ── EmptyState ─────────────────────────────────────────────── */
+function EmptyState({ title, subtitle, icon: Icon }) {
+    return (
+        <div style={{
+            padding: "48px 20px", display: "flex",
+            flexDirection: "column", alignItems: "center", textAlign: "center",
+            fontFamily: C.font,
+        }}>
+            <div style={{
+                width: "60px", height: "60px", borderRadius: "16px",
+                background: C.card, border: `0.5px solid ${C.border}`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: C.muted, marginBottom: "16px",
+            }}>
+                <Icon size={26} strokeWidth={1.4} />
+            </div>
+            <div style={{ fontSize: "16px", fontWeight: 700, color: C.text, marginBottom: "6px" }}>{title}</div>
+            <p style={{ fontSize: "13px", color: C.muted, lineHeight: "1.7", maxWidth: "360px", margin: 0 }}>{subtitle}</p>
+        </div>
+    );
+}
+
+/* ── SectionBox ─────────────────────────────────────────────── */
+function SectionBox({ title, subtitle, children, action }) {
+    return (
+        <div style={{
+            background: C.surface, border: `0.5px solid ${C.border}`,
+            borderRadius: "14px", overflow: "hidden", marginBottom: "18px",
+        }}>
+            <div style={{
+                padding: "18px 22px", borderBottom: `0.5px solid ${C.border}`,
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                flexWrap: "wrap", gap: "10px",
+            }}>
+                <div>
+                    <div style={{ fontSize: "15px", fontWeight: 700, color: C.text }}>{title}</div>
+                    {subtitle && (
+                        <div style={{ fontSize: "12px", color: C.muted, marginTop: "3px" }}>{subtitle}</div>
+                    )}
+                </div>
+                {action}
             </div>
             {children}
         </div>
     );
 }
 
-function EmptyState({ title, subtitle, icon }) {
+/* ── Divider label ──────────────────────────────────────────── */
+function SectionDivider({ label }) {
     return (
-        <div
-            style={{
-                minHeight: "280px",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                alignItems: "center",
-                textAlign: "center",
-                padding: "20px",
-            }}
-        >
-            <div
-                style={{
-                    width: "86px",
-                    height: "86px",
-                    borderRadius: "24px",
-                    background: "rgba(59,130,246,0.10)",
-                    border: "1px solid rgba(59,130,246,0.16)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "#60a5fa",
-                    marginBottom: "24px",
-                }}
-            >
-                {icon}
-            </div>
-            <h3
-                style={{
-                    margin: 0,
-                    fontSize: "28px",
-                    fontWeight: "800",
-                    color: "#ffffff",
-                }}
-            >
-                {title}
-            </h3>
-            <p
-                style={{
-                    margin: "14px 0 0",
-                    maxWidth: "520px",
-                    color: "#94a3b8",
-                    fontSize: "15px",
-                    lineHeight: "1.9",
-                }}
-            >
-                {subtitle}
-            </p>
+        <div style={{
+            display: "flex", alignItems: "center", gap: "12px",
+            marginBottom: "18px", marginTop: "8px",
+        }}>
+            <div style={{ flex: 1, height: "0.5px", background: C.border }} />
+            <span style={{
+                fontSize: "11px", fontWeight: 600, color: C.muted,
+                textTransform: "uppercase", letterSpacing: ".8px",
+                whiteSpace: "nowrap",
+            }}>{label}</span>
+            <div style={{ flex: 1, height: "0.5px", background: C.border }} />
         </div>
     );
 }
 
-// ─── Payment Account Section ─────────────────────────────────────────────────
+/* ── Analytics mini-card (2-col grid) ──────────────────────── */
+function AnalyticsCard({ title, subtitle, icon: Icon, children }) {
+    return (
+        <div style={{
+            background: C.surface, border: `0.5px solid ${C.border}`,
+            borderRadius: "14px", overflow: "hidden",
+        }}>
+            <div style={{
+                padding: "16px 20px", borderBottom: `0.5px solid ${C.border}`,
+                display: "flex", alignItems: "center", gap: "10px",
+            }}>
+                <div style={{
+                    width: "32px", height: "32px", borderRadius: "8px",
+                    background: C.card, border: `0.5px solid ${C.border}`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: C.muted, flexShrink: 0,
+                }}>
+                    <Icon size={15} strokeWidth={1.8} />
+                </div>
+                <div>
+                    <div style={{ fontSize: "13.5px", fontWeight: 700, color: C.text }}>{title}</div>
+                    {subtitle && <div style={{ fontSize: "11.5px", color: C.muted, marginTop: "2px" }}>{subtitle}</div>}
+                </div>
+            </div>
+            {children}
+        </div>
+    );
+}
 
-const BANK_LIST = [
-    "BCA", "BNI", "BRI", "Mandiri", "BTN",
-    "CIMB Niaga", "Danamon", "Permata", "Maybank", "OCBC NISP",
-    "BSI", "Muamalat", "Other",
-];
-
-const EWALLET_LIST = [
-    "GoPay", "OVO", "Dana", "ShopeePay", "LinkAja",
-    "Jenius", "Sakuku", "Astrapay", "Other",
-];
-
-const TYPE_TABS = [
-    { key: "bank", label: "Bank Account", icon: <Building2 size={15} /> },
-    { key: "ewallet", label: "E-Wallet", icon: <Smartphone size={15} /> },
-];
-
-const ACCENT = {
-    bank: "#3b82f6",
-    ewallet: "#8b5cf6",
-};
-
-function Badge({ type }) {
+/* ── Payment Account Badge ──────────────────────────────────── */
+function AccTypeBadge({ type }) {
     const isBank = type === "bank";
     return (
-        <span
-            style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "4px",
-                fontSize: "11px",
-                fontWeight: "700",
-                textTransform: "uppercase",
-                letterSpacing: "0.6px",
-                padding: "3px 10px",
-                borderRadius: "99px",
-                background: isBank
-                    ? "rgba(59,130,246,0.15)"
-                    : "rgba(139,92,246,0.15)",
-                color: isBank ? "#60a5fa" : "#a78bfa",
-                border: `1px solid ${isBank ? "rgba(59,130,246,0.25)" : "rgba(139,92,246,0.25)"}`,
-            }}
-        >
-            {isBank ? <Building2 size={11} /> : <Smartphone size={11} />}
+        <span style={{
+            display: "inline-flex", alignItems: "center", gap: "4px",
+            fontSize: "11px", fontWeight: 600,
+            padding: "3px 10px", borderRadius: "20px",
+            background: isBank ? "rgba(59,130,246,.12)" : "rgba(139,92,246,.12)",
+            border: `0.5px solid ${isBank ? "rgba(59,130,246,.30)" : "rgba(139,92,246,.30)"}`,
+            color: isBank ? "#60a5fa" : "#a78bfa",
+        }}>
+            {isBank ? <Building2 size={10} /> : <Smartphone size={10} />}
             {isBank ? "Bank" : "E-Wallet"}
         </span>
     );
 }
 
-function AccountCard({ account, onDelete, onSetDefault, onEdit }) {
+/* ── Account Row ────────────────────────────────────────────── */
+function AccountRow({ account, onDelete, onSetDefault, onEdit }) {
     return (
-        <div
-            style={{
-                background: account.is_default
-                    ? "linear-gradient(145deg, rgba(30,41,59,0.95), rgba(15,23,42,0.98))"
-                    : "rgba(15,23,42,0.6)",
-                border: account.is_default
-                    ? `1px solid ${ACCENT[account.type]}55`
-                    : "1px solid rgba(148,163,184,0.08)",
-                borderRadius: "18px",
-                padding: "18px 20px",
-                display: "flex",
-                alignItems: "center",
-                gap: "16px",
-                position: "relative",
-                transition: "border-color 0.2s",
-            }}
-        >
-            {/* Icon */}
-            <div
-                style={{
-                    width: "48px",
-                    height: "48px",
-                    borderRadius: "14px",
-                    background:
-                        account.type === "bank"
-                            ? "rgba(59,130,246,0.12)"
-                            : "rgba(139,92,246,0.12)",
-                    border: `1px solid ${
-                        account.type === "bank"
-                            ? "rgba(59,130,246,0.20)"
-                            : "rgba(139,92,246,0.20)"
-                    }`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: account.type === "bank" ? "#60a5fa" : "#a78bfa",
-                    flexShrink: 0,
-                }}
-            >
-                {account.type === "bank" ? (
-                    <CreditCard size={22} />
-                ) : (
-                    <Smartphone size={22} />
-                )}
+        <div style={{
+            display: "flex", alignItems: "center", gap: "14px",
+            padding: "14px 22px",
+            borderBottom: `0.5px solid rgba(255,255,255,.04)`,
+            fontFamily: C.font,
+        }}>
+            <div style={{
+                width: "36px", height: "36px", borderRadius: "9px", flexShrink: 0,
+                background: account.type === "bank" ? "rgba(59,130,246,.10)" : "rgba(139,92,246,.10)",
+                border: `0.5px solid ${account.type === "bank" ? "rgba(59,130,246,.25)" : "rgba(139,92,246,.25)"}`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: account.type === "bank" ? "#60a5fa" : "#a78bfa",
+            }}>
+                {account.type === "bank" ? <CreditCard size={16} strokeWidth={1.8} /> : <Smartphone size={16} strokeWidth={1.8} />}
             </div>
 
-            {/* Info */}
             <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                    style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        marginBottom: "4px",
-                        flexWrap: "wrap",
-                    }}
-                >
-                    <span
-                        style={{
-                            fontSize: "15px",
-                            fontWeight: "700",
-                            color: "#ffffff",
-                        }}
-                    >
-                        {account.provider_name}
-                    </span>
-                    <Badge type={account.type} />
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginBottom: "3px" }}>
+                    <span style={{ fontSize: "13.5px", fontWeight: 700, color: C.text }}>{account.provider_name}</span>
+                    <AccTypeBadge type={account.type} />
                     {account.is_default && (
-                        <span
-                            style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: "4px",
-                                fontSize: "11px",
-                                fontWeight: "700",
-                                padding: "3px 10px",
-                                borderRadius: "99px",
-                                background: "rgba(34,197,94,0.15)",
-                                color: "#4ade80",
-                                border: "1px solid rgba(34,197,94,0.25)",
-                            }}
-                        >
-                            <CheckCircle size={11} />
-                            Default
+                        <span style={{
+                            display: "inline-flex", alignItems: "center", gap: "4px",
+                            fontSize: "11px", fontWeight: 600,
+                            padding: "3px 10px", borderRadius: "20px",
+                            background: "rgba(16,185,129,.12)",
+                            border: "0.5px solid rgba(16,185,129,.30)",
+                            color: "#34d399",
+                        }}>
+                            <CheckCircle size={10} /> Default
                         </span>
                     )}
                 </div>
-                <div
-                    style={{
-                        fontSize: "13px",
-                        color: "#94a3b8",
-                        fontFamily: "monospace",
-                        letterSpacing: "0.5px",
-                    }}
-                >
+                <div style={{ fontSize: "12.5px", color: C.sub, fontFamily: "monospace" }}>
                     {account.account_number}
+                    {account.account_name && (
+                        <span style={{ fontFamily: C.font, color: C.muted, marginLeft: "8px" }}>
+                            · {account.account_name}
+                        </span>
+                    )}
                 </div>
-                {account.account_name && (
-                    <div
-                        style={{
-                            fontSize: "12px",
-                            color: "#64748b",
-                            marginTop: "2px",
-                        }}
-                    >
-                        Account holder: {account.account_name}
-                    </div>
-                )}
             </div>
 
-            {/* Actions */}
-            <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
+            <div style={{ display: "flex", gap: "7px", flexShrink: 0 }}>
                 {!account.is_default && (
-                    <button
-                        onClick={() => onSetDefault(account.id)}
-                        title="Set as default"
-                        style={{
-                            background: "rgba(34,197,94,0.10)",
-                            border: "1px solid rgba(34,197,94,0.20)",
-                            borderRadius: "10px",
-                            color: "#4ade80",
-                            width: "36px",
-                            height: "36px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            cursor: "pointer",
-                            transition: "background 0.15s",
-                        }}
-                    >
-                        <CheckCircle size={16} />
+                    <button onClick={() => onSetDefault(account.id)} style={{
+                        height: "30px", padding: "0 10px", borderRadius: "7px",
+                        border: "0.5px solid rgba(16,185,129,.30)",
+                        background: "rgba(16,185,129,.10)",
+                        color: "#34d399", fontFamily: C.font,
+                        fontSize: "11px", fontWeight: 600, cursor: "pointer",
+                        display: "flex", alignItems: "center", gap: "4px",
+                    }}>
+                        <CheckCircle size={11} strokeWidth={2} /> Default
                     </button>
                 )}
-                <button
-                    onClick={() => onEdit(account)}
-                    title="Edit"
-                    style={{
-                        background: "rgba(59,130,246,0.10)",
-                        border: "1px solid rgba(59,130,246,0.20)",
-                        borderRadius: "10px",
-                        color: "#60a5fa",
-                        width: "36px",
-                        height: "36px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        cursor: "pointer",
-                        transition: "background 0.15s",
-                    }}
-                >
-                    <Edit2 size={15} />
+                <button onClick={() => onEdit(account)} style={{
+                    height: "30px", padding: "0 10px", borderRadius: "7px",
+                    border: "0.5px solid rgba(99,102,241,.30)",
+                    background: "rgba(99,102,241,.10)",
+                    color: "#a5b4fc", fontFamily: C.font,
+                    fontSize: "11px", fontWeight: 600, cursor: "pointer",
+                    display: "flex", alignItems: "center", gap: "4px",
+                }}>
+                    <Edit2 size={11} strokeWidth={2} /> Edit
                 </button>
-                <button
-                    onClick={() => onDelete(account.id)}
-                    title="Delete"
-                    style={{
-                        background: "rgba(239,68,68,0.10)",
-                        border: "1px solid rgba(239,68,68,0.20)",
-                        borderRadius: "10px",
-                        color: "#f87171",
-                        width: "36px",
-                        height: "36px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        cursor: "pointer",
-                        transition: "background 0.15s",
-                    }}
-                >
-                    <Trash2 size={15} />
+                <button onClick={() => onDelete(account.id)} style={{
+                    height: "30px", padding: "0 10px", borderRadius: "7px",
+                    border: "0.5px solid rgba(239,68,68,.25)",
+                    background: "rgba(239,68,68,.10)",
+                    color: "#fca5a5", fontFamily: C.font,
+                    fontSize: "11px", fontWeight: 600, cursor: "pointer",
+                    display: "flex", alignItems: "center", gap: "4px",
+                }}>
+                    <Trash2 size={11} strokeWidth={2} /> Hapus
                 </button>
             </div>
         </div>
     );
 }
 
-// ─── Modal Form ───────────────────────────────────────────────────────────────
+/* ── providers ──────────────────────────────────────────────── */
+const BANK_LIST    = ["BCA","BNI","BRI","Mandiri","BTN","CIMB Niaga","Danamon","Permata","Maybank","OCBC NISP","BSI","Muamalat","Other"];
+const EWALLET_LIST = ["GoPay","OVO","Dana","ShopeePay","LinkAja","Jenius","Sakuku","Astrapay","Other"];
 
-function AccountFormModal({ editData, onClose, onSave }) {
-    const [type, setType] = useState(editData?.type ?? "bank");
-    const [provider, setProvider] = useState(editData?.provider_name ?? "");
-    const [customProvider, setCustomProvider] = useState(
-        editData?.provider_name &&
-            ![...BANK_LIST, ...EWALLET_LIST].includes(editData.provider_name)
-            ? editData.provider_name
-            : ""
-    );
-    const [accountNumber, setAccountNumber] = useState(editData?.account_number ?? "");
-    const [accountName, setAccountName] = useState(editData?.account_name ?? "");
-    const [errors, setErrors] = useState({});
+/* ── Account Modal ──────────────────────────────────────────── */
+function AccountModal({ editData, onClose, onSave }) {
+    const [type,           setType]           = useState(editData?.type ?? "bank");
+    const [provider,       setProvider]       = useState(editData?.provider_name ?? "");
+    const [customProvider, setCustomProvider] = useState("");
+    const [accountNumber,  setAccountNumber]  = useState(editData?.account_number ?? "");
+    const [accountName,    setAccountName]    = useState(editData?.account_name ?? "");
+    const [errors,         setErrors]         = useState({});
 
     const providerList = type === "bank" ? BANK_LIST : EWALLET_LIST;
-    const isCustom = provider === "Other" || !!customProvider;
 
     const validate = () => {
         const e = {};
-        const finalProvider = isCustom ? customProvider.trim() : provider;
-        if (!finalProvider) e.provider = "Please select or enter a provider name.";
-        if (!accountNumber.trim()) e.accountNumber = "Account number is required.";
-        if (type === "bank" && !accountName.trim())
-            e.accountName = "Account holder name is required.";
+        const fp = provider === "Other" ? customProvider.trim() : provider;
+        if (!fp) e.provider = "Pilih atau isi nama provider.";
+        if (!accountNumber.trim()) e.accountNumber = "Nomor rekening wajib diisi.";
+        if (type === "bank" && !accountName.trim()) e.accountName = "Nama pemilik rekening wajib diisi.";
         return e;
     };
 
     const handleSave = () => {
         const e = validate();
         if (Object.keys(e).length) { setErrors(e); return; }
-        const finalProvider = isCustom ? customProvider.trim() : provider;
-        onSave({
-            type,
-            provider_name: finalProvider,
-            account_number: accountNumber,
-            account_name: accountName,
-        });
-    };
-
-    const inputStyle = (err) => ({
-        width: "100%",
-        background: "rgba(15,23,42,0.8)",
-        border: `1px solid ${err ? "rgba(239,68,68,0.5)" : "rgba(148,163,184,0.15)"}`,
-        borderRadius: "12px",
-        padding: "12px 14px",
-        color: "#ffffff",
-        fontSize: "14px",
-        outline: "none",
-        boxSizing: "border-box",
-    });
-
-    const labelStyle = {
-        fontSize: "12px",
-        fontWeight: "700",
-        color: "#94a3b8",
-        textTransform: "uppercase",
-        letterSpacing: "0.6px",
-        marginBottom: "8px",
-        display: "block",
+        const finalProvider = provider === "Other" ? customProvider.trim() : provider;
+        onSave({ type, provider_name: finalProvider, account_number: accountNumber, account_name: accountName });
     };
 
     return (
-        <div
-            style={{
-                position: "fixed",
-                inset: 0,
-                background: "rgba(0,0,0,0.65)",
-                backdropFilter: "blur(6px)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                zIndex: 1000,
-                padding: "20px",
-            }}
-            onClick={(e) => e.target === e.currentTarget && onClose()}
-        >
-            <div
-                style={{
-                    background:
-                        "linear-gradient(145deg, rgba(15,23,42,0.99), rgba(30,41,59,0.99))",
-                    border: "1px solid rgba(148,163,184,0.12)",
-                    borderRadius: "24px",
-                    padding: "32px",
-                    width: "100%",
-                    maxWidth: "480px",
-                    boxShadow: "0 32px 80px rgba(0,0,0,0.6)",
-                }}
-            >
-                {/* Header */}
-                <div
-                    style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginBottom: "28px",
-                    }}
-                >
+        <div style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.70)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            zIndex: 9999, padding: "20px",
+        }}>
+            <div style={{
+                width: "100%", maxWidth: "420px",
+                background: C.surface, border: `0.5px solid ${C.borderMd}`,
+                borderRadius: "14px", padding: "24px", fontFamily: C.font,
+            }}>
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "20px" }}>
                     <div>
-                        <h3
-                            style={{
-                                margin: 0,
-                                fontSize: "20px",
-                                fontWeight: "800",
-                                color: "#ffffff",
-                            }}
-                        >
-                            {editData ? "Edit Payment Account" : "Add Payment Account"}
-                        </h3>
-                        <p style={{ margin: "6px 0 0", fontSize: "13px", color: "#64748b" }}>
-                            Bank account or e-wallet to receive payments from clients
-                        </p>
+                        <div style={{ fontSize: "18px", fontWeight: 800, color: C.text, letterSpacing: "-.4px" }}>
+                            {editData ? "Edit rekening" : "Tambah rekening"}
+                        </div>
+                        <div style={{ fontSize: "12.5px", color: C.muted, marginTop: "4px" }}>
+                            Rekening yang ditampilkan ke customer saat pembayaran
+                        </div>
                     </div>
-                    <button
-                        onClick={onClose}
-                        style={{
-                            background: "rgba(148,163,184,0.08)",
-                            border: "1px solid rgba(148,163,184,0.12)",
-                            borderRadius: "10px",
-                            color: "#94a3b8",
-                            width: "36px",
-                            height: "36px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            cursor: "pointer",
-                        }}
-                    >
-                        <X size={16} />
+                    <button onClick={onClose} style={{
+                        width: "30px", height: "30px", borderRadius: "7px",
+                        background: C.card, border: `0.5px solid ${C.border}`,
+                        color: C.muted, display: "flex", alignItems: "center",
+                        justifyContent: "center", cursor: "pointer",
+                    }}>
+                        <X size={14} strokeWidth={2} />
                     </button>
                 </div>
 
-                {/* Type Tabs */}
-                <div style={{ marginBottom: "22px" }}>
-                    <span style={labelStyle}>Account Type</span>
-                    <div
-                        style={{
-                            display: "flex",
-                            gap: "10px",
-                        }}
-                    >
-                        {TYPE_TABS.map((t) => (
-                            <button
-                                key={t.key}
-                                onClick={() => { setType(t.key); setProvider(""); setCustomProvider(""); setErrors({}); }}
-                                style={{
-                                    flex: 1,
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    gap: "7px",
-                                    padding: "11px",
-                                    borderRadius: "12px",
-                                    border: `1px solid ${
-                                        type === t.key
-                                            ? `${ACCENT[t.key]}60`
-                                            : "rgba(148,163,184,0.12)"
-                                    }`,
-                                    background:
-                                        type === t.key
-                                            ? `${ACCENT[t.key]}18`
-                                            : "rgba(15,23,42,0.6)",
-                                    color:
-                                        type === t.key ? ACCENT[t.key] : "#64748b",
-                                    fontSize: "13px",
-                                    fontWeight: "700",
-                                    cursor: "pointer",
-                                    transition: "all 0.15s",
-                                }}
-                            >
-                                {t.icon}
-                                {t.label}
-                            </button>
-                        ))}
-                    </div>
+                <FieldLabel mt={false}>Tipe rekening</FieldLabel>
+                <div style={{ display: "flex", gap: "8px", marginBottom: "4px" }}>
+                    {[{ key: "bank", label: "Bank", Icon: Building2 }, { key: "ewallet", label: "E-Wallet", Icon: Smartphone }].map(t => (
+                        <button key={t.key} onClick={() => { setType(t.key); setProvider(""); setCustomProvider(""); setErrors({}); }} style={{
+                            flex: 1, height: "36px", borderRadius: "8px", cursor: "pointer",
+                            border: `0.5px solid ${type === t.key ? "rgba(99,102,241,.50)" : C.borderMd}`,
+                            background: type === t.key ? "rgba(99,102,241,.15)" : "transparent",
+                            color: type === t.key ? "#a5b4fc" : C.muted,
+                            fontFamily: C.font, fontSize: "12.5px", fontWeight: 700,
+                            display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
+                        }}>
+                            <t.Icon size={13} /> {t.label}
+                        </button>
+                    ))}
                 </div>
 
-                {/* Provider Select */}
-                <div style={{ marginBottom: "18px" }}>
-                    <label style={labelStyle}>
-                        {type === "bank" ? "Bank Name" : "E-Wallet Name"}
-                    </label>
-                    <select
-                        value={provider}
-                        onChange={(e) => { setProvider(e.target.value); setErrors((prev) => ({ ...prev, provider: null })); }}
-                        style={{ ...inputStyle(errors.provider), cursor: "pointer" }}
-                    >
-                        <option value="">-- Select {type === "bank" ? "Bank" : "E-Wallet"} --</option>
-                        {providerList.map((p) => (
-                            <option key={p} value={p}>{p}</option>
-                        ))}
-                    </select>
-                    {errors.provider && (
-                        <p style={{ margin: "5px 0 0", fontSize: "12px", color: "#f87171" }}>
-                            {errors.provider}
-                        </p>
-                    )}
-                </div>
+                <FieldLabel>Nama {type === "bank" ? "bank" : "e-wallet"}</FieldLabel>
+                <select value={provider} onChange={e => { setProvider(e.target.value); setErrors(prev => ({ ...prev, provider: null })); }}
+                    style={{ ...inp(!!errors.provider), height: "40px", cursor: "pointer" }}>
+                    <option value="">-- Pilih {type === "bank" ? "bank" : "e-wallet"} --</option>
+                    {providerList.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+                {errors.provider && <div style={{ fontSize: "11.5px", color: "#f87171", marginTop: "4px" }}>{errors.provider}</div>}
 
-                {/* Custom Provider */}
                 {provider === "Other" && (
-                    <div style={{ marginBottom: "18px" }}>
-                        <label style={labelStyle}>
-                            {type === "bank" ? "Other Bank Name" : "Other E-Wallet Name"}
-                        </label>
-                        <input
-                            type="text"
-                            placeholder={`Enter the ${type === "bank" ? "bank" : "e-wallet"} name...`}
-                            value={customProvider}
-                            onChange={(e) => setCustomProvider(e.target.value)}
-                            style={inputStyle(false)}
-                        />
-                    </div>
+                    <>
+                        <FieldLabel>Nama lainnya</FieldLabel>
+                        <input style={inp()} type="text" placeholder="Tulis nama provider..."
+                            value={customProvider} onChange={e => setCustomProvider(e.target.value)} />
+                    </>
                 )}
 
-                {/* Account Number */}
-                <div style={{ marginBottom: "18px" }}>
-                    <label style={labelStyle}>
-                        {type === "bank" ? "Account Number" : "Account / Phone Number"}
-                    </label>
-                    <input
-                        type="text"
-                        placeholder={
-                            type === "bank"
-                                ? "e.g. 1234 5678 9012"
-                                : "e.g. 08123456789"
-                        }
-                        value={accountNumber}
-                        onChange={(e) => { setAccountNumber(e.target.value); setErrors((prev) => ({ ...prev, accountNumber: null })); }}
-                        style={inputStyle(errors.accountNumber)}
-                    />
-                    {errors.accountNumber && (
-                        <p style={{ margin: "5px 0 0", fontSize: "12px", color: "#f87171" }}>
-                            {errors.accountNumber}
-                        </p>
-                    )}
-                </div>
+                <FieldLabel>Nomor rekening / nomor HP</FieldLabel>
+                <input style={inp(!!errors.accountNumber)} type="text"
+                    placeholder={type === "bank" ? "e.g. 1234 5678 9012" : "e.g. 08123456789"}
+                    value={accountNumber} onChange={e => { setAccountNumber(e.target.value); setErrors(prev => ({ ...prev, accountNumber: null })); }} />
+                {errors.accountNumber && <div style={{ fontSize: "11.5px", color: "#f87171", marginTop: "4px" }}>{errors.accountNumber}</div>}
 
-                {/* Account Name */}
-                <div style={{ marginBottom: "28px" }}>
-                    <label style={labelStyle}>
-                        Account Holder Name {type === "bank" ? "(required)" : "(optional)"}
-                    </label>
-                    <input
-                        type="text"
-                        placeholder="Name as registered on the account"
-                        value={accountName}
-                        onChange={(e) => { setAccountName(e.target.value); setErrors((prev) => ({ ...prev, accountName: null })); }}
-                        style={inputStyle(errors.accountName)}
-                    />
-                    {errors.accountName && (
-                        <p style={{ margin: "5px 0 0", fontSize: "12px", color: "#f87171" }}>
-                            {errors.accountName}
-                        </p>
-                    )}
-                </div>
+                <FieldLabel>Nama pemilik {type === "bank" ? "(wajib)" : "(opsional)"}</FieldLabel>
+                <input style={inp(!!errors.accountName)} type="text"
+                    placeholder="Nama sesuai rekening"
+                    value={accountName} onChange={e => { setAccountName(e.target.value); setErrors(prev => ({ ...prev, accountName: null })); }} />
+                {errors.accountName && <div style={{ fontSize: "11.5px", color: "#f87171", marginTop: "4px" }}>{errors.accountName}</div>}
 
-                {/* Actions */}
-                <div style={{ display: "flex", gap: "12px" }}>
-                    <button
-                        onClick={onClose}
-                        style={{
-                            flex: 1,
-                            padding: "13px",
-                            borderRadius: "12px",
-                            background: "rgba(148,163,184,0.08)",
-                            border: "1px solid rgba(148,163,184,0.12)",
-                            color: "#94a3b8",
-                            fontSize: "14px",
-                            fontWeight: "700",
-                            cursor: "pointer",
-                        }}
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        style={{
-                            flex: 2,
-                            padding: "13px",
-                            borderRadius: "12px",
-                            background:
-                                "linear-gradient(135deg, #3b82f6, #6366f1)",
-                            border: "none",
-                            color: "#ffffff",
-                            fontSize: "14px",
-                            fontWeight: "700",
-                            cursor: "pointer",
-                            boxShadow: "0 8px 24px rgba(59,130,246,0.35)",
-                        }}
-                    >
-                        {editData ? "Save Changes" : "Add Account"}
+                <div style={{
+                    display: "flex", justifyContent: "flex-end", gap: "8px",
+                    marginTop: "22px", paddingTop: "16px",
+                    borderTop: `0.5px solid ${C.border}`,
+                }}>
+                    <button onClick={onClose} style={{
+                        height: "36px", padding: "0 14px", borderRadius: "8px",
+                        border: `0.5px solid ${C.borderMd}`, background: "transparent",
+                        color: C.sub, fontFamily: C.font, fontSize: "13px", fontWeight: 600, cursor: "pointer",
+                    }}>Batal</button>
+                    <button onClick={handleSave} style={{
+                        height: "36px", padding: "0 18px", borderRadius: "8px",
+                        border: "none", background: "#6366f1",
+                        color: "#fff", fontFamily: C.font, fontSize: "13px",
+                        fontWeight: 700, cursor: "pointer",
+                        display: "flex", alignItems: "center", gap: "5px",
+                    }}>
+                        <CheckCircle size={14} strokeWidth={2.5} />
+                        {editData ? "Update" : "Simpan"}
                     </button>
                 </div>
             </div>
@@ -701,316 +431,143 @@ function AccountFormModal({ editData, onClose, onSave }) {
     );
 }
 
-// ─── Payment Accounts Manager ─────────────────────────────────────────────────
-
+/* ── Payment Accounts Section ───────────────────────────────── */
 function PaymentAccountsSection() {
-    const [accounts, setAccounts] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [accounts,  setAccounts]  = useState([]);
+    const [loading,   setLoading]   = useState(true);
     const [showModal, setShowModal] = useState(false);
-    const [editData, setEditData] = useState(null);
-    const [activeFilter, setActiveFilter] = useState("all");
-
-    const getToken = () => localStorage.getItem("token");
+    const [editData,  setEditData]  = useState(null);
+    const [filter,    setFilter]    = useState("all");
 
     const loadAccounts = async () => {
         try {
             const res = await axios.get("/owner/payment-accounts", {
-                headers: {
-                    Authorization: `Bearer ${getToken()}`,
-                    Accept: "application/json",
-                },
+                headers: { Authorization: `Bearer ${getToken()}`, Accept: "application/json" },
             });
-
-            setAccounts(Array.isArray(res.data) ? res.data : (res.data?.data ?? []));
+            setAccounts(Array.isArray(res.data) ? res.data : res.data?.data ?? []);
         } catch (err) {
-            console.error("ERROR LOAD ACCOUNTS:", err);
+            console.error(err);
         } finally {
             setLoading(false);
         }
     };
 
-    // ✅ FIX: fetch accounts on mount so they persist across refresh
-    useEffect(() => {
-        loadAccounts();
-    }, []);
+    useEffect(() => { loadAccounts(); }, []);
 
     const handleSave = async (data) => {
         try {
             if (editData) {
-                await axios.put(
-                    `/api/owner/payment-accounts/${editData.id}`,
-                    data,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${getToken()}`,
-                            Accept: "application/json",
-                        },
-                    }
-                );
+                await axios.put(`/owner/payment-accounts/${editData.id}`, data, {
+                    headers: { Authorization: `Bearer ${getToken()}`, Accept: "application/json" },
+                });
             } else {
                 await axios.post("/owner/payment-accounts", data, {
-                    headers: {
-                        Authorization: `Bearer ${getToken()}`,
-                        Accept: "application/json",
-                    },
+                    headers: { Authorization: `Bearer ${getToken()}`, Accept: "application/json" },
                 });
             }
-
             await loadAccounts();
             setShowModal(false);
             setEditData(null);
         } catch (err) {
-            console.error(err);
-            alert("Failed to save payment account");
+            alert(err.response?.data?.message ?? "Gagal menyimpan rekening.");
         }
     };
 
     const handleDelete = async (id) => {
-        if (!confirm("Delete this payment account?")) return;
-
+        if (!window.confirm("Hapus rekening ini?")) return;
         try {
-            await axios.delete(`/api/owner/payment-accounts/${id}`, {
-                headers: {
-                    Authorization: `Bearer ${getToken()}`,
-                    Accept: "application/json",
-                },
+            await axios.delete(`/owner/payment-accounts/${id}`, {
+                headers: { Authorization: `Bearer ${getToken()}`, Accept: "application/json" },
             });
             await loadAccounts();
         } catch (err) {
-            console.error(err);
-            alert("Failed to delete payment account");
+            alert(err.response?.data?.message ?? "Gagal menghapus.");
         }
     };
 
     const handleSetDefault = async (id) => {
         try {
-            await axios.put(
-                `/api/owner/payment-accounts/${id}/set-default`,
-                {},
-                {
-                    headers: {
-                        Authorization: `Bearer ${getToken()}`,
-                        Accept: "application/json",
-                    },
-                }
-            );
+            await axios.put(`/owner/payment-accounts/${id}/set-default`, {}, {
+                headers: { Authorization: `Bearer ${getToken()}`, Accept: "application/json" },
+            });
             await loadAccounts();
         } catch (err) {
-            console.error(err);
-            alert("Failed to set default account");
+            alert("Gagal mengatur default.");
         }
     };
 
-    const handleEdit = (account) => {
-        setEditData(account);
-        setShowModal(true);
-    };
+    const counts   = { all: accounts.length, bank: accounts.filter(a => a.type === "bank").length, ewallet: accounts.filter(a => a.type === "ewallet").length };
+    const filtered = filter === "all" ? accounts : accounts.filter(a => a.type === filter);
 
-    const filtered =
-        activeFilter === "all"
-            ? accounts
-            : accounts.filter((a) => a.type === activeFilter);
-
-    const counts = {
-        all: accounts.length,
-        bank: accounts.filter((a) => a.type === "bank").length,
-        ewallet: accounts.filter((a) => a.type === "ewallet").length,
-    };
+    const addBtn = (
+        <button onClick={() => { setEditData(null); setShowModal(true); }} style={{
+            height: "34px", padding: "0 14px",
+            border: "0.5px solid rgba(99,102,241,.40)",
+            borderRadius: "8px",
+            background: "rgba(99,102,241,.15)",
+            color: "#a5b4fc", fontFamily: C.font,
+            fontWeight: 700, fontSize: "12.5px", cursor: "pointer",
+            display: "flex", alignItems: "center", gap: "6px",
+        }}>
+            <Plus size={14} strokeWidth={2.5} /> Tambah rekening
+        </button>
+    );
 
     return (
         <>
-            <SectionCard
-                title="Payment Accounts"
-                subtitle="Register bank accounts and e-wallets as payment methods shown to clients."
+            <SectionBox
+                title="Rekening pembayaran"
+                subtitle="Rekening bank atau e-wallet yang ditampilkan ke customer saat checkout"
+                action={addBtn}
             >
-                {/* Top bar */}
-                <div
-                    style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginBottom: "20px",
-                        flexWrap: "wrap",
-                        gap: "12px",
-                    }}
-                >
-                    {/* Filter tabs */}
-                    <div
-                        style={{
-                            display: "flex",
-                            gap: "8px",
-                            background: "rgba(15,23,42,0.6)",
-                            border: "1px solid rgba(148,163,184,0.08)",
-                            borderRadius: "12px",
-                            padding: "4px",
-                        }}
-                    >
-                        {[
-                            { key: "all", label: "All" },
-                            { key: "bank", label: "Bank" },
-                            { key: "ewallet", label: "E-Wallet" },
-                        ].map((f) => (
-                            <button
-                                key={f.key}
-                                onClick={() => setActiveFilter(f.key)}
-                                style={{
-                                    padding: "7px 16px",
-                                    borderRadius: "9px",
-                                    border: "none",
-                                    background:
-                                        activeFilter === f.key
-                                            ? "rgba(59,130,246,0.20)"
-                                            : "transparent",
-                                    color:
-                                        activeFilter === f.key ? "#60a5fa" : "#64748b",
-                                    fontSize: "13px",
-                                    fontWeight: "700",
-                                    cursor: "pointer",
-                                    transition: "all 0.15s",
-                                }}
-                            >
-                                {f.label}
-                                <span
-                                    style={{
-                                        marginLeft: "6px",
-                                        fontSize: "11px",
-                                        opacity: 0.75,
-                                    }}
-                                >
-                                    ({counts[f.key]})
-                                </span>
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Add button */}
-                    <button
-                        onClick={() => { setEditData(null); setShowModal(true); }}
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            padding: "10px 20px",
-                            borderRadius: "12px",
-                            background:
-                                "linear-gradient(135deg, #3b82f6, #6366f1)",
-                            border: "none",
-                            color: "#ffffff",
-                            fontSize: "14px",
-                            fontWeight: "700",
-                            cursor: "pointer",
-                            boxShadow: "0 6px 20px rgba(59,130,246,0.35)",
-                        }}
-                    >
-                        <Plus size={16} />
-                        Add Account
-                    </button>
+                <div style={{ padding: "12px 22px", borderBottom: `0.5px solid ${C.border}`, display: "flex", gap: "6px" }}>
+                    {[{ key: "all", label: "Semua" }, { key: "bank", label: "Bank" }, { key: "ewallet", label: "E-Wallet" }].map(f => (
+                        <button key={f.key} onClick={() => setFilter(f.key)} style={{
+                            height: "28px", padding: "0 12px", borderRadius: "6px", cursor: "pointer",
+                            border: `0.5px solid ${filter === f.key ? "rgba(99,102,241,.40)" : C.border}`,
+                            background: filter === f.key ? "rgba(99,102,241,.12)" : "transparent",
+                            color: filter === f.key ? "#a5b4fc" : C.muted,
+                            fontFamily: C.font, fontSize: "12px", fontWeight: 600,
+                        }}>
+                            {f.label} ({counts[f.key]})
+                        </button>
+                    ))}
                 </div>
 
-                {/* Account list */}
-                {loading ? (
-                    <div
-                        style={{
-                            minHeight: "120px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: "#64748b",
-                            fontSize: "14px",
-                        }}
-                    >
-                        Loading accounts...
-                    </div>
-                ) : filtered.length === 0 ? (
-                    <div
-                        style={{
-                            minHeight: "200px",
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            textAlign: "center",
-                            padding: "20px",
-                            border: "1px dashed rgba(148,163,184,0.15)",
-                            borderRadius: "16px",
-                        }}
-                    >
-                        <div
-                            style={{
-                                width: "60px",
-                                height: "60px",
-                                borderRadius: "16px",
-                                background: "rgba(59,130,246,0.10)",
-                                border: "1px solid rgba(59,130,246,0.16)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                color: "#60a5fa",
-                                marginBottom: "16px",
-                            }}
-                        >
-                            <Wallet size={26} />
-                        </div>
-                        <p
-                            style={{
-                                margin: 0,
-                                fontSize: "15px",
-                                fontWeight: "700",
-                                color: "#ffffff",
-                            }}
-                        >
-                            No accounts registered yet
-                        </p>
-                        <p
-                            style={{
-                                margin: "8px 0 0",
-                                fontSize: "13px",
-                                color: "#64748b",
-                                maxWidth: "360px",
-                                lineHeight: 1.7,
-                            }}
-                        >
-                            Add a bank account or e-wallet so clients can easily
-                            make payments.
-                        </p>
-                    </div>
-                ) : (
-                    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                        {filtered.map((account) => (
-                            <AccountCard
-                                key={account.id}
-                                account={account}
-                                onDelete={handleDelete}
-                                onSetDefault={handleSetDefault}
-                                onEdit={handleEdit}
-                            />
-                        ))}
-                    </div>
+                {loading && (
+                    <div style={{ padding: "32px", textAlign: "center", color: C.muted, fontSize: "13px" }}>Memuat data...</div>
                 )}
-
-                {/* Info note */}
+                {!loading && filtered.length === 0 && (
+                    <EmptyState
+                        title="Belum ada rekening"
+                        subtitle="Tambahkan rekening bank atau e-wallet agar customer bisa melakukan pembayaran."
+                        icon={Wallet}
+                    />
+                )}
+                {!loading && filtered.map(account => (
+                    <AccountRow
+                        key={account.id}
+                        account={account}
+                        onDelete={handleDelete}
+                        onSetDefault={handleSetDefault}
+                        onEdit={a => { setEditData(a); setShowModal(true); }}
+                    />
+                ))}
                 {!loading && accounts.length > 0 && (
-                    <div
-                        style={{
-                            marginTop: "18px",
-                            padding: "12px 16px",
-                            borderRadius: "12px",
-                            background: "rgba(59,130,246,0.07)",
-                            border: "1px solid rgba(59,130,246,0.14)",
-                            fontSize: "12px",
-                            color: "#64748b",
-                            lineHeight: 1.6,
-                        }}
-                    >
-                        💡 Accounts marked <strong style={{ color: "#4ade80" }}>Default</strong>{" "}
-                        will be shown as the priority payment method to clients.
-                        Use the ✓ button to change the default account.
+                    <div style={{
+                        margin: "14px 22px",
+                        padding: "10px 14px", borderRadius: "8px",
+                        background: "rgba(99,102,241,.07)",
+                        border: "0.5px solid rgba(99,102,241,.18)",
+                        fontSize: "12px", color: C.muted, lineHeight: 1.6,
+                    }}>
+                        💡 Rekening bertanda <strong style={{ color: "#34d399" }}>Default</strong> akan ditampilkan sebagai metode pembayaran utama ke customer.
                     </div>
                 )}
-            </SectionCard>
+            </SectionBox>
 
             {showModal && (
-                <AccountFormModal
+                <AccountModal
                     editData={editData}
                     onClose={() => { setShowModal(false); setEditData(null); }}
                     onSave={handleSave}
@@ -1020,110 +577,113 @@ function PaymentAccountsSection() {
     );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
-
+/* ── Main Page ──────────────────────────────────────────────── */
 export default function RevenueOwner() {
+    const [stats] = useState({
+        today:        "Rp 0",
+        month:        "Rp 0",
+        growth:       "0%",
+        total_orders: 0,
+    });
+
     return (
         <OwnerLayout>
-            {/* Header */}
-            <div style={{ marginBottom: "32px" }}>
-                <h1
-                    style={{
-                        margin: 0,
-                        fontSize: "36px",
-                        fontWeight: "800",
-                        color: "#ffffff",
-                    }}
+            <div style={{ fontFamily: C.font }}>
+
+                {/* ── header ── */}
+                <div style={{ marginBottom: "28px" }}>
+                    <div style={{
+                        display: "flex", alignItems: "center", gap: "6px",
+                        fontSize: "11px", fontWeight: 600, color: C.muted,
+                        textTransform: "uppercase", letterSpacing: ".8px",
+                        marginBottom: "14px",
+                    }}>
+                        <LayoutDashboard size={13} strokeWidth={2} />
+                        <span>Owner</span>
+                        <span style={{ color: "#1E293B" }}>›</span>
+                        <span>Revenue & Laporan</span>
+                    </div>
+                    <h1 style={{
+                        fontSize: "28px", fontWeight: 800, color: C.text,
+                        letterSpacing: "-.8px", lineHeight: 1.1, margin: 0,
+                    }}>Pendapatan & Laporan</h1>
+                    <p style={{ marginTop: "8px", fontSize: "13.5px", color: C.muted, lineHeight: "1.7" }}>
+                        Ringkasan pendapatan dari pesanan customer, rekening pembayaran, dan analitik bisnis.
+                    </p>
+                </div>
+
+                {/* ── stat cards — 4 kolom 1 baris ── */}
+                <div style={{
+                    display: "grid", gridTemplateColumns: "repeat(4,1fr)",
+                    gap: "12px", marginBottom: "22px",
+                }}>
+                    <StatCard label="Pendapatan hari ini" value={stats.today}        icon={DollarSign}   bar={bars.green}  />
+                    <StatCard label="Bulan ini"           value={stats.month}        icon={Calendar}     bar={bars.blue}   />
+                    <StatCard label="Pertumbuhan"         value={stats.growth}       icon={TrendingUp}   bar={bars.amber}  />
+                    <StatCard label="Total pesanan"       value={stats.total_orders} icon={ShoppingBag}  bar={bars.indigo} />
+                </div>
+
+                {/* ── rekening pembayaran ── */}
+                <PaymentAccountsSection />
+
+                {/* ── riwayat transaksi ── */}
+                <SectionBox
+                    title="Riwayat transaksi"
+                    subtitle="Daftar pembayaran masuk dari pesanan customer"
                 >
-                    Revenue
-                </h1>
-                <p
-                    style={{
-                        margin: "10px 0 0",
-                        color: "#94a3b8",
-                        fontSize: "15px",
-                        lineHeight: "1.8",
-                        maxWidth: "680px",
-                    }}
+                    <EmptyState
+                        title="Belum ada transaksi"
+                        subtitle="Riwayat pembayaran dari pesanan customer akan muncul otomatis di sini."
+                        icon={DollarSign}
+                    />
+                </SectionBox>
+
+                {/* ── divider laporan ── */}
+                <SectionDivider label="Analitik & Laporan" />
+
+                {/* ── analytics grid 2-col ── */}
+                <div style={{
+                    display: "grid", gridTemplateColumns: "1fr 1fr",
+                    gap: "14px", marginBottom: "18px",
+                }}>
+                    <AnalyticsCard
+                        title="Laporan penjualan"
+                        subtitle="Tren pesanan dan total transaksi"
+                        icon={BarChart3}
+                    >
+                        <EmptyState
+                            title="Belum ada data"
+                            subtitle="Laporan penjualan akan muncul setelah ada pesanan yang diproses."
+                            icon={BarChart3}
+                        />
+                    </AnalyticsCard>
+
+                    <AnalyticsCard
+                        title="Analisis pendapatan"
+                        subtitle="Ringkasan bulanan dan tahunan"
+                        icon={TrendingUp}
+                    >
+                        <EmptyState
+                            title="Belum ada data"
+                            subtitle="Ringkasan pendapatan akan tampil setelah ada transaksi tercatat."
+                            icon={TrendingUp}
+                        />
+                    </AnalyticsCard>
+                </div>
+
+                {/* ── paket terlaris — full width ── */}
+                <SectionBox
+                    title="Paket terlaris"
+                    subtitle="Paket catering yang paling banyak dipesan customer"
                 >
-                    Monitor company revenue, operational expenses, profit growth, and
-                    overall financial performance.
-                </p>
+                    <EmptyState
+                        title="Belum ada data"
+                        subtitle="Ranking paket catering terpopuler akan muncul setelah ada pesanan dari customer."
+                        icon={Package}
+                    />
+                </SectionBox>
+
             </div>
-
-            {/* Summary Cards */}
-            <div
-                style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(240px,1fr))",
-                    gap: "20px",
-                    marginBottom: "24px",
-                }}
-            >
-                <MetricCard
-                    title="Today's Revenue"
-                    value="Rp 0"
-                    icon={<DollarSign size={24} />}
-                    color="#22c55e"
-                />
-                <MetricCard
-                    title="This Month"
-                    value="Rp 0"
-                    icon={<Calendar size={24} />}
-                    color="#3b82f6"
-                />
-                <MetricCard
-                    title="Growth"
-                    value="0 %"
-                    icon={<TrendingUp size={24} />}
-                    color="#f59e0b"
-                />
-                <MetricCard
-                    title="Net Profit"
-                    value="Rp 0"
-                    icon={<Wallet size={24} />}
-                    color="#8b5cf6"
-                />
-            </div>
-
-            {/* Payment Accounts */}
-            <PaymentAccountsSection />
-
-            {/* Monthly Revenue */}
-            <SectionCard
-                title="Monthly Revenue"
-                subtitle="Income overview and monthly financial growth performance."
-            >
-                <EmptyState
-                    title="No Revenue Data"
-                    subtitle="Monthly revenue reports and financial records will appear here once business transactions are available."
-                    icon={<DollarSign size={40} />}
-                />
-            </SectionCard>
-
-            {/* Expense Analysis */}
-            <SectionCard
-                title="Expense Analysis"
-                subtitle="Track operational costs, spending activity, and business expenses."
-            >
-                <EmptyState
-                    title="No Expense Data"
-                    subtitle="Expense analysis and operational cost reports will appear here."
-                    icon={<Wallet size={40} />}
-                />
-            </SectionCard>
-
-            {/* Profit Summary */}
-            <SectionCard
-                title="Profit Summary"
-                subtitle="Revenue performance after operational and production expenses."
-            >
-                <EmptyState
-                    title="No Profit Data"
-                    subtitle="Profit summaries and net income analytics will appear here."
-                    icon={<TrendingUp size={40} />}
-                />
-            </SectionCard>
         </OwnerLayout>
     );
 }

@@ -20,8 +20,10 @@ use App\Http\Controllers\KlienController;
 use App\Http\Controllers\Api\CourierController;
 use App\Http\Controllers\Api\TrackingController;
 use App\Http\Controllers\Klien\InvoiceKlienController;
+use App\Http\Controllers\Klien\GeoController;
 
 use App\Http\Controllers\Api\OwnerMenuController;
+use App\Http\Controllers\Owner\MenuController as OwnerMenuController2;
 use App\Http\Controllers\Api\OwnerStockController;
 use App\Http\Controllers\Api\OwnerPaymentAccountController;
 
@@ -378,6 +380,9 @@ Route::prefix('klien')->group(function () {
     Route::get('invoice/{id}/pdf',     [InvoiceKlienController::class, 'downloadPdf']);
 });
 
+Route::get('/klien/geocode', [GeoController::class, 'geocode']);
+Route::get('/klien/route', [GeoController::class, 'route']);
+
 
 /*
 |--------------------------------------------------------------------------
@@ -424,11 +429,11 @@ Route::middleware('auth:sanctum')
         [OwnerStockController::class,'destroy']
     );
 
-    Route::get('/menus', [OwnerMenuController::class, 'index']);
-    Route::post('/menus', [OwnerMenuController::class, 'store']);
-    Route::put('/menus/{id}', [OwnerMenuController::class, 'update']);
-    Route::delete('/menus/{id}', [OwnerMenuController::class, 'destroy']);
- 
+    Route::get('/menus', [OwnerMenuController2::class, 'index']);
+Route::post('/menus', [OwnerMenuController2::class, 'store']);
+Route::put('/menus/{menu}', [OwnerMenuController2::class, 'update']);
+Route::delete('/menus/{menu}', [OwnerMenuController2::class, 'destroy']);
+Route::get('/menus/{menu}/ingredients', [OwnerMenuController2::class, 'ingredients']); 
 
     Route::get('/orders', [OrderController::class, 'ownerOrders']);
     Route::put('/orders/{id}/process', [OrderController::class, 'process']);

@@ -1,190 +1,226 @@
 // resources/js/pages/Owner/CustomersOwner.jsx
-
-import {
-    Users,
-    UserPlus,
-} from "lucide-react";
-
+import { Users, UserPlus, UserCheck, LayoutDashboard, Clock, Info } from "lucide-react";
 import OwnerLayout from "../../layouts/OwnerLayout";
 
-function MetricCard({
-    title,
-    value = 0,
-    icon,
-    color = "#60a5fa",
-}) {
+/* ── font injection (run once) ──────────────────────────────── */
+if (typeof document !== "undefined" && !document.getElementById("inter-font")) {
+    const link = document.createElement("link");
+    link.id = "inter-font";
+    link.rel = "stylesheet";
+    link.href =
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap";
+    document.head.appendChild(link);
+}
+
+/* ── design tokens ──────────────────────────────────────────── */
+const T = {
+    bg: "#080C14",
+    surface: "#0F1623",
+    surfaceHover: "#141E30",
+    border: "rgba(255,255,255,0.07)",
+    borderStrong: "rgba(255,255,255,0.12)",
+    textPrimary: "#F8FAFC",
+    textMuted: "#64748B",
+    textFaint: "#334155",
+    font: "'Inter', system-ui, -apple-system, sans-serif",
+};
+
+const accentBars = {
+    indigo: "linear-gradient(90deg, #6366f1, #818cf8)",
+    violet: "linear-gradient(90deg, #8b5cf6, #a78bfa)",
+    sky:    "linear-gradient(90deg, #0ea5e9, #38bdf8)",
+};
+
+/* ── MetricCard ─────────────────────────────────────────────── */
+function MetricCard({ label, value, icon: Icon, accent = "indigo" }) {
     return (
         <div
             style={{
-                background:
-                    "linear-gradient(145deg, rgba(15,23,42,0.95), rgba(30,41,59,0.95))",
-                border:
-                    "1px solid rgba(148,163,184,0.08)",
-                borderRadius: "20px",
+                background: T.surface,
+                border: `0.5px solid ${T.border}`,
+                borderRadius: "14px",
                 padding: "20px 22px",
-                display: "flex",
-                justifyContent:
-                    "space-between",
-                alignItems: "center",
-                boxShadow:
-                    "0 12px 32px rgba(0,0,0,0.28)",
-                backdropFilter:
-                    "blur(10px)",
+                position: "relative",
+                overflow: "hidden",
+                fontFamily: T.font,
             }}
         >
-            {/* Left */}
-            <div>
-                <div
-                    style={{
-                        fontSize: "12px",
-                        color: "#94a3b8",
-                        fontWeight: "600",
-                        textTransform:
-                            "uppercase",
-                        letterSpacing:
-                            "0.6px",
-                        marginBottom: "8px",
-                    }}
-                >
-                    {title}
-                </div>
+            {/* top accent line */}
+            <div
+                style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: "2px",
+                    background: accentBars[accent],
+                }}
+            />
 
+            <div
+                style={{
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    color: T.textMuted,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.8px",
+                    marginBottom: "12px",
+                }}
+            >
+                {label}
+            </div>
+
+            <div
+                style={{
+                    display: "flex",
+                    alignItems: "flex-end",
+                    justifyContent: "space-between",
+                }}
+            >
                 <div
                     style={{
-                        fontSize: "30px",
-                        fontWeight: "800",
-                        color: "white",
+                        fontSize: "32px",
+                        fontWeight: 800,
+                        color: T.textPrimary,
+                        letterSpacing: "-1.5px",
                         lineHeight: 1,
                     }}
                 >
-                    {value}
+                    {value ?? "—"}
                 </div>
-            </div>
 
-            {/* Icon */}
-            <div
-                style={{
-                    width: "52px",
-                    height: "52px",
-                    borderRadius: "16px",
-                    background:
-                        "rgba(59,130,246,0.10)",
-                    border:
-                        "1px solid rgba(59,130,246,0.15)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent:
-                        "center",
-                    color,
-                    flexShrink: 0,
-                }}
-            >
-                {icon}
+                <div
+                    style={{
+                        width: "40px",
+                        height: "40px",
+                        borderRadius: "10px",
+                        background: T.surfaceHover,
+                        border: `0.5px solid ${T.border}`,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: T.textMuted,
+                        flexShrink: 0,
+                    }}
+                >
+                    <Icon size={18} strokeWidth={1.7} />
+                </div>
             </div>
         </div>
     );
 }
 
+/* ── EmptyState ─────────────────────────────────────────────── */
 function EmptyState() {
     return (
         <div
             style={{
-                minHeight: "320px",
+                padding: "56px 24px",
                 display: "flex",
                 flexDirection: "column",
-                justifyContent:
-                    "center",
                 alignItems: "center",
                 textAlign: "center",
-                padding: "20px",
+                fontFamily: T.font,
             }}
         >
-            {/* Icon */}
             <div
                 style={{
-                    width: "84px",
-                    height: "84px",
-                    borderRadius: "24px",
-                    background:
-                        "rgba(59,130,246,0.10)",
-                    border:
-                        "1px solid rgba(59,130,246,0.15)",
+                    width: "72px",
+                    height: "72px",
+                    borderRadius: "20px",
+                    background: T.surfaceHover,
+                    border: `0.5px solid ${T.border}`,
                     display: "flex",
-                    alignItems:
-                        "center",
-                    justifyContent:
-                        "center",
-                    color: "#60a5fa",
-                    marginBottom: "24px",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: T.textMuted,
+                    marginBottom: "20px",
                 }}
             >
-                <Users size={38} />
+                <Users size={30} strokeWidth={1.5} />
             </div>
 
-            {/* Title */}
             <h3
                 style={{
+                    fontSize: "18px",
+                    fontWeight: 700,
+                    color: T.textPrimary,
+                    letterSpacing: "-0.3px",
                     margin: 0,
-                    fontSize: "28px",
-                    fontWeight: "800",
-                    color: "white",
-                    letterSpacing:
-                        "-0.5px",
                 }}
             >
-                No Customer Data
+                No customers yet
             </h3>
 
-            {/* Description */}
             <p
                 style={{
-                    margin:
-                        "12px 0 0",
-                    maxWidth: "520px",
-                    color: "#94a3b8",
-                    fontSize: "15px",
-                    lineHeight: "1.8",
+                    marginTop: "10px",
+                    fontSize: "13.5px",
+                    color: T.textMuted,
+                    lineHeight: "1.75",
+                    maxWidth: "420px",
                 }}
             >
-                Customer information
-                will appear here
-                automatically after
-                users register and
-                place orders in the
-                system.
+                Customer records will appear here once users register and place
+                their first order in the system.
             </p>
+
+            <div
+                style={{
+                    marginTop: "22px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    fontSize: "12px",
+                    color: T.textMuted,
+                    background: T.surfaceHover,
+                    border: `0.5px solid ${T.border}`,
+                    borderRadius: "8px",
+                    padding: "8px 14px",
+                }}
+            >
+                <Info size={14} strokeWidth={1.7} />
+                Data updates automatically — no refresh needed
+            </div>
         </div>
     );
 }
 
+/* ── Page ───────────────────────────────────────────────────── */
 export default function CustomersOwner() {
     return (
         <OwnerLayout>
-            {/* Header */}
-            <div
-                style={{
-                    marginBottom: "30px",
-                    display: "flex",
-                    justifyContent:
-                        "space-between",
-                    alignItems:
-                        "flex-start",
-                    flexWrap: "wrap",
-                    gap: "20px",
-                }}
-            >
-                <div>
+            <div style={{ fontFamily: T.font }}>
+
+                {/* Header */}
+                <div style={{ marginBottom: "32px" }}>
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            fontSize: "11px",
+                            fontWeight: 600,
+                            color: T.textMuted,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.8px",
+                            marginBottom: "14px",
+                        }}
+                    >
+                        <LayoutDashboard size={13} strokeWidth={2} />
+                        <span>Owner</span>
+                        <span style={{ color: T.textFaint }}>›</span>
+                        <span>Customers</span>
+                    </div>
+
                     <h1
                         style={{
+                            fontSize: "28px",
+                            fontWeight: 800,
+                            color: T.textPrimary,
+                            letterSpacing: "-0.8px",
+                            lineHeight: 1.1,
                             margin: 0,
-                            fontSize:
-                                "34px",
-                            fontWeight:
-                                "800",
-                            color:
-                                "white",
-                            letterSpacing:
-                                "-0.5px",
                         }}
                     >
                         Customers
@@ -192,125 +228,110 @@ export default function CustomersOwner() {
 
                     <p
                         style={{
-                            margin:
-                                "10px 0 0",
-                            color:
-                                "#94a3b8",
-                            fontSize:
-                                "14px",
-                            lineHeight:
-                                "1.8",
-                            maxWidth:
-                                "650px",
+                            marginTop: "10px",
+                            fontSize: "13.5px",
+                            color: T.textMuted,
+                            lineHeight: "1.7",
+                            maxWidth: "600px",
                         }}
                     >
-                        View customer
-                        growth and
-                        monitor all
-                        registered client
-                        accounts in one
-                        executive
-                        dashboard.
+                        Track customer growth and manage all registered client accounts
+                        from one place.
                     </p>
                 </div>
-            </div>
 
-            {/* Metrics */}
-            <div
-                style={{
-                    display: "grid",
-                    gridTemplateColumns:
-                        "repeat(auto-fit, minmax(240px, 1fr))",
-                    gap: "20px",
-                    marginBottom:
-                        "24px",
-                }}
-            >
-                <MetricCard
-                    title="Total Customers"
-                    value={0}
-                    icon={
-                        <Users
-                            size={22}
-                        />
-                    }
-                />
-
-                <MetricCard
-                    title="New This Month"
-                    value={0}
-                    icon={
-                        <UserPlus
-                            size={22}
-                        />
-                    }
-                />
-
-                <MetricCard
-                    title="Active Accounts"
-                    value={0}
-                    icon={
-                        <Users
-                            size={22}
-                        />
-                    }
-                />
-            </div>
-
-            {/* Main Panel */}
-            <div
-                style={{
-                    background:
-                        "linear-gradient(145deg, rgba(15,23,42,0.95), rgba(30,41,59,0.95))",
-                    border:
-                        "1px solid rgba(148,163,184,0.08)",
-                    borderRadius:
-                        "24px",
-                    padding: "28px",
-                    boxShadow:
-                        "0 16px 40px rgba(0,0,0,0.30)",
-                    backdropFilter:
-                        "blur(12px)",
-                }}
-            >
+                {/* Metric Cards — always 3 columns */}
                 <div
                     style={{
-                        marginBottom:
-                            "20px",
+                        display: "grid",
+                        gridTemplateColumns: "repeat(3, 1fr)",
+                        gap: "14px",
+                        marginBottom: "24px",
                     }}
                 >
-                    <h2
-                        style={{
-                            margin: 0,
-                            fontSize:
-                                "22px",
-                            fontWeight:
-                                "700",
-                            color:
-                                "white",
-                        }}
-                    >
-                        Customer Database
-                    </h2>
-
-                    <p
-                        style={{
-                            margin:
-                                "6px 0 0",
-                            color:
-                                "#94a3b8",
-                            fontSize:
-                                "14px",
-                        }}
-                    >
-                        Registered
-                        customers and
-                        account activity.
-                    </p>
+                    <MetricCard
+                        label="Total customers"
+                        value={null}
+                        icon={Users}
+                        accent="indigo"
+                    />
+                    <MetricCard
+                        label="New this month"
+                        value={null}
+                        icon={UserPlus}
+                        accent="violet"
+                    />
+                    <MetricCard
+                        label="Active accounts"
+                        value={null}
+                        icon={UserCheck}
+                        accent="sky"
+                    />
                 </div>
 
-                {/* Empty State Only */}
-                <EmptyState />
+                {/* Main Panel */}
+                <div
+                    style={{
+                        background: T.surface,
+                        border: `0.5px solid ${T.border}`,
+                        borderRadius: "16px",
+                        overflow: "hidden",
+                    }}
+                >
+                    {/* Panel header */}
+                    <div
+                        style={{
+                            padding: "22px 26px 18px",
+                            borderBottom: `0.5px solid ${T.border}`,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                        }}
+                    >
+                        <div>
+                            <div
+                                style={{
+                                    fontSize: "15px",
+                                    fontWeight: 700,
+                                    color: T.textPrimary,
+                                }}
+                            >
+                                Customer database
+                            </div>
+                            <div
+                                style={{
+                                    fontSize: "12.5px",
+                                    color: T.textMuted,
+                                    marginTop: "3px",
+                                }}
+                            >
+                                Registered accounts and activity
+                            </div>
+                        </div>
+
+                        {/* Live badge */}
+                        <div
+                            style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "5px",
+                                fontSize: "11px",
+                                fontWeight: 600,
+                                color: T.textMuted,
+                                background: T.surfaceHover,
+                                border: `0.5px solid ${T.border}`,
+                                borderRadius: "20px",
+                                padding: "4px 10px",
+                                letterSpacing: "0.2px",
+                            }}
+                        >
+                            <Clock size={11} strokeWidth={2} />
+                            Live
+                        </div>
+                    </div>
+
+                    <EmptyState />
+                </div>
             </div>
         </OwnerLayout>
     );

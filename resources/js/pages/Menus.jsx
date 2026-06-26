@@ -78,10 +78,8 @@ export default function Menus() {
                     .includes(keyword);
 
             const matchCategory =
-                selectedCategory ===
-                    "All" ||
-                item.category ===
-                    selectedCategory;
+    selectedCategory === "All" ||
+    item.category?.toLowerCase() === selectedCategory.toLowerCase();
 
             return (
                 matchSearch &&
@@ -692,11 +690,7 @@ export default function Menus() {
                             "0 20px 40px rgba(0,0,0,.4)",
                     }}
                 >
-                    {[
-                        "All",
-                        "Food",
-                        "Drink",
-                    ].map((item) => (
+                    {["All", "Makanan", "Minuman"].map((item) => (
                         <button
                             key={item}
                             onClick={() => {

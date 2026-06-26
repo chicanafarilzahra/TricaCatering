@@ -2,1322 +2,625 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
-
 import {
-    UtensilsCrossed,
-    Plus,
-    Pencil,
-    Trash2,
-    Search,
-    Image as ImageIcon,
-    X,
-    Package,
-    Layers3,
-    MoreVertical,
+    UtensilsCrossed, CheckCircle2, XCircle, Layers3,
+    LayoutDashboard, Plus, Pencil, Trash2,
+    Check, X, FlaskConical, Minus, Image,
 } from "lucide-react";
-
 import OwnerLayout from "../../layouts/OwnerLayout";
 
-export default function MenusOwner() {
-    const [menus, setMenus] =
-        useState([]);
+/* ── font ───────────────────────────────────────────────────── */
+if (typeof document !== "undefined" && !document.getElementById("inter-font")) {
+    const l = document.createElement("link");
+    l.id = "inter-font"; l.rel = "stylesheet";
+    l.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap";
+    document.head.appendChild(l);
+}
 
-    const [search, setSearch] =
-        useState("");
-
-    const [showModal, setShowModal] =
-        useState(false);
-
-    const [editingId, setEditingId] =
-        useState(null);
-
-    const [form, setForm] = useState({
-        name: "",
-        price: "",
-        category: "",
-        description: "",
-        image: null,
-        jenis_catering: "Insidentil",
-        min_porsi: 1,
-    });
-
-    /* =========================
-       FETCH MENUS
-    ========================= */
-
-const fetchMenus = async () => {
-    try {
-        const user = JSON.parse(localStorage.getItem("user"));
-        const token = localStorage.getItem("token");
-
-        const res = await axios.get("/owner/menus", {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                Accept: "application/json",
-            },
-            params: {
-                owner_id: user.id,
-            },
-        });
-
-        setMenus(res.data);
-    } catch (error) {
-        console.log("ERROR =", error);
-        console.log("DATA =", error.response?.data);
-
-        alert(JSON.stringify(error.response?.data));
-    }
+/* ── tokens ─────────────────────────────────────────────────── */
+const C = {
+    bg:      "#080C14",
+    surface: "#0F1623",
+    card:    "#141E30",
+    border:  "rgba(255,255,255,0.07)",
+    borderMd:"rgba(255,255,255,0.10)",
+    text:    "#F8FAFC",
+    muted:   "#64748B",
+    sub:     "#94A3B8",
+    font:    "'Inter', system-ui, -apple-system, sans-serif",
 };
+
+const bars = {
+    indigo: "linear-gradient(90deg,#6366f1,#818cf8)",
+    violet: "linear-gradient(90deg,#8b5cf6,#a78bfa)",
+    green:  "linear-gradient(90deg,#10b981,#34d399)",
+    red:    "linear-gradient(90deg,#ef4444,#f87171)",
+};
+
+/* ── shared input ────────────────────────────────────────────── */
+const inp = {
+    width: "100%", height: "40px", borderRadius: "8px",
+    border: `0.5px solid ${C.borderMd}`, background: C.card,
+    padding: "0 12px", color: C.text, fontFamily: C.font,
+    fontSize: "13.5px", outline: "none", boxSizing: "border-box",
+};
+
+const selectStyle = {
+    ...inp,
+    appearance: "none", WebkitAppearance: "none",
+    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`,
+    backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center",
+    paddingRight: "32px",
+};
+
+const emptyForm = {
+    name: "", description: "", category: "", price: "",
+    min_pax: "", status: "active", image: null, imageFile: null,
+};
+
+/* ── helpers ─────────────────────────────────────────────────── */
+function fmt(num) {
+    if (!num && num !== 0) return "—";
+    return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(num);
+}
+
+/* ── StatCard ────────────────────────────────────────────────── */
+function StatCard({ label, value, icon: Icon, bar }) {
+    return (
+        <div style={{
+            background: C.surface, border: `0.5px solid ${C.border}`,
+            borderRadius: "12px", padding: "18px 20px",
+            position: "relative", overflow: "hidden", fontFamily: C.font,
+        }}>
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "2px", background: bar }} />
+            <div style={{ fontSize: "11px", fontWeight: 600, color: C.muted, textTransform: "uppercase", letterSpacing: ".7px", marginBottom: "10px" }}>{label}</div>
+            <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
+                <div style={{ fontSize: "30px", fontWeight: 800, color: C.text, letterSpacing: "-1.2px", lineHeight: 1 }}>{value ?? "—"}</div>
+                <div style={{ width: "38px", height: "38px", borderRadius: "9px", background: C.card, border: `0.5px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: C.muted, flexShrink: 0 }}>
+                    <Icon size={18} strokeWidth={1.7} />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+/* ── FieldLabel ──────────────────────────────────────────────── */
+function FieldLabel({ children, mt = true }) {
+    return (
+        <div style={{ fontSize: "11px", fontWeight: 600, color: C.muted, textTransform: "uppercase", letterSpacing: ".6px", marginBottom: "5px", marginTop: mt ? "13px" : 0 }}>
+            {children}
+        </div>
+    );
+}
+
+/* ── EmptyState ──────────────────────────────────────────────── */
+function EmptyState({ title, subtitle, icon: Icon }) {
+    return (
+        <div style={{ padding: "48px 20px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", fontFamily: C.font }}>
+            <div style={{ width: "60px", height: "60px", borderRadius: "16px", background: C.card, border: `0.5px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: C.muted, marginBottom: "16px" }}>
+                <Icon size={26} strokeWidth={1.4} />
+            </div>
+            <div style={{ fontSize: "16px", fontWeight: 700, color: C.text, marginBottom: "6px" }}>{title}</div>
+            <p style={{ fontSize: "13px", color: C.muted, lineHeight: "1.7", maxWidth: "360px", margin: 0 }}>{subtitle}</p>
+        </div>
+    );
+}
+
+/* ── StatusBadge ─────────────────────────────────────────────── */
+function StatusBadge({ status }) {
+    const map = {
+        active:   { label: "Aktif",    color: "#10b981", fill: "rgba(16,185,129,.12)", border: "rgba(16,185,129,.30)" },
+        inactive: { label: "Nonaktif", color: "#64748b", fill: "rgba(100,116,139,.12)", border: "rgba(100,116,139,.30)" },
+    };
+    const s = map[status] || map.inactive;
+    return (
+        <span style={{ display: "inline-flex", alignItems: "center", fontSize: "11px", fontWeight: 600, padding: "3px 10px", borderRadius: "20px", background: s.fill, border: `0.5px solid ${s.border}`, color: s.color }}>
+            {s.label}
+        </span>
+    );
+}
+
+/* ── IngredientsPanel ────────────────────────────────────────── */
+function IngredientsPanel({ ingredients, setIngredients, stocks }) {
+    const addRow = () =>
+        setIngredients([...ingredients, { stock_id: "", qty_per_portion: "" }]);
+
+    const removeRow = (i) =>
+        setIngredients(ingredients.filter((_, idx) => idx !== i));
+
+    const updateRow = (i, field, val) => {
+        const next = [...ingredients];
+        next[i] = { ...next[i], [field]: val };
+        if (field === "stock_id") {
+            const found = stocks.find(s => String(s.id) === String(val));
+            next[i].unit = found?.unit || "";
+        }
+        setIngredients(next);
+    };
+
+    return (
+        <div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                <div style={{ fontSize: "11px", fontWeight: 600, color: C.muted, textTransform: "uppercase", letterSpacing: ".6px" }}>
+                    Bahan per porsi
+                </div>
+                <button type="button" onClick={addRow} style={{
+                    height: "26px", padding: "0 10px", borderRadius: "6px",
+                    border: "0.5px solid rgba(99,102,241,.35)",
+                    background: "rgba(99,102,241,.12)",
+                    color: "#a5b4fc", fontFamily: C.font,
+                    fontSize: "11px", fontWeight: 700, cursor: "pointer",
+                    display: "flex", alignItems: "center", gap: "4px",
+                }}>
+                    <Plus size={11} strokeWidth={2.5} /> Tambah bahan
+                </button>
+            </div>
+
+            {ingredients.length === 0 ? (
+                <div style={{
+                    padding: "14px", borderRadius: "8px",
+                    background: "rgba(255,255,255,0.02)",
+                    border: `0.5px solid ${C.border}`,
+                    fontSize: "12px", color: C.muted, textAlign: "center",
+                }}>
+                    Belum ada bahan. Klik "+ Tambah bahan" untuk menambahkan.
+                </div>
+            ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    {ingredients.map((row, i) => {
+                        const found = stocks.find(s => String(s.id) === String(row.stock_id));
+                        return (
+                            <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 90px 50px 28px", gap: "6px", alignItems: "center" }}>
+                                <select
+                                    style={selectStyle}
+                                    value={row.stock_id}
+                                    onChange={e => updateRow(i, "stock_id", e.target.value)}
+                                >
+                                    <option value="">— pilih bahan —</option>
+                                    {stocks.map(s => (
+                                        <option key={s.id} value={s.id}>{s.name}</option>
+                                    ))}
+                                </select>
+
+                                <input
+                                    style={{ ...inp, textAlign: "right" }}
+                                    type="number"
+                                    placeholder="0"
+                                    min="0"
+                                    step="0.001"
+                                    value={row.qty_per_portion}
+                                    onChange={e => updateRow(i, "qty_per_portion", e.target.value)}
+                                />
+
+                                <div style={{
+                                    height: "40px", borderRadius: "8px",
+                                    border: `0.5px solid ${C.border}`,
+                                    background: "rgba(255,255,255,0.03)",
+                                    display: "flex", alignItems: "center",
+                                    justifyContent: "center",
+                                    fontSize: "12px", color: C.muted, fontFamily: C.font,
+                                }}>
+                                    {found?.unit || "—"}
+                                </div>
+
+                                <button type="button" onClick={() => removeRow(i)} style={{
+                                    width: "28px", height: "28px", borderRadius: "6px",
+                                    border: "0.5px solid rgba(239,68,68,.25)",
+                                    background: "rgba(239,68,68,.08)",
+                                    color: "#fca5a5", cursor: "pointer",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                }}>
+                                    <Minus size={12} strokeWidth={2.5} />
+                                </button>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+    );
+}
+
+/* ── MenuModal ───────────────────────────────────────────────── */
+function MenuModal({ show, editId, form, setForm, ingredients, setIngredients, stocks, onClose, onSubmit }) {
+    if (!show) return null;
+
+    const previewUrl = form.imageFile
+        ? URL.createObjectURL(form.imageFile)
+        : form.image
+            ? `/storage/${form.image}`
+            : null;
+
+    return (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "20px" }}>
+            <div style={{
+                width: "100%", maxWidth: "520px", background: C.surface,
+                border: `0.5px solid ${C.borderMd}`, borderRadius: "14px",
+                padding: "24px", fontFamily: C.font,
+                maxHeight: "90vh", overflowY: "auto",
+            }}>
+                {/* head */}
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "20px" }}>
+                    <div>
+                        <div style={{ fontSize: "18px", fontWeight: 800, color: C.text, letterSpacing: "-.4px" }}>
+                            {editId ? "Edit menu" : "Tambah menu"}
+                        </div>
+                        <div style={{ fontSize: "12.5px", color: C.muted, marginTop: "4px" }}>
+                            Isi detail menu dan bahan baku per porsi
+                        </div>
+                    </div>
+                    <button onClick={onClose} style={{ width: "30px", height: "30px", borderRadius: "7px", background: C.card, border: `0.5px solid ${C.border}`, color: C.muted, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+                        <X size={14} strokeWidth={2} />
+                    </button>
+                </div>
+
+                <form onSubmit={onSubmit}>
+                    {/* ── Informasi Menu ── */}
+                    <div style={{ fontSize: "12px", fontWeight: 700, color: "#818cf8", textTransform: "uppercase", letterSpacing: ".8px", marginBottom: "12px", paddingBottom: "8px", borderBottom: `0.5px solid ${C.border}` }}>
+                        Informasi menu
+                    </div>
+
+                    <FieldLabel mt={false}>Nama menu</FieldLabel>
+                    <input style={inp} type="text" placeholder="e.g. Nasi Box Ayam Bakar"
+                        value={form.name}
+                        onChange={e => setForm({ ...form, name: e.target.value })} />
+
+                    <FieldLabel>Deskripsi</FieldLabel>
+                    <textarea style={{ ...inp, height: "68px", padding: "10px 12px", resize: "vertical", lineHeight: "1.6" }}
+                        placeholder="Deskripsi singkat menu..."
+                        value={form.description}
+                        onChange={e => setForm({ ...form, description: e.target.value })}
+                    />
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                        <div>
+                            <FieldLabel>Kategori</FieldLabel>
+                            <input style={inp} type="text" placeholder="e.g. Nasi Box"
+                                value={form.category}
+                                onChange={e => setForm({ ...form, category: e.target.value })} />
+                        </div>
+                        <div>
+                            <FieldLabel>Harga (Rp)</FieldLabel>
+                            <input style={inp} type="number" placeholder="e.g. 35000"
+                                value={form.price}
+                                onChange={e => setForm({ ...form, price: e.target.value })} />
+                        </div>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                        <div>
+                            <FieldLabel>Min. porsi</FieldLabel>
+                            <input style={inp} type="number" placeholder="e.g. 10"
+                                value={form.min_pax}
+                                onChange={e => setForm({ ...form, min_pax: e.target.value })} />
+                        </div>
+                        <div>
+                            <FieldLabel>Status</FieldLabel>
+                            <select style={selectStyle} value={form.status}
+                                onChange={e => setForm({ ...form, status: e.target.value })}>
+                                <option value="active">Aktif</option>
+                                <option value="inactive">Nonaktif</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* ── Foto Menu ── */}
+                    <FieldLabel>Foto menu</FieldLabel>
+                    {previewUrl && (
+                        <div style={{ position: "relative", marginBottom: "8px" }}>
+                            <img
+                                src={previewUrl}
+                                alt="preview"
+                                style={{ width: "100%", height: "140px", objectFit: "cover", borderRadius: "8px", border: `0.5px solid ${C.border}` }}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setForm({ ...form, image: null, imageFile: null })}
+                                style={{ position: "absolute", top: "6px", right: "6px", width: "22px", height: "22px", borderRadius: "50%", background: "rgba(0,0,0,0.6)", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                            >
+                                <X size={11} />
+                            </button>
+                        </div>
+                    )}
+                    <label style={{
+                        display: "flex", alignItems: "center", gap: "8px",
+                        height: "40px", borderRadius: "8px",
+                        border: `0.5px dashed ${C.borderMd}`,
+                        background: C.card, padding: "0 12px",
+                        cursor: "pointer", fontSize: "13px", color: C.muted,
+                    }}>
+                        <Image size={14} strokeWidth={1.8} />
+                        <span>{form.imageFile ? form.imageFile.name : "Pilih foto (jpg, png, webp, maks 2MB)"}</span>
+                        <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            style={{ display: "none" }}
+                            onChange={e => {
+                                const file = e.target.files[0] || null;
+                                setForm({ ...form, imageFile: file });
+                            }}
+                        />
+                    </label>
+
+                    {/* ── Resep / Bahan ── */}
+                    <div style={{ fontSize: "12px", fontWeight: 700, color: "#34d399", textTransform: "uppercase", letterSpacing: ".8px", margin: "20px 0 12px", paddingBottom: "8px", borderBottom: `0.5px solid ${C.border}` }}>
+                        Resep (bahan per porsi)
+                    </div>
+
+                    <IngredientsPanel
+                        ingredients={ingredients}
+                        setIngredients={setIngredients}
+                        stocks={stocks}
+                    />
+
+                    {/* ── actions ── */}
+                    <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "22px", paddingTop: "16px", borderTop: `0.5px solid ${C.border}` }}>
+                        <button type="button" onClick={onClose} style={{ height: "36px", padding: "0 14px", borderRadius: "8px", border: `0.5px solid ${C.borderMd}`, background: "transparent", color: C.sub, fontFamily: C.font, fontSize: "13px", fontWeight: 600, cursor: "pointer" }}>
+                            Batal
+                        </button>
+                        <button type="submit" style={{ height: "36px", padding: "0 18px", borderRadius: "8px", border: "none", background: "#6366f1", color: "#fff", fontFamily: C.font, fontSize: "13px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: "5px" }}>
+                            <Check size={14} strokeWidth={2.5} />
+                            {editId ? "Update" : "Simpan"}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
+/* ── Page ────────────────────────────────────────────────────── */
+export default function MenusOwner() {
+    const [menus,       setMenus]       = useState([]);
+    const [stocks,      setStocks]      = useState([]);
+    const [showModal,   setShowModal]   = useState(false);
+    const [editId,      setEditId]      = useState(null);
+    const [ingredients, setIngredients] = useState([]);
+
+    const [form, setForm] = useState(emptyForm);
+
+    const token   = () => localStorage.getItem("auth_token");
+    const headers = () => ({ Authorization: `Bearer ${token()}` });
+
+    const fetchMenus = async () => {
+        try {
+            const res = await axios.get("/owner/menus", { headers: headers() });
+            setMenus(res.data);
+        } catch (err) { console.error(err); }
+    };
+
+    const fetchStocks = async () => {
+        try {
+            const res = await axios.get("/owner/stocks", { headers: headers() });
+            setStocks(res.data);
+        } catch (err) { console.error(err); }
+    };
 
     useEffect(() => {
         fetchMenus();
+        fetchStocks();
     }, []);
 
-    /* =========================
-       OPEN CREATE
-    ========================= */
+    /* ── submit ── */
+        const handleSubmit = async (e) => {
+            e.preventDefault();
+            try {
+                const validIngredients = ingredients.filter(i => i.stock_id && i.qty_per_portion);
 
-    const openCreateModal = () => {
-        setEditingId(null);
+                const fd = new FormData();
+                fd.append("name",        form.name);
+                fd.append("description", form.description);
+                fd.append("category",    form.category);
+                fd.append("price",       form.price);
+                fd.append("min_pax",     form.min_pax);
+                fd.append("status",      form.status);
+                fd.append("ingredients", JSON.stringify(validIngredients));
+                if (form.imageFile) fd.append("image", form.imageFile);
 
+                const cfg = { headers: { ...headers(), "Content-Type": "multipart/form-data" } };
+
+                if (editId) {
+                    fd.append("_method", "PUT");
+                    await axios.post(`/owner/menus/${editId}`, fd, cfg);
+                } else {
+                    await axios.post("/owner/menus", fd, cfg);
+                }
+
+                closeModal();
+                fetchMenus();
+            } catch (err) {
+    console.error(err.response?.data);  // <-- ganti ini
+}
+            
+        };
+
+    const closeModal = () => {
+        setShowModal(false);
+        setEditId(null);
+        setIngredients([]);
+        setForm(emptyForm);
+    };
+
+    /* ── edit ── */
+    const handleEdit = async (item) => {
         setForm({
-            name: "",
-            price: "",
-            category: "",
-            description: "",
-            image: null,
-
-            jenis_catering: "Insidentil",
-            min_porsi: 1,
+            name:        item.name,
+            description: item.description || "",
+            category:    item.category    || "",
+            price:       item.price       || "",
+            min_pax:     item.min_pax     || "",
+            status:      item.status      || "active",
+            image:       item.image       || null,
+            imageFile:   null,
         });
-
-        setShowModal(true);
-    };
-
-    /* =========================
-       OPEN EDIT
-    ========================= */
-
-    const openEditModal = (
-        menu
-    ) => {
-        setEditingId(menu.id);
-
-        setForm({
-            name: menu.name || "",
-            price: menu.price || "",
-            category: menu.category || "",
-            description: menu.description || "",
-            image: null,
-
-            jenis_catering:
-                menu.jenis_catering ||
-                "Insidentil",
-
-            min_porsi:
-                menu.min_porsi || 1,
-        });
-
-        setShowModal(true);
-    };
-
-    /* =========================
-       SUBMIT
-    ========================= */
-
- const handleSubmit = async (e) => {
-
-    e.preventDefault();
-
-    console.log("HANDLE SUBMIT JALAN");
-    console.log("editingId =", editingId);
-
-    try {
-
-        const user = JSON.parse(
-            localStorage.getItem("user")
-        );
-
-        console.log("USER =", user);
-
-        const data = new FormData();
-
-            data.append(
-                "owner_id",
-                user.id
-                );
-
-            data.append(
-                "name",
-                form.name
-            );
-
-            data.append(
-                "price",
-                form.price
-            );
-
-            data.append(
-                "category",
-                form.category
-            );
-
-            data.append(
-                "jenis_catering",
-                form.jenis_catering
-            );
-
-            data.append(
-                "min_porsi",
-                form.min_porsi
-            );
-
-            data.append(
-                "description",
-                form.description
-            );
-
-            if (form.image) {
-    data.append("image", form.image);
-}
-
-console.log("FORM =", form);
-
-for (let pair of data.entries()) {
-    console.log(pair[0], pair[1]);
-}
-
-if (editingId) {
-
-    data.append("_method", "PUT");
-
-    await axios.post(
-        `/api/owner/menus/${editingId}`,
-        data,
-        {
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
-        }
-    );
-}
-
-else {
-
-    await axios.post(
-        "/owner/menus",
-        data,
-        {
-            headers: {
-                "Content-Type":
-                    "multipart/form-data",
-            },
-        }
-    );
-
-}
-
-            setShowModal(false);
-
-            setForm({
-                name: "",
-                price: "",
-                category: "",
-                description: "",
-                image: null,
-                jenis_catering: "",
-                min_porsi: "",
-            });
-
-            fetchMenus();
-        } catch (error) {
-    console.log("ERROR =", error);
-    console.log("DATA =", error.response?.data);
-
-    alert(JSON.stringify(error.response?.data));
-}
-    };
-
-    /* =========================
-       DELETE
-    ========================= */
-
-    const handleDelete = async (
-        id
-    ) => {
-        const confirmDelete =
-            window.confirm(
-                "Delete this menu?"
-            );
-
-        if (!confirmDelete)
-            return;
+        setEditId(item.id);
 
         try {
-            await axios.delete(
-                `/api/owner/menus/${id}`
-            );
-
-            fetchMenus();
-        } catch (err) {
-            console.log(err);
+            const res = await axios.get(`/owner/menus/${item.id}/ingredients`, { headers: headers() });
+            setIngredients(res.data.map(i => ({
+                stock_id:        String(i.stock_id),
+                qty_per_portion: i.qty_per_portion,
+                unit:            i.stock?.unit || "",
+            })));
+        } catch {
+            setIngredients([]);
         }
+
+        setShowModal(true);
     };
 
-    /* =========================
-       FILTER
-    ========================= */
+    const handleDelete = async (id) => {
+        if (!window.confirm("Yakin ingin menghapus menu ini?")) return;
+        try {
+            await axios.delete(`/owner/menus/${id}`, { headers: headers() });
+            fetchMenus();
+        } catch (err) { console.error(err); }
+    };
 
-    const filteredMenus =
-        menus.filter((menu) =>
-            menu.name
-                ?.toLowerCase()
-                .includes(
-                    search.toLowerCase()
-                )
-        );
+    const openCreate = () => {
+        setEditId(null);
+        setIngredients([]);
+        setForm(emptyForm);
+        setShowModal(true);
+    };
+
+    /* derived */
+    const totalCount    = menus.length;
+    const catCount      = [...new Set(menus.map(m => m.category).filter(Boolean))].length;
+    const activeCount   = menus.filter(m => m.status === "active").length;
+    const inactiveCount = menus.filter(m => m.status === "inactive").length;
 
     return (
         <OwnerLayout>
-            {/* HEADER */}
-            <div
-                style={{
-                    display: "flex",
-                    justifyContent:
-                        "space-between",
-                    alignItems:
-                        "center",
-                    flexWrap: "wrap",
-                    gap: "14px",
-                    marginBottom:
-                        "22px",
-                }}
-            >
-                <div
-                    style={{
-                        display: "flex",
-                        alignItems:
-                            "center",
-                        gap: "14px",
-                    }}
-                >
-                    <div
-                        style={{
-                            width: "58px",
-                            height: "58px",
-                            borderRadius:
-                                "18px",
-                            background:
-                                "linear-gradient(135deg,#1d4ed8,#0f172a)",
-                            border:
-                                "1px solid rgba(59,130,246,0.30)",
-                            display:
-                                "flex",
-                            alignItems:
-                                "center",
-                            justifyContent:
-                                "center",
-                            boxShadow:
-                                "0 12px 24px rgba(37,99,235,0.20)",
-                        }}
-                    >
-                        <UtensilsCrossed
-                            size={28}
-                            color="white"
-                        />
-                    </div>
+            <div style={{ fontFamily: C.font }}>
 
+                {/* header */}
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", marginBottom: "28px", flexWrap: "wrap" }}>
                     <div>
-                        <h1
-                            style={{
-                                margin: 0,
-                                fontSize:
-                                    "30px",
-                                fontWeight:
-                                    "900",
-                                color:
-                                    "white",
-                                lineHeight:
-                                    "1",
-                            }}
-                        >
-                            Menu
-                            Management
-                        </h1>
-
-                        <p
-                            style={{
-                                margin:
-                                    "8px 0 0",
-                                color:
-                                    "#94a3b8",
-                                fontSize:
-                                    "13px",
-                            }}
-                        >
-                            Manage
-                            catering
-                            menus,
-                            pricing,
-                            and
-                            categories.
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "11px", fontWeight: 600, color: C.muted, textTransform: "uppercase", letterSpacing: ".8px", marginBottom: "14px" }}>
+                            <LayoutDashboard size={13} strokeWidth={2} />
+                            <span>Owner</span>
+                            <span style={{ color: "#1E293B" }}>›</span>
+                            <span>Menu</span>
+                        </div>
+                        <h1 style={{ fontSize: "28px", fontWeight: 800, color: C.text, letterSpacing: "-.8px", lineHeight: 1.1, margin: 0 }}>Menu catering</h1>
+                        <p style={{ marginTop: "8px", fontSize: "13.5px", color: C.muted, lineHeight: "1.7" }}>
+                            Kelola menu, harga, dan resep bahan baku per porsi.
                         </p>
                     </div>
+                    <button onClick={openCreate} style={{ height: "42px", padding: "0 18px", border: "0.5px solid rgba(99,102,241,.40)", borderRadius: "10px", background: "rgba(99,102,241,.15)", color: "#a5b4fc", fontFamily: C.font, fontWeight: 700, fontSize: "13px", cursor: "pointer", display: "flex", alignItems: "center", gap: "7px" }}>
+                        <Plus size={16} strokeWidth={2.5} /> Tambah menu
+                    </button>
                 </div>
 
-                <button
-                    onClick={
-                        openCreateModal
-                    }
-                    style={{
-                        height: "48px",
-                        padding:
-                            "0 18px",
-                        border:
-                            "1px solid rgba(59,130,246,0.35)",
-                        borderRadius:
-                            "14px",
-                        background:
-                            "linear-gradient(135deg,rgba(29,78,216,0.20),rgba(15,23,42,0.95))",
-                        color:
-                            "white",
-                        fontWeight:
-                            "800",
-                        fontSize:
-                            "14px",
-                        display:
-                            "flex",
-                        alignItems:
-                            "center",
-                        gap: "8px",
-                        cursor:
-                            "pointer",
-                        boxShadow:
-                            "0 12px 28px rgba(37,99,235,0.18)",
-                    }}
-                >
-                    <Plus size={18} />
-                    Add Menu
-                </button>
-            </div>
+                {/* stat cards */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "12px", marginBottom: "22px" }}>
+                    <StatCard label="Total menu"  value={totalCount    || null} icon={UtensilsCrossed} bar={bars.indigo} />
+                    <StatCard label="Kategori"    value={catCount      || null} icon={Layers3}         bar={bars.violet} />
+                    <StatCard label="Aktif"       value={activeCount   || null} icon={CheckCircle2}    bar={bars.green}  />
+                    <StatCard label="Nonaktif"    value={inactiveCount || null} icon={XCircle}         bar={bars.red}    />
+                </div>
 
-            {/* STATS */}
-            <div
-                style={{
-                    display: "grid",
-                    gridTemplateColumns:
-                        "repeat(auto-fit, minmax(220px, 1fr))",
-                    gap: "16px",
-                    marginBottom:
-                        "22px",
-                }}
-            >
-                <StatCard
-                    title="Total Menus"
-                    subtitle="All menu items"
-                    value={
-                        filteredMenus.length
-                    }
-                    icon={
-                        <UtensilsCrossed
-                            size={22}
-                        />
-                    }
-                    color="#2563eb"
-                />
-
-                <StatCard
-    title="Jenis Catering"
-    subtitle="Tipe layanan"
-    value={[
-        ...new Set(
-            menus.map(
-                (item) => item.jenis_catering
-            )
-        ),
-    ].length}
-    icon={<Package size={22} />}
-    color="#22c55e"
-/>
-                <StatCard
-                    title="Categories"
-                    subtitle="Food categories"
-                    value={
-                        [
-                            ...new Set(
-                                menus.map(
-                                    (
-                                        item
-                                    ) =>
-                                        item.category
-                                )
-                            ),
-                        ].length
-                    }
-                    icon={
-                        <Layers3
-                            size={22}
-                        />
-                    }
-                    color="#f59e0b"
-                />
-            </div>
-
-            {/* SEARCH */}
-            <div
-                style={{
-                    background:
-                        "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(15,23,42,0.95))",
-                    border:
-                        "1px solid rgba(59,130,246,0.15)",
-                    borderRadius:
-                        "22px",
-                    padding: "20px",
-                    boxShadow:
-                        "0 16px 40px rgba(0,0,0,0.28)",
-                }}
-            >
-                {/* TOP */}
-                <div
-                    style={{
-                        display:
-                            "flex",
-                        justifyContent:
-                            "space-between",
-                        alignItems:
-                            "center",
-                        flexWrap:
-                            "wrap",
-                        gap: "16px",
-                        marginBottom:
-                            "22px",
-                    }}
-                >
-                    <div>
-                        <div
-                            style={{
-                                color:
-                                    "#94a3b8",
-                                fontSize:
-                                    "12px",
-                                marginBottom:
-                                    "4px",
-                            }}
-                        >
-                            Total
-                            Result
-                        </div>
-
-                        <div
-                            style={{
-                                display:
-                                    "flex",
-                                alignItems:
-                                    "baseline",
-                                gap: "10px",
-                            }}
-                        >
-                            <div
-                                style={{
-                                    color:
-                                        "white",
-                                    fontSize:
-                                        "34px",
-                                    fontWeight:
-                                        "900",
-                                    lineHeight:
-                                        "1",
-                                }}
-                            >
-                                {
-                                    filteredMenus.length
-                                }
-                            </div>
-
-                            <div
-                                style={{
-                                    color:
-                                        "#cbd5e1",
-                                    fontSize:
-                                        "13px",
-                                }}
-                            >
-                                menu
-                                items
-                                found
-                            </div>
+                {/* table */}
+                <div style={{ background: C.surface, border: `0.5px solid ${C.border}`, borderRadius: "14px", overflow: "hidden" }}>
+                    <div style={{ padding: "18px 22px", borderBottom: `0.5px solid ${C.border}` }}>
+                        <div style={{ fontSize: "15px", fontWeight: 700, color: C.text }}>Menu catalog</div>
+                        <div style={{ fontSize: "12px", color: C.muted, marginTop: "3px" }}>
+                            Daftar menu, harga, dan jumlah bahan terpeta
                         </div>
                     </div>
 
-                    <div
-                        style={{
-                            width:
-                                "290px",
-                            maxWidth:
-                                "100%",
-                            height:
-                                "46px",
-                            borderRadius:
-                                "14px",
-                            background:
-                                "rgba(15,23,42,0.90)",
-                            border:
-                                "1px solid rgba(59,130,246,0.18)",
-                            display:
-                                "flex",
-                            alignItems:
-                                "center",
-                            padding:
-                                "0 14px",
-                            gap: "10px",
-                        }}
-                    >
-                        <Search
-                            size={18}
-                            color="#94a3b8"
+                    {menus.length === 0 ? (
+                        <EmptyState
+                            title="Belum ada menu"
+                            subtitle="Tambahkan menu pertama. Setiap menu bisa diisi resep bahan baku per porsi."
+                            icon={UtensilsCrossed}
                         />
-
-                        <input
-                            value={
-                                search
-                            }
-                            onChange={(
-                                e
-                            ) =>
-                                setSearch(
-                                    e
-                                        .target
-                                        .value
-                                )
-                            }
-                            placeholder="Search menu..."
-                            style={{
-                                flex: 1,
-                                border:
-                                    "none",
-                                outline:
-                                    "none",
-                                background:
-                                    "transparent",
-                                color:
-                                    "white",
-                                fontSize:
-                                    "14px",
-                            }}
-                        />
-                    </div>
+                    ) : (
+                        <div style={{ overflowX: "auto" }}>
+                            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", minWidth: "780px" }}>
+                                <thead>
+                                    <tr>
+                                        {["Foto", "Nama menu", "Kategori", "Harga", "Min. porsi", "Bahan", "Status", "Aksi"].map(h => (
+                                            <th key={h} style={{ padding: "11px 16px", textAlign: "left", fontSize: "11px", fontWeight: 600, color: C.muted, textTransform: "uppercase", letterSpacing: ".6px", borderBottom: `0.5px solid ${C.border}`, whiteSpace: "nowrap" }}>{h}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {menus.map(item => (
+                                        <tr key={item.id} style={{ borderBottom: `0.5px solid rgba(255,255,255,.04)` }}>
+                                            {/* foto */}
+                                            <td style={{ padding: "10px 16px" }}>
+                                                {item.image ? (
+                                                    <img
+                                                        src={`/storage/${item.image}`}
+                                                        alt={item.name}
+                                                        style={{ width: "44px", height: "44px", objectFit: "cover", borderRadius: "8px", border: `0.5px solid ${C.border}` }}
+                                                    />
+                                                ) : (
+                                                    <div style={{ width: "44px", height: "44px", borderRadius: "8px", background: C.card, border: `0.5px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: C.muted }}>
+                                                        <Image size={16} strokeWidth={1.5} />
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td style={{ padding: "12px 16px" }}>
+                                                <div style={{ fontWeight: 600, color: C.text }}>{item.name}</div>
+                                                {item.description && <div style={{ fontSize: "11.5px", color: C.muted, marginTop: "2px" }}>{item.description}</div>}
+                                            </td>
+                                            <td style={{ padding: "12px 16px" }}>
+                                                {item.category ? (
+                                                    <span style={{ fontSize: "11px", fontWeight: 600, padding: "3px 9px", borderRadius: "20px", background: "rgba(99,102,241,.12)", border: "0.5px solid rgba(99,102,241,.25)", color: "#a5b4fc" }}>{item.category}</span>
+                                                ) : <span style={{ color: C.muted }}>—</span>}
+                                            </td>
+                                            <td style={{ padding: "12px 16px", fontWeight: 700, color: C.text, whiteSpace: "nowrap" }}>
+                                                {fmt(item.price)}
+                                            </td>
+                                            <td style={{ padding: "12px 16px", color: C.sub }}>
+                                                {item.min_pax ? `${item.min_pax} porsi` : "—"}
+                                            </td>
+                                            <td style={{ padding: "12px 16px" }}>
+                                                {item.ingredients_count > 0 ? (
+                                                    <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "11px", fontWeight: 600, padding: "3px 9px", borderRadius: "20px", background: "rgba(16,185,129,.10)", border: "0.5px solid rgba(16,185,129,.25)", color: "#34d399" }}>
+                                                        <FlaskConical size={10} strokeWidth={2} />
+                                                        {item.ingredients_count} bahan
+                                                    </span>
+                                                ) : (
+                                                    <span style={{ fontSize: "11px", color: C.muted }}>Belum ada resep</span>
+                                                )}
+                                            </td>
+                                            <td style={{ padding: "12px 16px" }}>
+                                                <StatusBadge status={item.status} />
+                                            </td>
+                                            <td style={{ padding: "12px 16px" }}>
+                                                <div style={{ display: "flex", gap: "7px" }}>
+                                                    <button onClick={() => handleEdit(item)} style={{ height: "30px", padding: "0 12px", borderRadius: "7px", border: "0.5px solid rgba(99,102,241,.30)", background: "rgba(99,102,241,.12)", color: "#a5b4fc", fontFamily: C.font, fontSize: "11.5px", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
+                                                        <Pencil size={11} strokeWidth={2} /> Edit
+                                                    </button>
+                                                    <button onClick={() => handleDelete(item.id)} style={{ height: "30px", padding: "0 12px", borderRadius: "7px", border: "0.5px solid rgba(239,68,68,.25)", background: "rgba(239,68,68,.10)", color: "#fca5a5", fontFamily: C.font, fontSize: "11.5px", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
+                                                        <Trash2 size={11} strokeWidth={2} /> Hapus
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
+            </div>
 
-                {/* MENU GRID */}
-                <div
-                    style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(3, 1fr)",
-                        gap: "20px",
-                        alignItems: "stretch",
-                    }}
-                >
-                    {filteredMenus.map(
-                        (menu) => (
-                            <div
-    key={menu.id}
-    style={{
-        background:
-            "linear-gradient(145deg, rgba(15,23,42,0.96), rgba(17,24,39,0.98))",
-        border: "1px solid rgba(59,130,246,0.12)",
-        borderRadius: "20px",
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        minHeight: "430px",
-        boxShadow:
-            "0 12px 30px rgba(0,0,0,0.28)",
-    }}
->
-    {/* IMAGE */}
-    <div
-        style={{
-            width: "100%",
-            height: "180px",
-            overflow: "hidden",
-        }}
-    >
-        {menu.image ? (
-            <img
-                src={`/storage/${menu.image}`}
-                alt={menu.name}
-                style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                }}
+            <MenuModal
+                show={showModal}
+                editId={editId}
+                form={form}
+                setForm={setForm}
+                ingredients={ingredients}
+                setIngredients={setIngredients}
+                stocks={stocks}
+                onClose={closeModal}
+                onSubmit={handleSubmit}
             />
-        ) : (
-            <div
-                style={{
-                    width: "100%",
-                    height: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: "#0f172a",
-                }}
-            >
-                <ImageIcon size={40} />
-            </div>
-        )}
-    </div>
-
-    {/* CONTENT */}
-    <div
-        style={{
-            padding: "18px",
-            display: "flex",
-            flexDirection: "column",
-            flex: 1,
-        }}
-    >
-        <h3
-            style={{
-                color: "white",
-                margin: 0,
-                fontSize: "20px",
-                fontWeight: "800",
-                minHeight: "52px",
-            }}
-        >
-            {menu.name}
-        </h3>
-
-        <div
-    style={{
-        display: "flex",
-        gap: "6px",
-        flexWrap: "wrap",
-        marginTop: "8px",
-    }}
->
-    <div
-        style={{
-            padding: "4px 10px",
-            borderRadius: "999px",
-            background: "rgba(37,99,235,0.16)",
-            border: "1px solid rgba(59,130,246,0.20)",
-            color: "#93c5fd",
-            fontSize: "10px",
-            fontWeight: "700",
-        }}
-    >
-        {menu.category}
-    </div>
-
-    <div
-        style={{
-            padding: "4px 10px",
-            borderRadius: "999px",
-            background: "rgba(34,197,94,0.12)",
-            border: "1px solid rgba(34,197,94,0.25)",
-            color: "#86efac",
-            fontSize: "10px",
-            fontWeight: "700",
-        }}
-    >
-        {menu.jenis_catering}
-    </div>
-
-    <div
-        style={{
-            padding: "4px 10px",
-            borderRadius: "999px",
-            background: "rgba(245,158,11,0.12)",
-            border: "1px solid rgba(245,158,11,0.25)",
-            color: "#fcd34d",
-            fontSize: "10px",
-            fontWeight: "700",
-        }}
-    >
-        Min {menu.min_porsi} Porsi
-    </div>
-</div>
-
-        <p
-            style={{
-                marginTop: "12px",
-                color: "#94a3b8",
-                fontSize: "13px",
-                lineHeight: "1.7",
-                flex: 1,
-                overflow: "hidden",
-                display: "-webkit-box",
-                WebkitLineClamp: 4,
-                WebkitBoxOrient: "vertical",
-            }}
-        >
-            {menu.description ||
-                "No description available"}
-        </p>
-
-        {/* FOOTER */}
-        <div
-            style={{
-                marginTop: "16px",
-            }}
-        >
-            <div
-                style={{
-                    color: "#4ade80",
-                    fontSize: "28px",
-                    fontWeight: "900",
-                    marginBottom: "14px",
-                }}
-            >
-                Rp{" "}
-                {Number(
-                    menu.price || 0
-                ).toLocaleString("id-ID")}
-            </div>
-
-            <div
-                style={{
-                    display: "flex",
-                    gap: "10px",
-                }}
-            >
-                <button
-                    onClick={() =>
-                        openEditModal(menu)
-                    }
-                    style={{
-                        flex: 1,
-                        height: "42px",
-                        borderRadius: "12px",
-                        border: "none",
-                        background:
-                            "#2563eb",
-                        color: "white",
-                        fontWeight: "700",
-                        cursor: "pointer",
-                    }}
-                >
-                    Edit
-                </button>
-
-                <button
-                    onClick={() =>
-                        handleDelete(menu.id)
-                    }
-                    style={{
-                        flex: 1,
-                        height: "42px",
-                        borderRadius: "12px",
-                        border: "none",
-                        background:
-                            "#b91c1c",
-                        color: "white",
-                        fontWeight: "700",
-                        cursor: "pointer",
-                    }}
-                >
-                    Delete
-                </button>
-            </div>
-        </div>
-    </div>
-
-</div> 
-))
-}
-</div> 
-
-</div>
-
-
-            {/* MODAL */}
-            {showModal && (
-                <div
-                    style={{
-                        position:
-                            "fixed",
-                        inset: 0,
-                        background:
-                            "rgba(0,0,0,0.75)",
-                        display:
-                            "flex",
-                        alignItems:
-                            "center",
-                        justifyContent:
-                            "center",
-                        zIndex: 9999,
-                        padding:
-                            "20px",
-                    }}
-                >
-                    <div
-                        style={{
-                            width:
-                                "100%",
-                            maxWidth:
-                                "460px",
-                            background:
-                                "#111827",
-                            borderRadius:
-                                "22px",
-                            padding:
-                                "22px",
-                            border:
-                                "1px solid rgba(59,130,246,0.15)",
-                            boxShadow:
-                                "0 20px 50px rgba(0,0,0,0.40)",
-                        }}
-                    >
-                        <div
-                            style={{
-                                display:
-                                    "flex",
-                                justifyContent:
-                                    "space-between",
-                                alignItems:
-                                    "center",
-                                marginBottom:
-                                    "22px",
-                            }}
-                        >
-                            <div>
-                                <h2
-                                    style={{
-                                        margin: 0,
-                                        color:
-                                            "white",
-                                        fontSize:
-                                            "24px",
-                                        fontWeight:
-                                            "800",
-                                    }}
-                                >
-                                    {editingId
-                                        ? "Edit Menu"
-                                        : "Add Menu"}
-                                </h2>
-
-                                <p
-                                    style={{
-                                        margin:
-                                            "6px 0 0",
-                                        color:
-                                            "#94a3b8",
-                                        fontSize:
-                                            "13px",
-                                    }}
-                                >
-                                    Complete
-                                    menu
-                                    information
-                                </p>
-                            </div>
-
-                            <button
-                                onClick={() =>
-                                    setShowModal(
-                                        false
-                                    )
-                                }
-                                style={{
-                                    width:
-                                        "36px",
-                                    height:
-                                        "36px",
-                                    border:
-                                        "none",
-                                    borderRadius:
-                                        "12px",
-                                    background:
-                                        "rgba(255,255,255,0.06)",
-                                    color:
-                                        "#cbd5e1",
-                                    display:
-                                        "flex",
-                                    alignItems:
-                                        "center",
-                                    justifyContent:
-                                        "center",
-                                    cursor:
-                                        "pointer",
-                                }}
-                            >
-                                <X
-                                    size={16}
-                                />
-                            </button>
-                        </div>
-
-                        <form
-                            onSubmit={
-                                handleSubmit
-                            }
-                        >
-                            <input
-                                type="text"
-                                placeholder="Menu Name"
-                                value={
-                                    form.name
-                                }
-                                onChange={(
-                                    e
-                                ) =>
-                                    setForm(
-                                        {
-                                            ...form,
-                                            name: e
-                                                .target
-                                                .value,
-                                        }
-                                    )
-                                }
-                                style={
-                                    inputStyle
-                                }
-                            />
-
-                            <input
-                                type="number"
-                                placeholder="Price"
-                                value={
-                                    form.price
-                                }
-                                onChange={(
-                                    e
-                                ) =>
-                                    setForm(
-                                        {
-                                            ...form,
-                                            price:
-                                                e
-                                                    .target
-                                                    .value,
-                                        }
-                                    )
-                                }
-                                style={
-                                    inputStyle
-                                }
-                            />
-
-                            <input
-                                type="text"
-                                placeholder="Category"
-                                value={
-                                    form.category
-                                }
-                                onChange={(
-                                    e
-                                ) =>
-                                    setForm(
-                                        {
-                                            ...form,
-                                            category:
-                                                e
-                                                    .target
-                                                    .value,
-                                        }
-                                    )
-                                }
-                                style={
-                                    inputStyle
-                                }
-                            />
-
-                            <select
-                                value={form.jenis_catering}
-                                onChange={(e) =>
-                                    setForm({
-                                        ...form,
-                                        jenis_catering:
-                                            e.target.value,
-                                    })
-                                }
-                                style={inputStyle}
-                            >
-                                <option value="Insidentil">
-                                    Insidentil
-                                </option>
-
-                                <option value="Harian">
-                                    Harian
-                                </option>
-                            </select>
-                            <input
-                                type="number"
-                                placeholder="Minimal Porsi"
-                                value={form.min_porsi}
-                                onChange={(e) =>
-                                    setForm({
-                                        ...form,
-                                        min_porsi:
-                                            e.target.value,
-                                    })
-                                }
-                                style={inputStyle}
-                            />
-
-                            <textarea
-                                placeholder="Description"
-                                value={
-                                    form.description
-                                }
-                                onChange={(
-                                    e
-                                ) =>
-                                    setForm(
-                                        {
-                                            ...form,
-                                            description:
-                                                e
-                                                    .target
-                                                    .value,
-                                        }
-                                    )
-                                }
-                                style={{
-                                    ...inputStyle,
-                                    height:
-                                        "110px",
-                                    resize:
-                                        "none",
-                                    paddingTop:
-                                        "14px",
-                                }}
-                            />
-
-                            <input
-                                type="file"
-                                onChange={(
-                                    e
-                                ) =>
-                                    setForm(
-                                        {
-                                            ...form,
-                                            image:
-                                                e
-                                                    .target
-                                                    .files[0],
-                                        }
-                                    )
-                                }
-                                style={{
-                                    marginTop:
-                                        "16px",
-                                    color:
-                                        "#cbd5e1",
-                                    fontSize:
-                                        "13px",
-                                }}
-                            />
-
-                            <div
-                                style={{
-                                    display:
-                                        "flex",
-                                    justifyContent:
-                                        "flex-end",
-                                    gap: "10px",
-                                    marginTop:
-                                        "22px",
-                                }}
-                            >
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setShowModal(
-                                            false
-                                        )
-                                    }
-                                    style={{
-                                        height:
-                                            "42px",
-                                        padding:
-                                            "0 18px",
-                                        border:
-                                            "none",
-                                        borderRadius:
-                                            "12px",
-                                        background:
-                                            "rgba(255,255,255,0.06)",
-                                        color:
-                                            "#cbd5e1",
-                                        fontWeight:
-                                            "700",
-                                        cursor:
-                                            "pointer",
-                                    }}
-                                >
-                                    Cancel
-                                </button>
-
-                                <button
-    type="submit"
-    onClick={() =>
-        console.log(
-            "BUTTON UPDATE DIKLIK"
-        )
-    }
-    style={{
-        height: "42px",
-        padding: "0 18px",
-        border: "none",
-        borderRadius: "12px",
-        background:
-            "linear-gradient(135deg,#2563eb,#1d4ed8)",
-        color: "white",
-        fontWeight: "800",
-        cursor: "pointer",
-    }}
->
-    {editingId
-        ? "Update"
-        : "Save"}
-</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
         </OwnerLayout>
     );
 }
-
-/* =========================
-   STAT CARD
-========================= */
-
-function StatCard({
-    title,
-    subtitle,
-    value,
-    icon,
-    color,
-}) {
-    return (
-        <div
-            style={{
-                background:
-                    "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(15,23,42,0.92))",
-                border: `1px solid ${color}35`,
-                borderRadius:
-                    "20px",
-                padding:
-                    "18px",
-                overflow:
-                    "hidden",
-                position:
-                    "relative",
-                minHeight:
-                    "120px",
-                boxShadow:
-                    "0 12px 28px rgba(0,0,0,0.24)",
-            }}
-        >
-            <div
-                style={{
-                    position:
-                        "absolute",
-                    top: "-70px",
-                    right: "-70px",
-                    width: "150px",
-                    height:
-                        "150px",
-                    background: `${color}18`,
-                    filter:
-                        "blur(50px)",
-                }}
-            />
-
-            <div
-                style={{
-                    position:
-                        "relative",
-                    zIndex: 2,
-                }}
-            >
-                <div
-                    style={{
-                        width: "52px",
-                        height:
-                            "52px",
-                        borderRadius:
-                            "16px",
-                        background: `${color}18`,
-                        border: `1px solid ${color}40`,
-                        display:
-                            "flex",
-                        alignItems:
-                            "center",
-                        justifyContent:
-                            "center",
-                        color,
-                        marginBottom:
-                            "14px",
-                    }}
-                >
-                    {icon}
-                </div>
-
-                <div
-                    style={{
-                        color:
-                            "#cbd5e1",
-                        fontSize:
-                            "13px",
-                        marginBottom:
-                            "6px",
-                    }}
-                >
-                    {title}
-                </div>
-
-                <div
-                    style={{
-                        color:
-                            "white",
-                        fontSize:
-                            "32px",
-                        fontWeight:
-                            "900",
-                        lineHeight:
-                            "1",
-                    }}
-                >
-                    {value}
-                </div>
-
-                <div
-                    style={{
-                        marginTop:
-                            "6px",
-                        color:
-                            "#94a3b8",
-                        fontSize:
-                            "12px",
-                    }}
-                >
-                    {subtitle}
-                </div>
-            </div>
-        </div>
-    );
-}
-
-const inputStyle = {
-    width: "100%",
-    height: "44px",
-    borderRadius: "12px",
-    border:
-        "1px solid rgba(59,130,246,0.14)",
-    background: "#0f172a",
-    padding: "0 14px",
-    color: "white",
-    marginTop: "14px",
-    outline: "none",
-    boxSizing: "border-box",
-    fontSize: "14px",
-};
