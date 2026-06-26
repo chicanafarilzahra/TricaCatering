@@ -30,6 +30,12 @@ const bars = {
     red:    "linear-gradient(90deg,#ef4444,#f87171)",
 };
 
+<<<<<<< Updated upstream
+=======
+// ─── Status constants (SESUAI ENUM DATABASE) ─────────────────────────────────
+// pending -> confirmed -> preparing -> dispatched -> on_delivery -> delivered
+// (atau -> cancelled dari pending)
+>>>>>>> Stashed changes
 const STATUS = {
     PENDING:     "pending",
     CONFIRMED:   "confirmed",
@@ -67,6 +73,7 @@ function statusLabel(s) {
 
 /* ── Toast ── */
 function Toast({ toasts, onDismiss }) {
+<<<<<<< Updated upstream
     return (
         <div style={{ position: "fixed", top: 20, right: 20, zIndex: 9999, display: "flex", flexDirection: "column", gap: "8px", fontFamily: C.font }}>
             {toasts.map((t) => (
@@ -135,11 +142,200 @@ function PilihKurirModal({ order, kurirs, onClose, onConfirm, loading }) {
                         {loading ? "Memproses..." : "Konfirmasi"}
                     </button>
                 </div>
+=======
+  return (
+    <div style={{
+      position: "fixed", top: 24, right: 24, zIndex: 9999,
+      display: "flex", flexDirection: "column", gap: 10,
+      fontFamily: FONT,
+    }}>
+      {toasts.map((t) => (
+        <div
+          key={t.id}
+          style={{
+            background: "linear-gradient(135deg,rgba(15,23,42,0.98),rgba(30,41,59,0.98))",
+            border: `1px solid ${t.color || "rgba(99,102,241,0.4)"}`,
+            borderRadius: 14, padding: "14px 16px",
+            minWidth: 300, maxWidth: 360,
+            boxShadow: `0 8px 32px rgba(0,0,0,0.4),0 0 0 1px ${t.color || "rgba(99,102,241,0.2)"}`,
+            display: "flex", alignItems: "flex-start", gap: 12,
+            animation: "slideIn 0.3s ease",
+            position: "relative",
+          }}
+        >
+          <div style={{
+            color: t.color || "#818cf8", marginTop: 2, flexShrink: 0,
+            width: 30, height: 30, borderRadius: 9,
+            background: `${t.color || "#818cf8"}18`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            {t.icon || <Bell size={16} />}
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "white", marginBottom: 3 }}>{t.title}</div>
+            <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.5 }}>{t.message}</div>
+          </div>
+          <button
+            onClick={() => onDismiss(t.id)}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "#475569", padding: 0, marginTop: 2 }}
+          >
+            <X size={14} />
+          </button>
+        </div>
+      ))}
+      <style>{`
+        @keyframes slideIn {
+          from { opacity:0; transform:translateX(40px); }
+          to   { opacity:1; transform:translateX(0); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// ─── Tracking Modal ───────────────────────────────────────────────────────────
+function TrackingModal({ order, onClose }) {
+  if (!order) return null;
+  const s = order.status?.toLowerCase();
+
+  const steps = [
+    {
+      key: STATUS.CONFIRMED,
+      icon: <CheckCircle2 size={16} />,
+      label: "Pesanan Disetujui",
+      desc: "Owner telah menyetujui pesananmu.",
+    },
+    {
+      key: STATUS.PREPARING,
+      icon: <ChefHat size={16} />,
+      label: "Diproses di Dapur",
+      desc: order.kurir
+        ? `Pesananmu disiapkan. Kurir: ${order.kurir.name}.`
+        : "Pesananmu sedang disiapkan oleh tim dapur kami.",
+    },
+    {
+      key: STATUS.DISPATCHED,
+      icon: <Truck size={16} />,
+      label: "Pesanan Dikirim",
+      desc: order.estimasi_menit
+        ? `Estimasi tiba: ${order.estimasi_menit} menit dari lokasi catering.`
+        : "Pesananmu sedang dalam perjalanan.",
+    },
+    {
+      key: STATUS.ON_DELIVERY,
+      icon: <MapPin size={16} />,
+      label: "Dalam Perjalanan",
+      desc: "Kurir sedang menuju lokasimu. Lihat posisi live di bawah.",
+    },
+    {
+      key: STATUS.DELIVERED,
+      icon: <CheckCircle2 size={16} />,
+      label: "Pesanan Selesai",
+      desc: "Pesanan telah diterima. Selamat menikmati!",
+    },
+  ];
+
+  const flowOrder = [STATUS.CONFIRMED, STATUS.PREPARING, STATUS.DISPATCHED, STATUS.ON_DELIVERY, STATUS.DELIVERED];
+  const currentIdx = flowOrder.indexOf(s);
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed", inset: 0,
+        background: "rgba(0,0,0,0.65)", backdropFilter: "blur(6px)",
+        zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center",
+        fontFamily: FONT,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "linear-gradient(145deg,rgba(15,23,42,0.98),rgba(30,41,59,0.98))",
+          border: "1px solid rgba(148,163,184,0.12)",
+          borderRadius: 24, padding: "32px 30px",
+          minWidth: 360, maxWidth: 440, width: "100%",
+          boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
+        }}
+      >
+        {/* Header */}
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ fontSize: 10, color: "#60a5fa", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
+            Live Tracking Pesanan
+          </div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: "white" }}>
+            #{order.id} — {order.customer_name}
+          </div>
+          <div style={{ fontSize: 13, color: "#94a3b8", marginTop: 4 }}>
+            {order.menu?.name} × {order.quantity}
+          </div>
+        </div>
+
+        {/* Steps */}
+        <div style={{ position: "relative", paddingLeft: 32 }}>
+          <div style={{
+            position: "absolute", left: 9, top: 10, bottom: 10,
+            width: 2, background: "rgba(255,255,255,0.07)", borderRadius: 2,
+          }} />
+          {steps.map((step, i) => {
+            const done   = i <= currentIdx;
+            const active = i === currentIdx;
+            return (
+              <div key={step.key} style={{ position: "relative", marginBottom: i < steps.length - 1 ? 28 : 0 }}>
+                <div style={{
+                  position: "absolute", left: -32, top: 3,
+                  width: 20, height: 20, borderRadius: "50%",
+                  background: done ? (active ? "#3b82f6" : "#16a34a") : "rgba(255,255,255,0.05)",
+                  border: `2px solid ${done ? (active ? "#60a5fa" : "#4ade80") : "rgba(255,255,255,0.10)"}`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  color: done ? "white" : "#334155",
+                  boxShadow: active ? "0 0 14px rgba(59,130,246,0.55)" : "none",
+                  transition: "all 0.35s ease",
+                }} />
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: done ? "white" : "#334155", marginBottom: 4 }}>
+                    {step.label}
+                  </div>
+                  <div style={{ fontSize: 12, color: done ? "#94a3b8" : "#1e293b", lineHeight: 1.5 }}>
+                    {step.desc}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Cancelled notice */}
+        {s === STATUS.CANCELLED && (
+          <div style={{
+            marginTop: 24, padding: 14,
+            background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)",
+            borderRadius: 12, color: "#fca5a5", fontSize: 13,
+            display: "flex", alignItems: "center", gap: 8,
+          }}>
+            <XCircle size={16} />
+            Pesanan ini telah ditolak oleh owner.
+          </div>
+        )}
+
+        {/* Estimasi & posisi kurir live */}
+        {(s === STATUS.DISPATCHED || s === STATUS.ON_DELIVERY) && (
+          <div style={{
+            marginTop: 20, padding: "10px 14px",
+            background: "rgba(168,85,247,0.10)", border: "1px solid rgba(168,85,247,0.25)",
+            borderRadius: 12, color: "#d8b4fe", fontSize: 13, fontWeight: 600,
+            display: "flex", flexDirection: "column", gap: 6,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Truck size={15} />
+              Estimasi tiba: <strong>{order.estimasi_menit ?? "-"} menit</strong>
+>>>>>>> Stashed changes
             </div>
         </div>
     );
 }
 
+<<<<<<< Updated upstream
 /* ── TrackingModal ── */
 function TrackingModal({ order, onClose }) {
     if (!order) return null;
@@ -249,6 +445,55 @@ function ActionBtn({ label, onClick, color, disabled, loading }) {
             {loading ? "···" : label}
         </button>
     );
+=======
+// ─── Action Button ────────────────────────────────────────────────────────────
+function ActionBtn({ label, icon, onClick, color, disabled, loading }) {
+  const active = !disabled && !loading;
+
+  const bg =
+    !active
+      ? "rgba(71,85,105,0.22)"
+      : color === "green"  ? "linear-gradient(135deg,#22c55e,#16a34a)"
+      : color === "red"    ? "linear-gradient(135deg,#ef4444,#dc2626)"
+      : color === "blue"   ? "linear-gradient(135deg,#3b82f6,#2563eb)"
+      : color === "purple" ? "linear-gradient(135deg,#a855f7,#7c3aed)"
+      : "rgba(71,85,105,0.22)";
+
+  const shadow = !active ? "none"
+    : color === "green"  ? "0 4px 14px rgba(34,197,94,0.35)"
+    : color === "red"    ? "0 4px 14px rgba(239,68,68,0.35)"
+    : color === "blue"   ? "0 4px 14px rgba(59,130,246,0.35)"
+    : color === "purple" ? "0 4px 14px rgba(168,85,247,0.35)"
+    : "none";
+
+  return (
+    <button
+      onClick={onClick}
+      disabled={!active}
+      title={disabled ? "Sudah selesai" : undefined}
+      style={{
+        background: bg, border: "none",
+        color: active ? "#fff" : "#475569",
+        padding: "7px 13px", borderRadius: 9,
+        cursor: active ? "pointer" : "not-allowed",
+        fontWeight: 700, fontSize: 12, boxShadow: shadow,
+        transition: "all 0.25s ease", whiteSpace: "nowrap",
+        opacity: loading ? 0.65 : 1,
+        fontFamily: FONT,
+        display: "inline-flex", alignItems: "center", gap: 6,
+      }}
+    >
+      {loading ? (
+        "···"
+      ) : (
+        <>
+          {icon}
+          {label}
+        </>
+      )}
+    </button>
+  );
+>>>>>>> Stashed changes
 }
 
 /* ── EmptyState ── */
@@ -268,6 +513,7 @@ function EmptyState() {
    MAIN
 ════════════════════════════════════════ */
 export default function OrdersOwner() {
+<<<<<<< Updated upstream
     const [orders,             setOrders]             = useState([]);
     const [kurirs,             setKurirs]             = useState([]);
     const [loadingIds,         setLoadingIds]         = useState({});
@@ -302,6 +548,35 @@ export default function OrdersOwner() {
         setToasts((prev) => [...prev, { id, title, message, color, detail, isError }]);
         setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), isError ? 8000 : 5000);
     }, []);
+=======
+  const [orders,        setOrders]        = useState([]);
+  const [loadingIds,    setLoadingIds]    = useState({});
+  const [toasts,        setToasts]        = useState([]);
+  const [trackingOrder, setTrackingOrder] = useState(null);
+
+  // ── fetch orders ──
+  const getOrders = useCallback(async () => {
+    try {
+      const res = await axios.get("/owner/orders");
+      setOrders(res.data.data ?? []);
+    } catch (err) {
+      console.error("Fetch orders error:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    getOrders();
+    const interval = setInterval(getOrders, 15_000);
+    return () => clearInterval(interval);
+  }, [getOrders]);
+
+  // ── toast helpers ──
+  const pushToast = useCallback((title, message, color, icon) => {
+    const id = Date.now();
+    setToasts((prev) => [...prev, { id, title, message, color, icon }]);
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 5000);
+  }, []);
+>>>>>>> Stashed changes
 
     const dismissToast = useCallback((id) => setToasts((prev) => prev.filter((t) => t.id !== id)), []);
     const setLoading   = (id, val) => setLoadingIds((prev) => ({ ...prev, [id]: val }));
@@ -324,6 +599,7 @@ export default function OrdersOwner() {
         }
     };
 
+<<<<<<< Updated upstream
     const rejectOrder = async (id) => {
         setLoading(id, "reject");
         try {
@@ -377,6 +653,90 @@ export default function OrdersOwner() {
     return (
         <OwnerLayout>
             <style>{`* { font-family: ${C.font}; } .order-row:hover td { background: rgba(255,255,255,0.015); } .order-row td { transition: background 0.15s; }`}</style>
+=======
+  // ── APPROVE — pending → confirmed ──
+  const approveOrder = async (id) => {
+    setLoading(id, "approve");
+    try {
+      await axios.put(`/owner/orders/${id}/approve`);
+      pushToast(
+        "Pesanan Disetujui",
+        `Order #${id} disetujui. Invoice dibuat & saldo menu masuk ke wallet Anda.`,
+        "#22c55e",
+        <CheckCircle2 size={16} />,
+      );
+      getOrders();
+    } catch (err) {
+      pushToast("Gagal", err?.response?.data?.message || "Tidak bisa menyetujui pesanan.", "#ef4444", <XCircle size={16} />);
+    } finally {
+      setLoading(id, null);
+    }
+  };
+
+  // ── REJECT — pending → cancelled ──
+  const rejectOrder = async (id) => {
+    setLoading(id, "reject");
+    try {
+      await axios.put(`/owner/orders/${id}/reject`);
+      pushToast("Pesanan Ditolak", `Order #${id} telah ditolak.`, "#ef4444", <XCircle size={16} />);
+      getOrders();
+    } catch (err) {
+      pushToast("Gagal", err?.response?.data?.message || "Tidak bisa menolak pesanan.", "#ef4444", <XCircle size={16} />);
+    } finally {
+      setLoading(id, null);
+    }
+  };
+
+  // ── PROCESS — confirmed → preparing ──
+  const processOrder = async (id) => {
+    setLoading(id, "process");
+    try {
+      await axios.put(`/owner/orders/${id}/process`);
+      pushToast(
+        "Sedang Diproses",
+        `Order #${id} kini diproses di dapur.`,
+        "#3b82f6",
+        <ChefHat size={16} />,
+      );
+      getOrders();
+    } catch (err) {
+      pushToast("Gagal", err?.response?.data?.message || "Tidak bisa memproses pesanan.", "#ef4444", <XCircle size={16} />);
+    } finally {
+      setLoading(id, null);
+    }
+  };
+
+  // ── DISPATCH — preparing → dispatched ──
+  const dispatchOrder = async (order) => {
+    setLoading(order.id, "dispatch");
+    try {
+      const res = await axios.put(`/owner/orders/${order.id}/dispatch`);
+      const kurirName = res?.data?.data?.kurir;
+      pushToast(
+        "Pesanan Dikirim",
+        kurirName
+          ? `Order #${order.id} dikirim ke kurir ${kurirName}.`
+          : `Order #${order.id} sudah dalam perjalanan!`,
+        "#a855f7",
+        <Truck size={16} />,
+      );
+      getOrders();
+    } catch (err) {
+      pushToast("Gagal", err?.response?.data?.message || "Tidak bisa mengirim pesanan.", "#ef4444", <XCircle size={16} />);
+    } finally {
+      setLoading(order.id, null);
+    }
+  };
+
+  // ── Metrics ──
+  const totalOrders    = orders.length;
+  const pendingOrders  = orders.filter((o) => o.status?.toLowerCase() === STATUS.PENDING).length;
+  const activeOrders   = orders.filter((o) =>
+    [STATUS.CONFIRMED, STATUS.PREPARING, STATUS.DISPATCHED, STATUS.ON_DELIVERY, STATUS.DELIVERED]
+      .includes(o.status?.toLowerCase())
+  ).length;
+  const rejectedOrders = orders.filter((o) => o.status?.toLowerCase() === STATUS.CANCELLED).length;
+>>>>>>> Stashed changes
 
             <Toast toasts={toasts} onDismiss={dismissToast} />
             {trackingOrder      && <TrackingModal order={trackingOrder} onClose={() => setTrackingOrder(null)} />}
@@ -400,6 +760,7 @@ export default function OrdersOwner() {
                     </div>
                 </div>
 
+<<<<<<< Updated upstream
                 {/* ── stat cards (1 baris, 4 kolom) ── */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px", marginBottom: "22px" }}>
                     <StatCard label="Total Pesanan"    value={totalOrders    || null} icon={ShoppingCart}  bar={bars.blue}  />
@@ -447,6 +808,29 @@ export default function OrdersOwner() {
                                         const isDelivered  = s === STATUS.DELIVERED;
                                         const isCancelled  = s === STATUS.CANCELLED;
                                         const busy         = loadingIds[order.id];
+=======
+      {/* ── Header ── */}
+      <div style={{ marginBottom: 30 }}>
+        <h1 style={{ margin: 0, fontSize: 32, fontWeight: 800, color: "white", letterSpacing: -0.5 }}>
+          Pesanan Masuk
+        </h1>
+        <p style={{ margin: "6px 0 0", color: "#64748b", fontSize: 14 }}>
+          Kelola dan pantau semua pesanan pelanggan secara real-time.
+        </p>
+      </div>
+
+      {/* ── Metric Cards ── */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit,minmax(210px,1fr))",
+        gap: 16, marginBottom: 24,
+      }}>
+        <MetricCard title="Total Pesanan"   value={totalOrders}    icon={<ShoppingCart size={22} />} color="#60a5fa" />
+        <MetricCard title="Menunggu"        value={pendingOrders}  icon={<Clock size={22} />}        color="#f59e0b" />
+        <MetricCard title="Aktif / Selesai" value={activeOrders}   icon={<CheckCircle2 size={22} />} color="#22c55e" />
+        <MetricCard title="Ditolak"         value={rejectedOrders} icon={<XCircle size={22} />}      color="#ef4444" />
+      </div>
+>>>>>>> Stashed changes
 
                                         const showApprove = isPending;
                                         const showReject  = isPending || isConfirmed;
@@ -456,6 +840,7 @@ export default function OrdersOwner() {
                                         const sendGrey    = isDispatched || isOnDelivery || isDelivered;
                                         const color       = statusColor(s);
 
+<<<<<<< Updated upstream
                                         return (
                                             <tr key={order.id} className="order-row" style={{ borderBottom: `0.5px solid rgba(255,255,255,.04)` }}>
                                                 <td style={{ padding: "12px 16px", fontSize: "12px", color: C.muted }}>#{order.id}</td>
@@ -470,6 +855,19 @@ export default function OrdersOwner() {
                                                     Rp {Number(order.total_price || 0).toLocaleString("id-ID")}
                                                 </td>
                                                 <td style={{ padding: "12px 16px", fontSize: "12px", color: order.kurir ? C.sub : C.muted }}>{order.kurir ? order.kurir.name : "—"}</td>
+=======
+                // ─── Logika tombol (1 tombol aktif per status) ───────────
+                // pending    → Setuju + Tolak
+                // confirmed  → Proses
+                // preparing  → Kirim
+                // dispatched / on_delivery / delivered → teks info saja
+                // cancelled  → —
+                const showApprove  = isPending;
+                const showReject   = isPending;
+                const showProcess  = isConfirmed;
+                const showSend     = isPreparing;
+                const showInfo     = isDispatched || isOnDelivery || isDelivered;
+>>>>>>> Stashed changes
 
                                                 {/* status badge */}
                                                 <td style={{ padding: "12px 16px", textAlign: "center" }}>
@@ -527,7 +925,104 @@ export default function OrdersOwner() {
                     )}
                 </div>
 
+<<<<<<< Updated upstream
             </div>
         </OwnerLayout>
     );
+=======
+                    {/* Tracking Button */}
+                    <td style={{ padding: "12px 10px", textAlign: "center" }}>
+                      {!isPending && !isCancelled ? (
+                        <button
+                          onClick={() => setTrackingOrder(order)}
+                          style={{
+                            background: "rgba(99,102,241,0.10)",
+                            border: "1px solid rgba(99,102,241,0.28)",
+                            color: "#818cf8", padding: "5px 13px", borderRadius: 8,
+                            cursor: "pointer", fontSize: 12, fontWeight: 600,
+                            fontFamily: FONT, transition: "background 0.2s",
+                            display: "inline-flex", alignItems: "center", gap: 6,
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(99,102,241,0.20)")}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(99,102,241,0.10)")}
+                        >
+                          <MapPin size={13} />
+                          Lihat
+                        </button>
+                      ) : (
+                        <span style={{ color: "#334155", fontSize: 12 }}>—</span>
+                      )}
+                    </td>
+
+                    {/* Action Buttons */}
+                    <td style={{ padding: "12px 10px", textAlign: "center" }}>
+                      <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap" }}>
+
+                        {showApprove && (
+                          <ActionBtn
+                            label="Setuju"
+                            icon={<CheckCircle2 size={13} />}
+                            color="green"
+                            onClick={() => approveOrder(order.id)}
+                            loading={busy === "approve"}
+                          />
+                        )}
+
+                        {showReject && (
+                          <ActionBtn
+                            label="Tolak"
+                            icon={<XCircle size={13} />}
+                            color="red"
+                            onClick={() => rejectOrder(order.id)}
+                            loading={busy === "reject"}
+                          />
+                        )}
+
+                        {showProcess && (
+                          <ActionBtn
+                            label="Proses"
+                            icon={<ChefHat size={13} />}
+                            color="blue"
+                            onClick={() => processOrder(order.id)}
+                            loading={busy === "process"}
+                          />
+                        )}
+
+                        {showSend && (
+                          <ActionBtn
+                            label="Kirim"
+                            icon={<Truck size={13} />}
+                            color="purple"
+                            onClick={() => dispatchOrder(order)}
+                            loading={busy === "dispatch"}
+                          />
+                        )}
+
+                        {showInfo && (
+                          <span style={{
+                            fontSize: 12, fontStyle: "italic",
+                            color: isDelivered ? "#10b981" : "#06b6d4",
+                            display: "inline-flex", alignItems: "center", gap: 5,
+                          }}>
+                            {isDelivered ? <CheckCircle2 size={13} /> : <Truck size={13} />}
+                            {isDelivered ? "Selesai" : "Dalam Pengiriman"}
+                          </span>
+                        )}
+
+                        {isCancelled && (
+                          <span style={{ color: "#475569", fontSize: 12, fontStyle: "italic" }}>—</span>
+                        )}
+
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </OwnerLayout>
+  );
+>>>>>>> Stashed changes
 }

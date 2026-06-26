@@ -138,12 +138,43 @@ export default function SidebarOwner() {
             msOverflowStyle:"none",
             fontFamily:     "'Inter', system-ui, -apple-system, sans-serif",
         },
+<<<<<<< Updated upstream
         logoRow: {
             display:       "flex",
             alignItems:    "center",
             gap:           "12px",
             padding:       "4px 6px",
             marginBottom:  "20px",
+=======
+
+        {
+            title: "BUSINESS",
+            items: [
+                {
+                    label: "Orders",
+                    path: "/owner/orders",
+                    icon: (
+                        <ShoppingCart size={18} />
+                    ),
+                },
+
+                {
+                    label: "Menus",
+                    path: "/owner/menus",
+                    icon: (
+                        <UtensilsCrossed size={18} />
+                    ),
+                },
+
+                {
+                    label: "Packages",
+                    path: "/owner/packages",
+                    icon: (
+                        <Package size={18} />
+                    ),
+                },
+            ],
+>>>>>>> Stashed changes
         },
         logoIcon: {
             width:          "40px",

@@ -36,7 +36,7 @@ export default function DistribusiSPPG() {
     fetchMenu();
   }, []);
 
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("auth_token");
   console.log(token);
 
 const fetchDistribusi = async () => {

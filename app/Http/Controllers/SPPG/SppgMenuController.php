@@ -19,10 +19,8 @@ class SppgMenuController extends Controller
     ->get();
 }
 
-    public function store(Request $request)
+public function store(Request $request)
 {
-    dd($request->all());
-
     $request->validate([
         'nama_menu' => 'required',
     ]);

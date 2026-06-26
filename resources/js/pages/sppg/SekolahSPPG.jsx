@@ -80,7 +80,7 @@ useEffect(() => {
     try {
         console.log("fetchData jalan");
 
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("auth_token");
         console.log("token:", token);
 
         const res = await axios.get(
@@ -159,7 +159,7 @@ const saveData = async (e) => {
     return;
 }
 
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("auth_token");
 
     console.log("DATA KIRIM:", form);
 
@@ -240,7 +240,7 @@ if(item.latitude && item.longitude){
     if (!window.confirm("Yakin ingin menghapus?")) return;
 
     try {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("auth_token");
 
         await axios.delete(
             `/api/sppg/sekolah/${id}`,
@@ -263,7 +263,7 @@ const confirmDelete = async () => {
     console.log("DELETE ID:", deleteId);
 
     try {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("auth_token");
 
         const res = await axios.delete(
             `/api/sppg/sekolah/${deleteId}`,

@@ -281,6 +281,7 @@ export default function DashboardOwner() {
         fetchDashboard();
     }, []);
 
+<<<<<<< Updated upstream
     const fetchDashboard = async () => {
         try {
             const token = localStorage.getItem("token");
@@ -292,6 +293,11 @@ export default function DashboardOwner() {
             console.error(err);
         }
     };
+=======
+const fetchDashboard = async () => {
+    try {
+        const token = localStorage.getItem("auth_token");
+>>>>>>> Stashed changes
 
     const cards = STAT_CARDS(stats);
 

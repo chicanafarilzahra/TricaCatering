@@ -99,52 +99,47 @@ class KlienController extends Controller
         ]);
     }
 
-    public function storePesanan(Request $request)
+   public function storePesanan(Request $request)
 {
     $request->validate([
-        'client_id' => 'required',
+        'client_id'     => 'required',
+        'owner_id'      => 'required|exists:users,id', // ← tambah
         'customer_name' => 'required|string',
-        'phone' => 'required|string',
-
-        'type' => 'required|in:harian,insidentil',
-        'menu_id' => 'required|exists:menus,id',
-        'quantity' => 'required|integer|min:1',
-
-        'address' => 'required|string',
-        'lat' => 'required|numeric',
-        'lng' => 'required|numeric',
-
-        'total_price' => 'required|numeric',
-        'courier_fee' => 'required|numeric',
+        'phone'         => 'required|string',
+        'type'          => 'required|in:harian,insidentil',
+        'menu_id'       => 'required|exists:menus,id',
+        'quantity'      => 'required|integer|min:1',
+        'address'       => 'required|string',
+        'lat'           => 'required|numeric',
+        'lng'           => 'required|numeric',
+        'total_price'   => 'required|numeric',
+        'courier_fee'   => 'required|numeric',
     ]);
 
     $order = Order::create([
-        'client_id' => $request->client_id,
+        'client_id'     => $request->client_id,
+        'owner_id'      => $request->owner_id,      // ← pastikan tersimpan
         'customer_name' => $request->customer_name,
-        'phone' => $request->phone,
-        'address' => $request->address,
-        'order_date' => now()->format('Y-m-d'),
-        'owner_id' => $request->owner_id,
-        'type' => $request->type,
-        'menu_id' => $request->menu_id,
-        'quantity' => $request->quantity,
-        'duration' => $request->duration,
-        'event_date' => $request->event_date,
-        'theme' => $request->theme,
-        'notes' => $request->notes,
-
-        'lat' => $request->lat,
-        'lng' => $request->lng,
-
-        'total_price' => $request->total_price,
-        'courier_fee' => $request->courier_fee,
-
-        'status' => 'Pending',
+        'phone'         => $request->phone,
+        'address'       => $request->address,
+        'order_date'    => now()->format('Y-m-d'),
+        'type'          => $request->type,
+        'menu_id'       => $request->menu_id,
+        'quantity'      => $request->quantity,
+        'duration'      => $request->duration,
+        'event_date'    => $request->event_date,
+        'theme'         => $request->theme,
+        'notes'         => $request->notes,
+        'lat'           => $request->lat,
+        'lng'           => $request->lng,
+        'total_price'   => $request->total_price,
+        'courier_fee'   => $request->courier_fee,
+        'status'        => 'pending',               // ← huruf kecil
     ]);
 
     return response()->json([
         'message' => 'Pesanan berhasil dibuat',
-        'order' => $order
+        'order'   => $order,
     ]);
 }
 }

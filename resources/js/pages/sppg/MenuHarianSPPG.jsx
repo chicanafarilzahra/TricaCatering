@@ -54,56 +54,33 @@ export default function MenuHarianSPPG() {
         }
     };
 
-    const handleSaveMenu = async () => {
+   const handleSaveMenu = async () => {
     try {
-
         const formData = new FormData();
 
-        formData.append(
-            "nama_menu",
-            form.nama_menu
-        );
+        formData.append("nama_menu", form.nama_menu);
+        formData.append("kategori", form.kategori);
+        formData.append("deskripsi", form.deskripsi);
+        formData.append("tanggal", date); // <-- was missing
+        formData.append("kalori", form.kalori);
+        formData.append("protein", form.protein);
+        formData.append("lemak", form.lemak);
+        formData.append("karbohidrat", form.karbo);
+        formData.append("serat", form.serat); // <-- was missing
 
-        formData.append(
-            "deskripsi",
-            form.deskripsi
-        );
+        if (form.gambar) {
+            formData.append("gambar", form.gambar); // <-- was missing, the actual file
+        }
 
-        formData.append(
-            "kalori",
-            form.kalori
-        );
-
-        formData.append(
-            "protein",
-            form.protein
-        );
-
-        formData.append(
-            "lemak",
-            form.lemak
-        );
-
-        formData.append(
-            "karbohidrat",
-            form.karbo
-        );
-
-        await axios.post(
-            "/sppg/menus",
-            formData
-        );
+        await axios.post("/sppg/menus", formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
 
         alert("Menu berhasil disimpan");
-
         loadData();
-
         setOpenModal(false);
-
     } catch (err) {
-
-        console.log(err);
-
+        console.log(err.response?.data || err); // log the actual backend error message
         alert("Gagal menyimpan menu");
     }
 };

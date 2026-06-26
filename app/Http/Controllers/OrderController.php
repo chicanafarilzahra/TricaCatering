@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Events\OrderDispatched;
+use App\Models\Invoice;
 use App\Models\Order;
 use App\Models\User;
+use App\Models\Wallet;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
@@ -24,7 +27,6 @@ class OrderController extends Controller
             'owner:id,name,lat,lng',
         ])->findOrFail($id);
 
-        // Klien hanya bisa lihat order miliknya sendiri
         if ($user->role === 'klien' && $order->client_id !== $user->id) {
             return response()->json(['message' => 'Akses ditolak'], 403);
         }
@@ -44,21 +46,13 @@ class OrderController extends Controller
                 'total_price'   => $order->total_price,
                 'courier_fee'   => $order->courier_fee,
                 'menu'          => $order->menu?->name,
-
-                // Koordinat klien — dari kolom lat & lng di orders
                 'lat_klien'     => $order->lat,
                 'lng_klien'     => $order->lng,
-
-                // Koordinat dapur — dari users.lat & users.lng milik owner
                 'lat_dapur'     => $order->owner?->lat,
                 'lng_dapur'     => $order->owner?->lng,
-
-                // Posisi kurir terakhir — null jika belum berangkat
-                // Ini yang langsung ditampilkan di peta saat klien buka halaman
                 'kurir_lat'     => $order->last_kurir_lat,
                 'kurir_lng'     => $order->last_kurir_lng,
                 'last_update'   => $order->last_location_at,
-
                 'kurir' => $order->courier ? [
                     'name'  => $order->courier->name,
                     'phone' => $order->courier->phone,
@@ -69,47 +63,69 @@ class OrderController extends Controller
 
     // ──────────────────────────────────────────────────────────
     // PUT /api/orders/{id}/dispatch
-    // Owner klik tombol "Kirim" → ubah status + broadcast
-    //
-    // Ganti semua pemanggilan lama di React:
-    //   PUT /api/orders/{id}/send    → PUT /api/orders/{id}/dispatch
-    //   PUT /api/orders/{id}/process → PUT /api/orders/{id}/dispatch
+    // Owner klik tombol "Kirim" → sistem PILIH KURIR OTOMATIS
+    // via round-robin (tidak ada lagi assign manual), cairkan
+    // ongkir ke wallet kurir, lalu broadcast.
     // ──────────────────────────────────────────────────────────
     public function dispatch(Request $request, int $id): JsonResponse
     {
         $owner = $request->user();
-
+ 
         if (!in_array($owner->role, ['owner', 'admin'])) {
             return response()->json(['message' => 'Akses ditolak'], 403);
         }
-
-        $order = Order::with('courier')->findOrFail($id);
-
-        // Guard: harus sudah ada kurir sebelum dispatch
-        if (!$order->kurir_id) {
-            return response()->json([
-                'message' => 'Belum ada kurir yang ditugaskan ke order ini.',
-            ], 422);
+ 
+        $order = Order::findOrFail($id);
+ 
+        if ($order->owner_id !== $owner->id && $owner->role !== 'admin') {
+            return response()->json(['message' => 'Akses ditolak'], 403);
         }
-
-        // Guard: hanya dari status confirmed atau preparing
-        if (!in_array($order->status, [
-            Order::STATUS_CONFIRMED,
-            Order::STATUS_PREPARING,
-        ])) {
+ 
+        // Hanya order yang sudah diproses (preparing) yang boleh dikirim
+        if ($order->status !== 'preparing') {
             return response()->json([
                 'message' => "Order status '{$order->status}' tidak bisa dikirim. "
-                           . "Harus confirmed atau preparing terlebih dahulu.",
+                           . "Harus dalam status preparing terlebih dahulu.",
             ], 422);
         }
-
-        $order->update(['status' => Order::STATUS_DISPATCHED]);
-
+ 
+        $courier = $this->pickNextAvailableCourier($order->owner_id);
+ 
+        if (!$courier) {
+            return response()->json([
+                'message' => 'Tidak ada kurir yang tersedia saat ini.',
+            ], 422);
+        }
+ 
+        DB::transaction(function () use ($order, $courier) {
+            $courierFee = (float) ($order->courier_fee ?? 0);
+ 
+            if ($courierFee > 0) {
+                $courierWallet = Wallet::firstOrCreate(['user_id' => $courier->id]);
+                $courierWallet->credit(
+                    amount: $courierFee,
+                    category: 'courier_fee',
+                    orderId: $order->id,
+                    description: "Jasa kurir untuk pesanan #{$order->id}",
+                );
+            }
+ 
+            $order->update([
+                'status'   => 'dispatched',
+                'kurir_id' => $courier->id,
+            ]);
+ 
+            // Kurir jadi tidak available sampai pesanan ini selesai diantar
+            $courier->update(['is_available' => false]);
+        });
+ 
+        $order->refresh()->load('courier');
+ 
         // Broadcast langsung ke kurir & klien via WebSocket
         broadcast(new OrderDispatched($order));
-
+ 
         return response()->json([
-            'message' => 'Order berhasil dikirim. Kurir sudah diberitahu.',
+            'message' => 'Order berhasil dikirim. Kurir sudah ditugaskan otomatis.',
             'data'    => [
                 'order_id' => $order->id,
                 'status'   => $order->status,
@@ -119,41 +135,10 @@ class OrderController extends Controller
     }
 
     // ──────────────────────────────────────────────────────────
-    // PUT /api/orders/{id}/assign-kurir
-    // Owner tugaskan kurir ke order sebelum dispatch
-    // ──────────────────────────────────────────────────────────
-    public function assignKurir(Request $request, int $id): JsonResponse
-    {
-        $owner = $request->user();
-
-        if (!in_array($owner->role, ['owner', 'admin'])) {
-            return response()->json(['message' => 'Akses ditolak'], 403);
-        }
-
-        $validated = $request->validate([
-            'kurir_id' => 'required|exists:users,id',
-        ]);
-
-        // Pastikan user yang dipilih memang role kurir
-        $kurir = User::where('id', $validated['kurir_id'])
-            ->where('role', 'kurir')
-            ->firstOrFail();
-
-        $order = Order::findOrFail($id);
-        $order->update(['kurir_id' => $kurir->id]);
-
-        return response()->json([
-            'message' => "Kurir {$kurir->name} berhasil ditugaskan.",
-            'data'    => [
-                'kurir_id'   => $kurir->id,
-                'kurir_name' => $kurir->name,
-            ],
-        ]);
-    }
-
-    // ──────────────────────────────────────────────────────────
     // GET /api/kurir/list
-    // Fetch daftar kurir — untuk dropdown assign di halaman owner
+    // Masih dipertahankan untuk keperluan lain (misal lihat
+    // daftar kurir di dashboard owner), TIDAK dipakai lagi untuk
+    // assign manual ke order.
     // ──────────────────────────────────────────────────────────
     public function kurirList(Request $request): JsonResponse
     {
@@ -164,7 +149,8 @@ class OrderController extends Controller
         }
 
         $kurirList = User::where('role', 'kurir')
-            ->select('id', 'name', 'phone')
+            ->where('owner_id', $owner->id)
+            ->select('id', 'name', 'phone', 'is_available')
             ->orderBy('name')
             ->get();
 
@@ -172,67 +158,186 @@ class OrderController extends Controller
     }
 
     public function ownerOrders(Request $request): JsonResponse
-{
-    $owner = $request->user();
+    {
+        $owner = $request->user();
 
-    if ($owner->role !== 'owner') {
-        return response()->json(['message' => 'Akses ditolak'], 403);
+        if ($owner->role !== 'owner') {
+            return response()->json(['message' => 'Akses ditolak'], 403);
+        }
+
+        $orders = Order::with([
+            'client:id,name,phone',
+            'courier:id,name,phone',
+        ])
+            ->where('owner_id', $owner->id)
+            ->orderBy('tanggal', 'desc')
+            ->orderBy('jam', 'desc')
+            ->get();
+
+        return response()->json(['data' => $orders]);
     }
 
-    $orders = Order::with([
-    'client:id,name,phone',
-    'courier:id,name,phone',
-])        // ✅ users tidak punya phone, jadi tidak diambil
-        ->where('owner_id', $owner->id)
-        ->orderBy('tanggal', 'desc')
-        ->orderBy('jam', 'desc')
-        ->get();
+    // ──────────────────────────────────────────────────────────
+    // PUT /api/orders/{id}/approve
+    // Owner approve order → uang harga menu cair ke wallet owner,
+    // dan invoice dibuat otomatis (1 order = 1 invoice).
+    // ──────────────────────────────────────────────────────────
+    public function approve(Request $request, int $id): JsonResponse
+    {
+        $owner = $request->user();
 
-    return response()->json(['data' => $orders]);
-}
-// PUT /api/orders/{id}/approve
-public function approve(Request $request, int $id): JsonResponse
-{
-    $owner = $request->user();
+        if (!in_array($owner->role, ['owner', 'admin'])) {
+            return response()->json(['message' => 'Akses ditolak'], 403);
+        }
 
-    if (!in_array($owner->role, ['owner', 'admin'])) {
-        return response()->json(['message' => 'Akses ditolak'], 403);
+        $order = Order::findOrFail($id);
+
+        if ($order->status !== 'pending') {
+            return response()->json(['message' => 'Order bukan status pending'], 422);
+        }
+
+        $invoice = DB::transaction(function () use ($order) {
+            $courierFee = (float) ($order->courier_fee ?? 0);
+            $menuAmount = (float) $order->total_price - $courierFee;
+
+            // 1. Uang menu cair ke wallet owner
+            if ($menuAmount > 0) {
+                $ownerWallet = Wallet::firstOrCreate(['user_id' => $order->owner_id]);
+                $ownerWallet->credit(
+                    amount: $menuAmount,
+                    category: 'menu_payment',
+                    orderId: $order->id,
+                    description: "Pembayaran menu pesanan #{$order->id}",
+                );
+            }
+
+            // 2. Generate invoice otomatis (kalau belum ada untuk order ini)
+            $invoice = Invoice::firstOrCreate(
+                ['order_id' => $order->id],
+                [
+                    'invoice_number' => $this->generateInvoiceNumber($order->id),
+                    'client_id'      => $order->client_id,
+                    'subtotal'       => $menuAmount,
+                    'tax'            => 0,
+                    'discount'       => 0,
+                    'total_amount'   => (float) $order->total_price,
+                    'status'         => 'pending',
+                    'due_date'       => $order->event_date ?? $order->tanggal ?? null,
+                ]
+            );
+
+            // 3. Order pindah status
+            $order->update(['status' => 'confirmed']);
+
+            return $invoice;
+        });
+
+        return response()->json([
+            'message' => 'Order disetujui. Invoice dibuat dan saldo menu masuk ke wallet Anda.',
+            'data'    => [
+                'status'  => $order->status,
+                'invoice' => $invoice,
+            ],
+        ]);
     }
 
-    $order = Order::findOrFail($id);
+    // PUT /api/orders/{id}/reject
+    public function reject(Request $request, int $id): JsonResponse
+    {
+        $owner = $request->user();
 
-    if ($order->status !== 'pending') {
-        return response()->json(['message' => 'Order bukan status pending'], 422);
+        if (!in_array($owner->role, ['owner', 'admin'])) {
+            return response()->json(['message' => 'Akses ditolak'], 403);
+        }
+
+        $order = Order::findOrFail($id);
+
+        if ($order->status !== 'pending') {
+            return response()->json(['message' => 'Order bukan status pending'], 422);
+        }
+
+        $order->update(['status' => 'cancelled']);
+
+        return response()->json([
+            'message' => 'Order ditolak',
+            'data'    => ['status' => $order->status],
+        ]);
     }
 
-    $order->update(['status' => 'confirmed']);
+    
 
-    return response()->json([
-        'message' => 'Order disetujui',
-        'data'    => ['status' => $order->status],
-    ]);
-}
+    // ──────────────────────────────────────────────────────────
+    // Pilih kurir selanjutnya secara round-robin, hanya dari
+    // kurir yang role='kurir', owner_id=milik owner ini, dan
+    // is_available=true. Urut berdasar id terkecil -> terbesar,
+    // lanjut dari kurir terakhir yang dipakai owner ini.
+    // ──────────────────────────────────────────────────────────
+    private function pickNextAvailableCourier(int $ownerId): ?User
+    {
+        return DB::transaction(function () use ($ownerId) {
+            $availableCouriers = User::where('owner_id', $ownerId)
+                ->where('role', 'kurir')
+                ->where('is_available', true)
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get();
 
-// PUT /api/orders/{id}/reject
-public function reject(Request $request, int $id): JsonResponse
-{
-    $owner = $request->user();
+            if ($availableCouriers->isEmpty()) {
+                return null;
+            }
 
-    if (!in_array($owner->role, ['owner', 'admin'])) {
-        return response()->json(['message' => 'Akses ditolak'], 403);
+            $lastCourierId = Order::where('owner_id', $ownerId)
+                ->whereNotNull('kurir_id')
+                ->where('status', 'dispatched')
+                ->orderByDesc('id')
+                ->value('kurir_id');
+
+            if (!$lastCourierId) {
+                return $availableCouriers->first();
+            }
+
+            $next = $availableCouriers->first(fn ($c) => $c->id > $lastCourierId);
+
+            return $next ?? $availableCouriers->first();
+        });
     }
 
-    $order = Order::findOrFail($id);
-
-    if ($order->status !== 'pending') {
-        return response()->json(['message' => 'Order bukan status pending'], 422);
+    private function generateInvoiceNumber(int $orderId): string
+    {
+        return 'INV-' . now()->format('Ym') . '-' . $orderId;
     }
 
-    $order->update(['status' => 'cancelled']);
-
-    return response()->json([
-        'message' => 'Order ditolak',
-        'data'    => ['status' => $order->status],
-    ]);
-}
+    // OrderController.php
+ public function process(Request $request, int $id): JsonResponse
+    {
+        $owner = $request->user();
+ 
+        if (!in_array($owner->role, ['owner', 'admin'])) {
+            return response()->json(['message' => 'Akses ditolak'], 403);
+        }
+ 
+        $order = Order::findOrFail($id);
+ 
+        if ($order->owner_id !== $owner->id && $owner->role !== 'admin') {
+            return response()->json(['message' => 'Akses ditolak'], 403);
+        }
+ 
+        // Hanya order yang sudah confirmed yang boleh diproses
+        if ($order->status !== 'confirmed') {
+            return response()->json([
+                'message' => "Order status '{$order->status}' tidak bisa diproses. "
+                           . "Harus dalam status confirmed terlebih dahulu.",
+            ], 422);
+        }
+ 
+        $order->update(['status' => 'preparing']);
+ 
+        return response()->json([
+            'message' => 'Pesanan sedang disiapkan.',
+            'data'    => [
+                'order_id' => $order->id,
+                'status'   => $order->status,
+            ],
+        ]);
+    }
 }

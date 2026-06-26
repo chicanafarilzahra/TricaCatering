@@ -40,7 +40,7 @@ export default function DashboardSPPG() {
     const loadDashboard = async () => {
     try {
 
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("auth_token");
 
         const res = await axios.get(
             "/sppg/dashboard",

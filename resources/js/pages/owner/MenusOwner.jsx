@@ -17,6 +17,7 @@ if (typeof document !== "undefined" && !document.getElementById("inter-font")) {
     document.head.appendChild(l);
 }
 
+<<<<<<< Updated upstream
 /* ── tokens ─────────────────────────────────────────────────── */
 const C = {
     bg:      "#080C14",
@@ -28,6 +29,53 @@ const C = {
     muted:   "#64748B",
     sub:     "#94A3B8",
     font:    "'Inter', system-ui, -apple-system, sans-serif",
+=======
+    const [search, setSearch] =
+        useState("");
+
+    const [showModal, setShowModal] =
+        useState(false);
+
+    const [editingId, setEditingId] =
+        useState(null);
+
+    const [form, setForm] = useState({
+        name: "",
+        price: "",
+        category: "",
+        description: "",
+        image: null,
+        jenis_catering: "Insidentil",
+        min_porsi: 1,
+    });
+
+    /* =========================
+       FETCH MENUS
+    ========================= */
+
+const fetchMenus = async () => {
+    try {
+        const user = JSON.parse(localStorage.getItem("user"));
+        const token = localStorage.getItem("auth_token");
+
+        const res = await axios.get("/owner/menus", {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: "application/json",
+            },
+            params: {
+                owner_id: user.id,
+            },
+        });
+
+        setMenus(res.data);
+    } catch (error) {
+        console.log("ERROR =", error);
+        console.log("DATA =", error.response?.data);
+
+        alert(JSON.stringify(error.response?.data));
+    }
+>>>>>>> Stashed changes
 };
 
 const bars = {

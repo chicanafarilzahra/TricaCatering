@@ -379,6 +379,8 @@ Route::prefix('klien')->group(function () {
     // Download PDF
     Route::get('invoice/{id}/pdf',     [InvoiceKlienController::class, 'downloadPdf']);
 });
+    Route::get('/klien/geocode', [GeoController::class, 'geocode']);
+    Route::get('/klien/route', [GeoController::class, 'route']);
 
 Route::get('/klien/geocode', [GeoController::class, 'geocode']);
 Route::get('/klien/route', [GeoController::class, 'route']);
@@ -435,9 +437,11 @@ Route::put('/menus/{menu}', [OwnerMenuController2::class, 'update']);
 Route::delete('/menus/{menu}', [OwnerMenuController2::class, 'destroy']);
 Route::get('/menus/{menu}/ingredients', [OwnerMenuController2::class, 'ingredients']); 
 
-    Route::get('/orders', [OrderController::class, 'ownerOrders']);
-    Route::put('/orders/{id}/process', [OrderController::class, 'process']);
-    Route::put('/orders/{id}/send', [OrderController::class, 'send']);
+    Route::get('/orders',                [OrderController::class, 'ownerOrders']);
+    Route::put('/orders/{id}/approve',   [OrderController::class, 'approve']);
+    Route::put('/orders/{id}/reject',    [OrderController::class, 'reject']);
+    Route::put('/orders/{id}/process',   [OrderController::class, 'process']);
+    Route::put('/orders/{id}/dispatch',  [OrderController::class, 'dispatch']);
 
     Route::get('/payment-accounts', [OwnerPaymentAccountController::class, 'index']);
     Route::post('/payment-accounts', [OwnerPaymentAccountController::class, 'store']);

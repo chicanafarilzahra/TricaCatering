@@ -25,7 +25,7 @@ export default function SPPG() {
 
     const fetchDistribusi = async () => {
         try {
-            const token = localStorage.getItem("token");
+            const token = localStorage.getItem("auth_token");
             const res = await axios.get("http://localhost:8000/api/sppg/distribusi", {
                 headers: {
                     Authorization: `Bearer ${token}`,
