@@ -66,7 +66,7 @@ export default function AdminValidasiUser() {
     try {
 
         await axios.put(
-            `/api/users/${id}/approve`
+            `/users/${id}/approve`
         );
 
         alert(
@@ -97,7 +97,7 @@ export default function AdminValidasiUser() {
     try {
 
         await axios.put(
-            `/api/users/${id}/reject`
+            `/users/${id}/reject`
         );
 
         alert(

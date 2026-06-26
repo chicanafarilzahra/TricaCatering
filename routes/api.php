@@ -25,6 +25,8 @@ use App\Http\Controllers\Api\OwnerMenuController;
 use App\Http\Controllers\Api\OwnerStockController;
 use App\Http\Controllers\Api\OwnerPaymentAccountController;
 
+use App\Http\Controllers\Owner\CourierController as OwnerCourierController;
+
 use App\Http\Controllers\SPPG\DashboardSPPGController;
 use App\Http\Controllers\SPPG\MenuHarianController;
 use App\Http\Controllers\SPPG\SekolahController;
@@ -238,6 +240,11 @@ Route::put(
     '/users/{id}/reject',
     [AdminUserController::class, 'reject']
 );
+
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/owner/couriers', [OwnerCourierController::class, 'index']);
+});
+
 /*
 |--------------------------------------------------------------------------
 | KURIR
