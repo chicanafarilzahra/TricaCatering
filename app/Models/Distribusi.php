@@ -27,10 +27,10 @@ class Distribusi extends Model
     }
 
     public function menu()
-    {
-        return $this->belongsTo(
-            MenuHarian::class,
-            'menu_id'
-        );
-    }
+{
+    return $this->belongsTo(
+        SppgMenu::class,  // ganti dari MenuHarian
+        'menu_id'
+    );
+}
 }

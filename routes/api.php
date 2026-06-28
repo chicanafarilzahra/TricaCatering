@@ -535,11 +535,15 @@ Route::post(
     [StocksSPPGController::class, 'store']
 );
 
+Route::put(
+    '/stocks/{id}',
+    [StocksSPPGController::class, 'update']
+);
+
 Route::delete(
     '/stocks/{id}',
     [StocksSPPGController::class, 'destroy']
 );
-
     Route::get(
     '/distribusi',
     [DistribusiController::class,'index']

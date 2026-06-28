@@ -4,13 +4,13 @@ namespace App\Http\Controllers\SPPG;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Stock;
+use App\Models\StockSPPG;
 
 class StocksSPPGController extends Controller
 {
     public function index(Request $request)
     {
-        $stocks = Stock::where(
+        $stocks = StockSPPG::where(
             'sppg_id',
             $request->user()->id
         )->latest()->get();
@@ -20,16 +20,15 @@ class StocksSPPGController extends Controller
                 'total_bahan' => $stocks->count(),
 
                 'stok_aman' => $stocks
-                    ->where('qty', '>', 20)
+                    ->filter(fn ($s) => $s->qty > 0 && $s->qty > $s->minimum_stock)
                     ->count(),
 
                 'stok_menipis' => $stocks
-                    ->where('qty', '>', 0)
-                    ->where('qty', '<=', 20)
+                    ->filter(fn ($s) => $s->qty > 0 && $s->qty <= $s->minimum_stock)
                     ->count(),
 
                 'stok_habis' => $stocks
-                    ->where('qty', '<=', 0)
+                    ->filter(fn ($s) => $s->qty <= 0)
                     ->count(),
             ],
 
@@ -46,7 +45,7 @@ class StocksSPPGController extends Controller
             'minimum_stock' => 'required|numeric',
         ]);
 
-        $stock = Stock::create([
+        $stock = StockSPPG::create([
             'sppg_id' => $request->user()->id,
             'name' => $request->name,
             'qty' => $request->qty,
@@ -62,7 +61,7 @@ class StocksSPPGController extends Controller
 
     public function update(Request $request, int $id)
     {
-        $stock = Stock::findOrFail($id);
+        $stock = StockSPPG::findOrFail($id);
 
         $stock->update([
             'name' => $request->name,
@@ -79,7 +78,7 @@ class StocksSPPGController extends Controller
 
     public function destroy(int $id)
     {
-        Stock::findOrFail($id)->delete();
+        StockSPPG::findOrFail($id)->delete();
 
         return response()->json([
             'message' => 'Stok berhasil dihapus'

@@ -22,9 +22,9 @@ const FONT = "'Inter', system-ui, -apple-system, sans-serif";
 
 /* ─── design tokens ─── */
 const t = {
-    cardBg:   "#111827",
-    cardBorder: "rgba(255,255,255,0.07)",
-    pageBg:   "#0f172a",
+    cardBg:      "#111827",
+    cardBorder:  "rgba(255,255,255,0.07)",
+    pageBg:      "#0f172a",
     textPrimary: "#f1f5f9",
     textMuted:   "#64748b",
     textSub:     "#94a3b8",
@@ -44,7 +44,6 @@ const STAT_CARDS = (stats) => [
         accent: "#6366f1",
         bg:     "rgba(99,102,241,0.10)",
         border: "rgba(99,102,241,0.20)",
-        // change: akan diisi dari API nanti
     },
     {
         title:  "Customers",
@@ -53,7 +52,6 @@ const STAT_CARDS = (stats) => [
         accent: "#3b82f6",
         bg:     "rgba(59,130,246,0.10)",
         border: "rgba(59,130,246,0.20)",
-        // change: akan diisi dari API nanti
     },
     {
         title:  "Packages",
@@ -62,7 +60,6 @@ const STAT_CARDS = (stats) => [
         accent: "#f59e0b",
         bg:     "rgba(245,158,11,0.10)",
         border: "rgba(245,158,11,0.20)",
-        // change: akan diisi dari API nanti
     },
     {
         title:  "Revenue",
@@ -71,16 +68,15 @@ const STAT_CARDS = (stats) => [
         accent: "#10b981",
         bg:     "rgba(16,185,129,0.10)",
         border: "rgba(16,185,129,0.20)",
-        // change: akan diisi dari API nanti
     },
 ];
 
 /* ─── quick insights config ─── */
 const INSIGHTS = [
-    { label: "Order Growth",        icon: <TrendingUp size={15} />, color: "#6366f1" },
-    { label: "Customer Activity",   icon: <Users size={15} />,      color: "#3b82f6" },
-    { label: "Operational Status",  icon: <Activity size={15} />,   color: "#10b981" },
-    { label: "Profit Analysis",     icon: <Zap size={15} />,        color: "#f59e0b" },
+    { label: "Order Growth",       icon: <TrendingUp size={15} />, color: "#6366f1" },
+    { label: "Customer Activity",  icon: <Users size={15} />,      color: "#3b82f6" },
+    { label: "Operational Status", icon: <Activity size={15} />,   color: "#10b981" },
+    { label: "Profit Analysis",    icon: <Zap size={15} />,        color: "#f59e0b" },
 ];
 
 /* =========================================
@@ -94,94 +90,58 @@ function StatCard({ title, value, icon, accent, bg, border, change }) {
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
             style={{
-                background:  t.cardBg,
-                border:      `1px solid ${hovered ? accent + "40" : t.cardBorder}`,
-                borderRadius: t.radius.lg,
-                padding:     "20px",
-                display:     "flex",
+                background:    t.cardBg,
+                border:        `1px solid ${hovered ? accent + "40" : t.cardBorder}`,
+                borderRadius:  t.radius.lg,
+                padding:       "20px",
+                display:       "flex",
                 flexDirection: "column",
-                gap:         "14px",
-                transition:  "all 0.2s ease",
-                cursor:      "default",
-                transform:   hovered ? "translateY(-2px)" : "none",
-                fontFamily:  FONT,
+                gap:           "14px",
+                transition:    "all 0.2s ease",
+                cursor:        "default",
+                transform:     hovered ? "translateY(-2px)" : "none",
+                fontFamily:    FONT,
             }}
         >
             {/* top row */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span
-                    style={{
-                        fontSize:      "11px",
-                        fontWeight:    "600",
-                        color:         t.textMuted,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.9px",
-                    }}
-                >
+                <span style={{
+                    fontSize: "11px", fontWeight: "600", color: t.textMuted,
+                    textTransform: "uppercase", letterSpacing: "0.9px",
+                }}>
                     {title}
                 </span>
-
-                <div
-                    style={{
-                        width:          "34px",
-                        height:         "34px",
-                        borderRadius:   t.radius.sm,
-                        background:     bg,
-                        border:         `1px solid ${border}`,
-                        display:        "flex",
-                        alignItems:     "center",
-                        justifyContent: "center",
-                        color:          accent,
-                        flexShrink:     0,
-                    }}
-                >
+                <div style={{
+                    width: "34px", height: "34px", borderRadius: t.radius.sm,
+                    background: bg, border: `1px solid ${border}`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: accent, flexShrink: 0,
+                }}>
                     {icon}
                 </div>
             </div>
 
             {/* value */}
-            <div
-                style={{
-                    fontSize:    "26px",
-                    fontWeight:  "700",
-                    color:       t.textPrimary,
-                    letterSpacing: "-0.5px",
-                    lineHeight:  1,
-                }}
-            >
+            <div style={{
+                fontSize: "26px", fontWeight: "700", color: t.textPrimary,
+                letterSpacing: "-0.5px", lineHeight: 1,
+            }}>
                 {value}
             </div>
 
-            {/* change badge — hanya tampil kalau API kirim data */}
+            {/* change badge — hanya tampil kalau ada data */}
             {change ? (
-                <div
-                    style={{
-                        display:      "inline-flex",
-                        alignItems:   "center",
-                        gap:          "4px",
-                        fontSize:     "11px",
-                        fontWeight:   "600",
-                        color:        accent,
-                        background:   bg,
-                        border:       `1px solid ${border}`,
-                        borderRadius: "20px",
-                        padding:      "3px 10px",
-                        alignSelf:    "flex-start",
-                    }}
-                >
+                <div style={{
+                    display: "inline-flex", alignItems: "center", gap: "4px",
+                    fontSize: "11px", fontWeight: "600", color: accent,
+                    background: bg, border: `1px solid ${border}`,
+                    borderRadius: "20px", padding: "3px 10px", alignSelf: "flex-start",
+                }}>
                     <ArrowUpRight size={11} />
                     {change}
                 </div>
             ) : (
-                <div
-                    style={{
-                        fontSize:   "11px",
-                        color:      t.textMuted,
-                        fontWeight: "500",
-                    }}
-                >
-                    —
-                </div>
+                <div style={{ fontSize: "11px", color: t.textMuted, fontWeight: "500" }}>—</div>
             )}
         </div>
     );
@@ -190,55 +150,34 @@ function StatCard({ title, value, icon, accent, bg, border, change }) {
 /* =========================================
    SECTION CARD
 ========================================= */
-function SectionCard({ title, icon, iconColor = "#60a5fa", iconBg = "rgba(59,130,246,0.10)", iconBorder = "rgba(59,130,246,0.18)", children }) {
+function SectionCard({
+    title, icon,
+    iconColor  = "#60a5fa",
+    iconBg     = "rgba(59,130,246,0.10)",
+    iconBorder = "rgba(59,130,246,0.18)",
+    children,
+}) {
     return (
-        <div
-            style={{
-                background:   t.cardBg,
-                border:       `1px solid ${t.cardBorder}`,
-                borderRadius: t.radius.lg,
-                padding:      "22px",
-                fontFamily:   FONT,
-            }}
-        >
-            <div
-                style={{
-                    display:        "flex",
-                    justifyContent: "space-between",
-                    alignItems:     "center",
-                    marginBottom:   "20px",
-                }}
-            >
-                <h3
-                    style={{
-                        margin:      0,
-                        fontSize:    "15px",
-                        fontWeight:  "700",
-                        color:       t.textPrimary,
-                        letterSpacing: "-0.2px",
-                    }}
-                >
+        <div style={{
+            background: t.cardBg, border: `1px solid ${t.cardBorder}`,
+            borderRadius: t.radius.lg, padding: "22px", fontFamily: FONT,
+        }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+                <h3 style={{
+                    margin: 0, fontSize: "15px", fontWeight: "700",
+                    color: t.textPrimary, letterSpacing: "-0.2px",
+                }}>
                     {title}
                 </h3>
-
-                <div
-                    style={{
-                        width:          "34px",
-                        height:         "34px",
-                        borderRadius:   t.radius.sm,
-                        background:     iconBg,
-                        border:         `1px solid ${iconBorder}`,
-                        color:          iconColor,
-                        display:        "flex",
-                        alignItems:     "center",
-                        justifyContent: "center",
-                        flexShrink:     0,
-                    }}
-                >
+                <div style={{
+                    width: "34px", height: "34px", borderRadius: t.radius.sm,
+                    background: iconBg, border: `1px solid ${iconBorder}`,
+                    color: iconColor, display: "flex", alignItems: "center",
+                    justifyContent: "center", flexShrink: 0,
+                }}>
                     {icon}
                 </div>
             </div>
-
             {children}
         </div>
     );
@@ -247,19 +186,13 @@ function SectionCard({ title, icon, iconColor = "#60a5fa", iconBg = "rgba(59,130
 /* ─── empty placeholder ─── */
 function EmptyPlaceholder({ icon, label, height = 220 }) {
     return (
-        <div
-            style={{
-                height,
-                display:        "flex",
-                flexDirection:  "column",
-                alignItems:     "center",
-                justifyContent: "center",
-                gap:            "10px",
-                borderRadius:   t.radius.md,
-                border:         "1px dashed rgba(255,255,255,0.07)",
-                color:          t.textMuted,
-            }}
-        >
+        <div style={{
+            height, display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center", gap: "10px",
+            borderRadius: t.radius.md,
+            border: "1px dashed rgba(255,255,255,0.07)",
+            color: t.textMuted,
+        }}>
             <div style={{ opacity: 0.4 }}>{icon}</div>
             <span style={{ fontSize: "13px", fontWeight: "500" }}>{label}</span>
         </div>
@@ -281,23 +214,14 @@ export default function DashboardOwner() {
         fetchDashboard();
     }, []);
 
-<<<<<<< Updated upstream
     const fetchDashboard = async () => {
         try {
-            const token = localStorage.getItem("token");
-            const res   = await axios.get("/owner/dashboard", {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const res = await axios.get("/owner/dashboard");
             setStats(res.data);
         } catch (err) {
             console.error(err);
         }
     };
-=======
-const fetchDashboard = async () => {
-    try {
-        const token = localStorage.getItem("auth_token");
->>>>>>> Stashed changes
 
     const cards = STAT_CARDS(stats);
 
@@ -306,87 +230,52 @@ const fetchDashboard = async () => {
             <div style={{ fontFamily: FONT }}>
 
                 {/* ── Page header ── */}
-                <div
-                    style={{
-                        display:        "flex",
-                        justifyContent: "space-between",
-                        alignItems:     "center",
-                        flexWrap:       "wrap",
-                        gap:            "12px",
-                        marginBottom:   "24px",
-                    }}
-                >
+                <div style={{
+                    display: "flex", justifyContent: "space-between",
+                    alignItems: "center", flexWrap: "wrap",
+                    gap: "12px", marginBottom: "24px",
+                }}>
                     <div>
-                        <h1
-                            style={{
-                                margin:        0,
-                                fontSize:      "22px",
-                                fontWeight:    "700",
-                                color:         t.textPrimary,
-                                letterSpacing: "-0.4px",
-                            }}
-                        >
+                        <h1 style={{
+                            margin: 0, fontSize: "22px", fontWeight: "700",
+                            color: t.textPrimary, letterSpacing: "-0.4px",
+                        }}>
                             Business Overview
                         </h1>
-                        <p
-                            style={{
-                                margin:    "4px 0 0",
-                                fontSize:  "13px",
-                                color:     t.textMuted,
-                                fontWeight: "400",
-                            }}
-                        >
+                        <p style={{ margin: "4px 0 0", fontSize: "13px", color: t.textMuted, fontWeight: "400" }}>
                             Pantau performa bisnis catering secara real-time
                         </p>
                     </div>
 
-                    <div
-                        style={{
-                            display:      "flex",
-                            alignItems:   "center",
-                            gap:          "8px",
-                            padding:      "8px 14px",
-                            borderRadius: t.radius.md,
-                            background:   "rgba(59,130,246,0.08)",
-                            border:       "1px solid rgba(59,130,246,0.15)",
-                            color:        "#60a5fa",
-                            fontWeight:   "600",
-                            fontSize:     "12px",
-                        }}
-                    >
+                    <div style={{
+                        display: "flex", alignItems: "center", gap: "8px",
+                        padding: "8px 14px", borderRadius: t.radius.md,
+                        background: "rgba(59,130,246,0.08)",
+                        border: "1px solid rgba(59,130,246,0.15)",
+                        color: "#60a5fa", fontWeight: "600", fontSize: "12px",
+                    }}>
                         <Clock size={14} />
                         Live Dashboard
                     </div>
                 </div>
 
-                {/* ── 4 Stat cards — 1 row ── */}
-                <div
-                    style={{
-                        display:               "grid",
-                        gridTemplateColumns:   "repeat(4, 1fr)",
-                        gap:                   "14px",
-                        marginBottom:          "20px",
-                    }}
-                >
+                {/* ── 4 Stat cards ── */}
+                <div style={{
+                    display: "grid", gridTemplateColumns: "repeat(4, 1fr)",
+                    gap: "14px", marginBottom: "20px",
+                }}>
                     {cards.map((card, i) => (
                         <StatCard key={i} {...card} />
                     ))}
                 </div>
 
                 {/* ── Analytics row ── */}
-                <div
-                    style={{
-                        display:             "grid",
-                        gridTemplateColumns: "2fr 1fr",
-                        gap:                 "14px",
-                        marginBottom:        "14px",
-                    }}
-                >
+                <div style={{
+                    display: "grid", gridTemplateColumns: "2fr 1fr",
+                    gap: "14px", marginBottom: "14px",
+                }}>
                     {/* Revenue chart placeholder */}
-                    <SectionCard
-                        title="Revenue Analytics"
-                        icon={<TrendingUp size={16} />}
-                    >
+                    <SectionCard title="Revenue Analytics" icon={<TrendingUp size={16} />}>
                         <EmptyPlaceholder
                             icon={<BarChart3 size={32} />}
                             label="Belum ada data revenue"
@@ -395,56 +284,29 @@ const fetchDashboard = async () => {
                     </SectionCard>
 
                     {/* Quick insights */}
-                    <SectionCard
-                        title="Quick Insights"
-                        icon={<ArrowUpRight size={16} />}
-                    >
+                    <SectionCard title="Quick Insights" icon={<ArrowUpRight size={16} />}>
                         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                             {INSIGHTS.map((item, i) => (
-                                <div
-                                    key={i}
-                                    style={{
-                                        display:      "flex",
-                                        alignItems:   "center",
-                                        gap:          "10px",
-                                        padding:      "12px 14px",
-                                        borderRadius: t.radius.md,
-                                        background:   "rgba(255,255,255,0.03)",
-                                        border:       "1px solid rgba(255,255,255,0.05)",
-                                        cursor:       "default",
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            width:          "28px",
-                                            height:         "28px",
-                                            borderRadius:   "8px",
-                                            background:     item.color + "18",
-                                            border:         `1px solid ${item.color}30`,
-                                            display:        "flex",
-                                            alignItems:     "center",
-                                            justifyContent: "center",
-                                            color:          item.color,
-                                            flexShrink:     0,
-                                        }}
-                                    >
+                                <div key={i} style={{
+                                    display: "flex", alignItems: "center", gap: "10px",
+                                    padding: "12px 14px", borderRadius: t.radius.md,
+                                    background: "rgba(255,255,255,0.03)",
+                                    border: "1px solid rgba(255,255,255,0.05)",
+                                    cursor: "default",
+                                }}>
+                                    <div style={{
+                                        width: "28px", height: "28px", borderRadius: "8px",
+                                        background: item.color + "18",
+                                        border: `1px solid ${item.color}30`,
+                                        display: "flex", alignItems: "center", justifyContent: "center",
+                                        color: item.color, flexShrink: 0,
+                                    }}>
                                         {item.icon}
                                     </div>
-
-                                    <span
-                                        style={{
-                                            fontSize:   "13px",
-                                            fontWeight: "500",
-                                            color:      t.textSub,
-                                        }}
-                                    >
+                                    <span style={{ fontSize: "13px", fontWeight: "500", color: t.textSub }}>
                                         {item.label}
                                     </span>
-
-                                    <ArrowUpRight
-                                        size={13}
-                                        style={{ marginLeft: "auto", color: t.textMuted, opacity: 0.5 }}
-                                    />
+                                    <ArrowUpRight size={13} style={{ marginLeft: "auto", color: t.textMuted, opacity: 0.5 }} />
                                 </div>
                             ))}
                         </div>
@@ -452,10 +314,7 @@ const fetchDashboard = async () => {
                 </div>
 
                 {/* ── Latest transactions ── */}
-                <SectionCard
-                    title="Latest Transactions"
-                    icon={<ShoppingCart size={16} />}
-                >
+                <SectionCard title="Latest Transactions" icon={<ShoppingCart size={16} />}>
                     <EmptyPlaceholder
                         icon={<ShoppingCart size={28} />}
                         label="Belum ada transaksi"

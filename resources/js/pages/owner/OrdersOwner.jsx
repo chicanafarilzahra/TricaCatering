@@ -10,7 +10,7 @@ import OwnerLayout from "../../layouts/OwnerLayout";
 import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 
-/* ── tokens (sama persis dengan MenusOwner) ─────────────────── */
+/* ── Design tokens ─────────────────────────────────────────── */
 const C = {
     bg:      "#080C14",
     surface: "#0F1623",
@@ -30,12 +30,9 @@ const bars = {
     red:    "linear-gradient(90deg,#ef4444,#f87171)",
 };
 
-<<<<<<< Updated upstream
-=======
-// ─── Status constants (SESUAI ENUM DATABASE) ─────────────────────────────────
+// ─── Status constants (SESUAI ENUM DATABASE) ──────────────────
 // pending -> confirmed -> preparing -> dispatched -> on_delivery -> delivered
 // (atau -> cancelled dari pending)
->>>>>>> Stashed changes
 const STATUS = {
     PENDING:     "pending",
     CONFIRMED:   "confirmed",
@@ -73,9 +70,12 @@ function statusLabel(s) {
 
 /* ── Toast ── */
 function Toast({ toasts, onDismiss }) {
-<<<<<<< Updated upstream
     return (
-        <div style={{ position: "fixed", top: 20, right: 20, zIndex: 9999, display: "flex", flexDirection: "column", gap: "8px", fontFamily: C.font }}>
+        <div style={{
+            position: "fixed", top: 20, right: 20, zIndex: 9999,
+            display: "flex", flexDirection: "column", gap: "8px",
+            fontFamily: C.font,
+        }}>
             {toasts.map((t) => (
                 <div key={t.id} style={{
                     background: C.card,
@@ -90,15 +90,27 @@ function Toast({ toasts, onDismiss }) {
                         {t.isError ? <AlertTriangle size={16} /> : <Bell size={16} />}
                     </div>
                     <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: "13px", fontWeight: 700, color: C.text, marginBottom: "3px" }}>{t.title}</div>
-                        <div style={{ fontSize: "12px", color: C.sub, lineHeight: 1.5 }}>{t.message}</div>
+                        <div style={{ fontSize: "13px", fontWeight: 700, color: C.text, marginBottom: "3px" }}>
+                            {t.title}
+                        </div>
+                        <div style={{ fontSize: "12px", color: C.sub, lineHeight: 1.5 }}>
+                            {t.message}
+                        </div>
                         {t.detail && (
-                            <div style={{ marginTop: "6px", padding: "6px 8px", borderRadius: "6px", background: "rgba(239,68,68,0.10)", border: "0.5px solid rgba(239,68,68,0.25)", fontSize: "11.5px", color: "#fca5a5" }}>
+                            <div style={{
+                                marginTop: "6px", padding: "6px 8px", borderRadius: "6px",
+                                background: "rgba(239,68,68,0.10)",
+                                border: "0.5px solid rgba(239,68,68,0.25)",
+                                fontSize: "11.5px", color: "#fca5a5",
+                            }}>
                                 {t.detail}
                             </div>
                         )}
                     </div>
-                    <button onClick={() => onDismiss(t.id)} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, padding: 0, marginTop: "2px", flexShrink: 0 }}>
+                    <button
+                        onClick={() => onDismiss(t.id)}
+                        style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, padding: 0, marginTop: "2px", flexShrink: 0 }}
+                    >
                         <X size={14} />
                     </button>
                 </div>
@@ -113,21 +125,60 @@ function PilihKurirModal({ order, kurirs, onClose, onConfirm, loading }) {
     const [selected, setSelected] = useState("");
     if (!order) return null;
     return (
-        <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: C.font }}>
-            <div onClick={(e) => e.stopPropagation()} style={{ background: C.surface, border: `0.5px solid ${C.borderMd}`, borderRadius: "14px", padding: "28px", minWidth: "360px", maxWidth: "420px", width: "100%", boxShadow: "0 24px 64px rgba(0,0,0,0.5)" }}>
+        <div
+            onClick={onClose}
+            style={{
+                position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)",
+                backdropFilter: "blur(4px)", zIndex: 1000,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontFamily: C.font,
+            }}
+        >
+            <div
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                    background: C.surface, border: `0.5px solid ${C.borderMd}`,
+                    borderRadius: "14px", padding: "28px",
+                    minWidth: "360px", maxWidth: "420px", width: "100%",
+                    boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
+                }}
+            >
                 <div style={{ marginBottom: "20px" }}>
-                    <div style={{ fontSize: "10px", color: "#60a5fa", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>Proses Pesanan #{order.id}</div>
-                    <div style={{ fontSize: "17px", fontWeight: 800, color: C.text, letterSpacing: "-.4px" }}>Pilih Kurir Pengantar</div>
+                    <div style={{ fontSize: "10px", color: "#60a5fa", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>
+                        Proses Pesanan #{order.id}
+                    </div>
+                    <div style={{ fontSize: "17px", fontWeight: 800, color: C.text, letterSpacing: "-.4px" }}>
+                        Pilih Kurir Pengantar
+                    </div>
                 </div>
+
                 {kurirs.length === 0 ? (
-                    <div style={{ padding: "14px", borderRadius: "8px", fontSize: "13px", color: "#fca5a5", background: "rgba(239,68,68,0.08)", border: "0.5px solid rgba(239,68,68,0.18)" }}>
+                    <div style={{
+                        padding: "14px", borderRadius: "8px", fontSize: "13px",
+                        color: "#fca5a5", background: "rgba(239,68,68,0.08)",
+                        border: "0.5px solid rgba(239,68,68,0.18)",
+                    }}>
                         Belum ada kurir aktif.
                     </div>
                 ) : (
                     <div style={{ display: "flex", flexDirection: "column", gap: "6px", maxHeight: "240px", overflowY: "auto" }}>
                         {kurirs.map((k) => (
-                            <label key={k.id} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", borderRadius: "8px", cursor: "pointer", background: selected === String(k.id) ? "rgba(59,130,246,0.12)" : "rgba(255,255,255,0.03)", border: `0.5px solid ${selected === String(k.id) ? "rgba(59,130,246,0.35)" : C.border}`, transition: "all 0.15s" }}>
-                                <input type="radio" name="kurir" value={k.id} checked={selected === String(k.id)} onChange={(e) => setSelected(e.target.value)} style={{ accentColor: "#3b82f6" }} />
+                            <label
+                                key={k.id}
+                                style={{
+                                    display: "flex", alignItems: "center", gap: "10px",
+                                    padding: "10px 12px", borderRadius: "8px", cursor: "pointer",
+                                    background: selected === String(k.id) ? "rgba(59,130,246,0.12)" : "rgba(255,255,255,0.03)",
+                                    border: `0.5px solid ${selected === String(k.id) ? "rgba(59,130,246,0.35)" : C.border}`,
+                                    transition: "all 0.15s",
+                                }}
+                            >
+                                <input
+                                    type="radio" name="kurir" value={k.id}
+                                    checked={selected === String(k.id)}
+                                    onChange={(e) => setSelected(e.target.value)}
+                                    style={{ accentColor: "#3b82f6" }}
+                                />
                                 <div>
                                     <div style={{ fontSize: "13px", fontWeight: 600, color: C.text }}>{k.name}</div>
                                     <div style={{ fontSize: "11px", color: C.muted, marginTop: "2px" }}>{k.phone || "—"}</div>
@@ -136,227 +187,83 @@ function PilihKurirModal({ order, kurirs, onClose, onConfirm, loading }) {
                         ))}
                     </div>
                 )}
+
                 <div style={{ display: "flex", gap: "8px", marginTop: "20px" }}>
-                    <button onClick={onClose} style={{ flex: 1, padding: "10px 0", background: "rgba(255,255,255,0.03)", border: `0.5px solid ${C.borderMd}`, borderRadius: "8px", color: C.sub, cursor: "pointer", fontSize: "13px", fontWeight: 600, fontFamily: C.font }}>Batal</button>
-                    <button onClick={() => selected && onConfirm(selected)} disabled={!selected || loading} style={{ flex: 1, padding: "10px 0", background: selected && !loading ? "linear-gradient(135deg,#3b82f6,#2563eb)" : "rgba(71,85,105,0.2)", border: "none", borderRadius: "8px", color: selected && !loading ? "white" : C.muted, cursor: selected && !loading ? "pointer" : "not-allowed", fontSize: "13px", fontWeight: 700, fontFamily: C.font, transition: "all 0.2s" }}>
+                    <button
+                        onClick={onClose}
+                        style={{
+                            flex: 1, padding: "10px 0",
+                            background: "rgba(255,255,255,0.03)", border: `0.5px solid ${C.borderMd}`,
+                            borderRadius: "8px", color: C.sub, cursor: "pointer",
+                            fontSize: "13px", fontWeight: 600, fontFamily: C.font,
+                        }}
+                    >
+                        Batal
+                    </button>
+                    <button
+                        onClick={() => selected && onConfirm(selected)}
+                        disabled={!selected || loading}
+                        style={{
+                            flex: 1, padding: "10px 0", border: "none", borderRadius: "8px",
+                            background: selected && !loading ? "linear-gradient(135deg,#3b82f6,#2563eb)" : "rgba(71,85,105,0.2)",
+                            color: selected && !loading ? "white" : C.muted,
+                            cursor: selected && !loading ? "pointer" : "not-allowed",
+                            fontSize: "13px", fontWeight: 700, fontFamily: C.font, transition: "all 0.2s",
+                        }}
+                    >
                         {loading ? "Memproses..." : "Konfirmasi"}
                     </button>
                 </div>
-=======
-  return (
-    <div style={{
-      position: "fixed", top: 24, right: 24, zIndex: 9999,
-      display: "flex", flexDirection: "column", gap: 10,
-      fontFamily: FONT,
-    }}>
-      {toasts.map((t) => (
-        <div
-          key={t.id}
-          style={{
-            background: "linear-gradient(135deg,rgba(15,23,42,0.98),rgba(30,41,59,0.98))",
-            border: `1px solid ${t.color || "rgba(99,102,241,0.4)"}`,
-            borderRadius: 14, padding: "14px 16px",
-            minWidth: 300, maxWidth: 360,
-            boxShadow: `0 8px 32px rgba(0,0,0,0.4),0 0 0 1px ${t.color || "rgba(99,102,241,0.2)"}`,
-            display: "flex", alignItems: "flex-start", gap: 12,
-            animation: "slideIn 0.3s ease",
-            position: "relative",
-          }}
-        >
-          <div style={{
-            color: t.color || "#818cf8", marginTop: 2, flexShrink: 0,
-            width: 30, height: 30, borderRadius: 9,
-            background: `${t.color || "#818cf8"}18`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
-            {t.icon || <Bell size={16} />}
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "white", marginBottom: 3 }}>{t.title}</div>
-            <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.5 }}>{t.message}</div>
-          </div>
-          <button
-            onClick={() => onDismiss(t.id)}
-            style={{ background: "none", border: "none", cursor: "pointer", color: "#475569", padding: 0, marginTop: 2 }}
-          >
-            <X size={14} />
-          </button>
-        </div>
-      ))}
-      <style>{`
-        @keyframes slideIn {
-          from { opacity:0; transform:translateX(40px); }
-          to   { opacity:1; transform:translateX(0); }
-        }
-      `}</style>
-    </div>
-  );
-}
-
-// ─── Tracking Modal ───────────────────────────────────────────────────────────
-function TrackingModal({ order, onClose }) {
-  if (!order) return null;
-  const s = order.status?.toLowerCase();
-
-  const steps = [
-    {
-      key: STATUS.CONFIRMED,
-      icon: <CheckCircle2 size={16} />,
-      label: "Pesanan Disetujui",
-      desc: "Owner telah menyetujui pesananmu.",
-    },
-    {
-      key: STATUS.PREPARING,
-      icon: <ChefHat size={16} />,
-      label: "Diproses di Dapur",
-      desc: order.kurir
-        ? `Pesananmu disiapkan. Kurir: ${order.kurir.name}.`
-        : "Pesananmu sedang disiapkan oleh tim dapur kami.",
-    },
-    {
-      key: STATUS.DISPATCHED,
-      icon: <Truck size={16} />,
-      label: "Pesanan Dikirim",
-      desc: order.estimasi_menit
-        ? `Estimasi tiba: ${order.estimasi_menit} menit dari lokasi catering.`
-        : "Pesananmu sedang dalam perjalanan.",
-    },
-    {
-      key: STATUS.ON_DELIVERY,
-      icon: <MapPin size={16} />,
-      label: "Dalam Perjalanan",
-      desc: "Kurir sedang menuju lokasimu. Lihat posisi live di bawah.",
-    },
-    {
-      key: STATUS.DELIVERED,
-      icon: <CheckCircle2 size={16} />,
-      label: "Pesanan Selesai",
-      desc: "Pesanan telah diterima. Selamat menikmati!",
-    },
-  ];
-
-  const flowOrder = [STATUS.CONFIRMED, STATUS.PREPARING, STATUS.DISPATCHED, STATUS.ON_DELIVERY, STATUS.DELIVERED];
-  const currentIdx = flowOrder.indexOf(s);
-
-  return (
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed", inset: 0,
-        background: "rgba(0,0,0,0.65)", backdropFilter: "blur(6px)",
-        zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center",
-        fontFamily: FONT,
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: "linear-gradient(145deg,rgba(15,23,42,0.98),rgba(30,41,59,0.98))",
-          border: "1px solid rgba(148,163,184,0.12)",
-          borderRadius: 24, padding: "32px 30px",
-          minWidth: 360, maxWidth: 440, width: "100%",
-          boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
-        }}
-      >
-        {/* Header */}
-        <div style={{ marginBottom: 28 }}>
-          <div style={{ fontSize: 10, color: "#60a5fa", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
-            Live Tracking Pesanan
-          </div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: "white" }}>
-            #{order.id} — {order.customer_name}
-          </div>
-          <div style={{ fontSize: 13, color: "#94a3b8", marginTop: 4 }}>
-            {order.menu?.name} × {order.quantity}
-          </div>
-        </div>
-
-        {/* Steps */}
-        <div style={{ position: "relative", paddingLeft: 32 }}>
-          <div style={{
-            position: "absolute", left: 9, top: 10, bottom: 10,
-            width: 2, background: "rgba(255,255,255,0.07)", borderRadius: 2,
-          }} />
-          {steps.map((step, i) => {
-            const done   = i <= currentIdx;
-            const active = i === currentIdx;
-            return (
-              <div key={step.key} style={{ position: "relative", marginBottom: i < steps.length - 1 ? 28 : 0 }}>
-                <div style={{
-                  position: "absolute", left: -32, top: 3,
-                  width: 20, height: 20, borderRadius: "50%",
-                  background: done ? (active ? "#3b82f6" : "#16a34a") : "rgba(255,255,255,0.05)",
-                  border: `2px solid ${done ? (active ? "#60a5fa" : "#4ade80") : "rgba(255,255,255,0.10)"}`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  color: done ? "white" : "#334155",
-                  boxShadow: active ? "0 0 14px rgba(59,130,246,0.55)" : "none",
-                  transition: "all 0.35s ease",
-                }} />
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: done ? "white" : "#334155", marginBottom: 4 }}>
-                    {step.label}
-                  </div>
-                  <div style={{ fontSize: 12, color: done ? "#94a3b8" : "#1e293b", lineHeight: 1.5 }}>
-                    {step.desc}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Cancelled notice */}
-        {s === STATUS.CANCELLED && (
-          <div style={{
-            marginTop: 24, padding: 14,
-            background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)",
-            borderRadius: 12, color: "#fca5a5", fontSize: 13,
-            display: "flex", alignItems: "center", gap: 8,
-          }}>
-            <XCircle size={16} />
-            Pesanan ini telah ditolak oleh owner.
-          </div>
-        )}
-
-        {/* Estimasi & posisi kurir live */}
-        {(s === STATUS.DISPATCHED || s === STATUS.ON_DELIVERY) && (
-          <div style={{
-            marginTop: 20, padding: "10px 14px",
-            background: "rgba(168,85,247,0.10)", border: "1px solid rgba(168,85,247,0.25)",
-            borderRadius: 12, color: "#d8b4fe", fontSize: 13, fontWeight: 600,
-            display: "flex", flexDirection: "column", gap: 6,
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <Truck size={15} />
-              Estimasi tiba: <strong>{order.estimasi_menit ?? "-"} menit</strong>
->>>>>>> Stashed changes
             </div>
         </div>
     );
 }
 
-<<<<<<< Updated upstream
 /* ── TrackingModal ── */
 function TrackingModal({ order, onClose }) {
     if (!order) return null;
     const s = order.status?.toLowerCase();
     const steps = [
-        { key: STATUS.CONFIRMED,   icon: <CheckCircle2 size={14} />, label: "Pesanan Disetujui",  desc: "Owner telah menyetujui pesanan." },
-        { key: STATUS.PREPARING,   icon: <ChefHat size={14} />,      label: "Diproses di Dapur",  desc: order.kurir ? `Disiapkan. Kurir: ${order.kurir.name}.` : "Sedang disiapkan." },
-        { key: STATUS.DISPATCHED,  icon: <Truck size={14} />,        label: "Pesanan Dikirim",    desc: order.estimasi_menit ? `Estimasi tiba: ${order.estimasi_menit} menit.` : "Dalam perjalanan." },
-        { key: STATUS.ON_DELIVERY, icon: <MapPin size={14} />,       label: "Dalam Perjalanan",   desc: "Kurir sedang menuju lokasi." },
-        { key: STATUS.DELIVERED,   icon: <CheckCircle2 size={14} />, label: "Pesanan Selesai",    desc: "Pesanan telah diterima." },
+        { key: STATUS.CONFIRMED,   icon: <CheckCircle2 size={14} />, label: "Pesanan Disetujui", desc: "Owner telah menyetujui pesanan." },
+        { key: STATUS.PREPARING,   icon: <ChefHat size={14} />,      label: "Diproses di Dapur", desc: order.kurir ? `Disiapkan. Kurir: ${order.kurir.name}.` : "Sedang disiapkan." },
+        { key: STATUS.DISPATCHED,  icon: <Truck size={14} />,        label: "Pesanan Dikirim",   desc: order.estimasi_menit ? `Estimasi tiba: ${order.estimasi_menit} menit.` : "Dalam perjalanan." },
+        { key: STATUS.ON_DELIVERY, icon: <MapPin size={14} />,       label: "Dalam Perjalanan",  desc: "Kurir sedang menuju lokasi." },
+        { key: STATUS.DELIVERED,   icon: <CheckCircle2 size={14} />, label: "Pesanan Selesai",   desc: "Pesanan telah diterima." },
     ];
     const flowOrder  = [STATUS.CONFIRMED, STATUS.PREPARING, STATUS.DISPATCHED, STATUS.ON_DELIVERY, STATUS.DELIVERED];
     const currentIdx = flowOrder.indexOf(s);
+
     return (
-        <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: C.font }}>
-            <div onClick={(e) => e.stopPropagation()} style={{ background: C.surface, border: `0.5px solid ${C.borderMd}`, borderRadius: "14px", padding: "28px", minWidth: "360px", maxWidth: "440px", width: "100%", boxShadow: "0 24px 64px rgba(0,0,0,0.5)" }}>
+        <div
+            onClick={onClose}
+            style={{
+                position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)",
+                backdropFilter: "blur(4px)", zIndex: 1000,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontFamily: C.font,
+            }}
+        >
+            <div
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                    background: C.surface, border: `0.5px solid ${C.borderMd}`,
+                    borderRadius: "14px", padding: "28px",
+                    minWidth: "360px", maxWidth: "440px", width: "100%",
+                    boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
+                }}
+            >
                 <div style={{ marginBottom: "24px" }}>
-                    <div style={{ fontSize: "10px", color: "#60a5fa", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>Live Tracking</div>
-                    <div style={{ fontSize: "17px", fontWeight: 800, color: C.text, letterSpacing: "-.4px" }}>#{order.id} — {order.customer_name}</div>
-                    <div style={{ fontSize: "12px", color: C.muted, marginTop: "3px" }}>{order.menu?.name} × {order.quantity}</div>
+                    <div style={{ fontSize: "10px", color: "#60a5fa", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>
+                        Live Tracking
+                    </div>
+                    <div style={{ fontSize: "17px", fontWeight: 800, color: C.text, letterSpacing: "-.4px" }}>
+                        #{order.id} — {order.customer_name}
+                    </div>
+                    <div style={{ fontSize: "12px", color: C.muted, marginTop: "3px" }}>
+                        {order.menu?.name} × {order.quantity}
+                    </div>
                 </div>
+
                 <div style={{ position: "relative", paddingLeft: "28px" }}>
                     <div style={{ position: "absolute", left: "7px", top: "10px", bottom: "10px", width: "1px", background: C.border }} />
                     {steps.map((step, i) => {
@@ -364,25 +271,65 @@ function TrackingModal({ order, onClose }) {
                         const active = i === currentIdx;
                         return (
                             <div key={step.key} style={{ position: "relative", marginBottom: i < steps.length - 1 ? "22px" : 0 }}>
-                                <div style={{ position: "absolute", left: "-28px", top: "2px", width: "16px", height: "16px", borderRadius: "50%", background: done ? (active ? "#3b82f6" : "#16a34a") : "rgba(255,255,255,0.04)", border: `1.5px solid ${done ? (active ? "#60a5fa" : "#4ade80") : "rgba(255,255,255,0.08)"}`, display: "flex", alignItems: "center", justifyContent: "center", color: done ? "white" : "#1e293b", boxShadow: active ? "0 0 12px rgba(59,130,246,0.5)" : "none" }}>
+                                <div style={{
+                                    position: "absolute", left: "-28px", top: "2px",
+                                    width: "16px", height: "16px", borderRadius: "50%",
+                                    background: done ? (active ? "#3b82f6" : "#16a34a") : "rgba(255,255,255,0.04)",
+                                    border: `1.5px solid ${done ? (active ? "#60a5fa" : "#4ade80") : "rgba(255,255,255,0.08)"}`,
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    color: done ? "white" : "#1e293b",
+                                    boxShadow: active ? "0 0 12px rgba(59,130,246,0.5)" : "none",
+                                }}>
                                     {step.icon}
                                 </div>
-                                <div style={{ fontSize: "13px", fontWeight: 700, color: done ? C.text : "#1e293b", marginBottom: "3px" }}>{step.label}</div>
-                                <div style={{ fontSize: "12px", color: done ? C.sub : "#1e293b", lineHeight: 1.5 }}>{step.desc}</div>
+                                <div style={{ fontSize: "13px", fontWeight: 700, color: done ? C.text : "#1e293b", marginBottom: "3px" }}>
+                                    {step.label}
+                                </div>
+                                <div style={{ fontSize: "12px", color: done ? C.sub : "#1e293b", lineHeight: 1.5 }}>
+                                    {step.desc}
+                                </div>
                             </div>
                         );
                     })}
                 </div>
+
                 {s === STATUS.CANCELLED && (
-                    <div style={{ marginTop: "20px", padding: "12px 14px", background: "rgba(239,68,68,0.08)", border: "0.5px solid rgba(239,68,68,0.18)", borderRadius: "8px", color: "#fca5a5", fontSize: "13px" }}>Pesanan ini telah ditolak.</div>
-                )}
-                {(s === STATUS.DISPATCHED || s === STATUS.ON_DELIVERY) && (
-                    <div style={{ marginTop: "16px", padding: "12px 14px", background: "rgba(168,85,247,0.08)", border: "0.5px solid rgba(168,85,247,0.2)", borderRadius: "8px", color: "#d8b4fe", fontSize: "13px", fontWeight: 600, display: "flex", flexDirection: "column", gap: "4px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}><Truck size={14} /> Estimasi: {order.estimasi_menit ?? "—"} menit</div>
-                        {order.kurir && <div style={{ fontSize: "12px", color: "#c4b5fd" }}>Kurir: {order.kurir.name} {order.kurir.phone ? `· ${order.kurir.phone}` : ""}</div>}
+                    <div style={{
+                        marginTop: "20px", padding: "12px 14px",
+                        background: "rgba(239,68,68,0.08)", border: "0.5px solid rgba(239,68,68,0.18)",
+                        borderRadius: "8px", color: "#fca5a5", fontSize: "13px",
+                    }}>
+                        Pesanan ini telah ditolak.
                     </div>
                 )}
-                <button onClick={onClose} style={{ marginTop: "22px", width: "100%", padding: "10px 0", background: "rgba(255,255,255,0.03)", border: `0.5px solid ${C.borderMd}`, borderRadius: "8px", color: C.sub, cursor: "pointer", fontSize: "13px", fontWeight: 600, fontFamily: C.font }}>
+
+                {(s === STATUS.DISPATCHED || s === STATUS.ON_DELIVERY) && (
+                    <div style={{
+                        marginTop: "16px", padding: "12px 14px",
+                        background: "rgba(168,85,247,0.08)", border: "0.5px solid rgba(168,85,247,0.2)",
+                        borderRadius: "8px", color: "#d8b4fe", fontSize: "13px", fontWeight: 600,
+                        display: "flex", flexDirection: "column", gap: "4px",
+                    }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <Truck size={14} /> Estimasi: {order.estimasi_menit ?? "—"} menit
+                        </div>
+                        {order.kurir && (
+                            <div style={{ fontSize: "12px", color: "#c4b5fd" }}>
+                                Kurir: {order.kurir.name}{order.kurir.phone ? ` · ${order.kurir.phone}` : ""}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                <button
+                    onClick={onClose}
+                    style={{
+                        marginTop: "22px", width: "100%", padding: "10px 0",
+                        background: "rgba(255,255,255,0.03)", border: `0.5px solid ${C.borderMd}`,
+                        borderRadius: "8px", color: C.sub, cursor: "pointer",
+                        fontSize: "13px", fontWeight: 600, fontFamily: C.font,
+                    }}
+                >
                     Tutup
                 </button>
             </div>
@@ -390,23 +337,28 @@ function TrackingModal({ order, onClose }) {
     );
 }
 
-/* ── StatCard (sama persis pola MenusOwner) ─────────────────── */
+/* ── StatCard ── */
 function StatCard({ label, value, icon: Icon, bar }) {
     return (
         <div style={{
-            background: C.surface,
-            border: `0.5px solid ${C.border}`,
-            borderRadius: "12px",
-            padding: "18px 20px",
-            position: "relative",
-            overflow: "hidden",
-            fontFamily: C.font,
+            background: C.surface, border: `0.5px solid ${C.border}`,
+            borderRadius: "12px", padding: "18px 20px",
+            position: "relative", overflow: "hidden", fontFamily: C.font,
         }}>
             <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "2px", background: bar }} />
-            <div style={{ fontSize: "11px", fontWeight: 600, color: C.muted, textTransform: "uppercase", letterSpacing: ".7px", marginBottom: "10px" }}>{label}</div>
+            <div style={{ fontSize: "11px", fontWeight: 600, color: C.muted, textTransform: "uppercase", letterSpacing: ".7px", marginBottom: "10px" }}>
+                {label}
+            </div>
             <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
-                <div style={{ fontSize: "30px", fontWeight: 800, color: C.text, letterSpacing: "-1.2px", lineHeight: 1 }}>{value ?? "—"}</div>
-                <div style={{ width: "38px", height: "38px", borderRadius: "9px", background: C.card, border: `0.5px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: C.muted, flexShrink: 0 }}>
+                <div style={{ fontSize: "30px", fontWeight: 800, color: C.text, letterSpacing: "-1.2px", lineHeight: 1 }}>
+                    {value ?? "—"}
+                </div>
+                <div style={{
+                    width: "38px", height: "38px", borderRadius: "9px",
+                    background: C.card, border: `0.5px solid ${C.border}`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: C.muted, flexShrink: 0,
+                }}>
                     <Icon size={18} strokeWidth={1.7} />
                 </div>
             </div>
@@ -415,7 +367,7 @@ function StatCard({ label, value, icon: Icon, bar }) {
 }
 
 /* ── ActionBtn ── */
-function ActionBtn({ label, onClick, color, disabled, loading }) {
+function ActionBtn({ label, icon, onClick, color, disabled, loading }) {
     const active = !disabled && !loading;
     const styles = {
         green:  { bg: "rgba(16,185,129,.12)",  border: "rgba(16,185,129,.30)",  text: "#34d399" },
@@ -434,77 +386,33 @@ function ActionBtn({ label, onClick, color, disabled, loading }) {
                 background: active ? s.bg : "rgba(255,255,255,0.02)",
                 color: active ? s.text : C.muted,
                 cursor: active ? "pointer" : "not-allowed",
-                fontWeight: 600, fontSize: "11.5px",
-                fontFamily: C.font,
-                whiteSpace: "nowrap",
-                opacity: loading ? 0.6 : 1,
+                fontWeight: 600, fontSize: "11.5px", fontFamily: C.font,
+                whiteSpace: "nowrap", opacity: loading ? 0.6 : 1,
                 transition: "all 0.15s",
-                display: "flex", alignItems: "center",
+                display: "inline-flex", alignItems: "center", gap: "5px",
             }}
         >
-            {loading ? "···" : label}
+            {loading ? "···" : <>{icon}{label}</>}
         </button>
     );
-=======
-// ─── Action Button ────────────────────────────────────────────────────────────
-function ActionBtn({ label, icon, onClick, color, disabled, loading }) {
-  const active = !disabled && !loading;
-
-  const bg =
-    !active
-      ? "rgba(71,85,105,0.22)"
-      : color === "green"  ? "linear-gradient(135deg,#22c55e,#16a34a)"
-      : color === "red"    ? "linear-gradient(135deg,#ef4444,#dc2626)"
-      : color === "blue"   ? "linear-gradient(135deg,#3b82f6,#2563eb)"
-      : color === "purple" ? "linear-gradient(135deg,#a855f7,#7c3aed)"
-      : "rgba(71,85,105,0.22)";
-
-  const shadow = !active ? "none"
-    : color === "green"  ? "0 4px 14px rgba(34,197,94,0.35)"
-    : color === "red"    ? "0 4px 14px rgba(239,68,68,0.35)"
-    : color === "blue"   ? "0 4px 14px rgba(59,130,246,0.35)"
-    : color === "purple" ? "0 4px 14px rgba(168,85,247,0.35)"
-    : "none";
-
-  return (
-    <button
-      onClick={onClick}
-      disabled={!active}
-      title={disabled ? "Sudah selesai" : undefined}
-      style={{
-        background: bg, border: "none",
-        color: active ? "#fff" : "#475569",
-        padding: "7px 13px", borderRadius: 9,
-        cursor: active ? "pointer" : "not-allowed",
-        fontWeight: 700, fontSize: 12, boxShadow: shadow,
-        transition: "all 0.25s ease", whiteSpace: "nowrap",
-        opacity: loading ? 0.65 : 1,
-        fontFamily: FONT,
-        display: "inline-flex", alignItems: "center", gap: 6,
-      }}
-    >
-      {loading ? (
-        "···"
-      ) : (
-        <>
-          {icon}
-          {label}
-        </>
-      )}
-    </button>
-  );
->>>>>>> Stashed changes
 }
 
 /* ── EmptyState ── */
 function EmptyState() {
     return (
         <div style={{ padding: "48px 20px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", fontFamily: C.font }}>
-            <div style={{ width: "60px", height: "60px", borderRadius: "16px", background: C.card, border: `0.5px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: C.muted, marginBottom: "16px" }}>
+            <div style={{
+                width: "60px", height: "60px", borderRadius: "16px",
+                background: C.card, border: `0.5px solid ${C.border}`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: C.muted, marginBottom: "16px",
+            }}>
                 <ShoppingCart size={26} strokeWidth={1.4} />
             </div>
             <div style={{ fontSize: "16px", fontWeight: 700, color: C.text, marginBottom: "6px" }}>Belum Ada Pesanan</div>
-            <p style={{ fontSize: "13px", color: C.muted, lineHeight: "1.7", maxWidth: "360px", margin: 0 }}>Pesanan masuk akan tampil di sini secara otomatis.</p>
+            <p style={{ fontSize: "13px", color: C.muted, lineHeight: "1.7", maxWidth: "360px", margin: 0 }}>
+                Pesanan masuk akan tampil di sini secara otomatis.
+            </p>
         </div>
     );
 }
@@ -513,7 +421,6 @@ function EmptyState() {
    MAIN
 ════════════════════════════════════════ */
 export default function OrdersOwner() {
-<<<<<<< Updated upstream
     const [orders,             setOrders]             = useState([]);
     const [kurirs,             setKurirs]             = useState([]);
     const [loadingIds,         setLoadingIds]         = useState({});
@@ -548,39 +455,11 @@ export default function OrdersOwner() {
         setToasts((prev) => [...prev, { id, title, message, color, detail, isError }]);
         setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), isError ? 8000 : 5000);
     }, []);
-=======
-  const [orders,        setOrders]        = useState([]);
-  const [loadingIds,    setLoadingIds]    = useState({});
-  const [toasts,        setToasts]        = useState([]);
-  const [trackingOrder, setTrackingOrder] = useState(null);
-
-  // ── fetch orders ──
-  const getOrders = useCallback(async () => {
-    try {
-      const res = await axios.get("/owner/orders");
-      setOrders(res.data.data ?? []);
-    } catch (err) {
-      console.error("Fetch orders error:", err);
-    }
-  }, []);
-
-  useEffect(() => {
-    getOrders();
-    const interval = setInterval(getOrders, 15_000);
-    return () => clearInterval(interval);
-  }, [getOrders]);
-
-  // ── toast helpers ──
-  const pushToast = useCallback((title, message, color, icon) => {
-    const id = Date.now();
-    setToasts((prev) => [...prev, { id, title, message, color, icon }]);
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 5000);
-  }, []);
->>>>>>> Stashed changes
 
     const dismissToast = useCallback((id) => setToasts((prev) => prev.filter((t) => t.id !== id)), []);
     const setLoading   = (id, val) => setLoadingIds((prev) => ({ ...prev, [id]: val }));
 
+    // ── APPROVE — pending → confirmed ──
     const approveOrder = async (id) => {
         setLoading(id, "approve");
         try {
@@ -599,7 +478,7 @@ export default function OrdersOwner() {
         }
     };
 
-<<<<<<< Updated upstream
+    // ── REJECT — pending → cancelled ──
     const rejectOrder = async (id) => {
         setLoading(id, "reject");
         try {
@@ -613,6 +492,7 @@ export default function OrdersOwner() {
         }
     };
 
+    // ── PROCESS — confirmed → preparing (pilih kurir dulu) ──
     const openProcessModal = (order) => setProcessOrderTarget(order);
 
     const confirmProcess = async (kurirId) => {
@@ -631,6 +511,7 @@ export default function OrdersOwner() {
         }
     };
 
+    // ── DISPATCH — preparing → dispatched ──
     const sendOrder = async (order) => {
         setLoading(order.id, "send");
         try {
@@ -645,106 +526,38 @@ export default function OrdersOwner() {
         }
     };
 
+    // ── Metrics ──
     const totalOrders    = orders.length;
     const pendingOrders  = orders.filter((o) => o.status?.toLowerCase() === STATUS.PENDING).length;
-    const activeOrders   = orders.filter((o) => [STATUS.CONFIRMED, STATUS.PREPARING, STATUS.DISPATCHED, STATUS.ON_DELIVERY, STATUS.DELIVERED].includes(o.status?.toLowerCase())).length;
+    const activeOrders   = orders.filter((o) =>
+        [STATUS.CONFIRMED, STATUS.PREPARING, STATUS.DISPATCHED, STATUS.ON_DELIVERY, STATUS.DELIVERED]
+            .includes(o.status?.toLowerCase())
+    ).length;
     const rejectedOrders = orders.filter((o) => o.status?.toLowerCase() === STATUS.CANCELLED).length;
 
     return (
         <OwnerLayout>
-            <style>{`* { font-family: ${C.font}; } .order-row:hover td { background: rgba(255,255,255,0.015); } .order-row td { transition: background 0.15s; }`}</style>
-=======
-  // ── APPROVE — pending → confirmed ──
-  const approveOrder = async (id) => {
-    setLoading(id, "approve");
-    try {
-      await axios.put(`/owner/orders/${id}/approve`);
-      pushToast(
-        "Pesanan Disetujui",
-        `Order #${id} disetujui. Invoice dibuat & saldo menu masuk ke wallet Anda.`,
-        "#22c55e",
-        <CheckCircle2 size={16} />,
-      );
-      getOrders();
-    } catch (err) {
-      pushToast("Gagal", err?.response?.data?.message || "Tidak bisa menyetujui pesanan.", "#ef4444", <XCircle size={16} />);
-    } finally {
-      setLoading(id, null);
-    }
-  };
-
-  // ── REJECT — pending → cancelled ──
-  const rejectOrder = async (id) => {
-    setLoading(id, "reject");
-    try {
-      await axios.put(`/owner/orders/${id}/reject`);
-      pushToast("Pesanan Ditolak", `Order #${id} telah ditolak.`, "#ef4444", <XCircle size={16} />);
-      getOrders();
-    } catch (err) {
-      pushToast("Gagal", err?.response?.data?.message || "Tidak bisa menolak pesanan.", "#ef4444", <XCircle size={16} />);
-    } finally {
-      setLoading(id, null);
-    }
-  };
-
-  // ── PROCESS — confirmed → preparing ──
-  const processOrder = async (id) => {
-    setLoading(id, "process");
-    try {
-      await axios.put(`/owner/orders/${id}/process`);
-      pushToast(
-        "Sedang Diproses",
-        `Order #${id} kini diproses di dapur.`,
-        "#3b82f6",
-        <ChefHat size={16} />,
-      );
-      getOrders();
-    } catch (err) {
-      pushToast("Gagal", err?.response?.data?.message || "Tidak bisa memproses pesanan.", "#ef4444", <XCircle size={16} />);
-    } finally {
-      setLoading(id, null);
-    }
-  };
-
-  // ── DISPATCH — preparing → dispatched ──
-  const dispatchOrder = async (order) => {
-    setLoading(order.id, "dispatch");
-    try {
-      const res = await axios.put(`/owner/orders/${order.id}/dispatch`);
-      const kurirName = res?.data?.data?.kurir;
-      pushToast(
-        "Pesanan Dikirim",
-        kurirName
-          ? `Order #${order.id} dikirim ke kurir ${kurirName}.`
-          : `Order #${order.id} sudah dalam perjalanan!`,
-        "#a855f7",
-        <Truck size={16} />,
-      );
-      getOrders();
-    } catch (err) {
-      pushToast("Gagal", err?.response?.data?.message || "Tidak bisa mengirim pesanan.", "#ef4444", <XCircle size={16} />);
-    } finally {
-      setLoading(order.id, null);
-    }
-  };
-
-  // ── Metrics ──
-  const totalOrders    = orders.length;
-  const pendingOrders  = orders.filter((o) => o.status?.toLowerCase() === STATUS.PENDING).length;
-  const activeOrders   = orders.filter((o) =>
-    [STATUS.CONFIRMED, STATUS.PREPARING, STATUS.DISPATCHED, STATUS.ON_DELIVERY, STATUS.DELIVERED]
-      .includes(o.status?.toLowerCase())
-  ).length;
-  const rejectedOrders = orders.filter((o) => o.status?.toLowerCase() === STATUS.CANCELLED).length;
->>>>>>> Stashed changes
+            <style>{`
+                * { font-family: ${C.font}; }
+                .order-row:hover td { background: rgba(255,255,255,0.015); }
+                .order-row td { transition: background 0.15s; }
+            `}</style>
 
             <Toast toasts={toasts} onDismiss={dismissToast} />
             {trackingOrder      && <TrackingModal order={trackingOrder} onClose={() => setTrackingOrder(null)} />}
-            {processOrderTarget && <PilihKurirModal order={processOrderTarget} kurirs={kurirs} loading={processLoading} onClose={() => setProcessOrderTarget(null)} onConfirm={confirmProcess} />}
+            {processOrderTarget && (
+                <PilihKurirModal
+                    order={processOrderTarget}
+                    kurirs={kurirs}
+                    loading={processLoading}
+                    onClose={() => setProcessOrderTarget(null)}
+                    onConfirm={confirmProcess}
+                />
+            )}
 
             <div style={{ fontFamily: C.font }}>
 
-                {/* ── header ── */}
+                {/* ── Header ── */}
                 <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", marginBottom: "28px", flexWrap: "wrap" }}>
                     <div>
                         <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "11px", fontWeight: 600, color: C.muted, textTransform: "uppercase", letterSpacing: ".8px", marginBottom: "14px" }}>
@@ -753,23 +566,24 @@ export default function OrdersOwner() {
                             <span style={{ color: "#1E293B" }}>›</span>
                             <span>Pesanan</span>
                         </div>
-                        <h1 style={{ fontSize: "28px", fontWeight: 800, color: C.text, letterSpacing: "-.8px", lineHeight: 1.1, margin: 0 }}>Pesanan masuk</h1>
+                        <h1 style={{ fontSize: "28px", fontWeight: 800, color: C.text, letterSpacing: "-.8px", lineHeight: 1.1, margin: 0 }}>
+                            Pesanan masuk
+                        </h1>
                         <p style={{ marginTop: "8px", fontSize: "13.5px", color: C.muted, lineHeight: "1.7" }}>
                             Kelola dan pantau semua pesanan. Saat disetujui, stok bahan akan otomatis berkurang.
                         </p>
                     </div>
                 </div>
 
-<<<<<<< Updated upstream
-                {/* ── stat cards (1 baris, 4 kolom) ── */}
+                {/* ── Stat Cards ── */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px", marginBottom: "22px" }}>
-                    <StatCard label="Total Pesanan"    value={totalOrders    || null} icon={ShoppingCart}  bar={bars.blue}  />
-                    <StatCard label="Menunggu"          value={pendingOrders  || null} icon={Clock}          bar={bars.amber} />
-                    <StatCard label="Aktif / Selesai"   value={activeOrders   || null} icon={CheckCircle2}   bar={bars.green} />
-                    <StatCard label="Ditolak"           value={rejectedOrders || null} icon={XCircle}        bar={bars.red}   />
+                    <StatCard label="Total Pesanan"  value={totalOrders    || null} icon={ShoppingCart} bar={bars.blue}  />
+                    <StatCard label="Menunggu"        value={pendingOrders  || null} icon={Clock}         bar={bars.amber} />
+                    <StatCard label="Aktif / Selesai" value={activeOrders   || null} icon={CheckCircle2}  bar={bars.green} />
+                    <StatCard label="Ditolak"         value={rejectedOrders || null} icon={XCircle}       bar={bars.red}   />
                 </div>
 
-                {/* ── table ── */}
+                {/* ── Table ── */}
                 <div style={{ background: C.surface, border: `0.5px solid ${C.border}`, borderRadius: "14px", overflow: "hidden" }}>
                     <div style={{ padding: "18px 22px", borderBottom: `0.5px solid ${C.border}` }}>
                         <div style={{ fontSize: "15px", fontWeight: 700, color: C.text }}>Daftar pesanan</div>
@@ -785,7 +599,7 @@ export default function OrdersOwner() {
                             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", minWidth: "1020px" }}>
                                 <thead>
                                     <tr>
-                                        {["ID", "Pelanggan", "Telepon", "Alamat", "Menu", "Qty", "Total", "Kurir", "Status", "Tracking", "Aksi"].map((h, i) => (
+                                        {["ID", "Pelanggan", "Telepon", "Alamat", "Menu", "Qty", "Total", "Kurir", "Status", "Tracking", "Aksi"].map((h) => (
                                             <th key={h} style={{
                                                 padding: "11px 16px",
                                                 textAlign: ["Qty", "Total", "Status", "Tracking", "Aksi"].includes(h) ? "center" : "left",
@@ -793,7 +607,9 @@ export default function OrdersOwner() {
                                                 textTransform: "uppercase", letterSpacing: ".6px",
                                                 borderBottom: `0.5px solid ${C.border}`,
                                                 whiteSpace: "nowrap",
-                                            }}>{h}</th>
+                                            }}>
+                                                {h}
+                                            </th>
                                         ))}
                                     </tr>
                                 </thead>
@@ -808,39 +624,20 @@ export default function OrdersOwner() {
                                         const isDelivered  = s === STATUS.DELIVERED;
                                         const isCancelled  = s === STATUS.CANCELLED;
                                         const busy         = loadingIds[order.id];
-=======
-      {/* ── Header ── */}
-      <div style={{ marginBottom: 30 }}>
-        <h1 style={{ margin: 0, fontSize: 32, fontWeight: 800, color: "white", letterSpacing: -0.5 }}>
-          Pesanan Masuk
-        </h1>
-        <p style={{ margin: "6px 0 0", color: "#64748b", fontSize: 14 }}>
-          Kelola dan pantau semua pesanan pelanggan secara real-time.
-        </p>
-      </div>
+                                        const color        = statusColor(s);
 
-      {/* ── Metric Cards ── */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit,minmax(210px,1fr))",
-        gap: 16, marginBottom: 24,
-      }}>
-        <MetricCard title="Total Pesanan"   value={totalOrders}    icon={<ShoppingCart size={22} />} color="#60a5fa" />
-        <MetricCard title="Menunggu"        value={pendingOrders}  icon={<Clock size={22} />}        color="#f59e0b" />
-        <MetricCard title="Aktif / Selesai" value={activeOrders}   icon={<CheckCircle2 size={22} />} color="#22c55e" />
-        <MetricCard title="Ditolak"         value={rejectedOrders} icon={<XCircle size={22} />}      color="#ef4444" />
-      </div>
->>>>>>> Stashed changes
-
+                                        // Logika tombol: 1 aksi aktif per status
+                                        // pending    → Setuju + Tolak
+                                        // confirmed  → Proses (pilih kurir)
+                                        // preparing  → Kirim
+                                        // dispatched / on_delivery / delivered → info saja
+                                        // cancelled  → —
                                         const showApprove = isPending;
-                                        const showReject  = isPending || isConfirmed;
-                                        const showProcess = isConfirmed || isPreparing || isDispatched || isOnDelivery || isDelivered;
-                                        const processGrey = isPreparing || isDispatched || isOnDelivery || isDelivered;
-                                        const showSend    = isPreparing || isDispatched || isOnDelivery || isDelivered;
-                                        const sendGrey    = isDispatched || isOnDelivery || isDelivered;
-                                        const color       = statusColor(s);
+                                        const showReject  = isPending;
+                                        const showProcess = isConfirmed;
+                                        const showSend    = isPreparing;
+                                        const showInfo    = isDispatched || isOnDelivery || isDelivered;
 
-<<<<<<< Updated upstream
                                         return (
                                             <tr key={order.id} className="order-row" style={{ borderBottom: `0.5px solid rgba(255,255,255,.04)` }}>
                                                 <td style={{ padding: "12px 16px", fontSize: "12px", color: C.muted }}>#{order.id}</td>
@@ -854,22 +651,11 @@ export default function OrdersOwner() {
                                                 <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 700, color: "#34d399", whiteSpace: "nowrap" }}>
                                                     Rp {Number(order.total_price || 0).toLocaleString("id-ID")}
                                                 </td>
-                                                <td style={{ padding: "12px 16px", fontSize: "12px", color: order.kurir ? C.sub : C.muted }}>{order.kurir ? order.kurir.name : "—"}</td>
-=======
-                // ─── Logika tombol (1 tombol aktif per status) ───────────
-                // pending    → Setuju + Tolak
-                // confirmed  → Proses
-                // preparing  → Kirim
-                // dispatched / on_delivery / delivered → teks info saja
-                // cancelled  → —
-                const showApprove  = isPending;
-                const showReject   = isPending;
-                const showProcess  = isConfirmed;
-                const showSend     = isPreparing;
-                const showInfo     = isDispatched || isOnDelivery || isDelivered;
->>>>>>> Stashed changes
+                                                <td style={{ padding: "12px 16px", fontSize: "12px", color: order.kurir ? C.sub : C.muted }}>
+                                                    {order.kurir ? order.kurir.name : "—"}
+                                                </td>
 
-                                                {/* status badge */}
+                                                {/* Status badge */}
                                                 <td style={{ padding: "12px 16px", textAlign: "center" }}>
                                                     <span style={{
                                                         display: "inline-flex", alignItems: "center",
@@ -884,7 +670,7 @@ export default function OrdersOwner() {
                                                     </span>
                                                 </td>
 
-                                                {/* tracking */}
+                                                {/* Tracking */}
                                                 <td style={{ padding: "12px 16px", textAlign: "center" }}>
                                                     {!isPending && !isCancelled ? (
                                                         <button
@@ -894,8 +680,8 @@ export default function OrdersOwner() {
                                                                 height: "28px", padding: "0 11px", borderRadius: "7px",
                                                                 border: "0.5px solid rgba(99,102,241,.30)",
                                                                 background: "rgba(99,102,241,.12)",
-                                                                color: "#a5b4fc",
-                                                                cursor: "pointer", fontSize: "11.5px", fontWeight: 600, fontFamily: C.font,
+                                                                color: "#a5b4fc", cursor: "pointer",
+                                                                fontSize: "11.5px", fontWeight: 600, fontFamily: C.font,
                                                                 transition: "background 0.15s",
                                                             }}
                                                             onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(99,102,241,0.20)")}
@@ -903,17 +689,63 @@ export default function OrdersOwner() {
                                                         >
                                                             Lihat <ArrowUpRight size={11} />
                                                         </button>
-                                                    ) : <span style={{ color: C.muted, fontSize: "12px" }}>—</span>}
+                                                    ) : (
+                                                        <span style={{ color: C.muted, fontSize: "12px" }}>—</span>
+                                                    )}
                                                 </td>
 
-                                                {/* aksi */}
+                                                {/* Aksi */}
                                                 <td style={{ padding: "12px 16px", textAlign: "center" }}>
                                                     <div style={{ display: "flex", gap: "6px", justifyContent: "center", flexWrap: "wrap" }}>
-                                                        {showApprove && <ActionBtn label="Setuju"  color="green"  onClick={() => approveOrder(order.id)}   loading={busy === "approve"} />}
-                                                        {showReject  && <ActionBtn label="Tolak"   color="red"    onClick={() => rejectOrder(order.id)}    loading={busy === "reject"} />}
-                                                        {showProcess && <ActionBtn label="Proses"  color="blue"   onClick={() => openProcessModal(order)}   disabled={processGrey} loading={busy === "process"} />}
-                                                        {showSend    && <ActionBtn label="Kirim"   color="purple" onClick={() => sendOrder(order)}          disabled={sendGrey} loading={busy === "send"} />}
-                                                        {isCancelled && <span style={{ color: C.muted, fontSize: "12px" }}>—</span>}
+                                                        {showApprove && (
+                                                            <ActionBtn
+                                                                label="Setuju"
+                                                                icon={<CheckCircle2 size={12} />}
+                                                                color="green"
+                                                                onClick={() => approveOrder(order.id)}
+                                                                loading={busy === "approve"}
+                                                            />
+                                                        )}
+                                                        {showReject && (
+                                                            <ActionBtn
+                                                                label="Tolak"
+                                                                icon={<XCircle size={12} />}
+                                                                color="red"
+                                                                onClick={() => rejectOrder(order.id)}
+                                                                loading={busy === "reject"}
+                                                            />
+                                                        )}
+                                                        {showProcess && (
+                                                            <ActionBtn
+                                                                label="Proses"
+                                                                icon={<ChefHat size={12} />}
+                                                                color="blue"
+                                                                onClick={() => openProcessModal(order)}
+                                                                loading={busy === "process"}
+                                                            />
+                                                        )}
+                                                        {showSend && (
+                                                            <ActionBtn
+                                                                label="Kirim"
+                                                                icon={<Truck size={12} />}
+                                                                color="purple"
+                                                                onClick={() => sendOrder(order)}
+                                                                loading={busy === "send"}
+                                                            />
+                                                        )}
+                                                        {showInfo && (
+                                                            <span style={{
+                                                                fontSize: "12px", fontStyle: "italic",
+                                                                color: isDelivered ? "#10b981" : "#06b6d4",
+                                                                display: "inline-flex", alignItems: "center", gap: "5px",
+                                                            }}>
+                                                                {isDelivered ? <CheckCircle2 size={13} /> : <Truck size={13} />}
+                                                                {isDelivered ? "Selesai" : "Dalam Pengiriman"}
+                                                            </span>
+                                                        )}
+                                                        {isCancelled && (
+                                                            <span style={{ color: C.muted, fontSize: "12px" }}>—</span>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -925,104 +757,7 @@ export default function OrdersOwner() {
                     )}
                 </div>
 
-<<<<<<< Updated upstream
             </div>
         </OwnerLayout>
     );
-=======
-                    {/* Tracking Button */}
-                    <td style={{ padding: "12px 10px", textAlign: "center" }}>
-                      {!isPending && !isCancelled ? (
-                        <button
-                          onClick={() => setTrackingOrder(order)}
-                          style={{
-                            background: "rgba(99,102,241,0.10)",
-                            border: "1px solid rgba(99,102,241,0.28)",
-                            color: "#818cf8", padding: "5px 13px", borderRadius: 8,
-                            cursor: "pointer", fontSize: 12, fontWeight: 600,
-                            fontFamily: FONT, transition: "background 0.2s",
-                            display: "inline-flex", alignItems: "center", gap: 6,
-                          }}
-                          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(99,102,241,0.20)")}
-                          onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(99,102,241,0.10)")}
-                        >
-                          <MapPin size={13} />
-                          Lihat
-                        </button>
-                      ) : (
-                        <span style={{ color: "#334155", fontSize: 12 }}>—</span>
-                      )}
-                    </td>
-
-                    {/* Action Buttons */}
-                    <td style={{ padding: "12px 10px", textAlign: "center" }}>
-                      <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap" }}>
-
-                        {showApprove && (
-                          <ActionBtn
-                            label="Setuju"
-                            icon={<CheckCircle2 size={13} />}
-                            color="green"
-                            onClick={() => approveOrder(order.id)}
-                            loading={busy === "approve"}
-                          />
-                        )}
-
-                        {showReject && (
-                          <ActionBtn
-                            label="Tolak"
-                            icon={<XCircle size={13} />}
-                            color="red"
-                            onClick={() => rejectOrder(order.id)}
-                            loading={busy === "reject"}
-                          />
-                        )}
-
-                        {showProcess && (
-                          <ActionBtn
-                            label="Proses"
-                            icon={<ChefHat size={13} />}
-                            color="blue"
-                            onClick={() => processOrder(order.id)}
-                            loading={busy === "process"}
-                          />
-                        )}
-
-                        {showSend && (
-                          <ActionBtn
-                            label="Kirim"
-                            icon={<Truck size={13} />}
-                            color="purple"
-                            onClick={() => dispatchOrder(order)}
-                            loading={busy === "dispatch"}
-                          />
-                        )}
-
-                        {showInfo && (
-                          <span style={{
-                            fontSize: 12, fontStyle: "italic",
-                            color: isDelivered ? "#10b981" : "#06b6d4",
-                            display: "inline-flex", alignItems: "center", gap: 5,
-                          }}>
-                            {isDelivered ? <CheckCircle2 size={13} /> : <Truck size={13} />}
-                            {isDelivered ? "Selesai" : "Dalam Pengiriman"}
-                          </span>
-                        )}
-
-                        {isCancelled && (
-                          <span style={{ color: "#475569", fontSize: 12, fontStyle: "italic" }}>—</span>
-                        )}
-
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </div>
-    </OwnerLayout>
-  );
->>>>>>> Stashed changes
 }

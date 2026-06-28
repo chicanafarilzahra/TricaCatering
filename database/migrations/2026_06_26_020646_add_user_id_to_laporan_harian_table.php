@@ -10,7 +10,12 @@ return new class extends Migration
     {
         Schema::table('laporan_harian', function (Blueprint $table) {
 
-            // Hanya buat foreign key
+            // Tambah kolom dulu jika belum ada
+            if (!Schema::hasColumn('laporan_harian', 'user_id')) {
+                $table->unsignedBigInteger('user_id')->nullable()->after('id');
+            }
+
+            // Baru buat foreign key
             $table->foreign('user_id')
                 ->references('id')
                 ->on('users')
@@ -22,9 +27,8 @@ return new class extends Migration
     public function down()
     {
         Schema::table('laporan_harian', function (Blueprint $table) {
-
             $table->dropForeign(['user_id']);
-
+            $table->dropColumnIfExists('user_id');
         });
     }
 };

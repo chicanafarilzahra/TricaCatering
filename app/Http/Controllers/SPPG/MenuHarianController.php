@@ -10,14 +10,8 @@ class MenuHarianController extends Controller
 {
     public function index()
     {
-        $menus = SppgMenu::where(
-                'sppg_id',
-                Auth::id()
-            )
-            ->where(
-                'is_active',
-                true
-            )
+        $menus = SppgMenu::where('sppg_id', Auth::id())
+            ->where('is_active', true)
             ->latest()
             ->get();
 
@@ -26,82 +20,57 @@ class MenuHarianController extends Controller
         return response()->json([
 
             "menu_harian" => $menuHarian ? [
+                "id"         => $menuHarian->id,
+                "nama_menu"  => $menuHarian->nama_menu,
+                "tanggal"    => $menuHarian->created_at?->toDateString(),
+                "deskripsi"  => $menuHarian->deskripsi,
+                "kategori"   => $menuHarian->kategori ?? null,
 
-                "id" => $menuHarian->id,
-
-                "nama_menu" =>
-                    $menuHarian->nama_menu,
-
-                "gambar_menu" => null,
+                "gambar_menu" => $menuHarian->gambar
+                    ? asset('storage/' . ltrim(
+                        str_replace('storage/app/public/', '', $menuHarian->gambar),
+                        '/'
+                      ))
+                    : null,
 
                 "detail_menu" => [
-                    $menuHarian->deskripsi
-                        ?? "Menu bergizi seimbang"
+                    $menuHarian->deskripsi ?? "Menu bergizi seimbang"
                 ],
 
-                "catatan" =>
-                    "Menu harian SPPG disusun sesuai standar gizi"
+                "catatan" => "Menu harian SPPG disusun sesuai standar gizi",
 
+                // field gizi langsung di menu_harian agar edit modal bisa populate
+                "kalori"      => $menuHarian->kalori,
+                "protein"     => $menuHarian->protein,
+                "lemak"       => $menuHarian->lemak,
+                "karbohidrat" => $menuHarian->karbohidrat,
+                "serat"       => $menuHarian->serat,
             ] : null,
 
             "gizi" => $menuHarian ? [
+                "energi"      => $menuHarian->kalori      ?? 0,
+                "protein"     => $menuHarian->protein     ?? 0,
+                "lemak"       => $menuHarian->lemak       ?? 0,
+                "karbohidrat" => $menuHarian->karbohidrat ?? 0,
+                "serat"       => $menuHarian->serat       ?? 0,
 
-                "energi" =>
-                    $menuHarian->kalori ?? 0,
-
-                "protein" =>
-                    $menuHarian->protein ?? 0,
-
-                "lemak" =>
-                    $menuHarian->lemak ?? 0,
-
-                "karbohidrat" =>
-                    $menuHarian->karbohidrat ?? 0,
-
-                "akg" => [
-
-                    [
-                        "label" => "Energi",
-                        "value" => 70
-                    ],
-
-                    [
-                        "label" => "Protein",
-                        "value" => 80
-                    ],
-
-                    [
-                        "label" => "Lemak",
-                        "value" => 60
-                    ],
-
-                    [
-                        "label" => "Karbohidrat",
-                        "value" => 75
-                    ]
-                ]
-
+                "target" => [
+                    "energi"      => 2000,
+                    "protein"     => 60,
+                    "lemak"       => 67,
+                    "karbohidrat" => 300,
+                    "serat"       => 25,
+                ],
             ] : null,
 
-            "menu_mingguan" => $menus
-                ->take(5)
-                ->values()
-                ->map(function ($menu, $i) {
-
-                    $hari = [
-                        "Senin",
-                        "Selasa",
-                        "Rabu",
-                        "Kamis",
-                        "Jumat"
-                    ];
-
-                    return [
-                        "id" => $menu->id,
-                        "hari" => $hari[$i] ?? "-",
-                        "menu" => $menu->nama_menu
-                    ];
-                })
+            "menu_mingguan" => $menus->take(5)->values()->map(function ($menu, $i) {
+                $hari = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"];
+                return [
+                    "id"   => $menu->id,
+                    "hari" => $hari[$i] ?? "-",
+                    "menu" => $menu->nama_menu,
+                ];
+            }),
         ]);
     }
 }

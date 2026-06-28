@@ -20,6 +20,8 @@ class SppgMenu extends Model
         'protein',
         'karbohidrat',
         'lemak',
+        'serat',    // ✅ tambah
+        'gambar',   // ✅ tambah
         'is_active',
     ];
 

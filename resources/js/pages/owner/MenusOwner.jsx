@@ -17,7 +17,6 @@ if (typeof document !== "undefined" && !document.getElementById("inter-font")) {
     document.head.appendChild(l);
 }
 
-<<<<<<< Updated upstream
 /* ── tokens ─────────────────────────────────────────────────── */
 const C = {
     bg:      "#080C14",
@@ -29,53 +28,6 @@ const C = {
     muted:   "#64748B",
     sub:     "#94A3B8",
     font:    "'Inter', system-ui, -apple-system, sans-serif",
-=======
-    const [search, setSearch] =
-        useState("");
-
-    const [showModal, setShowModal] =
-        useState(false);
-
-    const [editingId, setEditingId] =
-        useState(null);
-
-    const [form, setForm] = useState({
-        name: "",
-        price: "",
-        category: "",
-        description: "",
-        image: null,
-        jenis_catering: "Insidentil",
-        min_porsi: 1,
-    });
-
-    /* =========================
-       FETCH MENUS
-    ========================= */
-
-const fetchMenus = async () => {
-    try {
-        const user = JSON.parse(localStorage.getItem("user"));
-        const token = localStorage.getItem("auth_token");
-
-        const res = await axios.get("/owner/menus", {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                Accept: "application/json",
-            },
-            params: {
-                owner_id: user.id,
-            },
-        });
-
-        setMenus(res.data);
-    } catch (error) {
-        console.log("ERROR =", error);
-        console.log("DATA =", error.response?.data);
-
-        alert(JSON.stringify(error.response?.data));
-    }
->>>>>>> Stashed changes
 };
 
 const bars = {
@@ -101,6 +53,7 @@ const selectStyle = {
     paddingRight: "32px",
 };
 
+// FIX 1: emptyForm didefinisikan di sini (module level), bukan di dalam komponen
 const emptyForm = {
     name: "", description: "", category: "", price: "",
     min_pax: "", status: "active", image: null, imageFile: null,
@@ -419,29 +372,34 @@ function MenuModal({ show, editId, form, setForm, ingredients, setIngredients, s
 
 /* ── Page ────────────────────────────────────────────────────── */
 export default function MenusOwner() {
+    // FIX 2: semua useState hanya ada di sini, tidak ada duplikat di luar komponen
     const [menus,       setMenus]       = useState([]);
     const [stocks,      setStocks]      = useState([]);
     const [showModal,   setShowModal]   = useState(false);
     const [editId,      setEditId]      = useState(null);
     const [ingredients, setIngredients] = useState([]);
-
-    const [form, setForm] = useState(emptyForm);
+    const [form,        setForm]        = useState(emptyForm);
 
     const token   = () => localStorage.getItem("auth_token");
     const headers = () => ({ Authorization: `Bearer ${token()}` });
 
+    // FIX 3: hanya satu definisi fetchMenus (yang benar, di dalam komponen)
     const fetchMenus = async () => {
         try {
             const res = await axios.get("/owner/menus", { headers: headers() });
             setMenus(res.data);
-        } catch (err) { console.error(err); }
+        } catch (err) {
+            console.error("fetchMenus error:", err.response?.data || err);
+        }
     };
 
     const fetchStocks = async () => {
         try {
             const res = await axios.get("/owner/stocks", { headers: headers() });
             setStocks(res.data);
-        } catch (err) { console.error(err); }
+        } catch (err) {
+            console.error("fetchStocks error:", err.response?.data || err);
+        }
     };
 
     useEffect(() => {
@@ -450,37 +408,41 @@ export default function MenusOwner() {
     }, []);
 
     /* ── submit ── */
-        const handleSubmit = async (e) => {
-            e.preventDefault();
-            try {
-                const validIngredients = ingredients.filter(i => i.stock_id && i.qty_per_portion);
+    // FIX 4: try/catch lengkap dengan alert error yang informatif
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const validIngredients = ingredients.filter(i => i.stock_id && i.qty_per_portion);
 
-                const fd = new FormData();
-                fd.append("name",        form.name);
-                fd.append("description", form.description);
-                fd.append("category",    form.category);
-                fd.append("price",       form.price);
-                fd.append("min_pax",     form.min_pax);
-                fd.append("status",      form.status);
-                fd.append("ingredients", JSON.stringify(validIngredients));
-                if (form.imageFile) fd.append("image", form.imageFile);
+            const fd = new FormData();
+            fd.append("name",        form.name);
+            fd.append("description", form.description);
+            fd.append("category",    form.category);
+            fd.append("price",       form.price);
+            fd.append("min_pax",     form.min_pax);
+            fd.append("status",      form.status);
+            fd.append("ingredients", JSON.stringify(validIngredients));
+            if (form.imageFile) fd.append("image", form.imageFile);
 
-                const cfg = { headers: { ...headers(), "Content-Type": "multipart/form-data" } };
+            const cfg = { headers: { ...headers(), "Content-Type": "multipart/form-data" } };
 
-                if (editId) {
-                    fd.append("_method", "PUT");
-                    await axios.post(`/owner/menus/${editId}`, fd, cfg);
-                } else {
-                    await axios.post("/owner/menus", fd, cfg);
-                }
+            if (editId) {
+                fd.append("_method", "PUT");
+                await axios.post(`/owner/menus/${editId}`, fd, cfg);
+            } else {
+                await axios.post("/owner/menus", fd, cfg);
+            }
 
-                closeModal();
-                fetchMenus();
-            } catch (err) {
-    console.error(err.response?.data);  // <-- ganti ini
-}
-            
-        };
+            closeModal();
+            fetchMenus();
+        } catch (err) {
+            console.error("handleSubmit error:", err.response?.data || err);
+            const msg = err.response?.data?.message
+                || JSON.stringify(err.response?.data)
+                || "Terjadi kesalahan. Coba lagi.";
+            alert(msg);
+        }
+    };
 
     const closeModal = () => {
         setShowModal(false);
@@ -522,7 +484,9 @@ export default function MenusOwner() {
         try {
             await axios.delete(`/owner/menus/${id}`, { headers: headers() });
             fetchMenus();
-        } catch (err) { console.error(err); }
+        } catch (err) {
+            console.error("handleDelete error:", err.response?.data || err);
+        }
     };
 
     const openCreate = () => {

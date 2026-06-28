@@ -119,62 +119,31 @@ export default function SidebarOwner() {
     /* ─── styles ─── */
     const s = {
         sidebar: {
-            width:          "260px",
-            minWidth:       "260px",
-            height:         "100vh",
-            position:       "fixed",
-            top:            0,
-            left:           0,
-            zIndex:         999,
-            overflowY:      "auto",
-            overflowX:      "hidden",
-            boxSizing:      "border-box",
-            padding:        "20px 14px 24px",
-            display:        "flex",
-            flexDirection:  "column",
-            background:     token.sidebar,
-            borderRight:    `1px solid ${token.border}`,
-            scrollbarWidth: "none",
-            msOverflowStyle:"none",
-            fontFamily:     "'Inter', system-ui, -apple-system, sans-serif",
+            width:           "260px",
+            minWidth:        "260px",
+            height:          "100vh",
+            position:        "fixed",
+            top:             0,
+            left:            0,
+            zIndex:          999,
+            overflowY:       "auto",
+            overflowX:       "hidden",
+            boxSizing:       "border-box",
+            padding:         "20px 14px 24px",
+            display:         "flex",
+            flexDirection:   "column",
+            background:      token.sidebar,
+            borderRight:     `1px solid ${token.border}`,
+            scrollbarWidth:  "none",
+            msOverflowStyle: "none",
+            fontFamily:      "'Inter', system-ui, -apple-system, sans-serif",
         },
-<<<<<<< Updated upstream
         logoRow: {
-            display:       "flex",
-            alignItems:    "center",
-            gap:           "12px",
-            padding:       "4px 6px",
-            marginBottom:  "20px",
-=======
-
-        {
-            title: "BUSINESS",
-            items: [
-                {
-                    label: "Orders",
-                    path: "/owner/orders",
-                    icon: (
-                        <ShoppingCart size={18} />
-                    ),
-                },
-
-                {
-                    label: "Menus",
-                    path: "/owner/menus",
-                    icon: (
-                        <UtensilsCrossed size={18} />
-                    ),
-                },
-
-                {
-                    label: "Packages",
-                    path: "/owner/packages",
-                    icon: (
-                        <Package size={18} />
-                    ),
-                },
-            ],
->>>>>>> Stashed changes
+            display:      "flex",
+            alignItems:   "center",
+            gap:          "12px",
+            padding:      "4px 6px",
+            marginBottom: "20px",
         },
         logoIcon: {
             width:          "40px",
@@ -204,14 +173,14 @@ export default function SidebarOwner() {
             marginTop:     "3px",
         },
         userCard: {
-            background:    "rgba(255,255,255,0.04)",
-            border:        "1px solid rgba(255,255,255,0.07)",
-            borderRadius:  token.radius.lg,
-            padding:       "12px 14px",
-            marginBottom:  "22px",
-            display:       "flex",
-            alignItems:    "center",
-            gap:           "12px",
+            background:   "rgba(255,255,255,0.04)",
+            border:       "1px solid rgba(255,255,255,0.07)",
+            borderRadius: token.radius.lg,
+            padding:      "12px 14px",
+            marginBottom: "22px",
+            display:      "flex",
+            alignItems:   "center",
+            gap:          "12px",
         },
         userAvatar: {
             width:          "36px",
@@ -227,12 +196,12 @@ export default function SidebarOwner() {
             flexShrink:     0,
         },
         userName: {
-            color:         token.textPrimary,
-            fontSize:      "13px",
-            fontWeight:    "600",
-            whiteSpace:    "nowrap",
-            overflow:      "hidden",
-            textOverflow:  "ellipsis",
+            color:        token.textPrimary,
+            fontSize:     "13px",
+            fontWeight:   "600",
+            whiteSpace:   "nowrap",
+            overflow:     "hidden",
+            textOverflow: "ellipsis",
         },
         userRole: {
             fontSize:      "11px",
@@ -258,46 +227,46 @@ export default function SidebarOwner() {
             gap:           "2px",
         },
         bottomSection: {
-            marginTop:   "auto",
-            paddingTop:  "16px",
-            borderTop:   `1px solid ${token.border}`,
+            marginTop:  "auto",
+            paddingTop: "16px",
+            borderTop:  `1px solid ${token.border}`,
         },
         logoutBtn: {
-            width:        "100%",
-            height:       "42px",
-            display:      "flex",
-            alignItems:   "center",
-            gap:          "10px",
-            padding:      "0 14px",
-            borderRadius: token.radius.lg,
-            background:   token.logoutBg,
-            border:       `1px solid ${token.logoutBorder}`,
-            color:        token.logoutColor,
-            fontSize:     "13px",
-            fontWeight:   "600",
-            cursor:       "pointer",
-            transition:   "all 0.2s ease",
-            letterSpacing:"0.1px",
-            fontFamily:   "'Inter', system-ui, -apple-system, sans-serif",
+            width:         "100%",
+            height:        "42px",
+            display:       "flex",
+            alignItems:    "center",
+            gap:           "10px",
+            padding:       "0 14px",
+            borderRadius:  token.radius.lg,
+            background:    token.logoutBg,
+            border:        `1px solid ${token.logoutBorder}`,
+            color:         token.logoutColor,
+            fontSize:      "13px",
+            fontWeight:    "600",
+            cursor:        "pointer",
+            transition:    "all 0.2s ease",
+            letterSpacing: "0.1px",
+            fontFamily:    "'Inter', system-ui, -apple-system, sans-serif",
         },
     };
 
     const navItemStyle = (active) => ({
-        display:      "flex",
-        alignItems:   "center",
-        gap:          "10px",
-        padding:      "0 12px",
-        height:       "40px",
-        borderRadius: token.radius.md,
-        fontSize:     "13px",
-        fontWeight:   active ? "600" : "500",
-        color:        active ? token.activeColor : token.mutedColor,
-        background:   active ? token.activeBg : "transparent",
-        border:       `1px solid ${active ? token.activeBorder : "transparent"}`,
+        display:        "flex",
+        alignItems:     "center",
+        gap:            "10px",
+        padding:        "0 12px",
+        height:         "40px",
+        borderRadius:   token.radius.md,
+        fontSize:       "13px",
+        fontWeight:     active ? "600" : "500",
+        color:          active ? token.activeColor : token.mutedColor,
+        background:     active ? token.activeBg : "transparent",
+        border:         `1px solid ${active ? token.activeBorder : "transparent"}`,
         textDecoration: "none",
-        transition:   "all 0.18s ease",
-        cursor:       "pointer",
-        boxSizing:    "border-box",
+        transition:     "all 0.18s ease",
+        cursor:         "pointer",
+        boxSizing:      "border-box",
     });
 
     return (
@@ -337,13 +306,13 @@ export default function SidebarOwner() {
                                     onMouseEnter={(e) => {
                                         if (!active) {
                                             e.currentTarget.style.background = token.hoverBg;
-                                            e.currentTarget.style.color = token.hoverColor;
+                                            e.currentTarget.style.color      = token.hoverColor;
                                         }
                                     }}
                                     onMouseLeave={(e) => {
                                         if (!active) {
                                             e.currentTarget.style.background = "transparent";
-                                            e.currentTarget.style.color = token.mutedColor;
+                                            e.currentTarget.style.color      = token.mutedColor;
                                         }
                                     }}
                                 >
@@ -369,14 +338,14 @@ export default function SidebarOwner() {
                     onClick={handleLogout}
                     style={s.logoutBtn}
                     onMouseEnter={(e) => {
-                        e.currentTarget.style.background    = token.logoutHoverBg;
-                        e.currentTarget.style.color         = token.logoutHoverColor;
-                        e.currentTarget.style.borderColor   = "rgba(239,68,68,0.35)";
+                        e.currentTarget.style.background  = token.logoutHoverBg;
+                        e.currentTarget.style.color       = token.logoutHoverColor;
+                        e.currentTarget.style.borderColor = "rgba(239,68,68,0.35)";
                     }}
                     onMouseLeave={(e) => {
-                        e.currentTarget.style.background    = token.logoutBg;
-                        e.currentTarget.style.color         = token.logoutColor;
-                        e.currentTarget.style.borderColor   = token.logoutBorder;
+                        e.currentTarget.style.background  = token.logoutBg;
+                        e.currentTarget.style.color       = token.logoutColor;
+                        e.currentTarget.style.borderColor = token.logoutBorder;
                     }}
                 >
                     <LogOut size={15} style={{ flexShrink: 0, opacity: 0.85 }} />
