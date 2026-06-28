@@ -11,6 +11,7 @@ use App\Http\Controllers\AdminMenuController;
 use App\Http\Controllers\AdminClientController;
 use App\Http\Controllers\AdminStockController;
 use App\Http\Controllers\AdminUserController;
+use App\Http\Controllers\Admin\AdminInvoiceController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\OrderController;
 
@@ -28,6 +29,7 @@ use App\Http\Controllers\Api\OwnerStockController;
 use App\Http\Controllers\Api\OwnerPaymentAccountController;
 
 use App\Http\Controllers\Owner\CourierController as OwnerCourierController;
+use App\Http\Controllers\Owner\OwnerInvoiceController;
 
 use App\Http\Controllers\SPPG\DashboardSPPGController;
 use App\Http\Controllers\SPPG\MenuHarianController;
@@ -248,6 +250,9 @@ Route::delete(
     [AdminUserController::class, 'destroy']
 );
 
+Route::get('/admin/invoices', [AdminInvoiceController::class, 'index'])->middleware('auth:sanctum');
+Route::get('/admin/invoices/{id}', [AdminInvoiceController::class, 'show'])->middleware('auth:sanctum');
+
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/owner/couriers', [OwnerCourierController::class, 'index']);
 });
@@ -387,9 +392,6 @@ Route::prefix('klien')->group(function () {
     Route::get('/klien/geocode', [GeoController::class, 'geocode']);
     Route::get('/klien/route', [GeoController::class, 'route']);
 
-Route::get('/klien/geocode', [GeoController::class, 'geocode']);
-Route::get('/klien/route', [GeoController::class, 'route']);
-
 
 /*
 |--------------------------------------------------------------------------
@@ -453,6 +455,17 @@ Route::get('/menus/{menu}/ingredients', [OwnerMenuController2::class, 'ingredien
     Route::put('/payment-accounts/{id}', [OwnerPaymentAccountController::class, 'update']);
     Route::put('/payment-accounts/{id}/set-default', [OwnerPaymentAccountController::class, 'setDefault']);
     Route::delete('/payment-accounts/{id}', [OwnerPaymentAccountController::class, 'destroy']);
+
+    Route::get('/invoices', [OwnerInvoiceController::class, 'index']);
+Route::get('/invoices/{id}', [OwnerInvoiceController::class, 'show']);
+
+Route::get('/invoice-payments', [OwnerInvoiceController::class, 'pending']);
+
+Route::put('/invoice-payments/{paymentId}/confirm',
+    [OwnerInvoiceController::class, 'confirm']);
+
+Route::put('/invoice-payments/{paymentId}/reject',
+    [OwnerInvoiceController::class, 'reject']);
 
 }); 
 

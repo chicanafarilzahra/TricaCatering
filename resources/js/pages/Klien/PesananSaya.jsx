@@ -21,12 +21,38 @@ import NavbarKlien from "../../components/NavbarKlien";
 
 const FILTERS = ["Semua", "Pending", "Diproses", "Dikirim", "Selesai", "Dibatalkan"];
 
+// Mapping status ASLI dari database (Inggris) -> tampilan (label Indonesia,
+// warna, dan filter group). DB tetap menyimpan:
+// pending, confirmed, preparing, dispatched, on_delivery, delivered, cancelled
 const STATUS_CFG = {
-    Pending:    { bg: "rgba(251,146,60,0.1)",  color: "#fb923c", dot: "#fb923c",  border: "rgba(251,146,60,0.2)",  label: "Pending"     },
-    Diproses:   { bg: "rgba(96,165,250,0.1)",  color: "#60a5fa", dot: "#60a5fa",  border: "rgba(96,165,250,0.2)",  label: "Diproses"    },
-    Dikirim:    { bg: "rgba(167,139,250,0.1)", color: "#a78bfa", dot: "#a78bfa",  border: "rgba(167,139,250,0.2)", label: "Dikirim"     },
-    Selesai:    { bg: "rgba(52,211,153,0.1)",  color: "#34d399", dot: "#34d399",  border: "rgba(52,211,153,0.2)",  label: "Selesai"     },
-    Dibatalkan: { bg: "rgba(248,113,113,0.1)", color: "#f87171", dot: "#f87171",  border: "rgba(248,113,113,0.2)", label: "Dibatalkan"  },
+    pending: {
+        bg: "rgba(251,146,60,0.1)",  color: "#fb923c", dot: "#fb923c",  border: "rgba(251,146,60,0.2)",
+        label: "Pending", filterGroup: "Pending",
+    },
+    confirmed: {
+        bg: "rgba(96,165,250,0.1)",  color: "#60a5fa", dot: "#60a5fa",  border: "rgba(96,165,250,0.2)",
+        label: "Disetujui", filterGroup: "Diproses",
+    },
+    preparing: {
+        bg: "rgba(96,165,250,0.1)",  color: "#60a5fa", dot: "#60a5fa",  border: "rgba(96,165,250,0.2)",
+        label: "Diproses", filterGroup: "Diproses",
+    },
+    dispatched: {
+        bg: "rgba(167,139,250,0.1)", color: "#a78bfa", dot: "#a78bfa",  border: "rgba(167,139,250,0.2)",
+        label: "Dikirim", filterGroup: "Dikirim",
+    },
+    on_delivery: {
+        bg: "rgba(167,139,250,0.1)", color: "#a78bfa", dot: "#a78bfa",  border: "rgba(167,139,250,0.2)",
+        label: "Dalam Perjalanan", filterGroup: "Dikirim",
+    },
+    delivered: {
+        bg: "rgba(52,211,153,0.1)",  color: "#34d399", dot: "#34d399",  border: "rgba(52,211,153,0.2)",
+        label: "Selesai", filterGroup: "Selesai",
+    },
+    cancelled: {
+        bg: "rgba(248,113,113,0.1)", color: "#f87171", dot: "#f87171",  border: "rgba(248,113,113,0.2)",
+        label: "Dibatalkan", filterGroup: "Dibatalkan",
+    },
 };
 
 /* ─────────────────── HELPERS ─────────────────── */
@@ -34,7 +60,8 @@ const STATUS_CFG = {
 const getStatusMeta = (status) =>
     STATUS_CFG[status] || {
         bg: "rgba(148,163,184,0.1)", color: "#94a3b8",
-        dot: "#94a3b8", border: "rgba(148,163,184,0.2)", label: status || "—",
+        dot: "#94a3b8", border: "rgba(148,163,184,0.2)",
+        label: status || "—", filterGroup: null,
     };
 
 const formatRupiah = (v) => "Rp " + Number(v || 0).toLocaleString("id-ID");
@@ -345,10 +372,15 @@ export default function PesananSaya() {
         getPesanan();
     }, [getPesanan]);
 
-    const countStatus = useCallback((s) => pesanan.filter((p) => p.status === s).length, [pesanan]);
+    const countStatus = useCallback(
+        (filterName) => pesanan.filter((p) => getStatusMeta(p.status).filterGroup === filterName).length,
+        [pesanan]
+    );
 
     const filtered = useMemo(() => {
-        let list = filter === "Semua" ? pesanan : pesanan.filter((p) => p.status === filter);
+        let list = filter === "Semua"
+            ? pesanan
+            : pesanan.filter((p) => getStatusMeta(p.status).filterGroup === filter);
         const kw = search.trim().toLowerCase();
         if (kw) {
             list = list.filter((p) => {
@@ -363,7 +395,7 @@ export default function PesananSaya() {
     }, [pesanan, filter, search]);
 
     const totalBelanja = useMemo(
-        () => pesanan.filter((p) => p.status === "Selesai").reduce((acc, p) => acc + Number(p.total_price || p.total || 0), 0),
+        () => pesanan.filter((p) => p.status === "delivered").reduce((acc, p) => acc + Number(p.total_price || p.total || 0), 0),
         [pesanan]
     );
 

@@ -12,6 +12,10 @@ import {
     FaCheck,
     FaUtensils,
     FaTrash,
+    FaUpload,
+    FaImage,
+    FaExclamationTriangle,
+    FaHourglassHalf,
 } from "react-icons/fa";
 import axios from "axios";
 import NavbarKlien from "../../components/NavbarKlien";
@@ -27,6 +31,8 @@ const CATEGORIES = [
     { id: "harian", label: "Harian" },
     { id: "insidentil", label: "Insidentil" },
 ];
+
+const PAYMENT_DURATION_SECONDS = 5 * 60; // 5 menit
 
 /*
 |--------------------------------------------------------------------------
@@ -44,9 +50,17 @@ export default function PesanMakan() {
     const [clientLocation, setClientLocation] = useState(null);
     const [distanceKm, setDistanceKm] = useState(0);
     const [durationMinute, setDurationMinute] = useState(0);
+    const [geoStatus, setGeoStatus] = useState("idle"); // idle | searching | found | notfound
 
     const [payMethod, setPayMethod] = useState(null); // 'bank' | 'ewallet'
     const [payOption, setPayOption] = useState(null); // id akun pembayaran milik catering terkait
+
+    // ===== Bukti Pembayaran & Timer 15 Menit =====
+    const [buktiBayar, setBuktiBayar] = useState(null); // File
+    const [buktiBayarPreview, setBuktiBayarPreview] = useState(null);
+    const [paymentDeadline, setPaymentDeadline] = useState(null); // timestamp ms
+    const [timeLeft, setTimeLeft] = useState(null); // detik
+    const [submitting, setSubmitting] = useState(false);
 
     const [form, setForm] = useState({
         nama: "",
@@ -95,6 +109,7 @@ export default function PesanMakan() {
         setPayOption(null);
         setSearch("");
         setSortBy("default");
+        resetPaymentProof();
         setForm((f) => ({
             ...f,
             jumlah: "",
@@ -115,7 +130,20 @@ export default function PesanMakan() {
     useEffect(() => {
     console.log("🔍 form.alamat berubah:", form.alamat);   // TAMBAHIN
     if (geoTimerRef.current) clearTimeout(geoTimerRef.current);
-    if (!form.alamat) return;
+    if (!form.alamat) {
+        setGeoStatus("idle");
+        setClientLocation(null);
+        return;
+    }
+
+    // alamat lengkap minimal punya beberapa kata (jalan, kelurahan, kecamatan, dst)
+    // supaya geocoding tidak menembak alamat yang masih setengah jalan diketik
+    if (form.alamat.trim().length < 8) {
+        setGeoStatus("idle");
+        return;
+    }
+
+    setGeoStatus("searching");
 
     geoTimerRef.current = setTimeout(() => {
         console.log("📡 mengirim request geocode...");   // TAMBAHIN
@@ -127,13 +155,16 @@ export default function PesanMakan() {
                         lat: res.data.lat,
                         lng: res.data.lng,
                     });
+                    setGeoStatus("found");
                 } else {
                     setClientLocation(null);
+                    setGeoStatus("notfound");
                 }
             })
             .catch((err) => {
                 console.error("❌ Geocode error:", err.response?.data || err.message);
                 setClientLocation(null);
+                setGeoStatus("notfound");
             });
     }, 1200);
 
@@ -174,17 +205,89 @@ export default function PesanMakan() {
 
     /*
     |--------------------------------------------------------------------------
+    | TIMER 15 MENIT PROSES PEMBAYARAN
+    | (mulai otomatis begitu klien sudah memilih metode + akun pembayaran,
+    | artinya form pemesanan sudah lengkap diisi)
+    |--------------------------------------------------------------------------
+    */
+
+    useEffect(() => {
+        if (payMethod && payOption && !paymentDeadline) {
+            setPaymentDeadline(Date.now() + PAYMENT_DURATION_SECONDS * 1000);
+        }
+    }, [payMethod, payOption, paymentDeadline]);
+
+    useEffect(() => {
+        if (!paymentDeadline) {
+            setTimeLeft(null);
+            return;
+        }
+        const tick = () => {
+            const remaining = Math.max(0, Math.round((paymentDeadline - Date.now()) / 1000));
+            setTimeLeft(remaining);
+        };
+        tick();
+        const interval = setInterval(tick, 1000);
+        return () => clearInterval(interval);
+    }, [paymentDeadline]);
+
+    const isPaymentExpired = paymentDeadline !== null && timeLeft === 0;
+
+    const formatTimeLeft = (seconds) => {
+        if (seconds === null || seconds === undefined) return "--:--";
+        const m = Math.floor(seconds / 60).toString().padStart(2, "0");
+        const s = (seconds % 60).toString().padStart(2, "0");
+        return `${m}:${s}`;
+    };
+
+    const resetPaymentProof = () => {
+        setBuktiBayar(null);
+        setBuktiBayarPreview((prev) => {
+            if (prev) URL.revokeObjectURL(prev);
+            return null;
+        });
+        setPaymentDeadline(null);
+        setTimeLeft(null);
+    };
+
+    const handleBuktiBayarChange = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (!file.type.startsWith("image/")) {
+            alert("File bukti pembayaran harus berupa gambar (jpg/png).");
+            return;
+        }
+        setBuktiBayar(file);
+        setBuktiBayarPreview((prev) => {
+            if (prev) URL.revokeObjectURL(prev);
+            return URL.createObjectURL(file);
+        });
+    };
+
+    const handleRestartPaymentTimer = () => {
+        // batalkan pilihan akun pembayaran supaya klien pilih ulang & timer baru dimulai
+        resetPaymentProof();
+        setPayOption(null);
+    };
+
+    /*
+    |--------------------------------------------------------------------------
     | KALKULASI
     |--------------------------------------------------------------------------
     */
 
-    const courierFee = useMemo(() => Math.ceil(distanceKm) * 7000, [distanceKm]);
+    const COURIER_RATE_PER_KM = 5000; // Rp 5.000/km
+
+    const courierFee = useMemo(
+    () => Math.round(distanceKm * 10) / 10 * COURIER_RATE_PER_KM,
+    [distanceKm]
+);
 
     const totalCourierFee = useMemo(() => {
-        if (!courierFee) return 0;
-        if (selectedType === "harian") return courierFee * Number(form.durasi || 0);
-        return courierFee;
-    }, [courierFee, form.durasi, selectedType]);
+    if (!courierFee) return 0;
+    if (selectedType === "harian") return courierFee * Number(form.durasi || 0);
+    return courierFee;
+}, [courierFee, form.durasi, selectedType]);
 
     const hargaProduk = useMemo(() => {
         if (!selectedMenu || !form.jumlah) return 0;
@@ -204,7 +307,11 @@ export default function PesanMakan() {
     }, [selectedMenu, form.jumlah, courierFee]);
 
     const grandTotal = selectedType === "harian" ? totalHarian : totalInsidentil;
+    // Catering harian = wajib lunas 100% (tanpa DP).
+    // Catering insidentil = DP 50% saat pemesanan, sisanya dilunasi via invoice
+    // setelah pesanan di-approve (lihat halaman Invoice).
     const dp = totalInsidentil * 0.5;
+    const jumlahYangHarusDibayarSekarang = selectedType === "harian" ? totalHarian : dp;
 
     const tanggalSelesai = useMemo(() => {
         if (!form.tanggalMulai || !form.durasi) return "";
@@ -212,6 +319,11 @@ export default function PesanMakan() {
         d.setDate(d.getDate() + Number(form.durasi) - 1);
         return d.toISOString().split("T")[0];
     }, [form.tanggalMulai, form.durasi]);
+
+    // Tanggal hari ini, dipakai sebagai batas minimal tanggal mulai / tanggal event
+    // (poin 4: tanggal pengiriman pertama mengikuti tanggal pemesanan, jadi
+    // klien tidak boleh memilih tanggal yang sudah lewat)
+    const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
 
     /*
     |--------------------------------------------------------------------------
@@ -287,6 +399,7 @@ export default function PesanMakan() {
         setSelectedMenu(null);
         setPayMethod(null);
         setPayOption(null);
+        resetPaymentProof();
         setForm((f) => ({
             ...f,
             jumlah: "",
@@ -311,9 +424,27 @@ export default function PesanMakan() {
         if (Number(form.jumlah) < Number(selectedMenu.min_porsi)) {
             alert(`Minimal ${selectedMenu.min_porsi} porsi`); return;
         }
-        if (!clientLocation) { alert("Alamat tidak valid atau belum ditemukan"); return; }
+        if (!clientLocation) { alert("Alamat tidak valid atau belum ditemukan. Mohon masukkan alamat lengkap (jalan, kelurahan, kecamatan, kabupaten/kota)."); return; }
+
+        // Validasi tanggal tidak boleh di masa lalu (poin 4)
+        if (selectedType === "harian" && form.tanggalMulai && form.tanggalMulai < todayStr) {
+            alert("Tanggal mulai tidak boleh sebelum hari ini."); return;
+        }
+        if (selectedType === "insidentil" && form.tanggal && form.tanggal < todayStr) {
+            alert("Tanggal event tidak boleh sebelum hari ini."); return;
+        }
+
         if (!payMethod) { alert("Pilih metode pembayaran"); return; }
         if (!payOption) { alert(`Pilih ${payMethod === "bank" ? "rekening bank" : "e-wallet"} tujuan`); return; }
+
+        if (isPaymentExpired) {
+            alert("Waktu 15 menit untuk menyelesaikan pembayaran sudah habis. Silakan pilih ulang metode pembayaran.");
+            return;
+        }
+        if (!buktiBayar) {
+            alert("Mohon unggah foto/screenshot bukti pembayaran terlebih dahulu.");
+            return;
+        }
 
         const selectedAccount = [...bankAccounts, ...ewalletAccounts].find(
             (a) => a.id === payOption
@@ -326,38 +457,57 @@ export default function PesanMakan() {
                   courierFeeCalc * Number(form.durasi)
                 : selectedMenu.price * Number(form.jumlah) + courierFeeCalc;
 
+        const amountPaidNow = selectedType === "harian" ? totalPrice : totalPrice * 0.5;
+
         try {
-            await axios.post("/klien/orders", {
-                client_id: user.id,
-                customer_name: form.nama,
-                phone: form.phone,
-                order_date: new Date().toISOString().split("T")[0],
-                type: selectedType,
-                menu_id: selectedMenu.id,
-                catering_id: selectedMenu.catering_id,
-                quantity: form.jumlah,
-                duration: selectedType === "harian" ? form.durasi : null,
-                start_date: selectedType === "harian" ? form.tanggalMulai : null,
-                event_date: selectedType === "insidentil" ? form.tanggal : null,
-                theme: selectedType === "insidentil" ? form.tema : null,
-                jam: form.jam,
-                notes: form.catatan,
-                address: form.alamat,
-                lat: clientLocation.lat,
-                lng: clientLocation.lng,
-                total_price: totalPrice,
-                courier_fee: courierFeeCalc,
-                payment_method: payMethod,
-                payment_account_id: payOption,
-                payment_provider: selectedAccount?.provider_name,
-                payment_account_number: selectedAccount?.account_number,
+            setSubmitting(true);
+
+            const payload = new FormData();
+            payload.append("client_id", user.id);
+            payload.append("customer_name", form.nama);
+            payload.append("phone", form.phone);
+            payload.append("order_date", new Date().toISOString().split("T")[0]);
+            payload.append("type", selectedType);
+            payload.append("menu_id", selectedMenu.id);
+            payload.append("owner_id", selectedMenu.catering_id);
+            payload.append("quantity", form.jumlah);
+            if (selectedType === "harian") {
+                payload.append("duration", form.durasi);
+                payload.append("start_date", form.tanggalMulai);
+                payload.append("end_date", tanggalSelesai);
+            } else {
+                payload.append("event_date", form.tanggal);
+                payload.append("theme", form.tema || "");
+            }
+            payload.append("jam", form.jam);
+            payload.append("notes", form.catatan || "");
+            payload.append("address", form.alamat);
+            payload.append("lat", clientLocation.lat);
+            payload.append("lng", clientLocation.lng);
+            payload.append("total_price", totalPrice);
+            payload.append("courier_fee", courierFeeCalc);
+            payload.append("payment_method", payMethod);
+            payload.append("payment_account_id", payOption);
+            payload.append("payment_provider", selectedAccount?.provider_name || "");
+            payload.append("payment_account_number", selectedAccount?.account_number || "");
+            // Pembayaran tahap pertama: harian = lunas 100%, insidentil = DP 50%
+            // (sisa 50% insidentil dilunasi nanti lewat halaman Invoice, tempo 3 hari
+            // sebelum tanggal pengiriman pertama)
+            payload.append("payment_stage", selectedType === "harian" ? "lunas" : "dp_50");
+            payload.append("amount_paid", amountPaidNow);
+            payload.append("payment_proof", buktiBayar);
+
+            await axios.post("/klien/orders", payload, {
+                headers: { "Content-Type": "multipart/form-data" },
             });
 
-            alert("✅ Pesanan berhasil dibuat!");
+            alert("✅ Pesanan & bukti pembayaran berhasil dikirim! Menunggu konfirmasi catering.");
             setTimeout(() => { window.location.href = "/klien/pesanan-saya"; }, 500);
         } catch (err) {
             console.error(err);
             alert("Gagal membuat pesanan.");
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -589,6 +739,7 @@ export default function PesanMakan() {
                                             <FormInput
                                                 label="Tanggal Mulai"
                                                 type="date"
+                                                min={todayStr}
                                                 value={form.tanggalMulai}
                                                 onChange={(e) => setForm({ ...form, tanggalMulai: e.target.value })}
                                             />
@@ -601,7 +752,7 @@ export default function PesanMakan() {
                                         </div>
                                         {tanggalSelesai && (
                                             <div style={{ color: "#64748b", fontSize: 11, marginTop: -6, marginBottom: 12 }}>
-                                                Selesai pada {tanggalSelesai}
+                                                Pengiriman setiap hari pukul {form.jam || "--:--"}, mulai {form.tanggalMulai} sampai {tanggalSelesai} ({form.durasi} hari). Kurir akan otomatis berhenti mengirim setelah tanggal tersebut.
                                             </div>
                                         )}
                                     </>
@@ -611,6 +762,7 @@ export default function PesanMakan() {
                                             <FormInput
                                                 label="Tanggal Event"
                                                 type="date"
+                                                min={todayStr}
                                                 value={form.tanggal}
                                                 onChange={(e) => setForm({ ...form, tanggal: e.target.value })}
                                             />
@@ -640,11 +792,27 @@ export default function PesanMakan() {
                                 )}
 
                                 <FormInput
-                                    label="Alamat Pengiriman"
+                                    label="Alamat Pengiriman Lengkap"
                                     value={form.alamat}
                                     onChange={(e) => setForm({ ...form, alamat: e.target.value })}
-                                    placeholder="Jl. Contoh No.1, Kota..."
+                                    placeholder="Jl. Tongkol No.3, Sukalipuro, Dermo, Kec. Bangil, Pasuruan, Jawa Timur 67153"
                                 />
+                                <div style={{ marginTop: -8, marginBottom: 12, fontSize: 11 }}>
+                                    {geoStatus === "idle" && (
+                                        <span style={{ color: "#475569" }}>
+                                            Tulis alamat selengkap mungkin (jalan, kelurahan, kecamatan, kabupaten/kota, kode pos) agar jarak & estimasi tiba lebih akurat.
+                                        </span>
+                                    )}
+                                    {geoStatus === "searching" && (
+                                        <span style={{ color: "#fbbf24" }}>🔍 Mencari lokasi alamat...</span>
+                                    )}
+                                    {geoStatus === "found" && (
+                                        <span style={{ color: "#34d399" }}>✅ Alamat ditemukan, jarak & estimasi tiba sudah dihitung.</span>
+                                    )}
+                                    {geoStatus === "notfound" && (
+                                        <span style={{ color: "#f87171" }}>❌ Alamat belum ditemukan. Mohon lengkapi alamat (kecamatan/kabupaten/kode pos).</span>
+                                    )}
+                                </div>
 
                                 <SectionLabel>Ringkasan Pesanan</SectionLabel>
                                 <InfoBox>
@@ -659,10 +827,19 @@ export default function PesanMakan() {
                                             Rp {grandTotal.toLocaleString("id-ID")}
                                         </span>
                                     </div>
-                                    {selectedType === "insidentil" && (
-                                        <div style={{ color: "#fbbf24", fontSize: 13, marginTop: 8 }}>
-                                            DP 50%: Rp {dp.toLocaleString("id-ID")}
+                                    {selectedType === "harian" ? (
+                                        <div style={{ color: "#34d399", fontSize: 12, marginTop: 8, fontWeight: 600 }}>
+                                            Status: Wajib Lunas 100% (catering harian tidak ada DP)
                                         </div>
+                                    ) : (
+                                        <>
+                                            <div style={{ color: "#fbbf24", fontSize: 13, marginTop: 8, fontWeight: 700 }}>
+                                                Bayar Sekarang — DP 50%: Rp {dp.toLocaleString("id-ID")}
+                                            </div>
+                                            <div style={{ color: "#64748b", fontSize: 11, marginTop: 4 }}>
+                                                Sisa 50% (Rp {dp.toLocaleString("id-ID")}) dilunasi lewat halaman Invoice setelah pesanan disetujui, paling lambat 3 hari sebelum tanggal event.
+                                            </div>
+                                        </>
                                     )}
                                 </InfoBox>
 
@@ -722,6 +899,81 @@ export default function PesanMakan() {
                                     )
                                 )}
 
+                                {/* ===== CARD BUKTI PEMBAYARAN + TIMER 15 MENIT ===== */}
+                                {payMethod && payOption && (
+                                    <div
+                                        style={{
+                                            ...styles.proofCard,
+                                            borderColor: isPaymentExpired
+                                                ? "rgba(239,68,68,0.4)"
+                                                : "rgba(59,130,246,0.25)",
+                                        }}
+                                    >
+                                        <div style={styles.proofHeader}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                                <FaImage style={{ color: "#60a5fa" }} />
+                                                <span style={{ color: "#fff", fontSize: 13, fontWeight: 700 }}>
+                                                    Bukti Pembayaran
+                                                </span>
+                                            </div>
+                                            <div
+                                                style={{
+                                                    ...styles.proofTimer,
+                                                    color: isPaymentExpired ? "#f87171" : "#fbbf24",
+                                                    borderColor: isPaymentExpired
+                                                        ? "rgba(239,68,68,0.35)"
+                                                        : "rgba(251,191,36,0.3)",
+                                                }}
+                                            >
+                                                <FaHourglassHalf style={{ fontSize: 11 }} />
+                                                {formatTimeLeft(timeLeft)}
+                                            </div>
+                                        </div>
+
+                                        <div style={{ color: "#94a3b8", fontSize: 11.5, marginBottom: 10 }}>
+                                            Transfer <strong style={{ color: "#fbbf24" }}>Rp {jumlahYangHarusDibayarSekarang.toLocaleString("id-ID")}</strong> ke{" "}
+                                            {[...bankAccounts, ...ewalletAccounts].find((a) => a.id === payOption)?.provider_name}, lalu unggah foto/screenshot bukti transfer dalam waktu 15 menit.
+                                        </div>
+
+                                        {isPaymentExpired ? (
+                                            <div style={styles.proofExpiredBox}>
+                                                <FaExclamationTriangle style={{ color: "#f87171" }} />
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{ color: "#f87171", fontSize: 12, fontWeight: 700 }}>
+                                                        Waktu pembayaran habis
+                                                    </div>
+                                                    <div style={{ color: "#64748b", fontSize: 11, marginTop: 2 }}>
+                                                        Silakan pilih ulang metode pembayaran untuk memulai timer baru.
+                                                    </div>
+                                                </div>
+                                                <button onClick={handleRestartPaymentTimer} style={styles.proofRestartBtn}>
+                                                    Ulangi
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                {buktiBayarPreview ? (
+                                                    <div style={styles.proofPreviewWrap}>
+                                                        <img src={buktiBayarPreview} alt="Bukti Pembayaran" style={styles.proofPreviewImg} />
+                                                        <label style={styles.proofChangeBtn}>
+                                                            Ganti Foto
+                                                            <input type="file" accept="image/*" onChange={handleBuktiBayarChange} style={{ display: "none" }} />
+                                                        </label>
+                                                    </div>
+                                                ) : (
+                                                    <label style={styles.proofUploadBox}>
+                                                        <FaUpload style={{ fontSize: 18, color: "#60a5fa", marginBottom: 6 }} />
+                                                        <span style={{ color: "#94a3b8", fontSize: 12 }}>
+                                                            Klik untuk unggah foto bukti pembayaran
+                                                        </span>
+                                                        <input type="file" accept="image/*" onChange={handleBuktiBayarChange} style={{ display: "none" }} />
+                                                    </label>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                )}
+
                                 <FormInput
                                     label="Catatan (opsional)"
                                     value={form.catatan}
@@ -729,8 +981,8 @@ export default function PesanMakan() {
                                     placeholder="Tidak pedas, alergi kacang..."
                                 />
 
-                                <button onClick={handleSubmit} style={styles.submitBtn}>
-                                    <FaShoppingCart /> Kirim Pesanan
+                                <button onClick={handleSubmit} disabled={submitting} style={{ ...styles.submitBtn, opacity: submitting ? 0.6 : 1 }}>
+                                    <FaShoppingCart /> {submitting ? "Mengirim..." : "Kirim Pesanan"}
                                 </button>
                             </>
                         )}
@@ -1320,6 +1572,83 @@ const styles = {
         color: "#475569",
         fontSize: 12,
         marginBottom: 14,
+    },
+    proofCard: {
+        background: "#0d1117",
+        border: "1px solid rgba(59,130,246,0.25)",
+        borderRadius: 14,
+        padding: "14px",
+        marginBottom: 14,
+    },
+    proofHeader: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: 8,
+    },
+    proofTimer: {
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        border: "1px solid rgba(251,191,36,0.3)",
+        borderRadius: 10,
+        padding: "4px 10px",
+        fontSize: 12,
+        fontWeight: 700,
+        fontFamily: "monospace",
+    },
+    proofUploadBox: {
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        height: 110,
+        border: "1.5px dashed rgba(255,255,255,0.12)",
+        borderRadius: 12,
+        cursor: "pointer",
+        background: "rgba(255,255,255,0.02)",
+    },
+    proofPreviewWrap: {
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+    },
+    proofPreviewImg: {
+        width: 72,
+        height: 72,
+        borderRadius: 10,
+        objectFit: "cover",
+        border: "1px solid rgba(255,255,255,0.08)",
+    },
+    proofChangeBtn: {
+        background: "rgba(59,130,246,0.12)",
+        border: "1px solid rgba(59,130,246,0.25)",
+        color: "#60a5fa",
+        borderRadius: 10,
+        padding: "8px 12px",
+        fontSize: 11,
+        fontWeight: 600,
+        cursor: "pointer",
+    },
+    proofExpiredBox: {
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        background: "rgba(239,68,68,0.08)",
+        border: "1px solid rgba(239,68,68,0.2)",
+        borderRadius: 10,
+        padding: "10px 12px",
+    },
+    proofRestartBtn: {
+        background: "rgba(239,68,68,0.15)",
+        border: "1px solid rgba(239,68,68,0.3)",
+        color: "#f87171",
+        borderRadius: 8,
+        padding: "6px 10px",
+        fontSize: 11,
+        fontWeight: 700,
+        cursor: "pointer",
+        flexShrink: 0,
     },
     submitBtn: {
         width: "100%",

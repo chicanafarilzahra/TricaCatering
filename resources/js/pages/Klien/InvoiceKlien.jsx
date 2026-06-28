@@ -102,7 +102,6 @@ function PrimaryBtn({ children, onClick, disabled, loading, variant = "blue", st
     );
 }
 
-/* Card matching Home.jsx gradient */
 function GCard({ children, style: s }) {
     return (
         <div style={{
@@ -182,7 +181,6 @@ function ViewDaftar({ invoices, loading, onDetail, totalTagihan }) {
                     width: "200px", height: "200px", borderRadius: "999px",
                     background: "rgba(139,92,246,0.1)", filter: "blur(70px)", pointerEvents: "none",
                 }} />
-
                 <div style={{ position: "relative", zIndex: 2 }}>
                     <div style={{
                         display: "inline-flex", alignItems: "center", gap: "8px",
@@ -198,7 +196,6 @@ function ViewDaftar({ invoices, loading, onDetail, totalTagihan }) {
                         }} />
                         Invoice &amp; Pembayaran
                     </div>
-
                     <h1 style={{
                         margin: 0, fontSize: "clamp(28px, 3.5vw, 42px)", lineHeight: 1.15,
                         color: "white", fontWeight: "800", letterSpacing: "-1.5px",
@@ -212,7 +209,6 @@ function ViewDaftar({ invoices, loading, onDetail, totalTagihan }) {
                             Catering Anda 🧾
                         </span>
                     </h1>
-
                     <p style={{
                         margin: "16px 0 0", color: "#64748b",
                         fontSize: "15px", lineHeight: "1.8", maxWidth: "520px",
@@ -273,7 +269,6 @@ function ViewDaftar({ invoices, loading, onDetail, totalTagihan }) {
 
             {/* ── TABLE CARD ── */}
             <GCard>
-                {/* Table header with filter tabs */}
                 <div style={{ padding: "24px 28px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                     <h2 style={{ margin: "0 0 18px", color: "white", fontSize: "18px", fontWeight: "700", letterSpacing: "-0.3px" }}>
                         Daftar Invoice
@@ -315,7 +310,7 @@ function ViewDaftar({ invoices, loading, onDetail, totalTagihan }) {
                         <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "700px" }}>
                             <thead>
                                 <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                                    {["Invoice ID", "Tanggal", "Jatuh Tempo", "Layanan", "Total", "Status", "Aksi"].map(h => (
+                                    {["Invoice ID", "Tanggal", "Jatuh Tempo", "Layanan", "Tipe", "Total", "Status", "Aksi"].map(h => (
                                         <th key={h} style={{
                                             padding: "14px 20px", textAlign: "left",
                                             color: "#475569", fontSize: "11px", fontWeight: "700",
@@ -353,6 +348,20 @@ function ViewDaftar({ invoices, loading, onDetail, totalTagihan }) {
                                                 {inv.order?.catering_package?.name || inv.order?.menu?.name || "Catering"}
                                             </div>
                                         </td>
+                                        {/* ── KOLOM TIPE (harian / insidentil) ── */}
+                                        <td style={tdStyle}>
+                                            <span style={{
+                                                display: "inline-flex", alignItems: "center",
+                                                padding: "4px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: "700",
+                                                background: inv.order?.type === "harian"
+                                                    ? "rgba(59,130,246,0.1)" : "rgba(139,92,246,0.1)",
+                                                color: inv.order?.type === "harian" ? "#60a5fa" : "#a78bfa",
+                                                border: `1px solid ${inv.order?.type === "harian" ? "rgba(59,130,246,0.2)" : "rgba(139,92,246,0.2)"}`,
+                                                textTransform: "capitalize",
+                                            }}>
+                                                {inv.order?.type || "—"}
+                                            </span>
+                                        </td>
                                         <td style={tdStyle}>
                                             <span style={{ color: "#34d399", fontWeight: "700", fontSize: "14px" }}>{fmt(inv.total_amount)}</span>
                                         </td>
@@ -378,7 +387,7 @@ function ViewDaftar({ invoices, loading, onDetail, totalTagihan }) {
                                     </tr>
                                 )) : (
                                     <tr>
-                                        <td colSpan={7} style={{ padding: "64px 20px", textAlign: "center" }}>
+                                        <td colSpan={8} style={{ padding: "64px 20px", textAlign: "center" }}>
                                             <div style={{
                                                 width: "56px", height: "56px", borderRadius: "16px",
                                                 background: "rgba(255,255,255,0.04)",
@@ -417,9 +426,13 @@ function ViewDaftar({ invoices, loading, onDetail, totalTagihan }) {
 ══════════════════════════════════════════════════════════ */
 
 function ViewDetail({ invoice, onBack, onBayar, onRiwayat }) {
+    // ── Deteksi tipe order ──
+    const isHarian    = invoice.order?.type === "harian";
     const isPelunasan = invoice.status === "dp_paid";
     const isUnpaid    = invoice.status === "unpaid";
-    const canPay      = isUnpaid || isPelunasan;
+
+    // Harian = sudah lunas saat pesan, tidak perlu bayar lagi lewat invoice
+    const canPay = !isHarian && (isUnpaid || isPelunasan);
 
     const dpAmount    = invoice.dp_amount || 0;
     const totalAmount = invoice.total_amount || 0;
@@ -476,9 +489,25 @@ function ViewDetail({ invoice, onBack, onBayar, onRiwayat }) {
                             </div>
                         </div>
                         <Divider />
-                        <div>
-                            <div style={{ color: "#64748b", fontSize: "12px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px" }}>Referensi</div>
-                            <div style={{ fontWeight: "600", color: "white" }}>{invoice.order?.event_name || invoice.description || "—"}</div>
+                        {/* Tipe catering */}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div>
+                                <div style={{ color: "#64748b", fontSize: "12px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px" }}>Tipe Catering</div>
+                                <span style={{
+                                    display: "inline-flex", alignItems: "center",
+                                    padding: "5px 12px", borderRadius: "7px", fontSize: "13px", fontWeight: "700",
+                                    background: isHarian ? "rgba(59,130,246,0.1)" : "rgba(139,92,246,0.1)",
+                                    color: isHarian ? "#60a5fa" : "#a78bfa",
+                                    border: `1px solid ${isHarian ? "rgba(59,130,246,0.2)" : "rgba(139,92,246,0.2)"}`,
+                                    textTransform: "capitalize",
+                                }}>
+                                    {invoice.order?.type || "—"}
+                                </span>
+                            </div>
+                            <div>
+                                <div style={{ color: "#64748b", fontSize: "12px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px" }}>Referensi</div>
+                                <div style={{ fontWeight: "600", color: "white" }}>{invoice.order?.event_name || invoice.description || "—"}</div>
+                            </div>
                         </div>
                     </GCard>
 
@@ -536,15 +565,59 @@ function ViewDetail({ invoice, onBack, onBayar, onRiwayat }) {
                         <RowFlex label="Pajak (11%)" value={fmt(invoice.tax_amount || totalAmount - totalAmount / 1.11)} />
                         <Divider />
                         <RowFlex label="Total" value={fmt(totalAmount)} bold />
-                        {dpAmount > 0 && (
+                        {/* Harian: tampilkan lunas, Insidentil: tampilkan DP & sisa */}
+                        {isHarian ? (
+                            <>
+                                <Divider />
+                                <RowFlex label="Dibayar Lunas" value={fmt(invoice.order?.amount_paid || totalAmount)} color="#34d399" bold />
+                                <RowFlex label="Sisa Tagihan" value={fmt(0)} color="#34d399" />
+                            </>
+                        ) : dpAmount > 0 ? (
                             <>
                                 <RowFlex label="DP Terbayar" value={`- ${fmt(dpAmount)}`} color="#34d399" />
                                 <Divider />
                                 <RowFlex label="Sisa Pembayaran" value={fmt(remaining)} bold color={remaining > 0 ? "#fbbf24" : "#34d399"} />
                             </>
-                        )}
+                        ) : null}
                     </GCard>
 
+                    {/* ── HARIAN: info lunas + bukti bayar ── */}
+                    {isHarian && (
+                        <div style={{
+                            background: "rgba(16,185,129,0.08)",
+                            border: "1px solid rgba(16,185,129,0.2)",
+                            borderRadius: "14px", padding: "18px",
+                        }}>
+                            <div style={{
+                                display: "flex", alignItems: "center", gap: "8px",
+                                color: "#34d399", fontWeight: "700", fontSize: "14px", marginBottom: "10px",
+                            }}>
+                                <CheckCircle2 size={16} /> Pembayaran Lunas
+                            </div>
+                            <div style={{ color: "#64748b", fontSize: "13px", lineHeight: "1.7", marginBottom: "14px" }}>
+                                Catering harian telah dibayar lunas saat pemesanan. Tidak ada tagihan tambahan.
+                            </div>
+                            {invoice.order?.payment_proof && (
+                                <a
+                                    href={`/storage/${invoice.order.payment_proof}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={{
+                                        display: "inline-flex", alignItems: "center", gap: "6px",
+                                        color: "#60a5fa", fontSize: "13px", fontWeight: "600",
+                                        textDecoration: "none",
+                                        background: "rgba(59,130,246,0.08)",
+                                        border: "1px solid rgba(59,130,246,0.2)",
+                                        padding: "8px 14px", borderRadius: "10px",
+                                    }}
+                                >
+                                    <Eye size={13} /> Lihat Bukti Pembayaran
+                                </a>
+                            )}
+                        </div>
+                    )}
+
+                    {/* ── INSIDENTIL: tombol bayar & warning ── */}
                     {canPay && (
                         <PrimaryBtn variant="green" onClick={() => onBayar(invoice)} style={{ width: "100%", padding: "14px", fontSize: "15px" }}>
                             <Wallet size={16} />
@@ -574,7 +647,7 @@ function ViewDetail({ invoice, onBack, onBayar, onRiwayat }) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   VIEW 3 — PROSES PEMBAYARAN
+   VIEW 3 — PROSES PEMBAYARAN (hanya untuk insidentil)
 ══════════════════════════════════════════════════════════ */
 
 function ViewPembayaran({ invoice, onBack, onSuccess }) {
@@ -827,7 +900,6 @@ function ViewKonfirmasi({ invoice, onLihatInvoice, onBack }) {
     return (
         <div style={{ maxWidth: "520px", margin: "0 auto", paddingTop: "40px" }}>
             <GCard style={{ padding: "48px 40px", textAlign: "center" }}>
-                {/* Glow */}
                 <div style={{
                     position: "relative",
                     width: "90px", height: "90px", borderRadius: "50%",
@@ -890,6 +962,8 @@ function ViewRiwayat({ invoice, onBack }) {
     const [payments, setPayments] = useState([]);
     const [loading, setLoading]   = useState(true);
 
+    const isHarian = invoice.order?.type === "harian";
+
     useEffect(() => {
         const doFetch = async () => {
             try {
@@ -901,12 +975,19 @@ function ViewRiwayat({ invoice, onBack }) {
         doFetch();
     }, [invoice.id]);
 
-    const timeline = [
-        { label: "Invoice Dibuat",        desc: "Invoice telah dibuat dan dikirim ke Anda.", time: invoice.created_at, done: true },
-        { label: "Pembayaran Diterima",   desc: "Pembayaran diterima, menunggu verifikasi.", time: payments[0]?.created_at, done: payments.length > 0 },
-        { label: "Menunggu Konfirmasi",   desc: "Pembayaran sedang dikonfirmasi oleh tim.", time: payments.find(p => p.status === "pending")?.updated_at, done: ["pending","confirmed","paid","selesai"].includes(invoice.status) },
-        { label: "Pembayaran Berhasil",   desc: "Invoice dinyatakan lunas.", time: payments.find(p => p.status === "confirmed")?.updated_at, done: ["paid","selesai"].includes(invoice.status) },
-    ];
+    const timeline = isHarian
+        ? [
+            { label: "Invoice Dibuat",      desc: "Invoice telah dibuat dan dikirim ke Anda.",         time: invoice.created_at, done: true },
+            { label: "Pembayaran Lunas",    desc: "Dibayar lunas saat pemesanan.",                      time: invoice.order?.order_date, done: true },
+            { label: "Menunggu Konfirmasi", desc: "Pembayaran sedang dikonfirmasi oleh tim.",           time: null, done: ["paid","selesai"].includes(invoice.status) },
+            { label: "Selesai",             desc: "Invoice dinyatakan lunas dan pesanan berjalan.",     time: null, done: ["paid","selesai"].includes(invoice.status) },
+          ]
+        : [
+            { label: "Invoice Dibuat",        desc: "Invoice telah dibuat dan dikirim ke Anda.",           time: invoice.created_at, done: true },
+            { label: "DP Diterima",           desc: "DP 50% diterima, menunggu verifikasi.",              time: payments.find(p => p.type === "dp")?.created_at || invoice.order?.order_date, done: invoice.dp_amount > 0 },
+            { label: "Menunggu Pelunasan",    desc: "Silakan lunasi sisa 50% sebelum jatuh tempo.",       time: null, done: ["dp_paid","paid","selesai"].includes(invoice.status) },
+            { label: "Pelunasan Diterima",    desc: "Pembayaran penuh dikonfirmasi.",                     time: payments.find(p => p.type === "pelunasan" && p.status === "confirmed")?.updated_at, done: ["paid","selesai"].includes(invoice.status) },
+          ];
 
     return (
         <div>
@@ -930,6 +1011,14 @@ function ViewRiwayat({ invoice, onBack }) {
                                 <div style={{ fontWeight: "700", color: "#60a5fa", marginBottom: "4px" }}>{invoice.invoice_number || `INV-${invoice.id}`}</div>
                                 <div style={{ color: "#64748b", fontSize: "13px" }}>
                                     Total: <strong style={{ color: "white" }}>{fmt(invoice.total_amount)}</strong>
+                                    {" · "}
+                                    <span style={{
+                                        fontSize: "11px", fontWeight: "700",
+                                        color: isHarian ? "#60a5fa" : "#a78bfa",
+                                        textTransform: "capitalize",
+                                    }}>
+                                        {invoice.order?.type || ""}
+                                    </span>
                                 </div>
                             </div>
                             <Badge status={invoice.status} size="lg" />
@@ -980,8 +1069,45 @@ function ViewRiwayat({ invoice, onBack }) {
                         )}
                     </GCard>
 
-                    {/* Detail payments */}
-                    {payments.length > 0 && (
+                    {/* ── Detail pembayaran harian: dari order ── */}
+                    {isHarian && invoice.order?.payment_proof && (
+                        <GCard style={{ overflow: "hidden" }}>
+                            <div style={{ padding: "20px 24px", borderBottom: "1px solid rgba(255,255,255,0.05)", fontWeight: "700", fontSize: "16px" }}>
+                                Detail Pembayaran
+                            </div>
+                            <div style={{ padding: "20px 24px" }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+                                    <div style={{ fontWeight: "700", fontSize: "15px" }}>Pembayaran Lunas</div>
+                                    <Badge status="paid" />
+                                </div>
+                                <RowFlex label="Jumlah" value={fmt(invoice.order?.amount_paid || invoice.total_amount)} bold />
+                                <RowFlex label="Metode" value={invoice.order?.payment_method === "bank" ? "Transfer Bank" : "E-Wallet"} />
+                                <RowFlex label="Provider" value={invoice.order?.payment_provider || "—"} />
+                                <RowFlex label="No. Rekening / Akun" value={invoice.order?.payment_account_number || "—"} />
+                                <RowFlex label="Tanggal" value={invoice.order?.order_date ? new Date(invoice.order.order_date).toLocaleDateString("id-ID") : "—"} />
+                                <div style={{ marginTop: "12px" }}>
+                                    <a
+                                        href={`/storage/${invoice.order.payment_proof}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        style={{
+                                            display: "inline-flex", alignItems: "center", gap: "6px",
+                                            color: "#60a5fa", fontSize: "13px", fontWeight: "600",
+                                            textDecoration: "none",
+                                            background: "rgba(59,130,246,0.08)",
+                                            border: "1px solid rgba(59,130,246,0.2)",
+                                            padding: "8px 14px", borderRadius: "10px",
+                                        }}
+                                    >
+                                        <Eye size={13} /> Lihat Bukti Transfer
+                                    </a>
+                                </div>
+                            </div>
+                        </GCard>
+                    )}
+
+                    {/* ── Detail pembayaran insidentil: dari tabel payments ── */}
+                    {!isHarian && payments.length > 0 && (
                         <GCard style={{ overflow: "hidden" }}>
                             <div style={{ padding: "20px 24px", borderBottom: "1px solid rgba(255,255,255,0.05)", fontWeight: "700", fontSize: "16px" }}>
                                 Detail Pembayaran
@@ -990,18 +1116,26 @@ function ViewRiwayat({ invoice, onBack }) {
                                 <div key={i} style={{ padding: "20px 24px", borderBottom: i < payments.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
                                         <div style={{ fontWeight: "700" }}>
-                                            {p.type === "dp" ? "Uang Muka (DP)" : p.type === "pelunasan" ? "Pelunasan" : "Pembayaran Penuh"}
+                                            {p.type === "dp" ? "Uang Muka (DP 50%)" : p.type === "pelunasan" ? "Pelunasan (50%)" : "Pembayaran Penuh"}
                                         </div>
                                         <Badge status={p.status === "confirmed" ? "paid" : "pending"} />
                                     </div>
-                                    <RowFlex label="Jumlah"       value={fmt(p.amount)}                                           bold />
+                                    <RowFlex label="Jumlah"       value={fmt(p.amount)} bold />
                                     <RowFlex label="Metode"       value={p.payment_channel?.bank_name || p.payment_channel?.wallet_name || "—"} />
                                     <RowFlex label="Rekening/No." value={p.payment_channel?.account_number || "—"} />
                                     <RowFlex label="Tanggal"      value={p.created_at ? new Date(p.created_at).toLocaleDateString("id-ID") : "—"} />
                                     {p.proof_url && (
                                         <div style={{ marginTop: "10px" }}>
                                             <a href={p.proof_url} target="_blank" rel="noreferrer"
-                                                style={{ color: "#60a5fa", fontSize: "13px", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                                                style={{
+                                                    color: "#60a5fa", fontSize: "13px",
+                                                    display: "inline-flex", alignItems: "center", gap: "6px",
+                                                    textDecoration: "none",
+                                                    background: "rgba(59,130,246,0.08)",
+                                                    border: "1px solid rgba(59,130,246,0.2)",
+                                                    padding: "8px 14px", borderRadius: "10px",
+                                                    fontWeight: "600",
+                                                }}>
                                                 <Eye size={13} /> Lihat Bukti Transfer
                                             </a>
                                         </div>
@@ -1016,15 +1150,25 @@ function ViewRiwayat({ invoice, onBack }) {
                 <div>
                     <GCard style={{ padding: "24px", position: "sticky", top: "20px" }}>
                         <div style={{ fontWeight: "700", fontSize: "16px", marginBottom: "16px" }}>Ringkasan</div>
-                        <RowFlex label="Total Invoice"  value={fmt(invoice.total_amount)} />
-                        <RowFlex label="DP Terbayar"    value={fmt(invoice.dp_amount || 0)}  color="#34d399" />
-                        <RowFlex label="Pelunasan"      value={fmt(payments.filter(p => p.type === "pelunasan" && p.status === "confirmed").reduce((a, p) => a + parseFloat(p.amount || 0), 0))} color="#34d399" />
-                        <Divider />
-                        <RowFlex
-                            label="Sisa Tagihan"
-                            value={fmt(Math.max(0, invoice.total_amount - (invoice.dp_amount || 0) - payments.filter(p => p.type !== "dp" && p.status === "confirmed").reduce((a, p) => a + parseFloat(p.amount || 0), 0)))}
-                            bold color="#fbbf24"
-                        />
+                        <RowFlex label="Total Invoice" value={fmt(invoice.total_amount)} />
+                        {isHarian ? (
+                            <>
+                                <RowFlex label="Dibayar Lunas" value={fmt(invoice.order?.amount_paid || invoice.total_amount)} color="#34d399" />
+                                <Divider />
+                                <RowFlex label="Sisa Tagihan" value={fmt(0)} bold color="#34d399" />
+                            </>
+                        ) : (
+                            <>
+                                <RowFlex label="DP Terbayar"  value={fmt(invoice.dp_amount || 0)} color="#34d399" />
+                                <RowFlex label="Pelunasan"    value={fmt(payments.filter(p => p.type === "pelunasan" && p.status === "confirmed").reduce((a, p) => a + parseFloat(p.amount || 0), 0))} color="#34d399" />
+                                <Divider />
+                                <RowFlex
+                                    label="Sisa Tagihan"
+                                    value={fmt(Math.max(0, invoice.total_amount - (invoice.dp_amount || 0) - payments.filter(p => p.type !== "dp" && p.status === "confirmed").reduce((a, p) => a + parseFloat(p.amount || 0), 0)))}
+                                    bold color="#fbbf24"
+                                />
+                            </>
+                        )}
                     </GCard>
                 </div>
             </div>
@@ -1037,10 +1181,10 @@ function ViewRiwayat({ invoice, onBack }) {
 ══════════════════════════════════════════════════════════ */
 
 export default function InvoiceKlien() {
-    const [invoices, setInvoices]     = useState([]);
+    const [invoices, setInvoices]         = useState([]);
     const [totalTagihan, setTotalTagihan] = useState(0);
-    const [loading, setLoading]       = useState(true);
-    const [view, setView]             = useState("daftar");
+    const [loading, setLoading]           = useState(true);
+    const [view, setView]                 = useState("daftar");
     const [activeInvoice, setActiveInvoice] = useState(null);
 
     useEffect(() => {
@@ -1059,60 +1203,32 @@ export default function InvoiceKlien() {
         finally { setLoading(false); }
     };
 
-    const handleDetail   = (inv) => { setActiveInvoice(inv); setView("detail"); };
-    const handleBayar    = (inv) => { setActiveInvoice(inv); setView("bayar"); };
-    const handleSuccess  = (inv) => { setActiveInvoice(inv); setView("konfirmasi"); loadInvoices(); };
-    const handleRiwayat  = ()    => setView("riwayat");
-    const goBack         = ()    => setView("daftar");
-    const goDetail       = ()    => setView("detail");
+    const handleDetail  = (inv) => { setActiveInvoice(inv); setView("detail"); };
+    const handleBayar   = (inv) => { setActiveInvoice(inv); setView("bayar"); };
+    const handleSuccess = (inv) => { setActiveInvoice(inv); setView("konfirmasi"); loadInvoices(); };
+    const handleRiwayat = ()    => setView("riwayat");
+    const goBack        = ()    => setView("daftar");
+    const goDetail      = ()    => setView("detail");
 
     return (
         <div style={{ minHeight: "100vh", background: "#020817", color: "white" }}>
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-
-                .inv-wrap * {
-                    font-family: 'Inter', system-ui, sans-serif;
-                    box-sizing: border-box;
-                }
-
-                @keyframes spin {
-                    from { transform: rotate(0deg); }
-                    to   { transform: rotate(360deg); }
-                }
-
-                @keyframes pulse {
-                    0%, 100% { opacity: 1; }
-                    50%      { opacity: 0.4; }
-                }
-
-                textarea:focus, input:focus {
-                    outline: 1px solid rgba(59,130,246,0.5) !important;
-                }
-
-                @media (max-width: 860px) {
-                    .inv-two-col { grid-template-columns: 1fr !important; }
-                }
+                .inv-wrap * { font-family: 'Inter', system-ui, sans-serif; box-sizing: border-box; }
+                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+                @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+                textarea:focus, input:focus { outline: 1px solid rgba(59,130,246,0.5) !important; }
+                @media (max-width: 860px) { .inv-two-col { grid-template-columns: 1fr !important; } }
             `}</style>
 
             <NavbarKlien />
 
             <div className="inv-wrap" style={{ padding: "30px", maxWidth: "1400px", margin: "0 auto" }}>
-                {view === "daftar" && (
-                    <ViewDaftar invoices={invoices} loading={loading} totalTagihan={totalTagihan} onDetail={handleDetail} />
-                )}
-                {view === "detail" && activeInvoice && (
-                    <ViewDetail invoice={activeInvoice} onBack={goBack} onBayar={handleBayar} onRiwayat={handleRiwayat} />
-                )}
-                {view === "bayar" && activeInvoice && (
-                    <ViewPembayaran invoice={activeInvoice} onBack={goDetail} onSuccess={handleSuccess} />
-                )}
-                {view === "konfirmasi" && activeInvoice && (
-                    <ViewKonfirmasi invoice={activeInvoice} onLihatInvoice={goDetail} onBack={goBack} />
-                )}
-                {view === "riwayat" && activeInvoice && (
-                    <ViewRiwayat invoice={activeInvoice} onBack={goDetail} />
-                )}
+                {view === "daftar"     && <ViewDaftar invoices={invoices} loading={loading} totalTagihan={totalTagihan} onDetail={handleDetail} />}
+                {view === "detail"     && activeInvoice && <ViewDetail invoice={activeInvoice} onBack={goBack} onBayar={handleBayar} onRiwayat={handleRiwayat} />}
+                {view === "bayar"      && activeInvoice && <ViewPembayaran invoice={activeInvoice} onBack={goDetail} onSuccess={handleSuccess} />}
+                {view === "konfirmasi" && activeInvoice && <ViewKonfirmasi invoice={activeInvoice} onLihatInvoice={goDetail} onBack={goBack} />}
+                {view === "riwayat"   && activeInvoice && <ViewRiwayat invoice={activeInvoice} onBack={goDetail} />}
             </div>
         </div>
     );

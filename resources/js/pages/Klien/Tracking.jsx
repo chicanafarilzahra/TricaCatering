@@ -1,465 +1,748 @@
-import { useState, useEffect, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import { useState, useEffect, useMemo } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import Echo from "laravel-echo";
 import Pusher from "pusher-js";
-import markerIconPng from "leaflet/dist/images/marker-icon.png";
-import markerShadowPng from "leaflet/dist/images/marker-shadow.png";
+import NavbarKlien from "../../components/NavbarKlien";
 
-// ── Fix icon Leaflet ──────────────────────────────────────────
-const defaultIcon = L.icon({
-    iconUrl: markerIconPng,
-    shadowUrl: markerShadowPng,
-    iconAnchor: [12, 41],
-});
-L.Marker.prototype.options.icon = defaultIcon;
-
-// Ikon kurir — titik biru bergerak
-const kurirIcon = L.divIcon({
-    html: `<div style="
-        background:#2563eb;width:18px;height:18px;
-        border-radius:50%;border:3px solid white;
-        box-shadow:0 2px 8px rgba(37,99,235,0.5)">
-    </div>`,
-    className: "",
-    iconAnchor: [9, 9],
-});
-
-// Ikon dapur — kotak oranye
-const dapurIcon = L.divIcon({
-    html: `<div style="
-        background:#ea580c;width:16px;height:16px;
-        border-radius:4px;border:3px solid white;
-        box-shadow:0 0 6px rgba(0,0,0,0.4)">
-    </div>`,
-    className: "",
-    iconAnchor: [8, 8],
-});
-
-axios.defaults.baseURL = "/api";
-axios.defaults.headers.common["Authorization"] =
-    `Bearer ${localStorage.getItem("auth_token")}`;
-axios.defaults.headers.common["X-Requested-With"] = "XMLHttpRequest";
-
-// ── Setup Laravel Echo + Reverb ───────────────────────────────
+// ════════════════════════════════════════════════════════════
+// SETUP LARAVEL ECHO + REVERB (singleton)
+// ════════════════════════════════════════════════════════════
 window.Pusher = Pusher;
 
-const echo = new Echo({
-    broadcaster:       "reverb",
-    key:               import.meta.env.VITE_REVERB_APP_KEY,
-    wsHost:            import.meta.env.VITE_REVERB_HOST ?? window.location.hostname,
-    wsPort:            import.meta.env.VITE_REVERB_PORT ?? 8080,
-    wssPort:           import.meta.env.VITE_REVERB_PORT ?? 8080,
-    forceTLS:          (import.meta.env.VITE_REVERB_SCHEME ?? "http") === "https",
-    enabledTransports: ["ws", "wss"],
-    authEndpoint:      "/broadcasting/auth",
-    auth: {
-        headers: {
-            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+let echoInstance = null;
+function getEcho() {
+    if (echoInstance) return echoInstance;
+
+    echoInstance = new Echo({
+        broadcaster:       "reverb",
+        key:               import.meta.env.VITE_REVERB_APP_KEY,
+        wsHost:            import.meta.env.VITE_REVERB_HOST ?? window.location.hostname,
+        wsPort:            import.meta.env.VITE_REVERB_PORT ?? 8080,
+        wssPort:           import.meta.env.VITE_REVERB_PORT ?? 8080,
+        forceTLS:          (import.meta.env.VITE_REVERB_SCHEME ?? "http") === "https",
+        enabledTransports: ["ws", "wss"],
+        authEndpoint:      "/broadcasting/auth",
+        auth: {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+            },
         },
-    },
-});
+    });
 
-// ════════════════════════════════════════════════════════════
-// Auto fitBounds — marker kurir + klien selalu terlihat
-// ════════════════════════════════════════════════════════════
-function MapBoundsAdjuster({ kurirPos, klienPos }) {
-    const map     = useMap();
-    const isFirst = useRef(true);
-
-    useEffect(() => {
-        if (!kurirPos || !klienPos) return;
-
-        const bounds = L.latLngBounds([kurirPos, klienPos]);
-
-        if (isFirst.current) {
-            map.fitBounds(bounds, { padding: [60, 60] });
-            isFirst.current = false;
-        } else {
-            map.flyToBounds(bounds, {
-                padding:       [60, 60],
-                duration:      0.8,
-                easeLinearity: 0.5,
-            });
-        }
-    }, [map, kurirPos?.[0], kurirPos?.[1], klienPos?.[0], klienPos?.[1]]);
-
-    return null;
+    return echoInstance;
 }
 
 // ════════════════════════════════════════════════════════════
-// KOMPONEN UTAMA
-// Props: orderId (number) — dari Inertia props atau useParams
+// STYLE TOKENS — selaras dengan PesananSaya.jsx
 // ════════════════════════════════════════════════════════════
-export default function TrackingPage({ orderId }) {
-    const [order, setOrder]       = useState(null);
-    const [loading, setLoading]   = useState(true);
-    const [error, setError]       = useState(null);
-    const [kurirPos, setKurirPos] = useState(null);
-    const [wsStatus, setWsStatus] = useState("connecting");
+const COLOR = {
+    bgPage:     "#0B1220",
+    bgCard:     "#111827",
+    bgCardSoft: "rgba(255,255,255,0.03)",
+    border:     "rgba(255,255,255,0.08)",
+    borderSoft: "rgba(255,255,255,0.06)",
+    text:       "#E5E7EB",
+    textDim:    "#9CA3AF",
+    textFaint:  "#6B7280",
+    blue:       "#3B82F6",
+    purple:     "#8B5CF6",
+    green:      "#22C55E",
+    orange:     "#F59E0B",
+    red:        "#EF4444",
+    line:       "rgba(255,255,255,0.10)",
+};
 
-    const pollingRef = useRef(null);
+// 4 milestone utama ditampilkan sebagai "stat card" — warna mengikuti
+// urutan biru → ungu → hijau → orange seperti di PesananSaya.jsx
+const MILESTONES = [
+    { key: "confirmed",  label: "Disetujui",  icon: "check", barColor: "#3B82F6", glow: "rgba(59,130,246,0.25)"  },
+    { key: "preparing",  label: "Diproses",   icon: "chef",  barColor: "#8B5CF6", glow: "rgba(139,92,246,0.25)"  },
+    { key: "dispatched", label: "Dikirim",    icon: "box",   barColor: "#F59E0B", glow: "rgba(245,158,11,0.25)" },
+    { key: "delivered",  label: "Selesai",    icon: "flag",  barColor: "#22C55E", glow: "rgba(34,197,94,0.25)"  },
+];
 
-    // ── 1. Load data order saat pertama buka ─────────────────
+// Step lengkap untuk timeline detail (termasuk "Dalam Perjalanan")
+const STEP_DEFS = [
+    { key: "confirmed",   title: "Pesanan Disetujui", desc: "Owner telah menyetujui pesanan.",  icon: "check", color: "#3B82F6" },
+    { key: "preparing",   title: "Diproses di Dapur",  desc: "Sedang disiapkan.",                  icon: "chef",  color: "#8B5CF6" },
+    { key: "dispatched",  title: "Pesanan Dikirim",    desc: "Kurir berangkat dari dapur.",         icon: "box",   color: "#F59E0B" },
+    { key: "on_delivery", title: "Dalam Perjalanan",   desc: "Kurir sedang menuju lokasi Anda.",    icon: "bike",  color: "#F59E0B" },
+    { key: "delivered",   title: "Pesanan Selesai",    desc: "Pesanan telah diterima.",              icon: "flag",  color: "#22C55E" },
+];
+
+const STATUS_ORDER = ["pending", "confirmed", "preparing", "dispatched", "on_delivery", "delivered"];
+const ACTIVE_STATUSES = ["pending", "confirmed", "preparing", "dispatched", "on_delivery"];
+
+function statusIndex(status) {
+    const idx = STATUS_ORDER.indexOf(status);
+    return idx === -1 ? 0 : idx;
+}
+
+// ════════════════════════════════════════════════════════════
+// ICON SET
+// ════════════════════════════════════════════════════════════
+function Icon({ name, size = 18 }) {
+    const common = { width: size, height: size, viewBox: "0 0 24 24", fill: "none" };
+    switch (name) {
+        case "check":
+            return <svg {...common}><path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+        case "chef":
+            return (
+                <svg {...common}>
+                    <path d="M6 13c0-3 1.5-5 6-5s6 2 6 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    <rect x="6" y="13" width="12" height="3.2" rx="1" fill="currentColor" />
+                    <rect x="9" y="17" width="6" height="3" rx="0.6" fill="currentColor" />
+                </svg>
+            );
+        case "box":
+            return (
+                <svg {...common}>
+                    <path d="M3 8l9-4 9 4-9 4-9-4z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                    <path d="M3 8v8l9 4 9-4V8" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                    <path d="M12 12v8" stroke="currentColor" strokeWidth="2" />
+                </svg>
+            );
+        case "bike":
+            return (
+                <svg {...common}>
+                    <circle cx="6" cy="17" r="3" stroke="currentColor" strokeWidth="2" />
+                    <circle cx="18" cy="17" r="3" stroke="currentColor" strokeWidth="2" />
+                    <path d="M6 17l4-7h4l3 7M10 10l3-4h3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+            );
+        case "flag":
+            return (
+                <svg {...common}>
+                    <path d="M6 3v18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    <path d="M6 4h11l-2.5 3.5L17 11H6" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                </svg>
+            );
+        case "truck":
+            return (
+                <svg {...common}>
+                    <path d="M3 7h11v8H3z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                    <path d="M14 11h4l3 3v1h-7z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                    <circle cx="7" cy="17" r="1.6" stroke="currentColor" strokeWidth="2" />
+                    <circle cx="17" cy="17" r="1.6" stroke="currentColor" strokeWidth="2" />
+                </svg>
+            );
+        default:
+            return null;
+    }
+}
+
+// ════════════════════════════════════════════════════════════
+// HERO — header section, gaya badge gradient seperti PesananSaya
+// ════════════════════════════════════════════════════════════
+function Hero({ orders, selectedId, onSelect }) {
+    return (
+        <div style={{
+            background: "linear-gradient(135deg, rgba(59,130,246,0.07), rgba(139,92,246,0.07))",
+            border: `1px solid ${COLOR.borderSoft}`,
+            borderRadius: 24,
+            padding: "32px 32px",
+            marginBottom: 28,
+        }}>
+            <div style={{
+                display: "inline-flex", alignItems: "center", gap: 7,
+                padding: "6px 14px", borderRadius: 999,
+                background: "rgba(59,130,246,0.12)",
+                border: "1px solid rgba(59,130,246,0.3)",
+                marginBottom: 18,
+            }}>
+                <span style={{
+                    width: 6, height: 6, borderRadius: "50%", background: COLOR.blue,
+                    animation: "trkPulse 1.6s ease-in-out infinite",
+                }} />
+                <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.08em", color: "#93C5FD" }}>
+                    LIVE TRACKING
+                </span>
+            </div>
+
+            <div style={{
+                display: "flex", flexWrap: "wrap", justifyContent: "space-between",
+                alignItems: "flex-end", gap: 20,
+            }}>
+                <div>
+                    <h1 style={{
+                        margin: 0, fontSize: 36, fontWeight: 800, color: "#fff",
+                        lineHeight: 1.15,
+                    }}>
+                        Lacak{" "}
+                        <span style={{
+                            background: "linear-gradient(90deg, #60A5FA, #A78BFA)",
+                            WebkitBackgroundClip: "text",
+                            backgroundClip: "text",
+                            color: "transparent",
+                        }}>
+                            Pesanan Anda
+                        </span>
+                    </h1>
+                    <p style={{ margin: "10px 0 0", fontSize: 14.5, color: COLOR.textDim, maxWidth: 480 }}>
+                        Pantau perjalanan pesanan Anda dari dapur hingga sampai di depan pintu, secara real-time.
+                    </p>
+                </div>
+
+                {orders.length > 1 && (
+                    <div style={{ minWidth: 220 }}>
+                        <p style={{
+                            margin: "0 0 8px", fontSize: 11, fontWeight: 700, letterSpacing: "0.08em",
+                            color: COLOR.textFaint, textTransform: "uppercase",
+                        }}>
+                            Pesanan Aktif
+                        </p>
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                            {orders.map((o) => {
+                                const active = o.id === selectedId;
+                                return (
+                                    <button
+                                        key={o.id}
+                                        onClick={() => onSelect(o.id)}
+                                        style={{
+                                            padding: "8px 14px",
+                                            borderRadius: 10,
+                                            border: active ? `1px solid ${COLOR.blue}` : `1px solid ${COLOR.border}`,
+                                            background: active ? "rgba(59,130,246,0.18)" : "rgba(255,255,255,0.04)",
+                                            color: active ? "#93C5FD" : COLOR.textDim,
+                                            fontSize: 13,
+                                            fontWeight: 700,
+                                            cursor: "pointer",
+                                        }}
+                                    >
+                                        #{o.id}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+// ════════════════════════════════════════════════════════════
+// MILESTONE CARD — versi tracking dari "stat card" PesananSaya
+// (garis warna di atas, ikon dalam kotak, judul + sub status)
+// ════════════════════════════════════════════════════════════
+function MilestoneCard({ milestone, state }) {
+    const isDone   = state === "done";
+    const isActive = state === "active";
+
+    return (
+        <div style={{
+            position: "relative",
+            background: isActive ? `linear-gradient(160deg, ${milestone.glow}, transparent)` : COLOR.bgCard,
+            border: `1px solid ${isActive ? milestone.barColor + "55" : COLOR.border}`,
+            borderRadius: 18,
+            padding: "20px 20px 18px",
+            overflow: "hidden",
+            transition: "all 0.3s ease",
+        }}>
+            <div style={{
+                position: "absolute", top: 0, left: 0, right: 0, height: 3,
+                background: isDone || isActive ? milestone.barColor : "rgba(255,255,255,0.08)",
+                transition: "background 0.3s ease",
+            }} />
+
+            <div style={{
+                width: 42, height: 42, borderRadius: 12,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                marginBottom: 14,
+                background: isDone || isActive ? milestone.barColor + "22" : "rgba(255,255,255,0.04)",
+                color: isDone || isActive ? milestone.barColor : COLOR.textFaint,
+                position: "relative",
+            }}>
+                {isActive && (
+                    <span style={{
+                        position: "absolute", inset: -3, borderRadius: 14,
+                        border: `2px solid ${milestone.barColor}`,
+                        opacity: 0.5,
+                        animation: "trkRing 1.5s ease-out infinite",
+                    }} />
+                )}
+                <Icon name={isDone ? "check" : milestone.icon} size={20} />
+            </div>
+
+            <p style={{
+                margin: 0, fontSize: 15, fontWeight: 700,
+                color: isDone || isActive ? COLOR.text : COLOR.textFaint,
+            }}>
+                {milestone.label}
+            </p>
+            <p style={{
+                margin: "4px 0 0", fontSize: 12,
+                color: isActive ? milestone.barColor : isDone ? COLOR.green : COLOR.textFaint,
+                fontWeight: isActive ? 700 : 500,
+            }}>
+                {isDone ? "Selesai" : isActive ? "Sedang berjalan…" : "Menunggu"}
+            </p>
+        </div>
+    );
+}
+
+// ════════════════════════════════════════════════════════════
+// TIMELINE STEP (detail, vertikal, di kartu utama)
+// ════════════════════════════════════════════════════════════
+function TimelineStep({ step, state, isLast }) {
+    const circleStyle = {
+        width: 36, height: 36, borderRadius: "50%",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        flexShrink: 0, position: "relative", zIndex: 1,
+        transition: "all 0.3s ease",
+        ...(state === "done" && {
+            background: `${step.color}22`, border: `2px solid ${step.color}`, color: step.color,
+        }),
+        ...(state === "active" && {
+            background: step.color, border: `2px solid ${step.color}`, color: "#fff",
+            boxShadow: `0 0 0 6px ${step.color}33`,
+        }),
+        ...(state === "upcoming" && {
+            background: "rgba(255,255,255,0.04)", border: `2px solid ${COLOR.line}`, color: COLOR.textFaint,
+        }),
+    };
+
+    return (
+        <div style={{ display: "flex", gap: 14, position: "relative" }}>
+            {!isLast && (
+                <div style={{
+                    position: "absolute", left: 17, top: 36, width: 2,
+                    height: "calc(100% - 8px)",
+                    background: state === "done" ? step.color : COLOR.line,
+                    opacity: state === "done" ? 0.5 : 1,
+                    transition: "background 0.3s ease",
+                }} />
+            )}
+
+            <div style={circleStyle}>
+                {state === "active" ? (
+                    <span style={{
+                        width: 8, height: 8, borderRadius: "50%", background: "#fff",
+                        animation: "trkPulseDot 1.4s ease-in-out infinite",
+                    }} />
+                ) : (
+                    <Icon name={state === "done" ? "check" : step.icon} />
+                )}
+            </div>
+
+            <div style={{ paddingBottom: 24, minWidth: 0 }}>
+                <p style={{
+                    margin: 0, fontSize: 14.5, fontWeight: 700,
+                    color: state === "upcoming" ? COLOR.textFaint : COLOR.text,
+                }}>{step.title}</p>
+                <p style={{
+                    margin: "3px 0 0", fontSize: 12.5,
+                    color: state === "upcoming" ? "rgba(107,114,128,0.6)" : COLOR.textDim,
+                }}>{step.desc}</p>
+            </div>
+        </div>
+    );
+}
+
+// ════════════════════════════════════════════════════════════
+// MENU ITEM ROW
+// ════════════════════════════════════════════════════════════
+function MenuItemRow({ item }) {
+    return (
+        <div style={{ display: "flex", gap: 12, padding: "10px 0", borderBottom: `1px solid ${COLOR.borderSoft}` }}>
+            <div style={{
+                width: 50, height: 50, borderRadius: 10, flexShrink: 0, overflow: "hidden",
+                background: "rgba(255,255,255,0.04)", border: `1px solid ${COLOR.borderSoft}`,
+            }}>
+                {item.gambar ? (
+                    <img
+                        src={item.gambar}
+                        alt={item.nama}
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        onError={(e) => { e.currentTarget.style.display = "none"; }}
+                    />
+                ) : (
+                    <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🍽️</div>
+                )}
+            </div>
+
+            <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                    <p style={{
+                        margin: 0, fontSize: 13.5, fontWeight: 600, color: COLOR.text,
+                        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                    }}>{item.nama}</p>
+                    {item.qty != null && (
+                        <span style={{ fontSize: 12, color: COLOR.textDim, flexShrink: 0, fontWeight: 600 }}>× {item.qty}</span>
+                    )}
+                </div>
+                {item.deskripsi && (
+                    <p style={{
+                        margin: "2px 0 0", fontSize: 12, color: COLOR.textDim,
+                        overflow: "hidden", textOverflow: "ellipsis",
+                        display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+                    }}>{item.deskripsi}</p>
+                )}
+            </div>
+        </div>
+    );
+}
+
+function formatTanggal(tanggal) {
+    if (!tanggal) return "—";
+    try {
+        return new Date(tanggal).toLocaleDateString("id-ID", {
+            weekday: "long", day: "numeric", month: "long", year: "numeric",
+        });
+    } catch {
+        return tanggal;
+    }
+}
+
+function formatJam(jam) {
+    if (!jam) return "—";
+    return String(jam).substring(0, 5);
+}
+
+function InfoRow({ label, value, icon }) {
+    return (
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0" }}>
+            <div style={{
+                width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+                background: "rgba(255,255,255,0.05)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: COLOR.textDim, fontSize: 14,
+            }}>
+                {icon}
+            </div>
+            <div>
+                <p style={{ margin: 0, fontSize: 11.5, color: COLOR.textFaint }}>{label}</p>
+                <p style={{ margin: "1px 0 0", fontSize: 13.5, fontWeight: 600, color: COLOR.text }}>{value}</p>
+            </div>
+        </div>
+    );
+}
+
+// ════════════════════════════════════════════════════════════
+// KARTU UTAMA TRACKING UNTUK SATU ORDER
+// ════════════════════════════════════════════════════════════
+function TrackingDetail({ order, onStatusChange }) {
     useEffect(() => {
-        if (!orderId) return;
+        if (!order?.id) return;
 
-        const loadOrder = async () => {
-            try {
-                const { data } = await axios.get(`/orders/${orderId}`);
-                const o = data.data;
-                setOrder(o);
+        const echo = getEcho();
+        const channel = echo.private(`orders.${order.id}`);
 
-                if (o.last_kurir_lat && o.last_kurir_lng) {
-                    setKurirPos([o.last_kurir_lat, o.last_kurir_lng]);
-                }
-            } catch (err) {
-                setError(
-                    err.response?.status === 403
-                        ? "Anda tidak memiliki akses ke pesanan ini."
-                        : err.response?.status === 404
-                        ? "Pesanan tidak ditemukan."
-                        : "Gagal memuat data pesanan. Coba refresh halaman."
-                );
-            } finally {
-                setLoading(false);
-            }
-        };
+        const applyStatus = (status) => onStatusChange(order.id, status);
 
-        loadOrder();
-    }, [orderId]);
-
-    // ── 2. Subscribe WebSocket channel ───────────────────────
-    useEffect(() => {
-        if (!orderId || !order) return;
-
-        const activeStatuses = ["dispatched", "on_delivery"];
-        if (!activeStatuses.includes(order.status)) return;
-
-        const channel = echo.private(`orders.${orderId}`);
-
-        channel.listen(".kurir.location.updated", (e) => {
-            setKurirPos([e.latitude, e.longitude]);
-            setOrder((prev) =>
-                prev ? { ...prev, last_update: new Date().toISOString() } : prev
-            );
+        channel.listen(".order.confirmed",   () => applyStatus("confirmed"));
+        channel.listen(".order.preparing",   () => applyStatus("preparing"));
+        channel.listen(".order.dispatched",  () => applyStatus("dispatched"));
+        channel.listen(".order.on_delivery", () => applyStatus("on_delivery"));
+        channel.listen(".order.delivered",   () => applyStatus("delivered"));
+        channel.listen(".order.cancelled",   () => applyStatus("cancelled"));
+        channel.listen(".order.status.updated", (e) => {
+            if (e?.status) applyStatus(e.status);
         });
-
-        channel.listen(".order.dispatched", (e) => {
-            setOrder((prev) =>
-                prev ? { ...prev, status: e.status } : prev
-            );
-        });
-
-        channel.listen(".order.delivered", () => {
-            setOrder((prev) =>
-                prev ? { ...prev, status: "delivered" } : prev
-            );
-        });
-
-        const conn = echo.connector.pusher.connection;
-        conn.bind("connected",   () => setWsStatus("connected"));
-        conn.bind("unavailable", () => setWsStatus("error"));
-        conn.bind("failed",      () => setWsStatus("error"));
 
         return () => {
-            channel.stopListening(".kurir.location.updated");
+            channel.stopListening(".order.confirmed");
+            channel.stopListening(".order.preparing");
             channel.stopListening(".order.dispatched");
+            channel.stopListening(".order.on_delivery");
             channel.stopListening(".order.delivered");
-            echo.leave(`orders.${orderId}`);
+            channel.stopListening(".order.cancelled");
+            channel.stopListening(".order.status.updated");
+            echo.leave(`orders.${order.id}`);
         };
-    }, [orderId, order?.status]);
+    }, [order?.id]);
 
-    // ── 3. Fallback polling jika WebSocket gagal ─────────────
+    const currentIdx = statusIndex(order.status);
+    const isCancelled = order.status === "cancelled";
+    const totalQty = order.items?.reduce((sum, it) => sum + (it.qty ?? 1), 0) ?? null;
+
+    return (
+        <div style={{ animation: "trkFadeIn 0.25s ease" }}>
+
+            {/* ── 4 Milestone cards (gaya stat card PesananSaya) ── */}
+            {!isCancelled && (
+                <div className="trk-milestone-grid" style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(4, 1fr)",
+                    gap: 16,
+                    marginBottom: 24,
+                }}>
+                    {MILESTONES.map((m) => {
+                        const mIdx = statusIndex(m.key);
+                        let state = "upcoming";
+                        if (mIdx < currentIdx) state = "done";
+                        else if (mIdx === currentIdx || (m.key === "dispatched" && order.status === "on_delivery")) state = "active";
+                        if (m.key === "delivered" && order.status === "delivered") state = "done";
+                        return <MilestoneCard key={m.key} milestone={m} state={state} />;
+                    })}
+                </div>
+            )}
+
+            <div className="trk-detail-grid" style={{ display: "grid", gridTemplateColumns: "minmax(0,1.3fr) minmax(0,1fr)", gap: 20 }}>
+
+                {/* ── Card kiri: timeline detail ── */}
+                <div style={{
+                    background: COLOR.bgCard, border: `1px solid ${COLOR.border}`,
+                    borderRadius: 20, padding: 24,
+                }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
+                        <div>
+                            <p style={{ margin: 0, fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", color: COLOR.blue }}>
+                                ORDER #{order.id}
+                            </p>
+                            <h3 style={{ margin: "4px 0 0", fontSize: 17, fontWeight: 700, color: COLOR.text }}>
+                                Status Pengiriman
+                            </h3>
+                        </div>
+                        {order.kurir?.name && (
+                            <div style={{ textAlign: "right" }}>
+                                <p style={{ margin: 0, fontSize: 11, color: COLOR.textFaint }}>Kurir</p>
+                                <p style={{ margin: "2px 0 0", fontSize: 13, fontWeight: 600, color: COLOR.text }}>
+                                    {order.kurir.name}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
+                    {isCancelled ? (
+                        <div style={{ textAlign: "center", padding: "30px 8px" }}>
+                            <p style={{ fontSize: 44, margin: "0 0 10px" }}>❌</p>
+                            <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: COLOR.red }}>Pesanan Dibatalkan</p>
+                            <p style={{ margin: "6px 0 0", fontSize: 13, color: COLOR.textDim }}>Hubungi kami jika ada pertanyaan.</p>
+                        </div>
+                    ) : (
+                        STEP_DEFS.map((step, i) => {
+                            const stepIdx = statusIndex(step.key);
+                            let state = "upcoming";
+                            if (stepIdx < currentIdx) state = "done";
+                            else if (stepIdx === currentIdx) state = "active";
+                            return <TimelineStep key={step.key} step={step} state={state} isLast={i === STEP_DEFS.length - 1} />;
+                        })
+                    )}
+                </div>
+
+                {/* ── Card kanan: menu + info kirim ── */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+
+                    <div style={{
+                        background: COLOR.bgCard, border: `1px solid ${COLOR.border}`,
+                        borderRadius: 20, padding: 22,
+                    }}>
+                        <p style={{
+                            margin: "0 0 4px", fontSize: 11, fontWeight: 700, letterSpacing: "0.06em",
+                            color: COLOR.textFaint, textTransform: "uppercase",
+                        }}>
+                            Menu Dipesan {totalQty != null && `· ${totalQty} porsi`}
+                        </p>
+                        {order.items?.length > 0 ? (
+                            order.items.map((item, i) => <MenuItemRow key={item.id ?? i} item={item} />)
+                        ) : (
+                            <p style={{ fontSize: 13, color: COLOR.textFaint, margin: "10px 0 0" }}>Tidak ada detail menu.</p>
+                        )}
+                    </div>
+
+                    <div style={{
+                        background: "linear-gradient(160deg, rgba(59,130,246,0.08), rgba(139,92,246,0.05))",
+                        border: "1px solid rgba(59,130,246,0.18)",
+                        borderRadius: 20, padding: "10px 22px 4px",
+                    }}>
+                        <InfoRow icon="📅" label="Tanggal Kirim" value={formatTanggal(order.tanggal)} />
+                        <InfoRow icon="⏰" label="Jam Kirim" value={formatJam(order.jam)} />
+                        {order.address && <InfoRow icon="📍" label="Alamat" value={order.address} />}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ════════════════════════════════════════════════════════════
+// SKELETON LOADING
+// ════════════════════════════════════════════════════════════
+function LoadingState() {
+    return (
+        <div>
+            <div className="trk-milestone-grid" style={{
+                display: "grid", gridTemplateColumns: "repeat(4, 1fr)",
+                gap: 16, marginBottom: 24,
+            }}>
+                {[1, 2, 3, 4].map((i) => (
+                    <div key={i} style={{
+                        height: 116, borderRadius: 18,
+                        background: COLOR.bgCard, border: `1px solid ${COLOR.border}`,
+                    }} />
+                ))}
+            </div>
+            <div style={{
+                background: COLOR.bgCard, border: `1px solid ${COLOR.border}`,
+                borderRadius: 20, padding: 24,
+            }}>
+                {[1, 2, 3].map((i) => (
+                    <div key={i} style={{ display: "flex", gap: 14, marginBottom: 18 }}>
+                        <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.06)", flexShrink: 0 }} />
+                        <div style={{ flex: 1 }}>
+                            <div style={{ height: 14, width: "50%", borderRadius: 4, background: "rgba(255,255,255,0.06)", marginBottom: 6 }} />
+                            <div style={{ height: 11, width: "70%", borderRadius: 4, background: "rgba(255,255,255,0.04)" }} />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+// ════════════════════════════════════════════════════════════
+// KOMPONEN UTAMA — HALAMAN TRACKING
+// Route: /klien/lacak-pengiriman  (opsional query ?order=ID)
+// ════════════════════════════════════════════════════════════
+export default function Tracking() {
+    const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
+
+    const [orders, setOrders]       = useState([]);
+    const [loading, setLoading]     = useState(true);
+    const [error, setError]         = useState(null);
+    const [selectedId, setSelected] = useState(null);
+
+    const preselectId = searchParams.get("order");
+
     useEffect(() => {
-        if (wsStatus !== "error" || !orderId) return;
-        if (!["dispatched", "on_delivery"].includes(order?.status)) return;
+        let cancelled = false;
 
-        const poll = async () => {
+        const loadOrders = async () => {
+            setLoading(true);
+            setError(null);
             try {
-                const { data } = await axios.get(`/orders/${orderId}`);
-                const o = data.data;
-                if (o.last_kurir_lat && o.last_kurir_lng) {
-                    setKurirPos([o.last_kurir_lat, o.last_kurir_lng]);
+                const { data } = await axios.get("/klien/orders");
+                const all = Array.isArray(data.data) ? data.data : data.data?.data ?? [];
+                const active = all.filter((o) => ACTIVE_STATUSES.includes(o.status));
+
+                if (!cancelled) {
+                    setOrders(active);
+                    const fromQuery = preselectId
+                        ? active.find((o) => String(o.id) === String(preselectId))
+                        : null;
+                    setSelected(fromQuery?.id ?? active[0]?.id ?? null);
                 }
-                setOrder(o);
             } catch (err) {
-                console.warn("Polling gagal:", err.message);
+                if (!cancelled) {
+                    setError(
+                        err.response?.status === 401 || err.response?.status === 403
+                            ? "Anda tidak memiliki akses ke halaman ini."
+                            : "Gagal memuat data pesanan. Coba refresh halaman."
+                    );
+                }
+            } finally {
+                if (!cancelled) setLoading(false);
             }
         };
 
-        pollingRef.current = setInterval(poll, 8000);
-        poll();
+        loadOrders();
+        return () => { cancelled = true; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-        return () => clearInterval(pollingRef.current);
-    }, [wsStatus, orderId, order?.status]);
+    const handleStatusChange = (orderId, newStatus) => {
+        setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)));
+    };
 
-    // ── Render kondisional ────────────────────────────────────
-    if (loading) return <LoadingScreen />;
-    if (error)   return <ErrorScreen message={error} />;
-    if (!order)  return null;
+    const selectedOrder = useMemo(
+        () => orders.find((o) => o.id === selectedId) ?? null,
+        [orders, selectedId]
+    );
 
-    const klienPos = order.lat && order.lng
-        ? [order.lat, order.lng]
-        : null;
-
-    const dapurPos = order.lat_dapur && order.lng_dapur
-        ? [order.lat_dapur, order.lng_dapur]
-        : null;
-
-    if (["pending", "confirmed", "preparing"].includes(order.status))
-        return <PreparingScreen order={order} />;
-
-    if (order.status === "delivered")
-        return <DeliveredScreen />;
-
-    if (order.status === "cancelled")
-        return <CancelledScreen />;
-
-    // ── Status dispatched / on_delivery → tampilkan peta ─────
     return (
-        <div className="flex flex-col h-screen bg-gray-50">
+        <div style={{ minHeight: "100vh", background: COLOR.bgPage, fontFamily: "Arial, sans-serif" }}>
+            <style>{`
+                html, body, #root {
+                    margin: 0;
+                    padding: 0;
+                    background: ${COLOR.bgPage};
+                    min-height: 100%;
+                }
+                * { box-sizing: border-box; }
+                @keyframes trkPulse {
+                    0%, 100% { transform: scale(1); opacity: 1; }
+                    50%      { transform: scale(1.4); opacity: 0.5; }
+                }
+                @keyframes trkPulseDot {
+                    0%, 100% { transform: scale(1); opacity: 1; }
+                    50%      { transform: scale(1.3); opacity: 0.6; }
+                }
+                @keyframes trkRing {
+                    0%   { transform: scale(1);   opacity: 0.6; }
+                    100% { transform: scale(1.35); opacity: 0; }
+                }
+                @keyframes trkFadeIn {
+                    from { opacity: 0; transform: translateY(8px); }
+                    to   { opacity: 1; transform: translateY(0); }
+                }
+                @media (max-width: 860px) {
+                    .trk-detail-grid { grid-template-columns: minmax(0, 1fr) !important; }
+                }
+                @media (max-width: 640px) {
+                    .trk-milestone-grid { grid-template-columns: repeat(2, 1fr) !important; }
+                }
+            `}</style>
 
-            {/* ── Header ── */}
-            <div className="bg-white shadow-sm px-4 py-3 shrink-0">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-base font-bold text-gray-800">
-                            Lacak Pesanan
-                        </h1>
-                        {order.kurir ? (
-                            <p className="text-sm text-gray-500">
-                                Kurir:{" "}
-                                <span className="font-medium text-gray-700">
-                                    {order.kurir.name}
-                                </span>
-                                {order.kurir.phone && (
-                                    <>
-                                        {" · "}
-                                        <a
-                                            href={`tel:${order.kurir.phone}`}
-                                            className="text-blue-600"
-                                        >
-                                            {order.kurir.phone}
-                                        </a>
-                                    </>
-                                )}
-                            </p>
-                        ) : (
-                            <p className="text-sm text-gray-400">
-                                Menunggu info kurir...
-                            </p>
-                        )}
+            <NavbarKlien />
+
+            <div style={{ maxWidth: 1180, margin: "0 auto", padding: "28px 24px 60px" }}>
+
+                <Hero orders={orders} selectedId={selectedId} onSelect={setSelected} />
+
+                {loading && <LoadingState />}
+
+                {error && !loading && (
+                    <div style={{
+                        background: COLOR.bgCard, border: `1px solid ${COLOR.border}`,
+                        borderRadius: 20, padding: "36px 20px", textAlign: "center",
+                    }}>
+                        <p style={{ fontSize: 38, margin: "0 0 10px" }}>⚠️</p>
+                        <p style={{ margin: 0, fontSize: 14, color: COLOR.textDim }}>{error}</p>
+                        <button
+                            onClick={() => window.location.reload()}
+                            style={{
+                                marginTop: 16, padding: "9px 18px", borderRadius: 10,
+                                border: `1px solid ${COLOR.border}`, background: "rgba(255,255,255,0.04)",
+                                color: COLOR.text, fontSize: 13, fontWeight: 600, cursor: "pointer",
+                            }}
+                        >
+                            Refresh halaman
+                        </button>
                     </div>
-                    <WsBadge status={wsStatus} />
-                </div>
-
-                {/* Status banner */}
-                <div className="mt-2 flex items-center gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2">
-                    <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse shrink-0" />
-                    {order.status === "dispatched"
-                        ? "Kurir sedang dalam perjalanan ke dapur katering"
-                        : "Kurir sedang menuju lokasi Anda"}
-                </div>
-            </div>
-
-            {/* ── Peta ── */}
-            <div className="flex-1" style={{ minHeight: "400px" }}>
-                <MapContainer
-                    center={klienPos ?? [-7.457, 112.691]}
-                    zoom={14}
-                    style={{ width: "100%", height: "100%" }}
-                    zoomControl={true}
-                >
-                    <TileLayer
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                    />
-
-                    {/* Marker klien (statis) */}
-                    {klienPos && (
-                        <Marker position={klienPos}>
-                            <Popup>
-                                📍 Lokasi Anda<br />
-                                <span className="text-xs text-gray-500">
-                                    {order.address}
-                                </span>
-                            </Popup>
-                        </Marker>
-                    )}
-
-                    {/* Marker dapur (statis) */}
-                    {dapurPos && (
-                        <Marker position={dapurPos} icon={dapurIcon}>
-                            <Popup>🍽️ Dapur Katering</Popup>
-                        </Marker>
-                    )}
-
-                    {/* Marker kurir (bergerak real-time) */}
-                    {kurirPos && (
-                        <Marker position={kurirPos} icon={kurirIcon}>
-                            <Popup>
-                                🛵 {order.kurir?.name ?? "Kurir"}
-                                {order.last_update && (
-                                    <>
-                                        <br />
-                                        <span className="text-xs text-gray-400">
-                                            Update:{" "}
-                                            {new Date(order.last_update)
-                                                .toLocaleTimeString("id-ID")}
-                                        </span>
-                                    </>
-                                )}
-                            </Popup>
-                        </Marker>
-                    )}
-
-                    {/* Auto fitBounds */}
-                    {kurirPos && klienPos && (
-                        <MapBoundsAdjuster
-                            kurirPos={kurirPos}
-                            klienPos={klienPos}
-                        />
-                    )}
-                </MapContainer>
-            </div>
-
-            {/* ── Info bawah ── */}
-            <div className="bg-white px-4 py-3 border-t shrink-0">
-                <p className="text-sm text-gray-700">
-                    <span className="font-medium">Alamat pengiriman:</span>{" "}
-                    {order.address}
-                </p>
-                {order.menu && (
-                    <p className="text-sm text-gray-500 mt-0.5">
-                        <span className="font-medium">Menu:</span> {order.menu}
-                        {order.quantity && ` × ${order.quantity} porsi`}
-                    </p>
                 )}
-                {order.last_update && (
-                    <p className="text-xs text-gray-400 mt-1">
-                        Posisi kurir terakhir diperbarui:{" "}
-                        {new Date(order.last_update).toLocaleTimeString("id-ID")}
-                    </p>
+
+                {!loading && !error && orders.length === 0 && (
+                    <div style={{
+                        background: COLOR.bgCard, border: `1px solid ${COLOR.border}`,
+                        borderRadius: 20, padding: "50px 20px", textAlign: "center",
+                    }}>
+                        <p style={{ fontSize: 44, margin: "0 0 12px" }}>📭</p>
+                        <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: COLOR.text }}>
+                            Tidak ada pesanan aktif
+                        </p>
+                        <p style={{ margin: "8px 0 0", fontSize: 13.5, color: COLOR.textDim }}>
+                            Pesanan yang sedang berjalan akan otomatis muncul di sini.
+                        </p>
+                        <button
+                            onClick={() => navigate("/klien/pesanan")}
+                            style={{
+                                marginTop: 18, padding: "10px 20px", borderRadius: 10,
+                                border: "1px solid rgba(59,130,246,0.3)", background: "rgba(59,130,246,0.1)",
+                                color: COLOR.blue, fontSize: 13.5, fontWeight: 700, cursor: "pointer",
+                            }}
+                        >
+                            Lihat Pesanan Saya
+                        </button>
+                    </div>
                 )}
-                {wsStatus === "error" && (
-                    <p className="text-xs text-gray-400 mt-1">
-                        ⚠️ Mode polling aktif — posisi diperbarui setiap 8 detik
-                    </p>
+
+                {!loading && !error && selectedOrder && (
+                    <TrackingDetail order={selectedOrder} onStatusChange={handleStatusChange} />
                 )}
             </div>
         </div>
-    );
-}
-
-// ════════════════════════════════════════════════════════════
-// LAYAR STATUS
-// ════════════════════════════════════════════════════════════
-
-function LoadingScreen() {
-    return (
-        <div className="flex flex-col items-center justify-center h-screen gap-3">
-            <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-gray-500 text-sm">Memuat informasi pesanan...</p>
-        </div>
-    );
-}
-
-function ErrorScreen({ message }) {
-    return (
-        <div className="flex flex-col items-center justify-center h-screen px-6 text-center gap-4">
-            <p className="text-5xl">⚠️</p>
-            <p className="text-gray-700 font-medium">{message}</p>
-            <button
-                onClick={() => window.location.reload()}
-                className="text-sm text-blue-600 underline"
-            >
-                Refresh halaman
-            </button>
-        </div>
-    );
-}
-
-function PreparingScreen({ order }) {
-    const msg = {
-        pending:   "Pesanan sedang menunggu konfirmasi owner",
-        confirmed: "Pesanan sudah dikonfirmasi",
-        preparing: "Makanan sedang disiapkan di dapur",
-    };
-
-    const jamText = order.jam ? String(order.jam).substring(0, 5) : "—";
-
-    return (
-        <div className="flex flex-col items-center justify-center h-screen px-6 text-center bg-orange-50">
-            <p className="text-6xl mb-4">👨‍🍳</p>
-            <h2 className="text-xl font-bold text-orange-800 mb-2">
-                {msg[order.status] ?? "Pesanan sedang diproses"}
-            </h2>
-            <p className="text-orange-600 text-sm">
-                Estimasi pengiriman:{" "}
-                <span className="font-semibold">{jamText}</span>
-            </p>
-            {order.tanggal && (
-                <p className="text-orange-500 text-xs mt-1">
-                    Tanggal:{" "}
-                    {new Date(order.tanggal).toLocaleDateString("id-ID", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                    })}
-                </p>
-            )}
-            <div className="mt-6 text-gray-400 text-xs space-y-1">
-                <p>Halaman ini akan otomatis berubah saat kurir berangkat</p>
-                <p>(refresh manual jika tidak berubah dalam 10 menit)</p>
-            </div>
-        </div>
-    );
-}
-
-function DeliveredScreen() {
-    return (
-        <div className="flex flex-col items-center justify-center h-screen px-6 text-center bg-green-50">
-            <p className="text-6xl mb-4">✅</p>
-            <h2 className="text-xl font-bold text-green-800 mb-2">
-                Pesanan Sudah Sampai!
-            </h2>
-            <p className="text-green-600 text-sm">
-                Semoga makanan Anda dinikmati.<br />
-                Terima kasih sudah memesan!
-            </p>
-        </div>
-    );
-}
-
-function CancelledScreen() {
-    return (
-        <div className="flex flex-col items-center justify-center h-screen px-6 text-center bg-red-50">
-            <p className="text-6xl mb-4">❌</p>
-            <h2 className="text-xl font-bold text-red-800 mb-2">
-                Pesanan Dibatalkan
-            </h2>
-            <p className="text-red-600 text-sm">
-                Hubungi kami jika ada pertanyaan.
-            </p>
-        </div>
-    );
-}
-
-// Badge status WebSocket di pojok kanan header
-function WsBadge({ status }) {
-    const config = {
-        connecting: { color: "bg-yellow-100 text-yellow-700", label: "Menghubungkan..." },
-        connected:  { color: "bg-green-100 text-green-700",   label: "🟢 Live" },
-        error:      { color: "bg-gray-100 text-gray-500",     label: "Polling" },
-    };
-    const { color, label } = config[status] ?? config.connecting;
-
-    return (
-        <span className={`text-xs font-medium px-2 py-1 rounded-full ${color}`}>
-            {label}
-        </span>
     );
 }
