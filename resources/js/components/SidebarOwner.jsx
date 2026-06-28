@@ -3,7 +3,6 @@
 import {
     LayoutDashboard,
     ShoppingCart,
-    Users,
     DollarSign,
     LogOut,
     Boxes,
@@ -53,7 +52,6 @@ const MENUS = [
         title: "BISNIS",
         items: [
             { label: "Pesanan",    path: "/owner/orders",     icon: <ShoppingCart size={16} /> },
-            { label: "Pelanggan",  path: "/owner/customers",  icon: <Users size={16} /> },
             { label: "Menu",       path: "/owner/menus",      icon: <UtensilsCrossed size={16} /> },
         ],
     },

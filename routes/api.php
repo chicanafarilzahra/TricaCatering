@@ -243,6 +243,11 @@ Route::put(
     [AdminUserController::class, 'reject']
 );
 
+Route::delete(
+    '/users/{id}',
+    [AdminUserController::class, 'destroy']
+);
+
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/owner/couriers', [OwnerCourierController::class, 'index']);
 });

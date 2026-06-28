@@ -19,6 +19,8 @@ import {
 
 import AdminLayout from "../layouts/AdminLayout";
 
+const VALIDATABLE_ROLES = ["owner", "kurir", "operator_sppg"];
+
 export default function AdminValidasiUser() {
     const [users, setUsers] =
         useState([]);
@@ -46,7 +48,13 @@ export default function AdminValidasiUser() {
                     "/users"
                 );
 
-            setUsers(res.data);
+            // Hanya tampilkan role yang memang butuh validasi admin.
+            // Admin & klien tidak pernah masuk daftar ini.
+            const relevantUsers = res.data.filter((u) =>
+                VALIDATABLE_ROLES.includes(u.role)
+            );
+
+            setUsers(relevantUsers);
         } catch (err) {
             console.log(err);
         } finally {
@@ -115,6 +123,34 @@ export default function AdminValidasiUser() {
         );
     }
 };
+
+    const deleteUser = async (id) => {
+
+        const confirmDelete =
+            window.confirm(
+                "Apakah Anda yakin ingin menghapus user ini? Tindakan ini tidak dapat dibatalkan."
+            );
+
+        if (!confirmDelete) return;
+
+        try {
+
+            await axios.delete(
+                `/users/${id}`
+            );
+
+            alert("User berhasil dihapus.");
+
+            fetchUsers();
+
+        } catch (err) {
+
+            console.log(err);
+
+            alert("Gagal menghapus user.");
+        }
+    };
+
 const ownerCount = users.filter(
     (u) => u.role === "owner"
 ).length;
@@ -635,16 +671,20 @@ const filteredUsers =
                 alignItems:"center",
                 justifyContent:"center",
                 fontWeight:"700",
+                flexShrink: 0,
             }}
         >
-            {user.name.charAt(0)}
+            {user.name.charAt(0).toUpperCase()}
         </div>
 
-        <div>
+        <div style={{ minWidth: 0 }}>
             <div
                 style={{
                     color:"white",
                     fontWeight:"600",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
                 }}
             >
                 {user.name}
@@ -797,6 +837,7 @@ user.role==="owner"
 >
     <button
         title="Approve"
+        onClick={() => approveUser(user.id)}
         style={{
             width: "36px",
             height: "36px",
@@ -815,6 +856,7 @@ user.role==="owner"
 
     <button
         title="Reject"
+        onClick={() => rejectUser(user.id)}
         style={{
             width: "36px",
             height: "36px",

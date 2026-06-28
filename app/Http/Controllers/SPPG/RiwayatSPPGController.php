@@ -4,42 +4,26 @@ namespace App\Http\Controllers\SPPG;
 
 use App\Http\Controllers\Controller;
 use App\Models\Distribusi;
+use Illuminate\Support\Facades\Auth;
 
 class RiwayatSPPGController extends Controller
 {
     public function index()
     {
-        $data = Distribusi::with([
-            'sekolah',
-            'menu'
-        ])
-        ->latest()
-        ->get();
+        $sppgId = Auth::id();
+
+        $data = Distribusi::with(['sekolah', 'menu'])
+            ->where('sppg_id', $sppgId)
+            ->latest()
+            ->get();
 
         return response()->json([
             'summary' => [
-
-                'total_distribusi' =>
-                    Distribusi::count(),
-
-                'total_porsi' =>
-                    Distribusi::sum(
-                        'jumlah_porsi'
-                    ),
-
-                'berhasil' =>
-                    Distribusi::where(
-                        'status',
-                        'selesai'
-                    )->count(),
-
-                'gagal' =>
-                    Distribusi::where(
-                        'status',
-                        'gagal'
-                    )->count(),
+                'total_distribusi' => Distribusi::where('sppg_id', $sppgId)->count(),
+                'total_porsi'      => Distribusi::where('sppg_id', $sppgId)->sum('jumlah_porsi'),
+                'berhasil'         => Distribusi::where('sppg_id', $sppgId)->where('status', 'selesai')->count(),
+                'gagal'            => Distribusi::where('sppg_id', $sppgId)->where('status', 'gagal')->count(),
             ],
-
             'data' => $data
         ]);
     }

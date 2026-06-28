@@ -15,7 +15,7 @@ import AdminLayout from "../layouts/AdminLayout";
 export default function Stocks() {
     const stockRef = useRef(null);
     const [search, setSearch] = useState("");
-    const [statusFilter, setStatusFilter] = useState("All");
+    const [sourceFilter, setSourceFilter] = useState("All");
     const [stocks, setStocks] = useState([]);
     const [selectedGroup, setSelectedGroup] = useState(null);
 
@@ -49,19 +49,6 @@ export default function Stocks() {
         }
     };
 
-    const filteredStocks = useMemo(() => {
-        return stocks.filter((item) => {
-            const matchSearch =
-                item.name?.toLowerCase().includes(search.toLowerCase()) ||
-                item.tempat?.toLowerCase().includes(search.toLowerCase()) ||
-                item.source?.toLowerCase().includes(search.toLowerCase()) ||
-                item.unit?.toLowerCase().includes(search.toLowerCase());
-            const stockStatus = item.qty <= item.minimum_stock ? "Low Stock" : "Normal";
-            const matchStatus = statusFilter === "All" || stockStatus === statusFilter;
-            return matchSearch && matchStatus;
-        });
-    }, [stocks, search, statusFilter]);
-
     const stats = [
         {
             title: "Total Items",
@@ -93,22 +80,38 @@ export default function Stocks() {
         },
     ];
 
-    const groupedStocks = Object.values(
-        stocks.reduce((acc, item) => {
-            const key = item.source + "-" + item.tempat;
-            if (!acc[key]) {
-                acc[key] = {
-                    id: item.id,
-                    source: item.source,
-                    tempat: item.tempat,
-                    jumlah_bahan: item.jumlah_bahan,
-                    items: [],
-                };
-            }
-            acc[key].items.push(item);
-            return acc;
-        }, {})
-    );
+    // Grouping + search + filter sumber (Owner/SPPG) diterapkan di sini sekaligus,
+    // supaya hasilnya pasti ikut dirender di tabel (sebelumnya filter status
+    // dihitung terpisah dan tidak pernah dipakai di tabel).
+    const groupedStocks = useMemo(() => {
+        const grouped = Object.values(
+            stocks.reduce((acc, item) => {
+                const key = item.source + "-" + item.tempat;
+                if (!acc[key]) {
+                    acc[key] = {
+                        id: item.id,
+                        source: item.source,
+                        tempat: item.tempat,
+                        jumlah_bahan: item.jumlah_bahan,
+                        items: [],
+                    };
+                }
+                acc[key].items.push(item);
+                return acc;
+            }, {})
+        );
+
+        return grouped.filter((group) => {
+            const matchSearch =
+                group.tempat?.toLowerCase().includes(search.toLowerCase()) ||
+                group.source?.toLowerCase().includes(search.toLowerCase());
+
+            const matchSource =
+                sourceFilter === "All" || group.source === sourceFilter;
+
+            return matchSearch && matchSource;
+        });
+    }, [stocks, search, sourceFilter]);
 
     const modalStats = selectedGroup
         ? [
@@ -355,8 +358,8 @@ export default function Stocks() {
                                 />
                             </div>
                             <select
-                                value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value)}
+                                value={sourceFilter}
+                                onChange={(e) => setSourceFilter(e.target.value)}
                                 style={{
                                     height: "50px", padding: "0 18px",
                                     border: "1px solid rgba(255,255,255,0.06)",
@@ -366,9 +369,9 @@ export default function Stocks() {
                                     cursor: "pointer", outline: "none", minWidth: "150px",
                                 }}
                             >
-                                <option value="All" style={{ color: "black" }}>All Status</option>
-                                <option value="Normal" style={{ color: "black" }}>Normal</option>
-                                <option value="Low Stock" style={{ color: "black" }}>Low Stock</option>
+                                <option value="All" style={{ color: "black" }}>All Source</option>
+                                <option value="Owner" style={{ color: "black" }}>Owner</option>
+                                <option value="SPPG" style={{ color: "black" }}>SPPG</option>
                             </select>
                         </div>
                     </div>
@@ -397,62 +400,75 @@ export default function Stocks() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {groupedStocks.map((group, index) => (
-                                    <tr
-                                        key={index}
-                                        style={{ transition: "all .2s ease" }}
-                                        onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,.025)")}
-                                        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                                    >
-                                        <td style={{ padding: "16px" }}>
-                                            <span style={{
-                                                padding: "8px 14px", borderRadius: "999px",
-                                                background: group.source === "Owner"
-                                                    ? "rgba(139,92,246,.15)"
-                                                    : "rgba(16,185,129,.15)",
-                                                color: group.source === "Owner" ? "#a78bfa" : "#34d399",
-                                                fontSize: "12px", fontWeight: "700",
-                                            }}>
-                                                {group.source}
-                                            </span>
-                                        </td>
-                                        <td style={{ padding: "16px" }}>
-                                            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                                                <div style={{
-                                                    width: "40px", height: "40px", borderRadius: "12px",
-                                                    background: "rgba(59,130,246,.15)", color: "#60a5fa",
-                                                    display: "flex", alignItems: "center",
-                                                    justifyContent: "center", fontWeight: "700",
+                                {groupedStocks.length > 0 ? (
+                                    groupedStocks.map((group, index) => (
+                                        <tr
+                                            key={index}
+                                            style={{ transition: "all .2s ease" }}
+                                            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,.025)")}
+                                            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                                        >
+                                            <td style={{ padding: "16px" }}>
+                                                <span style={{
+                                                    padding: "8px 14px", borderRadius: "999px",
+                                                    background: group.source === "Owner"
+                                                        ? "rgba(139,92,246,.15)"
+                                                        : "rgba(16,185,129,.15)",
+                                                    color: group.source === "Owner" ? "#a78bfa" : "#34d399",
+                                                    fontSize: "12px", fontWeight: "700",
                                                 }}>
-                                                    {group.tempat?.charAt(0)?.toUpperCase()}
-                                                </div>
-                                                <div>
-                                                    <div style={{ color: "white", fontWeight: "600", fontSize: "14px" }}>
-                                                        {group.tempat}
+                                                    {group.source}
+                                                </span>
+                                            </td>
+                                            <td style={{ padding: "16px" }}>
+                                                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                                    <div style={{
+                                                        width: "40px", height: "40px", borderRadius: "12px",
+                                                        background: "rgba(59,130,246,.15)", color: "#60a5fa",
+                                                        display: "flex", alignItems: "center",
+                                                        justifyContent: "center", fontWeight: "700",
+                                                    }}>
+                                                        {group.tempat?.charAt(0)?.toUpperCase()}
                                                     </div>
-                                                    <div style={{ color: "#64748b", fontSize: "12px" }}>
-                                                        {group.jumlah_bahan ?? group.items.length} item stok
+                                                    <div>
+                                                        <div style={{ color: "white", fontWeight: "600", fontSize: "14px" }}>
+                                                            {group.tempat}
+                                                        </div>
+                                                        <div style={{ color: "#64748b", fontSize: "12px" }}>
+                                                            {group.jumlah_bahan ?? group.items.length} item stok
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td style={{ padding: "16px" }}>
-                                            <button
-                                                onClick={() => handleViewStock(group)}
-                                                style={{
-                                                    border: "none", borderRadius: "12px",
-                                                    padding: "10px 18px",
-                                                    background: "linear-gradient(135deg,#2563eb,#3b82f6)",
-                                                    color: "white", fontWeight: "600",
-                                                    cursor: "pointer",
-                                                    boxShadow: "0 8px 20px rgba(37,99,235,.25)",
-                                                }}
-                                            >
-                                                View Stock ({group.jumlah_bahan ?? group.items.length})
-                                            </button>
+                                            </td>
+                                            <td style={{ padding: "16px" }}>
+                                                <button
+                                                    onClick={() => handleViewStock(group)}
+                                                    style={{
+                                                        border: "none", borderRadius: "12px",
+                                                        padding: "10px 18px",
+                                                        background: "linear-gradient(135deg,#2563eb,#3b82f6)",
+                                                        color: "white", fontWeight: "600",
+                                                        cursor: "pointer",
+                                                        boxShadow: "0 8px 20px rgba(37,99,235,.25)",
+                                                    }}
+                                                >
+                                                    View Stock ({group.jumlah_bahan ?? group.items.length})
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={3} style={{
+                                            padding: "60px 20px", textAlign: "center",
+                                            color: "#64748b", fontSize: "14px",
+                                        }}>
+                                            {search
+                                                ? `Tidak ada hasil untuk "${search}"`
+                                                : "Tidak ada data sesuai filter"}
                                         </td>
                                     </tr>
-                                ))}
+                                )}
                             </tbody>
                         </table>
                     </div>

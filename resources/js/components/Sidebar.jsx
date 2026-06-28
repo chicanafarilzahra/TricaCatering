@@ -86,7 +86,6 @@ export default function Sidebar() {
             items: [
                 { label: "SPPG",          path: "/admin/sppg",          icon: <ClipboardList size={17} /> },
                 { label: "Validasi User", path: "/admin-validasi-user", icon: <Users size={17} /> },
-                { label: "Pelanggan",     path: "/customers",           icon: <Users size={17} /> },
             ],
         },
         {

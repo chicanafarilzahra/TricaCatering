@@ -11,20 +11,23 @@ use App\Models\Sekolah;
 
 class DistribusiController extends Controller
 {
-    // Menampilkan semua distribusi milik SPPG
-    public function index()
-{
-    return Distribusi::with([
-        'sekolah',
-        'menu'
-    ])
-    ->where(
-        'sppg_id',
-        Auth::id()
-    )
-    ->latest()
-    ->get();
-}
+    // Menampilkan distribusi: admin lihat semua, SPPG lihat milik sendiri
+    public function index(Request $request)
+    {
+        $query = Distribusi::with([
+            'sekolah',
+            'menu'
+        ]);
+
+        if ($request->user()->role !== 'admin') {
+            $query->where(
+                'sppg_id',
+                Auth::id()
+            );
+        }
+
+        return $query->latest()->get();
+    }
 
     // Menambahkan distribusi
    public function store(Request $request)

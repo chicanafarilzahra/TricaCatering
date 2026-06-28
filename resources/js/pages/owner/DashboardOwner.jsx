@@ -2,7 +2,6 @@
 
 import {
     ShoppingCart,
-    Users,
     Package,
     DollarSign,
     TrendingUp,
@@ -10,7 +9,10 @@ import {
     ArrowUpRight,
     Clock,
     Zap,
-    Activity,
+    AlertTriangle,
+    Truck,
+    CheckCircle2,
+    XCircle,
 } from "lucide-react";
 
 import OwnerLayout from "../../layouts/OwnerLayout";
@@ -46,14 +48,6 @@ const STAT_CARDS = (stats) => [
         border: "rgba(99,102,241,0.20)",
     },
     {
-        title:  "Customers",
-        value:  stats.customers,
-        icon:   <Users size={18} />,
-        accent: "#3b82f6",
-        bg:     "rgba(59,130,246,0.10)",
-        border: "rgba(59,130,246,0.20)",
-    },
-    {
         title:  "Packages",
         value:  stats.packages,
         icon:   <Package size={18} />,
@@ -69,14 +63,6 @@ const STAT_CARDS = (stats) => [
         bg:     "rgba(16,185,129,0.10)",
         border: "rgba(16,185,129,0.20)",
     },
-];
-
-/* ─── quick insights config ─── */
-const INSIGHTS = [
-    { label: "Order Growth",       icon: <TrendingUp size={15} />, color: "#6366f1" },
-    { label: "Customer Activity",  icon: <Users size={15} />,      color: "#3b82f6" },
-    { label: "Operational Status", icon: <Activity size={15} />,   color: "#10b981" },
-    { label: "Profit Analysis",    icon: <Zap size={15} />,        color: "#f59e0b" },
 ];
 
 /* =========================================
@@ -103,7 +89,6 @@ function StatCard({ title, value, icon, accent, bg, border, change }) {
                 fontFamily:    FONT,
             }}
         >
-            {/* top row */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <span style={{
                     fontSize: "11px", fontWeight: "600", color: t.textMuted,
@@ -121,7 +106,6 @@ function StatCard({ title, value, icon, accent, bg, border, change }) {
                 </div>
             </div>
 
-            {/* value */}
             <div style={{
                 fontSize: "26px", fontWeight: "700", color: t.textPrimary,
                 letterSpacing: "-0.5px", lineHeight: 1,
@@ -129,7 +113,6 @@ function StatCard({ title, value, icon, accent, bg, border, change }) {
                 {value}
             </div>
 
-            {/* change badge — hanya tampil kalau ada data */}
             {change ? (
                 <div style={{
                     display: "inline-flex", alignItems: "center", gap: "4px",
@@ -184,7 +167,7 @@ function SectionCard({
 }
 
 /* ─── empty placeholder ─── */
-function EmptyPlaceholder({ icon, label, height = 220 }) {
+function EmptyPlaceholder({ icon, label, height = 160 }) {
     return (
         <div style={{
             height, display: "flex", flexDirection: "column",
@@ -200,27 +183,162 @@ function EmptyPlaceholder({ icon, label, height = 220 }) {
 }
 
 /* =========================================
+   STOCK STATUS PANEL
+========================================= */
+function StockStatusPanel({ stocks }) {
+    if (!stocks || stocks.length === 0) {
+        return <EmptyPlaceholder icon={<Package size={26} />} label="Tidak ada data stok" />;
+    }
+
+    return (
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px", maxHeight: "260px", overflowY: "auto" }}>
+            {stocks.map((item) => {
+                const pct     = item.min_stock > 0 ? Math.min((item.stock / item.min_stock) * 100, 100) : 100;
+                const low     = item.stock <= item.min_stock;
+                const color   = low ? "#ef4444" : "#10b981";
+                const bgColor = low ? "rgba(239,68,68,0.08)" : "rgba(16,185,129,0.08)";
+                const border  = low ? "rgba(239,68,68,0.20)" : "rgba(16,185,129,0.20)";
+
+                return (
+                    <div key={item.id} style={{
+                        padding: "10px 12px", borderRadius: t.radius.md,
+                        background: bgColor, border: `1px solid ${border}`,
+                        display: "flex", alignItems: "center", gap: "10px",
+                    }}>
+                        <div style={{
+                            width: "28px", height: "28px", borderRadius: "8px",
+                            background: color + "20",
+                            border: `1px solid ${color}30`,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            color, flexShrink: 0,
+                        }}>
+                            {low ? <AlertTriangle size={13} /> : <CheckCircle2 size={13} />}
+                        </div>
+
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: "13px", fontWeight: "600", color: t.textPrimary, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                {item.name}
+                            </div>
+                            <div style={{ fontSize: "11px", color: t.textMuted, marginTop: "2px" }}>
+                                {item.stock} {item.unit} tersisa
+                                {item.min_stock > 0 && ` · min. ${item.min_stock} ${item.unit}`}
+                            </div>
+                        </div>
+
+                        <span style={{
+                            fontSize: "11px", fontWeight: "700",
+                            color, padding: "2px 8px", borderRadius: "20px",
+                            background: color + "18", border: `1px solid ${color}30`,
+                            flexShrink: 0,
+                        }}>
+                            {low ? "Menipis" : "Aman"}
+                        </span>
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
+
+/* =========================================
+   KURIR PANEL
+========================================= */
+function KurirPanel({ kurirs }) {
+    if (!kurirs || kurirs.length === 0) {
+        return <EmptyPlaceholder icon={<Truck size={26} />} label="Belum ada kurir terdaftar" />;
+    }
+
+    return (
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px", maxHeight: "260px", overflowY: "auto" }}>
+            {kurirs.map((kurir) => {
+                const active  = kurir.status === "active";
+                const color   = active ? "#10b981" : "#64748b";
+                const bgColor = active ? "rgba(16,185,129,0.08)" : "rgba(100,116,139,0.08)";
+                const border  = active ? "rgba(16,185,129,0.20)" : "rgba(100,116,139,0.15)";
+
+                return (
+                    <div key={kurir.id} style={{
+                        padding: "10px 12px", borderRadius: t.radius.md,
+                        background: bgColor, border: `1px solid ${border}`,
+                        display: "flex", alignItems: "center", gap: "10px",
+                    }}>
+                        {/* Avatar */}
+                        <div style={{
+                            width: "32px", height: "32px", borderRadius: "10px",
+                            background: "linear-gradient(135deg,#2563eb,#1d4ed8)",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            color: "white", fontSize: "13px", fontWeight: "700", flexShrink: 0,
+                        }}>
+                            {kurir.name?.charAt(0).toUpperCase() ?? "K"}
+                        </div>
+
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: "13px", fontWeight: "600", color: t.textPrimary, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                {kurir.name}
+                            </div>
+                            <div style={{ fontSize: "11px", color: t.textMuted, marginTop: "2px" }}>
+                                {kurir.phone || "—"}
+                            </div>
+                        </div>
+
+                        <span style={{
+                            fontSize: "11px", fontWeight: "700",
+                            color, padding: "2px 8px", borderRadius: "20px",
+                            background: color + "18", border: `1px solid ${color}30`,
+                            flexShrink: 0,
+                        }}>
+                            {active ? "Aktif" : "Nonaktif"}
+                        </span>
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
+
+/* =========================================
    DASHBOARD OWNER
 ========================================= */
 export default function DashboardOwner() {
     const [stats, setStats] = useState({
         totalOrders: 0,
-        customers:   0,
         packages:    0,
         revenue:     0,
     });
+    const [stocks, setStocks] = useState([]);
+    const [kurirs, setKurirs] = useState([]);
 
     useEffect(() => {
         fetchDashboard();
+        fetchStocks();
+        fetchKurirs();
     }, []);
 
     const fetchDashboard = async () => {
         try {
             const res = await axios.get("/owner/dashboard");
             setStats(res.data);
-        } catch (err) {
-            console.error(err);
-        }
+        } catch (err) { console.error(err); }
+    };
+
+    const fetchStocks = async () => {
+        try {
+            const res = await axios.get("/owner/stocks");
+            // urutkan: yang menipis dulu
+            const sorted = [...(res.data ?? [])].sort((a, b) => {
+                const aLow = a.stock <= a.min_stock;
+                const bLow = b.stock <= b.min_stock;
+                return bLow - aLow;
+            });
+            setStocks(sorted);
+        } catch (err) { console.error(err); }
+    };
+
+    const fetchKurirs = async () => {
+        try {
+            const res = await axios.get("/owner/kurirs");
+            setKurirs(res.data ?? []);
+        } catch (err) { console.error(err); }
     };
 
     const cards = STAT_CARDS(stats);
@@ -259,9 +377,9 @@ export default function DashboardOwner() {
                     </div>
                 </div>
 
-                {/* ── 4 Stat cards ── */}
+                {/* ── 3 Stat cards ── */}
                 <div style={{
-                    display: "grid", gridTemplateColumns: "repeat(4, 1fr)",
+                    display: "grid", gridTemplateColumns: "repeat(3, 1fr)",
                     gap: "14px", marginBottom: "20px",
                 }}>
                     {cards.map((card, i) => (
@@ -269,7 +387,7 @@ export default function DashboardOwner() {
                     ))}
                 </div>
 
-                {/* ── Analytics row ── */}
+                {/* ── Analytics + panels row ── */}
                 <div style={{
                     display: "grid", gridTemplateColumns: "2fr 1fr",
                     gap: "14px", marginBottom: "14px",
@@ -283,34 +401,28 @@ export default function DashboardOwner() {
                         />
                     </SectionCard>
 
-                    {/* Quick insights */}
-                    <SectionCard title="Quick Insights" icon={<ArrowUpRight size={16} />}>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                            {INSIGHTS.map((item, i) => (
-                                <div key={i} style={{
-                                    display: "flex", alignItems: "center", gap: "10px",
-                                    padding: "12px 14px", borderRadius: t.radius.md,
-                                    background: "rgba(255,255,255,0.03)",
-                                    border: "1px solid rgba(255,255,255,0.05)",
-                                    cursor: "default",
-                                }}>
-                                    <div style={{
-                                        width: "28px", height: "28px", borderRadius: "8px",
-                                        background: item.color + "18",
-                                        border: `1px solid ${item.color}30`,
-                                        display: "flex", alignItems: "center", justifyContent: "center",
-                                        color: item.color, flexShrink: 0,
-                                    }}>
-                                        {item.icon}
-                                    </div>
-                                    <span style={{ fontSize: "13px", fontWeight: "500", color: t.textSub }}>
-                                        {item.label}
-                                    </span>
-                                    <ArrowUpRight size={13} style={{ marginLeft: "auto", color: t.textMuted, opacity: 0.5 }} />
-                                </div>
-                            ))}
-                        </div>
-                    </SectionCard>
+                    {/* Right column: Stock + Kurir */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                        <SectionCard
+                            title="Status Stok"
+                            icon={<Package size={16} />}
+                            iconColor="#f59e0b"
+                            iconBg="rgba(245,158,11,0.10)"
+                            iconBorder="rgba(245,158,11,0.20)"
+                        >
+                            <StockStatusPanel stocks={stocks} />
+                        </SectionCard>
+
+                        <SectionCard
+                            title="Kurir"
+                            icon={<Truck size={16} />}
+                            iconColor="#a855f7"
+                            iconBg="rgba(168,85,247,0.10)"
+                            iconBorder="rgba(168,85,247,0.20)"
+                        >
+                            <KurirPanel kurirs={kurirs} />
+                        </SectionCard>
+                    </div>
                 </div>
 
                 {/* ── Latest transactions ── */}

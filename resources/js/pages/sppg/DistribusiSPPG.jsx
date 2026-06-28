@@ -3,7 +3,7 @@ import axios from "axios";
 import SidebarSPPG from "../../components/SidebarSPPG";
 import {
     Truck, Search, Plus, Package, UtensilsCrossed,
-    Pencil, Trash2, X, Check, AlertTriangle, CalendarDays, Clock,
+    Trash2, X, Check, AlertTriangle, CalendarDays, Clock, ChevronRight,
 } from "lucide-react";
 
 /* ── Font ─────────────────────────────────────────────────────── */
@@ -34,16 +34,11 @@ const T = {
     font:     "'Inter', system-ui, sans-serif",
 };
 
-/* ── Shared input ─────────────────────────────────────────────── */
 const inp = {
-    width: "100%", height: "42px",
-    padding: "0 14px",
-    background: T.elevated,
-    border: `0.5px solid ${T.borderMd}`,
-    borderRadius: "10px",
-    color: T.text, fontSize: "13.5px",
-    fontFamily: T.font, outline: "none",
-    boxSizing: "border-box",
+    width: "100%", height: "42px", padding: "0 14px",
+    background: T.elevated, border: `0.5px solid ${T.borderMd}`,
+    borderRadius: "10px", color: T.text, fontSize: "13.5px",
+    fontFamily: T.font, outline: "none", boxSizing: "border-box",
 };
 
 const selectStyle = {
@@ -56,13 +51,12 @@ const selectStyle = {
 
 /* ── Status config ────────────────────────────────────────────── */
 const STATUS = {
-    Diproses:  { color: T.amber,  bg: "rgba(245,158,11,.12)",  border: "rgba(245,158,11,.25)"  },
-    Disiapkan: { color: T.violet, bg: "rgba(139,92,246,.12)",  border: "rgba(139,92,246,.25)"  },
-    Dikirim:   { color: T.teal,   bg: "rgba(14,165,233,.12)",  border: "rgba(14,165,233,.25)"  },
-    Selesai:   { color: T.green,  bg: "rgba(16,185,129,.12)",  border: "rgba(16,185,129,.25)"  },
+    Diproses:  { color: T.amber,  bg: "rgba(245,158,11,.12)",  border: "rgba(245,158,11,.25)",  step: 1 },
+    Disiapkan: { color: T.violet, bg: "rgba(139,92,246,.12)",  border: "rgba(139,92,246,.25)",  step: 2 },
+    Dikirim:   { color: T.teal,   bg: "rgba(14,165,233,.12)",  border: "rgba(14,165,233,.25)",  step: 3 },
+    Selesai:   { color: T.green,  bg: "rgba(16,185,129,.12)",  border: "rgba(16,185,129,.25)",  step: 4 },
 };
 
-/* ── FieldLabel ───────────────────────────────────────────────── */
 function FieldLabel({ children, mt = true }) {
     return (
         <div style={{
@@ -73,7 +67,6 @@ function FieldLabel({ children, mt = true }) {
     );
 }
 
-/* ── KPI Card ─────────────────────────────────────────────────── */
 function KpiCard({ label, value, icon: Icon, accent }) {
     return (
         <div style={{
@@ -104,7 +97,6 @@ function KpiCard({ label, value, icon: Icon, accent }) {
     );
 }
 
-/* ── StatusBadge ──────────────────────────────────────────────── */
 function StatusBadge({ status }) {
     const s = STATUS[status] || STATUS.Diproses;
     return (
@@ -117,7 +109,51 @@ function StatusBadge({ status }) {
     );
 }
 
-/* ── Delete Modal ─────────────────────────────────────────────── */
+/* ── Status Stepper (read-only, otomatis) ─────────────────────── */
+function StatusStepper({ current }) {
+    const steps = Object.entries(STATUS);
+    const currentStep = STATUS[current]?.step ?? 1;
+    return (
+        <div style={{ display: "flex", alignItems: "center", gap: "0", marginTop: "8px" }}>
+            {steps.map(([key, cfg], i) => {
+                const done    = cfg.step < currentStep;
+                const active  = cfg.step === currentStep;
+                const color   = done || active ? cfg.color : T.muted;
+                const bg      = done || active ? cfg.bg : "transparent";
+                const border  = done || active ? cfg.border : T.border;
+                return (
+                    <div key={key} style={{ display: "flex", alignItems: "center", flex: 1 }}>
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1 }}>
+                            <div style={{
+                                width: "28px", height: "28px", borderRadius: "50%",
+                                background: bg, border: `1px solid ${border}`,
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                fontSize: "11px", fontWeight: 700, color,
+                            }}>
+                                {done ? "✓" : cfg.step}
+                            </div>
+                            <div style={{ fontSize: "10px", fontWeight: 600, color: active ? color : T.muted, marginTop: "5px", whiteSpace: "nowrap" }}>
+                                {key}
+                            </div>
+                            {active && (
+                                <div style={{ fontSize: "9px", color: T.muted, marginTop: "2px" }}>
+                                    {key === "Dikirim" ? "otomatis" : key === "Selesai" ? "otomatis" : "manual"}
+                                </div>
+                            )}
+                        </div>
+                        {i < steps.length - 1 && (
+                            <div style={{
+                                height: "1px", flex: 1, marginBottom: "18px",
+                                background: done ? cfg.color + "60" : T.border,
+                            }} />
+                        )}
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
+
 function DeleteModal({ onConfirm, onCancel }) {
     return (
         <div style={{
@@ -162,15 +198,15 @@ function DeleteModal({ onConfirm, onCancel }) {
 
 /* ── Main ─────────────────────────────────────────────────────── */
 export default function DistribusiSPPG() {
-    const [distribusi,   setDistribusi]   = useState([]);
-    const [sekolahs,     setSekolahs]     = useState([]);
-    const [menus,        setMenus]        = useState([]);
-    const [search,       setSearch]       = useState("");
-    const [showModal,    setShowModal]    = useState(false);
-    const [editId,       setEditId]       = useState(null);
-    const [deleteId,     setDeleteId]     = useState(null);
+    const [distribusi, setDistribusi] = useState([]);
+    const [sekolahs,   setSekolahs]   = useState([]);
+    const [menus,      setMenus]      = useState([]);
+    const [search,     setSearch]     = useState("");
+    const [showModal,  setShowModal]  = useState(false);
+    const [editId,     setEditId]     = useState(null);
+    const [deleteId,   setDeleteId]   = useState(null);
 
-    const emptyForm = { sekolah_id: "", menu_id: "", tanggal: "", jam_distribusi: "", jumlah_porsi: "", status: "Diproses" };
+    const emptyForm = { sekolah_id: "", menu_id: "", tanggal: "", jam_distribusi: "", jumlah_porsi: "" };
     const [form, setForm] = useState(emptyForm);
 
     const token   = () => localStorage.getItem("auth_token");
@@ -207,7 +243,7 @@ export default function DistribusiSPPG() {
         e.preventDefault();
         try {
             if (editId) {
-                await axios.put(`/api/sppg/distribusi/${editId}`, form, { headers: headers() });
+                await axios.put(`/sppg/distribusi/${editId}`, form, { headers: headers() });
             } else {
                 await axios.post("/sppg/distribusi", form, { headers: headers() });
             }
@@ -219,22 +255,31 @@ export default function DistribusiSPPG() {
         }
     };
 
+    /* Klik "Disiapkan" — satu-satunya status yang bisa diubah manual */
+    const tandaiDisiapkan = async (id) => {
+        try {
+            await axios.patch(`/sppg/distribusi/${id}/disiapkan`, {}, { headers: headers() });
+            fetchDistribusi();
+        } catch (err) {
+            alert(err.response?.data?.message || "Gagal update status");
+        }
+    };
+
     const editData = (item) => {
         setEditId(item.id);
         setForm({
-            sekolah_id:     item.sekolah_id     || "",
-            menu_id:        item.menu_id         || "",
-            tanggal:        item.tanggal         || "",
-            jam_distribusi: item.jam_distribusi  || "",
-            jumlah_porsi:   item.jumlah_porsi    || "",
-            status:         item.status          || "Diproses",
+            sekolah_id:     item.sekolah_id    || "",
+            menu_id:        item.menu_id        || "",
+            tanggal:        item.tanggal        || "",
+            jam_distribusi: item.jam_distribusi || "",
+            jumlah_porsi:   item.jumlah_porsi   || "",
         });
         setShowModal(true);
     };
 
     const confirmDelete = async () => {
         try {
-            await axios.delete(`/api/sppg/distribusi/${deleteId}`, { headers: headers() });
+            await axios.delete(`/sppg/distribusi/${deleteId}`, { headers: headers() });
             setDeleteId(null);
             fetchDistribusi();
         } catch (err) {
@@ -243,11 +288,7 @@ export default function DistribusiSPPG() {
         }
     };
 
-    const closeModal = () => {
-        setShowModal(false);
-        setEditId(null);
-        setForm(emptyForm);
-    };
+    const closeModal = () => { setShowModal(false); setEditId(null); setForm(emptyForm); };
 
     const filtered = distribusi.filter(item => {
         const s = item.sekolah?.nama_sekolah?.toLowerCase() || "";
@@ -255,10 +296,9 @@ export default function DistribusiSPPG() {
         return s.includes(search.toLowerCase()) || m.includes(search.toLowerCase());
     });
 
-    const totalPorsi  = distribusi.reduce((a, b) => a + Number(b.jumlah_porsi || 0), 0);
+    const totalPorsi   = distribusi.reduce((a, b) => a + Number(b.jumlah_porsi || 0), 0);
     const totalSelesai = distribusi.filter(x => x.status === "Selesai").length;
 
-    /* jam options */
     const jamOptions = Array.from({ length: 24 * 12 }, (_, i) => {
         const h = String(Math.floor(i / 12)).padStart(2, "0");
         const m = String((i % 12) * 5).padStart(2, "0");
@@ -267,6 +307,16 @@ export default function DistribusiSPPG() {
 
     return (
         <div style={{ minHeight: "100vh", background: T.bg, fontFamily: T.font }}>
+            <style>{`
+                html,body{margin:0;padding:0;background:${T.bg}}
+                *{box-sizing:border-box}
+                ::-webkit-scrollbar{width:4px}
+                ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:4px}
+                input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.4);cursor:pointer}
+                option{background:${T.card}}
+                tbody tr:hover td{background:rgba(255,255,255,0.015)!important;transition:background .15s}
+            `}</style>
+
             <SidebarSPPG />
 
             <div style={{ marginLeft: "260px", padding: "32px 36px" }}>
@@ -297,16 +347,35 @@ export default function DistribusiSPPG() {
 
                 {/* ── KPI Cards ── */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "14px", marginBottom: "24px" }}>
-                    <KpiCard label="Total Distribusi"    value={distribusi.length} icon={Truck}          accent={T.accent} />
-                    <KpiCard label="Total Porsi"         value={totalPorsi}        icon={Package}         accent={T.teal}   />
-                    <KpiCard label="Distribusi Selesai"  value={totalSelesai}      icon={UtensilsCrossed} accent={T.green}  />
+                    <KpiCard label="Total Distribusi"   value={distribusi.length} icon={Truck}          accent={T.accent} />
+                    <KpiCard label="Total Porsi"        value={totalPorsi}        icon={Package}         accent={T.teal}   />
+                    <KpiCard label="Distribusi Selesai" value={totalSelesai}      icon={UtensilsCrossed} accent={T.green}  />
+                </div>
+
+                {/* ── Info alur status ── */}
+                <div style={{
+                    background: T.elevated, border: `0.5px solid ${T.border}`,
+                    borderRadius: "14px", padding: "16px 22px", marginBottom: "20px",
+                    display: "flex", alignItems: "center", gap: "16px",
+                }}>
+                    <div style={{ fontSize: "12px", color: T.muted, flexShrink: 0 }}>Alur Status:</div>
+                    {Object.entries(STATUS).map(([key, cfg], i) => (
+                        <div key={key} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <span style={{
+                                fontSize: "11px", fontWeight: 700, padding: "2px 10px", borderRadius: "20px",
+                                background: cfg.bg, border: `0.5px solid ${cfg.border}`, color: cfg.color,
+                            }}>{key}</span>
+                            {i < 3 && <ChevronRight size={13} color={T.muted} />}
+                        </div>
+                    ))}
+                    <div style={{ marginLeft: "auto", fontSize: "11.5px", color: T.muted }}>
+                        <span style={{ color: T.violet, fontWeight: 600 }}>Disiapkan</span> → diklik manual ·
+                        <span style={{ color: T.teal, fontWeight: 600 }}> Dikirim</span> & <span style={{ color: T.green, fontWeight: 600 }}>Selesai</span> → otomatis
+                    </div>
                 </div>
 
                 {/* ── Table Card ── */}
-                <div style={{
-                    background: T.elevated, border: `0.5px solid ${T.border}`,
-                    borderRadius: "18px", overflow: "hidden",
-                }}>
+                <div style={{ background: T.elevated, border: `0.5px solid ${T.border}`, borderRadius: "18px", overflow: "hidden" }}>
                     {/* toolbar */}
                     <div style={{
                         display: "flex", justifyContent: "space-between", alignItems: "center",
@@ -324,27 +393,21 @@ export default function DistribusiSPPG() {
                             }}>
                                 <Search size={14} strokeWidth={2} color={T.muted} />
                                 <input
-                                    value={search}
-                                    onChange={e => setSearch(e.target.value)}
+                                    value={search} onChange={e => setSearch(e.target.value)}
                                     placeholder="Cari sekolah atau menu..."
-                                    style={{
-                                        background: "none", border: "none", outline: "none",
-                                        color: T.text, fontSize: "13px", fontFamily: T.font, width: "220px",
-                                    }}
+                                    style={{ background: "none", border: "none", outline: "none", color: T.text, fontSize: "13px", fontFamily: T.font, width: "220px" }}
                                 />
                             </div>
                             <span style={{
                                 fontSize: "11px", fontWeight: 700, padding: "4px 12px", borderRadius: "20px",
                                 background: `${T.accent}18`, border: `0.5px solid ${T.accent}30`, color: "#93C5FD",
-                            }}>
-                                {filtered.length} data
-                            </span>
+                            }}>{filtered.length} data</span>
                         </div>
                     </div>
 
                     {/* table */}
                     <div style={{ overflowX: "auto" }}>
-                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", minWidth: "780px" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", minWidth: "900px" }}>
                             <thead>
                                 <tr>
                                     {["No", "Sekolah", "Menu", "Tanggal", "Jam", "Porsi", "Status", "Aksi"].map(h => (
@@ -390,15 +453,11 @@ export default function DistribusiSPPG() {
                                                 </span>
                                             </div>
                                         </td>
-                                        <td style={{ padding: "14px 18px", color: T.sub }}>
-                                            {item.menu?.nama_menu || "—"}
-                                        </td>
+                                        <td style={{ padding: "14px 18px", color: T.sub }}>{item.menu?.nama_menu || "—"}</td>
                                         <td style={{ padding: "14px 18px", color: T.sub, whiteSpace: "nowrap" }}>
                                             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                                                 <CalendarDays size={13} strokeWidth={1.8} color={T.muted} />
-                                                {item.tanggal
-                                                    ? new Date(item.tanggal).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })
-                                                    : "—"}
+                                                {item.tanggal ? new Date(item.tanggal).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "—"}
                                             </div>
                                         </td>
                                         <td style={{ padding: "14px 18px", color: T.sub, whiteSpace: "nowrap" }}>
@@ -409,10 +468,8 @@ export default function DistribusiSPPG() {
                                         </td>
                                         <td style={{ padding: "14px 18px", textAlign: "center" }}>
                                             <span style={{
-                                                fontSize: "12px", fontWeight: 700, padding: "4px 12px",
-                                                borderRadius: "20px",
-                                                background: `${T.teal}15`, border: `0.5px solid ${T.teal}30`,
-                                                color: T.teal,
+                                                fontSize: "12px", fontWeight: 700, padding: "4px 12px", borderRadius: "20px",
+                                                background: `${T.teal}15`, border: `0.5px solid ${T.teal}30`, color: T.teal,
                                             }}>
                                                 {Number(item.jumlah_porsi || 0).toLocaleString("id-ID")}
                                             </span>
@@ -421,16 +478,31 @@ export default function DistribusiSPPG() {
                                             <StatusBadge status={item.status} />
                                         </td>
                                         <td style={{ padding: "14px 18px" }}>
-                                            <div style={{ display: "flex", justifyContent: "center", gap: "7px" }}>
-                                                <button onClick={() => editData(item)} style={{
-                                                    height: "32px", padding: "0 12px", borderRadius: "8px",
-                                                    border: `0.5px solid ${T.accent}30`, background: `${T.accent}12`,
-                                                    color: "#93C5FD", fontFamily: T.font, fontSize: "11.5px",
-                                                    fontWeight: 600, cursor: "pointer",
-                                                    display: "flex", alignItems: "center", gap: "5px",
-                                                }}>
-                                                    <Pencil size={11} strokeWidth={2} /> Edit
-                                                </button>
+                                            <div style={{ display: "flex", justifyContent: "center", gap: "6px" }}>
+                                                {/* Tombol Disiapkan — hanya muncul kalau status masih Diproses */}
+                                                {item.status === "Diproses" && (
+                                                    <button onClick={() => tandaiDisiapkan(item.id)} style={{
+                                                        height: "32px", padding: "0 12px", borderRadius: "8px",
+                                                        border: `0.5px solid ${T.violet}30`, background: `${T.violet}12`,
+                                                        color: "#c4b5fd", fontFamily: T.font, fontSize: "11.5px",
+                                                        fontWeight: 600, cursor: "pointer",
+                                                        display: "flex", alignItems: "center", gap: "5px",
+                                                    }}>
+                                                        <Check size={11} strokeWidth={2.5} /> Disiapkan
+                                                    </button>
+                                                )}
+                                                {/* Edit hanya boleh kalau belum Dikirim/Selesai */}
+                                                {["Diproses", "Disiapkan"].includes(item.status) && (
+                                                    <button onClick={() => editData(item)} style={{
+                                                        height: "32px", padding: "0 12px", borderRadius: "8px",
+                                                        border: `0.5px solid ${T.accent}30`, background: `${T.accent}12`,
+                                                        color: "#93C5FD", fontFamily: T.font, fontSize: "11.5px",
+                                                        fontWeight: 600, cursor: "pointer",
+                                                        display: "flex", alignItems: "center", gap: "5px",
+                                                    }}>
+                                                        Edit
+                                                    </button>
+                                                )}
                                                 <button onClick={() => setDeleteId(item.id)} style={{
                                                     height: "32px", padding: "0 12px", borderRadius: "8px",
                                                     border: `0.5px solid ${T.red}25`, background: `${T.red}10`,
@@ -451,12 +523,7 @@ export default function DistribusiSPPG() {
             </div>
 
             {/* ── Delete Modal ── */}
-            {deleteId && (
-                <DeleteModal
-                    onConfirm={confirmDelete}
-                    onCancel={() => setDeleteId(null)}
-                />
-            )}
+            {deleteId && <DeleteModal onConfirm={confirmDelete} onCancel={() => setDeleteId(null)} />}
 
             {/* ── Add / Edit Modal ── */}
             {showModal && (
@@ -489,22 +556,19 @@ export default function DistribusiSPPG() {
                             <button onClick={closeModal} style={{
                                 width: "30px", height: "30px", borderRadius: "8px",
                                 background: T.card, border: `0.5px solid ${T.border}`,
-                                color: T.muted, display: "flex", alignItems: "center", justifyContent: "center",
-                                cursor: "pointer",
+                                color: T.muted, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
                             }}>
                                 <X size={14} strokeWidth={2} />
                             </button>
                         </div>
 
                         <form onSubmit={saveData} style={{ padding: "20px 24px 24px" }}>
-                            {/* section */}
                             <div style={{ fontSize: "11px", fontWeight: 700, color: "#818cf8", textTransform: "uppercase", letterSpacing: ".8px", marginBottom: "14px", paddingBottom: "8px", borderBottom: `0.5px solid ${T.border}` }}>
                                 Informasi Distribusi
                             </div>
 
                             <FieldLabel mt={false}>Sekolah</FieldLabel>
-                            <select style={selectStyle}
-                                value={form.sekolah_id}
+                            <select style={selectStyle} value={form.sekolah_id}
                                 onChange={e => {
                                     const s = sekolahs.find(x => x.id == e.target.value);
                                     setForm({ ...form, sekolah_id: e.target.value, jumlah_porsi: s?.jumlah_siswa || 0 });
@@ -514,14 +578,12 @@ export default function DistribusiSPPG() {
                             </select>
 
                             <FieldLabel>Menu</FieldLabel>
-                            <select style={selectStyle}
-                                value={form.menu_id}
+                            <select style={selectStyle} value={form.menu_id}
                                 onChange={e => setForm({ ...form, menu_id: e.target.value })}>
                                 <option value="">Pilih menu</option>
                                 {menus.map(m => <option key={m.id} value={m.id}>{m.nama_menu}</option>)}
                             </select>
 
-                            {/* date + time + porsi */}
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
                                 <div>
                                     <FieldLabel>Tanggal</FieldLabel>
@@ -531,8 +593,7 @@ export default function DistribusiSPPG() {
                                 </div>
                                 <div>
                                     <FieldLabel>Jam</FieldLabel>
-                                    <select style={selectStyle}
-                                        value={form.jam_distribusi}
+                                    <select style={selectStyle} value={form.jam_distribusi}
                                         onChange={e => setForm({ ...form, jam_distribusi: e.target.value })}>
                                         <option value="">Pilih jam</option>
                                         {jamOptions.map(j => <option key={j} value={j}>{j}</option>)}
@@ -540,42 +601,28 @@ export default function DistribusiSPPG() {
                                 </div>
                                 <div>
                                     <FieldLabel>Jumlah Porsi</FieldLabel>
-                                    <div style={{
-                                        ...inp, display: "flex", alignItems: "center",
-                                        background: T.card, color: T.teal, fontWeight: 700,
-                                        cursor: "default",
-                                    }}>
+                                    <div style={{ ...inp, display: "flex", alignItems: "center", background: T.card, color: T.teal, fontWeight: 700, cursor: "default" }}>
                                         {Number(form.jumlah_porsi || 0).toLocaleString("id-ID")}
                                     </div>
-                                    <div style={{ fontSize: "10.5px", color: T.muted, marginTop: "4px" }}>
-                                        Otomatis dari data siswa
-                                    </div>
+                                    <div style={{ fontSize: "10.5px", color: T.muted, marginTop: "4px" }}>Otomatis dari data siswa</div>
                                 </div>
                             </div>
 
-                            {/* status */}
-                            <div style={{ fontSize: "11px", fontWeight: 700, color: "#34d399", textTransform: "uppercase", letterSpacing: ".8px", margin: "20px 0 14px", paddingBottom: "8px", borderBottom: `0.5px solid ${T.border}` }}>
-                                Status Distribusi
+                            {/* Info status — tidak bisa diubah dari modal */}
+                            <div style={{
+                                marginTop: "20px", padding: "14px 16px", borderRadius: "12px",
+                                background: `${T.accent}08`, border: `0.5px solid ${T.accent}20`,
+                            }}>
+                                <div style={{ fontSize: "11px", fontWeight: 700, color: T.accent, marginBottom: "4px", letterSpacing: ".5px", textTransform: "uppercase" }}>
+                                    Info Status
+                                </div>
+                                <div style={{ fontSize: "12px", color: T.muted, lineHeight: 1.6 }}>
+                                    Status dimulai dari <span style={{ color: T.amber, fontWeight: 600 }}>Diproses</span>.
+                                    Klik <span style={{ color: T.violet, fontWeight: 600 }}>Disiapkan</span> di tabel saat makanan siap dikemas.
+                                    Status <span style={{ color: T.teal, fontWeight: 600 }}>Dikirim</span> dan <span style={{ color: T.green, fontWeight: 600 }}>Selesai</span> berubah otomatis sesuai jadwal.
+                                </div>
                             </div>
 
-                            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "8px" }}>
-                                {Object.entries(STATUS).map(([key, cfg]) => (
-                                    <button key={key} type="button"
-                                        onClick={() => setForm({ ...form, status: key })}
-                                        style={{
-                                            height: "36px", borderRadius: "9px", cursor: "pointer",
-                                            fontFamily: T.font, fontSize: "12px", fontWeight: 700,
-                                            border: form.status === key ? `0.5px solid ${cfg.border}` : `0.5px solid ${T.border}`,
-                                            background: form.status === key ? cfg.bg : "transparent",
-                                            color: form.status === key ? cfg.color : T.muted,
-                                            transition: "all .15s",
-                                        }}>
-                                        {key}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* actions */}
                             <div style={{
                                 display: "flex", justifyContent: "flex-end", gap: "8px",
                                 marginTop: "22px", paddingTop: "16px", borderTop: `0.5px solid ${T.border}`,

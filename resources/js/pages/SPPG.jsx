@@ -40,8 +40,8 @@ export default function SPPG() {
 
     const sppgData = Array.isArray(distribusi) ? distribusi : [];
 
-    const totalSchools = new Set(sppgData.map((item) => item.sekolah?.nama)).size;
-    const totalPackages = new Set(sppgData.map((item) => item.menu?.name)).size;
+    const totalSchools = new Set(sppgData.map((item) => item.sekolah?.nama_sekolah)).size;
+    const totalPackages = new Set(sppgData.map((item) => item.menu?.nama_menu)).size;
 
     const filteredData = useMemo(() => {
         let data = [...sppgData];
@@ -52,7 +52,7 @@ export default function SPPG() {
         }
         if (search) {
             data = data.filter((item) =>
-                [item.sekolah?.nama, item.menu?.name, item.status]
+                [item.sekolah?.nama_sekolah, item.menu?.nama_menu, item.status]
                     .join(" ")
                     .toLowerCase()
                     .includes(search.toLowerCase())
@@ -374,17 +374,17 @@ export default function SPPG() {
                                                         display: "flex", alignItems: "center",
                                                         justifyContent: "center", fontWeight: "700", fontSize: "13px",
                                                     }}>
-                                                        {item.sekolah?.nama?.charAt(0)?.toUpperCase()}
+                                                        {item.sekolah?.nama_sekolah?.charAt(0)?.toUpperCase()}
                                                     </div>
                                                     <span style={{ color: "white", fontWeight: "600", fontSize: "14px" }}>
-                                                        {item.sekolah?.nama}
+                                                        {item.sekolah?.nama_sekolah}
                                                     </span>
                                                 </div>
                                             </td>
 
                                             {/* Package */}
                                             <td style={{ padding: "16px", color: "#cbd5e1", fontSize: "14px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                                                {item.menu?.name}
+                                                {item.menu?.nama_menu}
                                             </td>
 
                                             {/* Total Meals */}
@@ -394,7 +394,7 @@ export default function SPPG() {
 
                                             {/* Delivery Date */}
                                             <td style={{ padding: "16px", color: "#94a3b8", fontSize: "14px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                                                {item.tanggal_distribusi}
+                                                {item.tanggal}
                                             </td>
 
                                             {/* Status */}
