@@ -1,5 +1,7 @@
 // resources/js/pages/owner/OrdersOwner.jsx
 // approve → auto kurangi stok; jika stok kurang tampilkan toast error detail
+// process → ubah status ke preparing
+// dispatch → kurir ditugaskan OTOMATIS oleh backend (round-robin)
 
 import {
     ShoppingCart, Clock, CheckCircle2, XCircle,
@@ -116,105 +118,6 @@ function Toast({ toasts, onDismiss }) {
                 </div>
             ))}
             <style>{`@keyframes toastIn { from { opacity:0; transform:translateX(32px); } to { opacity:1; transform:translateX(0); } }`}</style>
-        </div>
-    );
-}
-
-/* ── PilihKurirModal ── */
-function PilihKurirModal({ order, kurirs, onClose, onConfirm, loading }) {
-    const [selected, setSelected] = useState("");
-    if (!order) return null;
-    return (
-        <div
-            onClick={onClose}
-            style={{
-                position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)",
-                backdropFilter: "blur(4px)", zIndex: 1000,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontFamily: C.font,
-            }}
-        >
-            <div
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                    background: C.surface, border: `0.5px solid ${C.borderMd}`,
-                    borderRadius: "14px", padding: "28px",
-                    minWidth: "360px", maxWidth: "420px", width: "100%",
-                    boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
-                }}
-            >
-                <div style={{ marginBottom: "20px" }}>
-                    <div style={{ fontSize: "10px", color: "#60a5fa", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>
-                        Proses Pesanan #{order.id}
-                    </div>
-                    <div style={{ fontSize: "17px", fontWeight: 800, color: C.text, letterSpacing: "-.4px" }}>
-                        Pilih Kurir Pengantar
-                    </div>
-                </div>
-
-                {kurirs.length === 0 ? (
-                    <div style={{
-                        padding: "14px", borderRadius: "8px", fontSize: "13px",
-                        color: "#fca5a5", background: "rgba(239,68,68,0.08)",
-                        border: "0.5px solid rgba(239,68,68,0.18)",
-                    }}>
-                        Belum ada kurir aktif.
-                    </div>
-                ) : (
-                    <div style={{ display: "flex", flexDirection: "column", gap: "6px", maxHeight: "240px", overflowY: "auto" }}>
-                        {kurirs.map((k) => (
-                            <label
-                                key={k.id}
-                                style={{
-                                    display: "flex", alignItems: "center", gap: "10px",
-                                    padding: "10px 12px", borderRadius: "8px", cursor: "pointer",
-                                    background: selected === String(k.id) ? "rgba(59,130,246,0.12)" : "rgba(255,255,255,0.03)",
-                                    border: `0.5px solid ${selected === String(k.id) ? "rgba(59,130,246,0.35)" : C.border}`,
-                                    transition: "all 0.15s",
-                                }}
-                            >
-                                <input
-                                    type="radio" name="kurir" value={k.id}
-                                    checked={selected === String(k.id)}
-                                    onChange={(e) => setSelected(e.target.value)}
-                                    style={{ accentColor: "#3b82f6" }}
-                                />
-                                <div>
-                                    <div style={{ fontSize: "13px", fontWeight: 600, color: C.text }}>{k.name}</div>
-                                    <div style={{ fontSize: "11px", color: C.muted, marginTop: "2px" }}>{k.phone || "—"}</div>
-                                </div>
-                            </label>
-                        ))}
-                    </div>
-                )}
-
-                <div style={{ display: "flex", gap: "8px", marginTop: "20px" }}>
-                    <button
-                        onClick={onClose}
-                        style={{
-                            flex: 1, padding: "10px 0",
-                            background: "rgba(255,255,255,0.03)", border: `0.5px solid ${C.borderMd}`,
-                            borderRadius: "8px", color: C.sub, cursor: "pointer",
-                            fontSize: "13px", fontWeight: 600, fontFamily: C.font,
-                        }}
-                    >
-                        Batal
-                    </button>
-                    <button
-                        onClick={() => selected && onConfirm(selected)}
-                        disabled={!selected || loading}
-                        style={{
-                            flex: 1, padding: "10px 0", border: "none", borderRadius: "8px",
-                            background: selected && !loading ? "linear-gradient(135deg,#3b82f6,#2563eb)" : "rgba(71,85,105,0.2)",
-                            color: selected && !loading ? "white" : C.muted,
-                            cursor: selected && !loading ? "pointer" : "not-allowed",
-                            fontSize: "13px", fontWeight: 700, fontFamily: C.font, transition: "all 0.2s",
-                        }}
-                    >
-                        {loading ? "Memproses..." : "Konfirmasi"}
-                    </button>
-                </div>
-            </div>
         </div>
     );
 }
@@ -421,13 +324,10 @@ function EmptyState() {
    MAIN
 ════════════════════════════════════════ */
 export default function OrdersOwner() {
-    const [orders,             setOrders]             = useState([]);
-    const [kurirs,             setKurirs]             = useState([]);
-    const [loadingIds,         setLoadingIds]         = useState({});
-    const [toasts,             setToasts]             = useState([]);
-    const [trackingOrder,      setTrackingOrder]      = useState(null);
-    const [processOrderTarget, setProcessOrderTarget] = useState(null);
-    const [processLoading,     setProcessLoading]     = useState(false);
+    const [orders,        setOrders]        = useState([]);
+    const [loadingIds,    setLoadingIds]    = useState({});
+    const [toasts,        setToasts]        = useState([]);
+    const [trackingOrder, setTrackingOrder] = useState(null);
 
     const getOrders = useCallback(async () => {
         try {
@@ -436,19 +336,11 @@ export default function OrdersOwner() {
         } catch (err) { console.error(err); }
     }, []);
 
-    const getKurirs = useCallback(async () => {
-        try {
-            const res = await axios.get("/owner/kurirs");
-            setKurirs(res.data.data ?? []);
-        } catch (err) { console.error(err); }
-    }, []);
-
     useEffect(() => {
         getOrders();
-        getKurirs();
         const interval = setInterval(getOrders, 15_000);
         return () => clearInterval(interval);
-    }, [getOrders, getKurirs]);
+    }, [getOrders]);
 
     const pushToast = useCallback((title, message, color, detail = null, isError = false) => {
         const id = Date.now();
@@ -492,35 +384,36 @@ export default function OrdersOwner() {
         }
     };
 
-    // ── PROCESS — confirmed → preparing (pilih kurir dulu) ──
-    const openProcessModal = (order) => setProcessOrderTarget(order);
-
-    const confirmProcess = async (kurirId) => {
-        const order = processOrderTarget;
-        if (!order) return;
-        setProcessLoading(true);
+    // ── PROCESS — confirmed → preparing (langsung, tanpa pilih kurir) ──
+    const processOrder = async (id) => {
+        setLoading(id, "process");
         try {
-            await axios.put(`/owner/orders/${order.id}/process`, { kurir_id: kurirId });
-            pushToast("Sedang Diproses", `Order #${order.id} kini diproses di dapur.`, "#3b82f6");
-            setProcessOrderTarget(null);
+            await axios.put(`/owner/orders/${id}/process`);
+            pushToast("Sedang Diproses", `Order #${id} kini diproses di dapur.`, "#3b82f6");
             getOrders();
         } catch (err) {
             pushToast("Gagal", err?.response?.data?.message || "Tidak bisa memproses pesanan.", "#ef4444");
         } finally {
-            setProcessLoading(false);
+            setLoading(id, null);
         }
     };
 
-    // ── DISPATCH — preparing → dispatched ──
+    // ── DISPATCH — preparing → dispatched (kurir otomatis round-robin) ──
     const sendOrder = async (order) => {
         setLoading(order.id, "send");
         try {
-            const estimasi = 15 + Math.floor(Math.random() * 21);
-            await axios.put(`/owner/orders/${order.id}/send`, { estimasi });
-            pushToast("Pesanan Dikirim", `Order #${order.id} dalam perjalanan. Estimasi: ${estimasi} menit.`, "#a855f7");
+            const res = await axios.put(`/owner/orders/${order.id}/dispatch`);
+            const kurirName = res.data?.data?.kurir;
+            pushToast(
+                "Pesanan Dikirim",
+                kurirName
+                    ? `Order #${order.id} dalam perjalanan. Kurir: ${kurirName}.`
+                    : `Order #${order.id} dalam perjalanan.`,
+                "#a855f7"
+            );
             getOrders();
         } catch (err) {
-            pushToast("Gagal", err?.response?.data?.message || "Tidak bisa mengirim pesanan.", "#ef4444");
+            pushToast("Gagal", err?.response?.data?.message || "Tidak bisa mengirim pesanan.", "#ef4444", null, true);
         } finally {
             setLoading(order.id, null);
         }
@@ -544,16 +437,7 @@ export default function OrdersOwner() {
             `}</style>
 
             <Toast toasts={toasts} onDismiss={dismissToast} />
-            {trackingOrder      && <TrackingModal order={trackingOrder} onClose={() => setTrackingOrder(null)} />}
-            {processOrderTarget && (
-                <PilihKurirModal
-                    order={processOrderTarget}
-                    kurirs={kurirs}
-                    loading={processLoading}
-                    onClose={() => setProcessOrderTarget(null)}
-                    onConfirm={confirmProcess}
-                />
-            )}
+            {trackingOrder && <TrackingModal order={trackingOrder} onClose={() => setTrackingOrder(null)} />}
 
             <div style={{ fontFamily: C.font }}>
 
@@ -628,8 +512,8 @@ export default function OrdersOwner() {
 
                                         // Logika tombol: 1 aksi aktif per status
                                         // pending    → Setuju + Tolak
-                                        // confirmed  → Proses (pilih kurir)
-                                        // preparing  → Kirim
+                                        // confirmed  → Proses (langsung, tanpa pilih kurir manual)
+                                        // preparing  → Kirim (kurir di-assign otomatis oleh sistem)
                                         // dispatched / on_delivery / delivered → info saja
                                         // cancelled  → —
                                         const showApprove = isPending;
@@ -720,7 +604,7 @@ export default function OrdersOwner() {
                                                                 label="Proses"
                                                                 icon={<ChefHat size={12} />}
                                                                 color="blue"
-                                                                onClick={() => openProcessModal(order)}
+                                                                onClick={() => processOrder(order.id)}
                                                                 loading={busy === "process"}
                                                             />
                                                         )}

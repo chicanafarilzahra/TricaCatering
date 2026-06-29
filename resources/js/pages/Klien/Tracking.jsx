@@ -1,9 +1,55 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import axios from "axios";
 import Echo from "laravel-echo";
 import Pusher from "pusher-js";
+import markerIconPng from "leaflet/dist/images/marker-icon.png";
+import markerShadowPng from "leaflet/dist/images/marker-shadow.png";
 import NavbarKlien from "../../components/NavbarKlien";
+
+
+// ════════════════════════════════════════════════════════════
+// FIX ICON LEAFLET
+// ════════════════════════════════════════════════════════════
+const defaultIcon = L.icon({
+    iconUrl: markerIconPng,
+    shadowUrl: markerShadowPng,
+    iconAnchor: [12, 41],
+});
+L.Marker.prototype.options.icon = defaultIcon;
+
+const kurirIcon = L.divIcon({
+    html: `<div style="
+        background:#2563eb;width:18px;height:18px;
+        border-radius:50%;border:3px solid white;
+        box-shadow:0 2px 8px rgba(37,99,235,0.5)">
+    </div>`,
+    className: "",
+    iconAnchor: [9, 9],
+});
+
+const dapurIcon = L.divIcon({
+    html: `<div style="
+        background:#1E3A8A;width:18px;height:18px;
+        border-radius:50%;border:3px solid white;
+        box-shadow:0 2px 8px rgba(30,58,138,0.5)">
+    </div>`,
+    className: "",
+    iconAnchor: [9, 9],
+});
+
+const klienIcon = L.divIcon({
+    html: `<div style="
+        background:#93C5FD;width:18px;height:18px;
+        border-radius:50%;border:3px solid white;
+        box-shadow:0 2px 8px rgba(147,197,253,0.6)">
+    </div>`,
+    className: "",
+    iconAnchor: [9, 9],
+});
 
 // ════════════════════════════════════════════════════════════
 // SETUP LARAVEL ECHO + REVERB (singleton)
@@ -53,8 +99,6 @@ const COLOR = {
     line:       "rgba(255,255,255,0.10)",
 };
 
-// 4 milestone utama ditampilkan sebagai "stat card" — warna mengikuti
-// urutan biru → ungu → hijau → orange seperti di PesananSaya.jsx
 const MILESTONES = [
     { key: "confirmed",  label: "Disetujui",  icon: "check", barColor: "#3B82F6", glow: "rgba(59,130,246,0.25)"  },
     { key: "preparing",  label: "Diproses",   icon: "chef",  barColor: "#8B5CF6", glow: "rgba(139,92,246,0.25)"  },
@@ -62,7 +106,6 @@ const MILESTONES = [
     { key: "delivered",  label: "Selesai",    icon: "flag",  barColor: "#22C55E", glow: "rgba(34,197,94,0.25)"  },
 ];
 
-// Step lengkap untuk timeline detail (termasuk "Dalam Perjalanan")
 const STEP_DEFS = [
     { key: "confirmed",   title: "Pesanan Disetujui", desc: "Owner telah menyetujui pesanan.",  icon: "check", color: "#3B82F6" },
     { key: "preparing",   title: "Diproses di Dapur",  desc: "Sedang disiapkan.",                  icon: "chef",  color: "#8B5CF6" },
@@ -73,6 +116,7 @@ const STEP_DEFS = [
 
 const STATUS_ORDER = ["pending", "confirmed", "preparing", "dispatched", "on_delivery", "delivered"];
 const ACTIVE_STATUSES = ["pending", "confirmed", "preparing", "dispatched", "on_delivery"];
+const MAP_STATUSES = ["dispatched", "on_delivery"];
 
 function statusIndex(status) {
     const idx = STATUS_ORDER.indexOf(status);
@@ -118,22 +162,42 @@ function Icon({ name, size = 18 }) {
                     <path d="M6 4h11l-2.5 3.5L17 11H6" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
                 </svg>
             );
-        case "truck":
-            return (
-                <svg {...common}>
-                    <path d="M3 7h11v8H3z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-                    <path d="M14 11h4l3 3v1h-7z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-                    <circle cx="7" cy="17" r="1.6" stroke="currentColor" strokeWidth="2" />
-                    <circle cx="17" cy="17" r="1.6" stroke="currentColor" strokeWidth="2" />
-                </svg>
-            );
+            case "calendar":
+    return (
+        <svg {...common}>
+            <rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="2" />
+            <path d="M3 9h18" stroke="currentColor" strokeWidth="2" />
+            <path d="M8 3v4M16 3v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+    );
+case "clock":
+    return (
+        <svg {...common}>
+            <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
+            <path d="M12 7v5l3.5 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+    );
+case "pin":
+    return (
+        <svg {...common}>
+            <path d="M12 21s7-7.2 7-12a7 7 0 10-14 0c0 4.8 7 12 7 12z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+            <circle cx="12" cy="9" r="2.4" stroke="currentColor" strokeWidth="2" />
+        </svg>
+    );
+case "cancel":
+    return (
+        <svg {...common}>
+            <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
+            <path d="M9 9l6 6M15 9l-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+    );
         default:
             return null;
     }
 }
 
 // ════════════════════════════════════════════════════════════
-// HERO — header section, gaya badge gradient seperti PesananSaya
+// HERO
 // ════════════════════════════════════════════════════════════
 function Hero({ orders, selectedId, onSelect }) {
     return (
@@ -223,8 +287,7 @@ function Hero({ orders, selectedId, onSelect }) {
 }
 
 // ════════════════════════════════════════════════════════════
-// MILESTONE CARD — versi tracking dari "stat card" PesananSaya
-// (garis warna di atas, ikon dalam kotak, judul + sub status)
+// MILESTONE CARD
 // ════════════════════════════════════════════════════════════
 function MilestoneCard({ milestone, state }) {
     const isDone   = state === "done";
@@ -283,7 +346,7 @@ function MilestoneCard({ milestone, state }) {
 }
 
 // ════════════════════════════════════════════════════════════
-// TIMELINE STEP (detail, vertikal, di kartu utama)
+// TIMELINE STEP
 // ════════════════════════════════════════════════════════════
 function TimelineStep({ step, state, isLast }) {
     const circleStyle = {
@@ -341,63 +404,96 @@ function TimelineStep({ step, state, isLast }) {
 }
 
 // ════════════════════════════════════════════════════════════
-// MENU ITEM ROW
+// MENU PREVIEW
 // ════════════════════════════════════════════════════════════
-function MenuItemRow({ item }) {
+function MenuPreview({ order }) {
+    const menu = order.menu;
+    if (!menu) {
+        return <p style={{ fontSize: 13, color: COLOR.textFaint, margin: "10px 0 0" }}>Tidak ada detail menu.</p>;
+    }
+
+    const imgSrc = menu.image
+        ? (String(menu.image).startsWith("http") ? menu.image : `/storage/${menu.image}`)
+        : null;
+
     return (
-        <div style={{ display: "flex", gap: 12, padding: "10px 0", borderBottom: `1px solid ${COLOR.borderSoft}` }}>
+        <div style={{ display: "flex", gap: 12, padding: "10px 0" }}>
             <div style={{
-                width: 50, height: 50, borderRadius: 10, flexShrink: 0, overflow: "hidden",
+                width: 56, height: 56, borderRadius: 12, flexShrink: 0, overflow: "hidden",
                 background: "rgba(255,255,255,0.04)", border: `1px solid ${COLOR.borderSoft}`,
             }}>
-                {item.gambar ? (
+                {imgSrc ? (
                     <img
-                        src={item.gambar}
-                        alt={item.nama}
+                        src={imgSrc}
+                        alt={menu.name}
                         style={{ width: "100%", height: "100%", objectFit: "cover" }}
                         onError={(e) => { e.currentTarget.style.display = "none"; }}
                     />
                 ) : (
-                    <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🍽️</div>
+                    <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>🍽️</div>
                 )}
             </div>
 
             <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-                    <p style={{
-                        margin: 0, fontSize: 13.5, fontWeight: 600, color: COLOR.text,
-                        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                    }}>{item.nama}</p>
-                    {item.qty != null && (
-                        <span style={{ fontSize: 12, color: COLOR.textDim, flexShrink: 0, fontWeight: 600 }}>× {item.qty}</span>
-                    )}
-                </div>
-                {item.deskripsi && (
-                    <p style={{
-                        margin: "2px 0 0", fontSize: 12, color: COLOR.textDim,
-                        overflow: "hidden", textOverflow: "ellipsis",
-                        display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
-                    }}>{item.deskripsi}</p>
+                <p style={{
+                    margin: 0, fontSize: 14, fontWeight: 700, color: COLOR.text,
+                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                }}>{menu.name}</p>
+                {order.quantity != null && (
+                    <p style={{ margin: "3px 0 0", fontSize: 12.5, color: COLOR.textDim }}>
+                        {order.quantity} porsi
+                        {order.type === "harian" && order.duration ? ` × ${order.duration} hari` : ""}
+                    </p>
                 )}
             </div>
         </div>
     );
 }
 
+// ════════════════════════════════════════════════════════════
+// FORMAT TANGGAL — terima string ISO ('2026-07-01T00:00:00.000000Z'
+// dari cast 'date' Laravel) ATAU string sederhana 'YYYY-MM-DD'.
+// ════════════════════════════════════════════════════════════
 function formatTanggal(tanggal) {
     if (!tanggal) return "—";
     try {
-        return new Date(tanggal).toLocaleDateString("id-ID", {
+        const d = new Date(tanggal);
+        if (isNaN(d.getTime())) return "—";
+        return d.toLocaleDateString("id-ID", {
             weekday: "long", day: "numeric", month: "long", year: "numeric",
         });
     } catch {
-        return tanggal;
+        return "—";
     }
 }
 
+// ════════════════════════════════════════════════════════════
+// FORMAT JAM — robust terhadap beberapa kemungkinan bentuk:
+// "14:30:00" (kolom TIME mysql), "14:30" (HH:mm dari validasi
+// date_format:H:i), atau bahkan ikut terbungkus tanggal penuh
+// "2026-01-01T14:30:00.000000Z" kalau suatu saat backend
+// menyimpannya sebagai datetime/cast.
+// ════════════════════════════════════════════════════════════
 function formatJam(jam) {
-    if (!jam) return "—";
-    return String(jam).substring(0, 5);
+    if (jam === null || jam === undefined || jam === "") return "—";
+
+    const str = String(jam).trim();
+
+    // Kasus "14:30:00" atau "14:30" -> ambil HH:MM langsung
+    const simpleMatch = str.match(/^(\d{1,2}):(\d{2})/);
+    if (simpleMatch) {
+        const hh = simpleMatch[1].padStart(2, "0");
+        const mm = simpleMatch[2];
+        return `${hh}:${mm}`;
+    }
+
+    // Kasus terbungkus format ISO datetime -> parse sebagai Date
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+        return d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+    }
+
+    return "—";
 }
 
 function InfoRow({ label, value, icon }) {
@@ -420,9 +516,128 @@ function InfoRow({ label, value, icon }) {
 }
 
 // ════════════════════════════════════════════════════════════
+// AUTO FITBOUNDS — marker kurir + klien selalu terlihat
+// ════════════════════════════════════════════════════════════
+function MapBoundsAdjuster({ kurirPos, klienPos }) {
+    const map     = useMap();
+    const isFirst = useRef(true);
+
+    useEffect(() => {
+        if (!kurirPos || !klienPos) return;
+        const bounds = L.latLngBounds([kurirPos, klienPos]);
+
+        if (isFirst.current) {
+            map.fitBounds(bounds, { padding: [50, 50] });
+            isFirst.current = false;
+        } else {
+            map.flyToBounds(bounds, { padding: [50, 50], duration: 0.8, easeLinearity: 0.5 });
+        }
+    }, [map, kurirPos?.[0], kurirPos?.[1], klienPos?.[0], klienPos?.[1]]);
+
+    return null;
+}
+
+// ════════════════════════════════════════════════════════════
+// PETA TRACKING — dirender hanya saat status dispatched/on_delivery
+// ════════════════════════════════════════════════════════════
+function TrackingMap({ order, kurirPos }) {
+    const klienPos = order.lat && order.lng ? [order.lat, order.lng] : null;
+    const dapurPos = order.lat_dapur && order.lng_dapur ? [order.lat_dapur, order.lng_dapur] : null;
+
+    const [routePath, setRoutePath] = useState(null);
+
+    useEffect(() => {
+        if (!dapurPos || !klienPos) {
+            setRoutePath(null);
+            return;
+        }
+        let cancelled = false;
+
+        (async () => {
+            try {
+                const url = `https://router.project-osrm.org/route/v1/driving/${dapurPos[1]},${dapurPos[0]};${klienPos[1]},${klienPos[0]}?overview=full&geometries=geojson`;
+                const res = await fetch(url);
+                const data = await res.json();
+                const coords = data?.routes?.[0]?.geometry?.coordinates;
+                if (!cancelled && Array.isArray(coords) && coords.length > 0) {
+                    setRoutePath(coords.map(([lng, lat]) => [lat, lng]));
+                } else if (!cancelled) {
+                    setRoutePath(null);
+                }
+            } catch {
+                if (!cancelled) setRoutePath(null);
+            }
+        })();
+
+        return () => { cancelled = true; };
+    }, [dapurPos?.[0], dapurPos?.[1], klienPos?.[0], klienPos?.[1]]);
+
+    return (
+        <div style={{
+            height: 260, borderRadius: 16, overflow: "hidden",
+            border: `1px solid ${COLOR.border}`, marginBottom: 16,
+        }}>
+            <MapContainer
+                center={klienPos ?? dapurPos ?? [-7.457, 112.691]}
+                zoom={14}
+                style={{ width: "100%", height: "100%" }}
+                zoomControl={true}
+            >
+                <TileLayer
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                />
+
+                {dapurPos && klienPos && (
+                    routePath ? (
+                        <Polyline
+                            positions={routePath}
+                            pathOptions={{ color: "#3B82F6", weight: 4, opacity: 0.85, lineCap: "round" }}
+                        />
+                    ) : (
+                        <Polyline
+                            positions={[dapurPos, klienPos]}
+                            pathOptions={{ color: "#3B82F6", weight: 3, opacity: 0.4, dashArray: "6 8" }}
+                        />
+                    )
+                )}
+
+                {klienPos && (
+                    <Marker position={klienPos} icon={klienIcon}>
+                        <Popup>📍 Lokasi Anda<br /><span style={{ fontSize: 12 }}>{order.address}</span></Popup>
+                    </Marker>
+                )}
+
+                {dapurPos && (
+                    <Marker position={dapurPos} icon={dapurIcon}>
+                        <Popup>🍽️ Dapur Catering</Popup>
+                    </Marker>
+                )}
+
+                {kurirPos && (
+                    <Marker position={kurirPos} icon={kurirIcon}>
+                        <Popup>🛵 {order.courier?.name ?? "Kurir"}</Popup>
+                    </Marker>
+                )}
+
+                {kurirPos && klienPos && (
+                    <MapBoundsAdjuster kurirPos={kurirPos} klienPos={klienPos} />
+                )}
+            </MapContainer>
+        </div>
+    );
+}
+
+// ════════════════════════════════════════════════════════════
 // KARTU UTAMA TRACKING UNTUK SATU ORDER
 // ════════════════════════════════════════════════════════════
 function TrackingDetail({ order, onStatusChange }) {
+    const [kurirPos, setKurirPos] = useState(
+        order.last_kurir_lat && order.last_kurir_lng
+            ? [order.last_kurir_lat, order.last_kurir_lng]
+            : null
+    );
+
     useEffect(() => {
         if (!order?.id) return;
 
@@ -441,6 +656,11 @@ function TrackingDetail({ order, onStatusChange }) {
             if (e?.status) applyStatus(e.status);
         });
 
+        // Update posisi kurir secara realtime selama pengiriman
+        channel.listen(".kurir.location.updated", (e) => {
+            if (e?.latitude && e?.longitude) setKurirPos([e.latitude, e.longitude]);
+        });
+
         return () => {
             channel.stopListening(".order.confirmed");
             channel.stopListening(".order.preparing");
@@ -449,18 +669,42 @@ function TrackingDetail({ order, onStatusChange }) {
             channel.stopListening(".order.delivered");
             channel.stopListening(".order.cancelled");
             channel.stopListening(".order.status.updated");
+            channel.stopListening(".kurir.location.updated");
             echo.leave(`orders.${order.id}`);
         };
     }, [order?.id]);
 
     const currentIdx = statusIndex(order.status);
     const isCancelled = order.status === "cancelled";
-    const totalQty = order.items?.reduce((sum, it) => sum + (it.qty ?? 1), 0) ?? null;
+    const showMap = MAP_STATUSES.includes(order.status);
+
+    // Tanggal kirim: pilih field sesuai tipe order, TAPI fallback ke
+    // field lain kalau yang utama kosong/null -- supaya data lama atau
+    // tipe yang tidak konsisten tetap menampilkan sesuatu.
+    const tanggalKirim =
+        (order.type === "harian"
+            ? (order.tanggal ?? order.tanggal_kirim ?? order.start_date ?? order.tanggal_mulai)
+            : (order.event_date ?? order.tanggal_kirim ?? order.tanggal)
+        ) ??
+        order.tanggal ??
+        order.tanggal_kirim ??
+        order.event_date ??
+        order.start_date ??
+        order.tanggal_mulai ??
+        null;
+
+    const jamKirim =
+        order.jam ??
+        order.jam_kirim ??
+        order.waktu_kirim ??
+        order.jam_pengiriman ??
+        order.delivery_time ??
+        null;
 
     return (
         <div style={{ animation: "trkFadeIn 0.25s ease" }}>
 
-            {/* ── 4 Milestone cards (gaya stat card PesananSaya) ── */}
+            {/* ── 4 Milestone cards ── */}
             {!isCancelled && (
                 <div className="trk-milestone-grid" style={{
                     display: "grid",
@@ -481,7 +725,7 @@ function TrackingDetail({ order, onStatusChange }) {
 
             <div className="trk-detail-grid" style={{ display: "grid", gridTemplateColumns: "minmax(0,1.3fr) minmax(0,1fr)", gap: 20 }}>
 
-                {/* ── Card kiri: timeline detail ── */}
+                {/* ── Card kiri: peta (jika relevan) + timeline detail ── */}
                 <div style={{
                     background: COLOR.bgCard, border: `1px solid ${COLOR.border}`,
                     borderRadius: 20, padding: 24,
@@ -495,19 +739,29 @@ function TrackingDetail({ order, onStatusChange }) {
                                 Status Pengiriman
                             </h3>
                         </div>
-                        {order.kurir?.name && (
+                        {order.courier?.name && (
                             <div style={{ textAlign: "right" }}>
                                 <p style={{ margin: 0, fontSize: 11, color: COLOR.textFaint }}>Kurir</p>
                                 <p style={{ margin: "2px 0 0", fontSize: 13, fontWeight: 600, color: COLOR.text }}>
-                                    {order.kurir.name}
+                                    {order.courier.name}
                                 </p>
                             </div>
                         )}
                     </div>
 
+                    {!isCancelled && showMap && (
+                        <TrackingMap order={order} kurirPos={kurirPos} />
+                    )}
+
                     {isCancelled ? (
                         <div style={{ textAlign: "center", padding: "30px 8px" }}>
-                            <p style={{ fontSize: 44, margin: "0 0 10px" }}>❌</p>
+                            <div style={{
+                                width: 64, height: 64, borderRadius: "50%", margin: "0 auto 14px",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                background: "rgba(239,68,68,0.12)", color: COLOR.red,
+                            }}>
+                                <Icon name="cancel" size={30} />
+                            </div>
                             <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: COLOR.red }}>Pesanan Dibatalkan</p>
                             <p style={{ margin: "6px 0 0", fontSize: 13, color: COLOR.textDim }}>Hubungi kami jika ada pertanyaan.</p>
                         </div>
@@ -533,13 +787,9 @@ function TrackingDetail({ order, onStatusChange }) {
                             margin: "0 0 4px", fontSize: 11, fontWeight: 700, letterSpacing: "0.06em",
                             color: COLOR.textFaint, textTransform: "uppercase",
                         }}>
-                            Menu Dipesan {totalQty != null && `· ${totalQty} porsi`}
+                            Menu Dipesan
                         </p>
-                        {order.items?.length > 0 ? (
-                            order.items.map((item, i) => <MenuItemRow key={item.id ?? i} item={item} />)
-                        ) : (
-                            <p style={{ fontSize: 13, color: COLOR.textFaint, margin: "10px 0 0" }}>Tidak ada detail menu.</p>
-                        )}
+                        <MenuPreview order={order} />
                     </div>
 
                     <div style={{
@@ -547,9 +797,9 @@ function TrackingDetail({ order, onStatusChange }) {
                         border: "1px solid rgba(59,130,246,0.18)",
                         borderRadius: 20, padding: "10px 22px 4px",
                     }}>
-                        <InfoRow icon="📅" label="Tanggal Kirim" value={formatTanggal(order.tanggal)} />
-                        <InfoRow icon="⏰" label="Jam Kirim" value={formatJam(order.jam)} />
-                        {order.address && <InfoRow icon="📍" label="Alamat" value={order.address} />}
+                        <InfoRow icon={<Icon name="calendar" size={16} />} label="Tanggal Kirim" value={formatTanggal(tanggalKirim)} />
+                        <InfoRow icon={<Icon name="clock" size={16} />} label="Jam Kirim" value={formatJam(jamKirim)} />
+                        {order.address && <InfoRow icon={<Icon name="pin" size={16} />} label="Alamat" value={order.address} />}
                     </div>
                 </div>
             </div>
@@ -616,7 +866,7 @@ export default function Tracking() {
             try {
                 const { data } = await axios.get("/klien/orders");
                 const all = Array.isArray(data.data) ? data.data : data.data?.data ?? [];
-                const active = all.filter((o) => ACTIVE_STATUSES.includes(o.status));
+                const active = all.filter((o) => ACTIVE_STATUSES.includes(o.status) && o.status !== "pending");
 
                 if (!cancelled) {
                     setOrders(active);
@@ -684,6 +934,7 @@ export default function Tracking() {
                 @media (max-width: 640px) {
                     .trk-milestone-grid { grid-template-columns: repeat(2, 1fr) !important; }
                 }
+                .leaflet-container { background: #1f2937 !important; }
             `}</style>
 
             <NavbarKlien />

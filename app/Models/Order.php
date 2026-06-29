@@ -92,4 +92,8 @@ class Order extends Model
             self::STATUS_ON_DELIVERY,
         ]);
     }
+   public function deliverySchedules()
+{
+    return $this->hasMany(DeliverySchedule::class);
+}
 }

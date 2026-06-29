@@ -82,6 +82,20 @@ function DetailModal({ item, onClose }) {
     if (!item) return null;
     const meta = getStatusMeta(item.status);
 
+    // Tipe pesanan: harian / insidentil
+    const isHarian = item.type === "harian";
+    const tipeLabel = isHarian ? "Harian" : "Insidentil";
+
+    // Tanggal kirim disesuaikan tipe pesanan:
+    // - harian      -> kolom `tanggal` (tanggal mulai pengiriman pertama)
+    // - insidentil  -> kolom `event_date`
+    const tanggalKirimRaw = isHarian ? item.tanggal : item.event_date;
+    const tanggalKirimValue = tanggalKirimRaw
+        ? new Date(tanggalKirimRaw).toLocaleDateString("id-ID", {
+              day: "2-digit", month: "short", year: "numeric",
+          }) + (item.jam ? `, ${item.jam.slice(0, 5)}` : "")
+        : "—";
+
     return (
         <div
             onClick={onClose}
@@ -92,6 +106,7 @@ function DetailModal({ item, onClose }) {
                 zIndex: 1000,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 padding: "20px",
+                fontFamily: "Arial, sans-serif",
             }}
         >
             <div
@@ -102,8 +117,11 @@ function DetailModal({ item, onClose }) {
                     borderRadius: "24px",
                     padding: "32px",
                     width: "100%", maxWidth: "500px",
-                    maxHeight: "90vh", overflowY: "auto",
+                    maxHeight: "90vh",
+                    overflowY: "auto",
+                    overflowX: "hidden",
                     position: "relative",
+                    fontFamily: "Arial, sans-serif",
                 }}
             >
                 {/* Glow */}
@@ -135,17 +153,29 @@ function DetailModal({ item, onClose }) {
                     </button>
                 </div>
 
-                {/* Status Badge */}
-                <div style={{
-                    display: "inline-flex", alignItems: "center", gap: "8px",
-                    background: meta.bg, color: meta.color,
-                    border: `1px solid ${meta.border}`,
-                    padding: "7px 14px", borderRadius: "10px",
-                    fontSize: "13px", fontWeight: "700", marginBottom: "24px",
-                    position: "relative", zIndex: 2,
-                }}>
-                    <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: meta.dot, display: "inline-block" }} />
-                    {meta.label}
+                {/* Status Badge + Tipe Pesanan */}
+                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "24px", position: "relative", zIndex: 2 }}>
+                    <div style={{
+                        display: "inline-flex", alignItems: "center", gap: "8px",
+                        background: meta.bg, color: meta.color,
+                        border: `1px solid ${meta.border}`,
+                        padding: "7px 14px", borderRadius: "10px",
+                        fontSize: "13px", fontWeight: "700",
+                    }}>
+                        <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: meta.dot, display: "inline-block" }} />
+                        {meta.label}
+                    </div>
+
+                    <div style={{
+                        display: "inline-flex", alignItems: "center", gap: "8px",
+                        background: isHarian ? "rgba(59,130,246,0.1)" : "rgba(139,92,246,0.1)",
+                        color: isHarian ? "#60a5fa" : "#a78bfa",
+                        border: `1px solid ${isHarian ? "rgba(59,130,246,0.2)" : "rgba(139,92,246,0.2)"}`,
+                        padding: "7px 14px", borderRadius: "10px",
+                        fontSize: "13px", fontWeight: "700",
+                    }}>
+                        {isHarian ? "🗓" : "🎉"} {tipeLabel}
+                    </div>
                 </div>
 
                 {/* Menu Info */}
@@ -190,10 +220,11 @@ function DetailModal({ item, onClose }) {
                     {[
                         { label: "Tanggal Pesan",  value: formatTanggal(item.created_at) },
                         { label: "Jumlah",         value: `${item.quantity || item.qty || 1} Porsi` },
+                        ...(isHarian ? [{ label: "Durasi", value: item.duration ? `${item.duration} Hari` : "—" }] : []),
                         { label: "Harga Satuan",   value: formatRupiah(item.menu?.price || item.price_per_item) },
                         { label: "Total Harga",    value: formatRupiah(item.total_price || item.total), accent: "#34d399" },
                         { label: "Alamat Kirim",   value: item.delivery_address || item.address || "—" },
-                        { label: "Tanggal Kirim",  value: formatTanggal(item.delivery_date) },
+                        { label: "Tanggal Kirim",  value: tanggalKirimValue },
                     ].map(({ label, value, accent }) => (
                         <div key={label} style={{
                             display: "flex", justifyContent: "space-between",
@@ -245,6 +276,7 @@ function DetailModal({ item, onClose }) {
                         background: "rgba(255,255,255,0.03)",
                         color: "#94a3b8", fontSize: "14px", fontWeight: "600",
                         cursor: "pointer", position: "relative", zIndex: 2,
+                        fontFamily: "Arial, sans-serif",
                     }}
                 >
                     Tutup

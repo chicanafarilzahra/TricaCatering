@@ -9,21 +9,23 @@ use Illuminate\Http\Request;
 class CourierController extends Controller
 {
     public function index(Request $request)
-{
-    $owner = $request->user();
+    {
+        $owner = $request->user();
 
-    $couriers = User::where('role', 'kurir')
-    ->whereRaw('TRIM(LOWER(nama_tempat_kurir)) = ?', [trim(strtolower($owner->nama_catering))])
-    ->where('status', 'approved')
-    ->get([
-        'id',
-        'name',
-        'phone',
-        'email',
-        'nama_tempat_kurir',
-        'alamat_tempat_kurir',
-        'status',
-    ]);
-    return response()->json($couriers);
-}
+        $couriers = User::where('role', 'kurir')
+            ->where('owner_id', $owner->id)
+            ->where('status', 'approved')
+            ->get([
+                'id',
+                'name',
+                'phone',
+                'email',
+                'is_available',
+                'nama_tempat_kurir',
+                'alamat_tempat_kurir',
+                'status',
+            ]);
+
+        return response()->json($couriers);
+    }
 }

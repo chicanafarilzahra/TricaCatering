@@ -473,8 +473,8 @@ export default function PesanMakan() {
             payload.append("quantity", form.jumlah);
             if (selectedType === "harian") {
                 payload.append("duration", form.durasi);
-                payload.append("start_date", form.tanggalMulai);
-                payload.append("end_date", tanggalSelesai);
+                payload.append("tanggal", form.tanggalMulai);     // ganti dari "start_date"
+                payload.append("end_date", tanggalSelesai);        // boleh tetap dikirim, opsional buat referensi
             } else {
                 payload.append("event_date", form.tanggal);
                 payload.append("theme", form.tema || "");

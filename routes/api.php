@@ -116,6 +116,8 @@ Route::post('/register', function (Request $request) {
         'latitude' => 'nullable|numeric',
         'longitude' => 'nullable|numeric',
 
+        'owner_id' => 'required_if:role,kurir|nullable|exists:users,id',
+
         'nama_tempat_kurir' => 'nullable|string|max:255',
         'alamat_tempat_kurir' => 'nullable|string',
     ]);
@@ -147,6 +149,8 @@ if ($request->role === 'owner') {
         'nama_catering' => $request->nama_catering,
         'alamat_catering' => $request->alamat_catering,
 
+        'owner_id' => $request->role === 'kurir' ? $request->owner_id : null,
+
         'nama_tempat_kurir' => $request->nama_tempat_kurir,
         'alamat_tempat_kurir' => $request->alamat_tempat_kurir,
 
@@ -172,6 +176,13 @@ if ($request->role === 'owner') {
     ]);
 
 
+    });
+
+    Route::get('/owners/list', function () {
+    return User::where('role', 'owner')
+        ->where('status', 'approved')
+        ->select('id', 'nama_catering', 'alamat_catering')
+        ->get();
 });
 
 /*
@@ -262,92 +273,32 @@ Route::middleware(['auth:sanctum'])->group(function () {
 | KURIR
 |--------------------------------------------------------------------------
 */
-
-Route::get(
-    'kurir/orders',
-    [KurirController::class, 'index']
-);
-
-Route::get(
-    'kurir/orders/{id}',
-    [KurirController::class, 'show']
-);
-
-Route::put(
-    'kurir/orders/{id}/update-status',
-    [KurirController::class, 'updateStatus']
-);
-
-Route::get(
-    'kurir/rute',
-    [KurirController::class, 'ruteHariIni']
-);
-
-Route::get('/kurir/laporan_harian', [LaporanHarianController::class, 'index']);
-Route::post('/kurir/laporan_harian', [LaporanHarianController::class, 'store']);
-
-/*
-|--------------------------------------------------------------------------
-| KLIEN
-|--------------------------------------------------------------------------
-*/
-
-Route::get(
-    'klien',
-    [KlienController::class, 'home']
-);
-
-Route::get(
-    'klien/pesanan',
-    [KlienController::class, 'pesananSaya']
-);
-
-Route::get(
-    'klien/lacak-pengiriman',
-    [KlienController::class, 'lacakPengiriman']
-);
-
-Route::get(
-    'klien/invoice',
-    [KlienController::class, 'invoice']
-);
-
-Route::get(
-    'klien/ulasan',
-    [KlienController::class, 'ulasan']
-);
-
-Route::get(
-    'klien/pesan',
-    [KlienController::class, 'PesanMakan']
-);
-
 Route::get('/klien/menus', function () {
-
+ 
     return \App\Models\Menu::with('owner.paymentAccounts')
         ->where('is_active', true)
         ->get()
         ->map(function ($menu) {
-
+ 
             return [
-
+ 
                 'id' => $menu->id,
                 'name' => $menu->name,
                 'description' => $menu->description,
                 'price' => $menu->price,
                 'image' => $menu->image,
-
+ 
                 'category' => $menu->jenis_catering,
                 'min_porsi' => $menu->min_porsi,
-
+ 
                 // PENTING: dibutuhkan saat submit pesanan
                 'catering_id' => $menu->owner_id,
-
+ 
                 'owner' => $menu->owner?->nama_catering,
                 'ownerAddress' => $menu->owner?->alamat_catering,
                 'cateringLat' => $menu->owner?->latitude,
                 'cateringLng' => $menu->owner?->longitude,
-
+ 
                 // PENTING: ini yang ditampilkan di form pemesanan klien
                 'payment_accounts' => $menu->owner?->paymentAccounts->map(function ($acc) {
                     return [
@@ -359,39 +310,50 @@ Route::get('/klien/menus', function () {
                         'is_default' => $acc->is_default,
                     ];
                 }) ?? [],
-
+ 
             ];
-
+ 
         });
-
+ 
 });
-
-Route::post('klien/orders', [KlienController::class, 'storePesanan']);
-Route::get('klien/orders', [KlienController::class, 'pesananSaya']); // histori
-Route::post('/kurir/update-lokasi', [CourierController::class, 'updateLocation']);
-Route::get('/klien/lacak/{order_id}', [TrackingController::class, 'show']);
-
-Route::prefix('klien')->group(function () {
  
-    // Invoice list & detail
-    Route::get('invoice',              [InvoiceKlienController::class, 'index']);
-    Route::get('invoice/{id}',         [InvoiceKlienController::class, 'show']);
+Route::middleware('auth:sanctum')->group(function () {
  
-    // Payment channels (bank/ewallet) untuk invoice tertentu
-    Route::get('invoice/{id}/payment-channels', [InvoiceKlienController::class, 'paymentChannels']);
+    Route::get('klien',                    [KlienController::class, 'home']);
+    Route::get('klien/pesanan',             [KlienController::class, 'pesananSaya']);
+    Route::get('klien/lacak-pengiriman',    [KlienController::class, 'lacakPengiriman']);
+    Route::get('klien/invoice',             [KlienController::class, 'invoice']);
+    Route::get('klien/ulasan',              [KlienController::class, 'ulasan']);
+    Route::get('klien/pesan',               [KlienController::class, 'PesanMakan']);
  
-    // Kirim bukti pembayaran
-    Route::post('invoice/{id}/pay',    [InvoiceKlienController::class, 'pay']);
+    Route::post('klien/orders', [KlienController::class, 'storePesanan']);
+    Route::get('klien/orders',  [KlienController::class, 'pesananSaya']); // histori — dipakai Tracking.jsx & PesananSaya.jsx
  
-    // Riwayat pembayaran
-    Route::get('invoice/{id}/payments',[InvoiceKlienController::class, 'payments']);
+    Route::get('/klien/lacak/{order_id}', [TrackingController::class, 'show']);
  
-    // Download PDF
-    Route::get('invoice/{id}/pdf',     [InvoiceKlienController::class, 'downloadPdf']);
-});
+    Route::prefix('klien')->group(function () {
+ 
+        // Invoice list & detail
+        Route::get('invoice',              [InvoiceKlienController::class, 'index']);
+        Route::get('invoice/{id}',         [InvoiceKlienController::class, 'show']);
+ 
+        // Payment channels (bank/ewallet) untuk invoice tertentu
+        Route::get('invoice/{id}/payment-channels', [InvoiceKlienController::class, 'paymentChannels']);
+ 
+        // Kirim bukti pembayaran
+        Route::post('invoice/{id}/pay',    [InvoiceKlienController::class, 'pay']);
+ 
+        // Riwayat pembayaran
+        Route::get('invoice/{id}/payments',[InvoiceKlienController::class, 'payments']);
+ 
+        // Download PDF
+        Route::get('invoice/{id}/pdf',     [InvoiceKlienController::class, 'downloadPdf']);
+    });
+ 
     Route::get('/klien/geocode', [GeoController::class, 'geocode']);
-    Route::get('/klien/route', [GeoController::class, 'route']);
-
+    Route::get('/klien/route',   [GeoController::class, 'route']);
+ 
+});
 
 /*
 |--------------------------------------------------------------------------
