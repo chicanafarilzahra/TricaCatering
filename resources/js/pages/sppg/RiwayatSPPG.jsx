@@ -111,7 +111,7 @@ export default function RiwayatSPPG() {
     };
 
     const filtered = data.filter(item =>
-        item.sekolah?.nama?.toLowerCase().includes(search.toLowerCase())
+        item.sekolah?.nama_sekolah?.toLowerCase().includes(search.toLowerCase())
     );
 
     const formatTanggal = (raw) => {
@@ -205,7 +205,7 @@ export default function RiwayatSPPG() {
                                         {formatTanggal(item.tanggal)}
                                     </td>
                                     <td style={{ padding: "14px 20px", borderBottom: `0.5px solid ${T.border}`, fontSize: "13.5px", fontWeight: 600, color: T.text }}>
-                                        {item.sekolah?.nama ?? "—"}
+                                        {item.sekolah?.nama_sekolah ?? "—"}
                                     </td>
                                     <td style={{ padding: "14px 20px", borderBottom: `0.5px solid ${T.border}`, fontSize: "13px", color: T.sub }}>
                                         {item.menu?.nama_menu ?? "—"}

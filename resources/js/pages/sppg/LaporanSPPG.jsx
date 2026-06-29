@@ -12,7 +12,6 @@ import {
     TrendingUp,
 } from "lucide-react";
 
-/* ─── Design Tokens (sama persis dengan Dashboard) ───────────── */
 const T = {
     bg:       "#05080F",
     surface:  "#0A0F1C",
@@ -24,16 +23,13 @@ const T = {
     muted:    "#475569",
     sub:      "#94A3B8",
     accent:   "#3B82F6",
-    accentLo: "rgba(59,130,246,0.12)",
     teal:     "#0EA5E9",
     green:    "#10B981",
     amber:    "#F59E0B",
     purple:   "#A78BFA",
     font:     "'Inter', system-ui, sans-serif",
-    mono:     "'JetBrains Mono', 'Fira Code', monospace",
 };
 
-/* load Inter */
 if (typeof document !== "undefined" && !document.getElementById("sppg-inter")) {
     const l = document.createElement("link");
     l.id = "sppg-inter"; l.rel = "stylesheet";
@@ -43,17 +39,19 @@ if (typeof document !== "undefined" && !document.getElementById("sppg-inter")) {
 
 const num = (v) => (v ?? 0).toLocaleString("id-ID");
 
-/* ─── KPI Card (sama dengan Dashboard) ─────────────────────────── */
+const fmtTanggal = (raw) => {
+    if (!raw) return "—";
+    return new Date(raw).toLocaleDateString("id-ID", {
+        day: "numeric", month: "long", year: "numeric",
+    });
+};
+
 function KpiCard({ label, value, icon: Icon, accent = T.accent }) {
     return (
         <div style={{
-            background: T.elevated,
-            border: `0.5px solid ${T.border}`,
-            borderRadius: "16px",
-            padding: "22px 24px",
-            position: "relative",
-            overflow: "hidden",
-            fontFamily: T.font,
+            background: T.elevated, border: `0.5px solid ${T.border}`,
+            borderRadius: "16px", padding: "22px 24px",
+            position: "relative", overflow: "hidden", fontFamily: T.font,
         }}>
             <div style={{
                 position: "absolute", top: 0, left: "20%", right: "20%", height: "1px",
@@ -65,10 +63,8 @@ function KpiCard({ label, value, icon: Icon, accent = T.accent }) {
                 </span>
                 <div style={{
                     width: "34px", height: "34px", borderRadius: "10px",
-                    background: `${accent}18`,
-                    border: `0.5px solid ${accent}30`,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    color: accent,
+                    background: `${accent}18`, border: `0.5px solid ${accent}30`,
+                    display: "flex", alignItems: "center", justifyContent: "center", color: accent,
                 }}>
                     <Icon size={16} strokeWidth={1.8} />
                 </div>
@@ -80,29 +76,10 @@ function KpiCard({ label, value, icon: Icon, accent = T.accent }) {
     );
 }
 
-/* ─── Section Header (sama dengan Dashboard) ────────────────────── */
-function SectionHeader({ label, action, onAction }) {
-    return (
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-            <span style={{ fontSize: "13px", fontWeight: 700, color: T.text, letterSpacing: "-.2px" }}>{label}</span>
-            {action && (
-                <button onClick={onAction} style={{
-                    fontSize: "11.5px", fontWeight: 600, color: T.accent,
-                    background: "none", border: "none", cursor: "pointer",
-                    display: "flex", alignItems: "center", gap: "3px", padding: 0,
-                }}>
-                    {action} <ChevronRight size={12} strokeWidth={2.5} />
-                </button>
-            )}
-        </div>
-    );
-}
-
-/* ─── Main Laporan ──────────────────────────────────────────────── */
 export default function LaporanSPPG() {
     const [summary, setSummary] = useState({});
     const [laporan, setLaporan] = useState([]);
-    const [search, setSearch] = useState("");
+    const [search,  setSearch]  = useState("");
     const [loading, setLoading] = useState(true);
 
     useEffect(() => { loadLaporan(); }, []);
@@ -113,10 +90,10 @@ export default function LaporanSPPG() {
             const res = await axios.get("/sppg/laporan", {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            setSummary(res.data.summary);
-            setLaporan(res.data.data);
+            setSummary(res.data.summary ?? {});
+            setLaporan(res.data.data ?? []);
         } catch (err) {
-            console.log(err);
+            console.error(err);
         } finally {
             setLoading(false);
         }
@@ -130,48 +107,44 @@ export default function LaporanSPPG() {
         weekday: "long", year: "numeric", month: "long", day: "numeric",
     });
 
+    const COLS = ["Tanggal", "Total Distribusi", "Total Porsi"];
+
     return (
         <div style={{ minHeight: "100vh", background: T.bg, fontFamily: T.font }}>
+            <style>{`
+                html,body{margin:0;padding:0;background:${T.bg}}
+                *{box-sizing:border-box}
+                ::-webkit-scrollbar{width:4px}
+                ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:4px}
+                @keyframes spin{to{transform:rotate(360deg)}}
+            `}</style>
+
             <SidebarSPPG />
 
             <div style={{ marginLeft: "260px", padding: "32px 36px", maxWidth: "1400px" }}>
 
-                {/* ── Top Bar ── */}
+                {/* ── Header ── */}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px" }}>
                     <div>
-                        <div style={{
-                            fontSize: "11px", fontWeight: 600, color: T.muted,
-                            textTransform: "uppercase", letterSpacing: "1.2px", marginBottom: "8px",
-                        }}>
+                        <div style={{ fontSize: "11px", fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: "1.2px", marginBottom: "8px" }}>
                             Monitoring MBG
                         </div>
                         <h1 style={{ margin: 0, fontSize: "26px", fontWeight: 800, color: T.text, letterSpacing: "-.6px" }}>
                             Laporan SPPG
                         </h1>
                     </div>
-
-                    <div style={{
-                        fontSize: "12px", color: T.sub, fontWeight: 500,
-                        padding: "9px 16px", borderRadius: "10px",
-                        background: T.elevated, border: `0.5px solid ${T.border}`,
-                    }}>
+                    <div style={{ fontSize: "12px", color: T.sub, fontWeight: 500, padding: "9px 16px", borderRadius: "10px", background: T.elevated, border: `0.5px solid ${T.border}` }}>
                         {today}
                     </div>
                 </div>
 
                 {loading ? (
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "60vh" }}>
-                        <div style={{
-                            width: "40px", height: "40px", borderRadius: "50%",
-                            border: `2px solid ${T.border}`,
-                            borderTopColor: T.accent,
-                            animation: "spin 0.8s linear infinite",
-                        }} />
-                        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                        <div style={{ width: "40px", height: "40px", borderRadius: "50%", border: `2px solid ${T.border}`, borderTopColor: T.accent, animation: "spin 0.8s linear infinite" }} />
                     </div>
                 ) : (
                     <>
-                        {/* ── KPI Grid ── */}
+                        {/* ── KPI ── */}
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "14px", marginBottom: "24px" }}>
                             <KpiCard label="Total Distribusi" value={summary.total_distribusi} icon={FileBarChart2} accent={T.accent} />
                             <KpiCard label="Total Porsi"      value={summary.total_porsi}      icon={Package}       accent={T.teal}   />
@@ -179,123 +152,83 @@ export default function LaporanSPPG() {
                             <KpiCard label="Total SPPG"       value={summary.total_sppg}       icon={Building2}     accent={T.amber}  />
                         </div>
 
-                        {/* ── Search + Table ── */}
-                        <div style={{
-                            background: T.elevated,
-                            border: `0.5px solid ${T.border}`,
-                            borderRadius: "18px",
-                            padding: "22px",
-                        }}>
-                            <SectionHeader label="Rekap Distribusi MBG" />
+                        {/* ── Table Card ── */}
+                        <div style={{ background: T.elevated, border: `0.5px solid ${T.border}`, borderRadius: "18px", overflow: "hidden" }}>
 
-                            {/* Search */}
-                            <div style={{ position: "relative", marginBottom: "16px" }}>
-                                <Search size={15} style={{
-                                    position: "absolute", top: "50%", left: "14px",
-                                    transform: "translateY(-50%)", color: T.muted,
-                                    pointerEvents: "none",
-                                }} />
-                                <input
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    placeholder="Cari tanggal laporan..."
-                                    style={{
-                                        width: "100%",
-                                        boxSizing: "border-box",
-                                        padding: "11px 14px 11px 40px",
-                                        border: `0.5px solid ${T.border}`,
-                                        borderRadius: "10px",
-                                        background: T.card,
-                                        color: T.text,
-                                        fontSize: "13px",
-                                        fontFamily: T.font,
-                                        outline: "none",
-                                    }}
-                                    onFocus={e => e.target.style.borderColor = `${T.accent}60`}
-                                    onBlur={e => e.target.style.borderColor = T.border}
-                                />
+                            {/* Toolbar */}
+                            <div style={{ padding: "18px 22px", borderBottom: `0.5px solid ${T.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <div>
+                                    <div style={{ fontSize: "15px", fontWeight: 700, color: T.text }}>Rekap Distribusi MBG</div>
+                                    <div style={{ fontSize: "12px", color: T.muted, marginTop: "3px" }}>Dikelompokkan per tanggal distribusi</div>
+                                </div>
+                                <div style={{ display: "flex", alignItems: "center", gap: "8px", background: T.card, border: `0.5px solid ${T.border}`, borderRadius: "10px", padding: "0 14px", height: "38px" }}>
+                                    <Search size={14} color={T.muted} />
+                                    <input
+                                        value={search}
+                                        onChange={e => setSearch(e.target.value)}
+                                        placeholder="Cari tanggal..."
+                                        style={{ background: "none", border: "none", outline: "none", color: T.text, fontSize: "13px", fontFamily: T.font, width: "180px" }}
+                                    />
+                                </div>
                             </div>
 
                             {/* Table */}
-                            <div style={{ borderRadius: "12px", overflow: "hidden", border: `0.5px solid ${T.border}` }}>
-                                <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: T.font }}>
+                            <div style={{ overflowX: "auto" }}>
+                                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
                                     <thead>
-                                        <tr style={{ background: T.card }}>
-                                            {["Tanggal", "Total Distribusi", "Total Porsi"].map((h) => (
+                                        <tr>
+                                            {COLS.map(h => (
                                                 <th key={h} style={{
-                                                    padding: "13px 18px",
-                                                    textAlign: "left",
-                                                    fontSize: "11px",
-                                                    fontWeight: 700,
-                                                    color: T.muted,
-                                                    textTransform: "uppercase",
-                                                    letterSpacing: "0.8px",
+                                                    padding: "12px 20px", textAlign: "left",
+                                                    fontSize: "11px", fontWeight: 700, color: T.muted,
+                                                    textTransform: "uppercase", letterSpacing: "0.8px",
                                                     borderBottom: `0.5px solid ${T.border}`,
-                                                }}>
-                                                    {h}
-                                                </th>
+                                                    background: T.card, whiteSpace: "nowrap",
+                                                }}>{h}</th>
                                             ))}
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {filtered.length === 0 ? (
                                             <tr>
-                                                <td colSpan="3" style={{
-                                                    textAlign: "center",
-                                                    padding: "48px",
-                                                    color: T.muted,
-                                                    fontSize: "13px",
-                                                }}>
-                                                    Belum ada laporan
+                                                <td colSpan={3} style={{ padding: "52px", textAlign: "center", color: T.muted, fontSize: "13px" }}>
+                                                    {search ? `Tidak ada hasil untuk "${search}"` : "Belum ada laporan distribusi"}
                                                 </td>
                                             </tr>
                                         ) : filtered.map((item, i) => (
                                             <tr key={i}
-                                                style={{ transition: "background .15s" }}
-                                                onMouseEnter={e => e.currentTarget.style.background = T.card}
+                                                style={{ borderBottom: `0.5px solid rgba(255,255,255,.04)`, transition: "background .15s" }}
+                                                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.02)"}
                                                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                                             >
                                                 {/* Tanggal */}
-                                                <td style={{
-                                                    padding: "15px 18px",
-                                                    borderTop: `0.5px solid ${T.border}`,
-                                                    fontSize: "13px", color: T.text, fontWeight: 500,
-                                                }}>
-                                                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                                <td style={{ padding: "15px 20px", color: T.text, fontWeight: 500 }}>
+                                                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                                                         <div style={{
-                                                            width: "28px", height: "28px", borderRadius: "8px",
-                                                            background: `${T.accent}18`,
-                                                            border: `0.5px solid ${T.accent}30`,
-                                                            display: "flex", alignItems: "center", justifyContent: "center",
+                                                            width: "30px", height: "30px", borderRadius: "9px",
+                                                            background: `${T.accent}18`, border: `0.5px solid ${T.accent}30`,
+                                                            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
                                                         }}>
                                                             <CalendarDays size={13} color={T.accent} strokeWidth={1.8} />
                                                         </div>
-                                                        {item.tanggal}
+                                                        {fmtTanggal(item.tanggal)}
                                                     </div>
                                                 </td>
 
                                                 {/* Total Distribusi */}
-                                                <td style={{
-                                                    padding: "15px 18px",
-                                                    borderTop: `0.5px solid ${T.border}`,
-                                                    fontSize: "14px", color: T.text, fontWeight: 700,
-                                                }}>
+                                                <td style={{ padding: "15px 20px" }}>
                                                     <span style={{
                                                         fontSize: "12px", fontWeight: 700, color: T.teal,
                                                         background: "rgba(14,165,233,.10)",
                                                         border: "0.5px solid rgba(14,165,233,.25)",
-                                                        padding: "3px 10px", borderRadius: "20px",
+                                                        padding: "4px 12px", borderRadius: "20px",
                                                     }}>
-                                                        {num(item.total_distribusi)}
+                                                        {num(item.total_distribusi)} distribusi
                                                     </span>
                                                 </td>
 
                                                 {/* Total Porsi */}
-                                                <td style={{
-                                                    padding: "15px 18px",
-                                                    borderTop: `0.5px solid ${T.border}`,
-                                                    fontSize: "13px", color: T.sub,
-                                                }}>
+                                                <td style={{ padding: "15px 20px" }}>
                                                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                                                         <TrendingUp size={13} color={T.green} strokeWidth={2} />
                                                         <span style={{ fontWeight: 700, color: T.green }}>{num(item.total_porsi)}</span>
@@ -308,10 +241,11 @@ export default function LaporanSPPG() {
                                 </table>
                             </div>
 
-                            {/* Footer count */}
+                            {/* Footer */}
                             {filtered.length > 0 && (
-                                <div style={{ marginTop: "12px", fontSize: "12px", color: T.muted, textAlign: "right" }}>
-                                    Menampilkan <span style={{ color: T.sub, fontWeight: 600 }}>{filtered.length}</span> laporan
+                                <div style={{ padding: "12px 22px", borderTop: `0.5px solid ${T.border}`, fontSize: "12px", color: T.muted }}>
+                                    Menampilkan <span style={{ color: T.sub, fontWeight: 600 }}>{filtered.length}</span> dari{" "}
+                                    <span style={{ color: T.sub, fontWeight: 600 }}>{laporan.length}</span> laporan
                                 </div>
                             )}
                         </div>

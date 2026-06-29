@@ -548,6 +548,12 @@ Route::get(
     '/distribusi/{id}',
     [DistribusiController::class,'show']
 );
+
+Route::patch(
+    '/distribusi/{id}/disiapkan',
+    [DistribusiController::class, 'tandaiDisiapkan']
+);
+
 Route::get(
         '/riwayat',
         [RiwayatSPPGController::class,'index']
