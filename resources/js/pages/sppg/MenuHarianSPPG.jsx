@@ -36,7 +36,35 @@ if (typeof document !== "undefined" && !document.getElementById("sppg-inter")) {
     document.head.appendChild(l);
 }
 
-/* ─── Shared helpers ─────────────────────────────────────────────── */
+/* ─── Helpers ────────────────────────────────────────────────────── */
+const getDayName = (d) => d ? new Date(d).toLocaleDateString("id-ID", { weekday: "long" }) : "";
+
+// Kembalikan string "YYYY-MM-DD" untuk hari ini (local time)
+const getTodayStr = () => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const d = String(now.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+};
+
+// Cek apakah dateStr < hari ini
+const isPastDate = (dateStr) => {
+    if (!dateStr) return false;
+    return dateStr < getTodayStr();
+};
+
+// FIX (gambar tidak muncul): resolve path gambar dari backend jadi URL absolut.
+// Kalau axios.defaults.baseURL = "https://api.domainkamu.com/api", maka
+// API_ORIGIN = "https://api.domainkamu.com" — sesuaikan kalau struktur baseURL beda.
+const API_ORIGIN = (axios.defaults.baseURL || "").replace(/\/api\/?$/, "");
+const resolveImage = (path) => {
+    if (!path) return null;
+    // sudah full URL (http/https) atau preview lokal (blob:) → pakai langsung
+    if (/^(https?:)?\/\//.test(path) || path.startsWith("blob:") || path.startsWith("data:")) return path;
+    return `${API_ORIGIN}${path.startsWith("/") ? "" : "/"}${path}`;
+};
+
 function SectionHeader({ label, action, onAction }) {
     return (
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
@@ -124,17 +152,45 @@ function IconBtn({ icon: Icon, color, hoverBg, onClick, title }) {
     );
 }
 
-function WeeklyRow({ hari, menu, active, onEdit, onDelete }) {
+/* ─── Weekly Row — dengan gambar & klik ─────────────────────────── */
+function WeeklyRow({ item, active, onEdit, onDelete, onClick }) {
+    const [hovered, setHovered] = useState(false);
     return (
-        <div style={{
-            padding: "13px 15px", borderRadius: "12px",
-            background: active ? `${T.accent}10` : T.card,
-            border: `0.5px solid ${active ? T.accent + "40" : T.border}`,
-            display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px",
-        }}>
-            <span style={{ fontSize: "11.5px", color: active ? T.accent : T.muted, fontWeight: active ? 600 : 400, flexShrink: 0 }}>{hari}</span>
-            <span style={{ fontSize: "12.5px", fontWeight: 600, color: T.text, flex: 1 }}>{menu}</span>
-            <div style={{ display: "flex", gap: "6px" }}>
+        <div
+            onClick={onClick}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            style={{
+                padding: "12px 15px", borderRadius: "12px",
+                background: active ? `${T.accent}10` : hovered ? `${T.elevated}` : T.card,
+                border: `0.5px solid ${active ? T.accent + "40" : hovered ? T.borderMd : T.border}`,
+                display: "flex", alignItems: "center", gap: "12px",
+                cursor: "pointer", transition: "all .15s ease",
+            }}
+        >
+            <div style={{
+                width: "44px", height: "44px", borderRadius: "10px", flexShrink: 0,
+                background: `linear-gradient(135deg, ${T.surface}, ${T.elevated})`,
+                border: `0.5px solid ${T.border}`,
+                overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+                {item.gambar_menu && (
+                    // FIX (gambar tidak muncul): pakai resolveImage()
+                    <img src={resolveImage(item.gambar_menu)} alt={item.menu} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                )}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: "11px", color: active ? T.accent : T.muted, fontWeight: active ? 600 : 400, marginBottom: "2px" }}>
+                    {item.hari}
+                </div>
+                <div style={{
+                    fontSize: "12.5px", fontWeight: 600, color: T.text,
+                    whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                }}>
+                    {item.menu}
+                </div>
+            </div>
+            <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
                 <IconBtn icon={Pencil} color={T.accent} hoverBg={`${T.accent}18`} onClick={onEdit}   title="Edit" />
                 <IconBtn icon={Trash2} color={T.red}    hoverBg={`${T.red}18`}    onClick={onDelete} title="Hapus" />
             </div>
@@ -200,8 +256,10 @@ function ConfirmModal({ message, onConfirm, onCancel }) {
 
 function Toast({ message, type, onClose }) {
     useEffect(() => { const t = setTimeout(onClose, 3500); return () => clearTimeout(t); }, []);
-    const color = type === "success" ? T.green : "#EF4444";
-    const bg    = type === "success" ? `${T.green}18` : "rgba(239,68,68,0.12)";
+    const color = type === "success" ? T.green : type === "warning" ? T.amber : "#EF4444";
+    const bg    = type === "success" ? `${T.green}18` : type === "warning" ? `${T.amber}18` : "rgba(239,68,68,0.12)";
+    const icon  = type === "success" ? "✓" : type === "warning" ? "!" : "✕";
+    const label = type === "success" ? "Berhasil" : type === "warning" ? "Perhatian" : "Gagal";
     return (
         <div style={{
             position: "fixed", bottom: "28px", right: "28px",
@@ -218,12 +276,10 @@ function Toast({ message, type, onClose }) {
                 background: bg, display: "flex", alignItems: "center",
                 justifyContent: "center", flexShrink: 0,
             }}>
-                <span style={{ fontSize: "15px" }}>{type === "success" ? "✓" : "✕"}</span>
+                <span style={{ fontSize: "15px" }}>{icon}</span>
             </div>
             <div style={{ flex: 1 }}>
-                <div style={{ fontSize: "13px", fontWeight: 700, color: T.text }}>
-                    {type === "success" ? "Berhasil" : "Gagal"}
-                </div>
+                <div style={{ fontSize: "13px", fontWeight: 700, color: T.text }}>{label}</div>
                 <div style={{ fontSize: "12px", color: T.muted, marginTop: "3px", lineHeight: 1.5 }}>{message}</div>
             </div>
             <button onClick={onClose} style={{ background: "none", border: "none", color: T.muted, cursor: "pointer", padding: 0, flexShrink: 0 }}>
@@ -233,19 +289,138 @@ function Toast({ message, type, onClose }) {
     );
 }
 
+/* ─── Weekly Detail Modal ────────────────────────────────────────── */
+function WeeklyDetailModal({ item, onClose }) {
+    if (!item) return null;
+    return (
+        <div style={{
+            position: "fixed", inset: 0, background: "rgba(5,8,15,0.85)",
+            backdropFilter: "blur(8px)", display: "flex",
+            alignItems: "center", justifyContent: "center", zIndex: 99997,
+        }} onClick={onClose}>
+            <div
+                onClick={e => e.stopPropagation()}
+                style={{
+                    width: "100%", maxWidth: "480px",
+                    background: T.elevated, border: `0.5px solid ${T.borderMd}`,
+                    borderRadius: "20px", overflow: "hidden",
+                    boxShadow: "0 32px 80px rgba(0,0,0,0.7)", fontFamily: T.font,
+                    animation: "fadeUp .2s ease",
+                }}
+            >
+                <style>{`@keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }`}</style>
+                <div style={{
+                    height: "180px", background: `linear-gradient(135deg, ${T.surface}, ${T.card})`,
+                    position: "relative", overflow: "hidden",
+                }}>
+                    {item.gambar_menu
+                        // FIX (gambar tidak muncul): pakai resolveImage()
+                        ? <img src={resolveImage(item.gambar_menu)} alt={item.menu} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        : (
+                            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                <span style={{ fontSize: "60px" }}>🍱</span>
+                            </div>
+                        )
+                    }
+                    <div style={{
+                        position: "absolute", inset: 0,
+                        background: "linear-gradient(to top, rgba(15,22,40,0.9) 0%, transparent 60%)",
+                    }} />
+                    <div style={{
+                        position: "absolute", top: "14px", left: "16px",
+                        background: `${T.accent}30`, border: `0.5px solid ${T.accent}60`,
+                        borderRadius: "8px", padding: "4px 10px",
+                        fontSize: "11px", fontWeight: 700, color: T.accent, letterSpacing: ".5px",
+                    }}>
+                        {item.hari}
+                    </div>
+                    <button onClick={onClose} style={{
+                        position: "absolute", top: "12px", right: "12px",
+                        background: "rgba(0,0,0,0.4)", border: `0.5px solid ${T.border}`,
+                        color: T.sub, width: "30px", height: "30px", borderRadius: "8px",
+                        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>
+                        <X size={14} strokeWidth={2} />
+                    </button>
+                    <div style={{ position: "absolute", bottom: "14px", left: "16px", right: "16px" }}>
+                        <div style={{ fontSize: "17px", fontWeight: 800, color: T.text, letterSpacing: "-.4px" }}>
+                            {item.menu}
+                        </div>
+                    </div>
+                </div>
+                <div style={{ padding: "20px 22px" }}>
+                    {item.deskripsi && (
+                        <p style={{ margin: "0 0 16px", fontSize: "13px", color: T.sub, lineHeight: 1.7 }}>
+                            {item.deskripsi}
+                        </p>
+                    )}
+                    {(item.kalori || item.protein || item.lemak || item.karbohidrat) && (
+                        <>
+                            <div style={{ fontSize: "11px", fontWeight: 700, color: T.muted, letterSpacing: "1px", textTransform: "uppercase", marginBottom: "12px" }}>
+                                Nilai Gizi
+                            </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "16px" }}>
+                                {[
+                                    { label: "Kalori",  value: item.kalori,      unit: "kkal", color: T.orange },
+                                    { label: "Protein", value: item.protein,     unit: "g",    color: T.green  },
+                                    { label: "Lemak",   value: item.lemak,       unit: "g",    color: T.accent },
+                                    { label: "Karbo",   value: item.karbohidrat, unit: "g",    color: T.purple },
+                                ].map(({ label, value, unit, color }) => (
+                                    <div key={label} style={{
+                                        background: T.card, border: `0.5px solid ${T.border}`,
+                                        borderRadius: "10px", padding: "10px 12px", textAlign: "center",
+                                    }}>
+                                        <div style={{ fontSize: "15px", fontWeight: 800, color, letterSpacing: "-.5px" }}>
+                                            {value ?? "—"}
+                                        </div>
+                                        <div style={{ fontSize: "10px", color: T.muted, marginTop: "2px" }}>{unit}</div>
+                                        <div style={{ fontSize: "10px", color: T.muted, marginTop: "1px" }}>{label}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    )}
+                    {item.serat !== undefined && item.serat !== null && (
+                        <div style={{
+                            display: "flex", justifyContent: "space-between", alignItems: "center",
+                            padding: "10px 14px", background: `${T.teal}10`,
+                            border: `0.5px solid ${T.teal}30`, borderRadius: "10px",
+                        }}>
+                            <span style={{ fontSize: "12.5px", color: T.sub }}>Serat</span>
+                            <span style={{ fontSize: "13px", fontWeight: 700, color: T.teal }}>{item.serat} g</span>
+                        </div>
+                    )}
+                    {item.kategori && (
+                        <div style={{
+                            marginTop: "12px", display: "inline-flex", alignItems: "center", gap: "6px",
+                            padding: "5px 12px", background: `${T.purple}15`,
+                            border: `0.5px solid ${T.purple}30`, borderRadius: "8px",
+                        }}>
+                            <span style={{ fontSize: "11px", color: T.purple, fontWeight: 600 }}>{item.kategori}</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 /* ─── Main Component ─────────────────────────────────────────────── */
 export default function MenuHarianSPPG() {
-    const [menu,          setMenu]          = useState(null);
-    const [gizi,          setGizi]          = useState(null);
-    const [weekly,        setWeekly]        = useState([]);
-    const [date,          setDate]          = useState("");
-    const [openModal,     setOpenModal]     = useState(false);
-    const [imagePreview,  setImagePreview]  = useState(null);
-    const [saving,        setSaving]        = useState(false);
-    const [toast,         setToast]         = useState(null);
-    const [editMode,      setEditMode]      = useState(false);
-    const [editTarget,    setEditTarget]    = useState(null);
-    const [confirmDelete, setConfirmDelete] = useState(null);
+    const [menu,             setMenu]             = useState(null);
+    const [gizi,             setGizi]             = useState(null);
+    const [weekly,           setWeekly]           = useState([]);
+    const [date,             setDate]             = useState("");
+    const [openModal,        setOpenModal]        = useState(false);
+    const [imagePreview,     setImagePreview]     = useState(null);
+    const [saving,           setSaving]           = useState(false);
+    const [loadingEdit,      setLoadingEdit]      = useState(false); // FIX: indikator loading saat fetch detail weekly
+    const [toast,            setToast]            = useState(null);
+    const [editMode,         setEditMode]         = useState(false);
+    const [editTarget,       setEditTarget]       = useState(null);
+    const [confirmDelete,    setConfirmDelete]    = useState(null);
+    const [weeklyDetail,     setWeeklyDetail]     = useState(null);
+    const [modalDate,        setModalDate]        = useState(""); // ← tanggal khusus di modal
     const [form, setForm] = useState({
         nama_menu: "", kategori: "", deskripsi: "",
         kalori: "", protein: "", lemak: "", karbo: "", serat: "",
@@ -255,6 +430,7 @@ export default function MenuHarianSPPG() {
 
     const getToken  = () => localStorage.getItem("auth_token");
     const showToast = (message, type = "error") => setToast({ message, type });
+    const today     = getTodayStr(); // "YYYY-MM-DD" hari ini
 
     const loadData = async () => {
         try {
@@ -268,35 +444,102 @@ export default function MenuHarianSPPG() {
         } catch (err) { console.log(err); }
     };
 
-    /* ── Open modal for edit — populate SEMUA field dari data ── */
+    /* ── Cek apakah hari dari tanggal sudah ada di weekly ── */
+    const isDayTaken = (dateStr, excludeId = null) => {
+        if (!dateStr) return false;
+        const dayName = getDayName(dateStr);
+        return weekly.some(w => w.hari === dayName && w.id !== excludeId);
+    };
+
+    /* ── Validasi tanggal di modal (past date + duplikat hari) ── */
+    const handleModalDateChange = (e) => {
+        const newDate = e.target.value;
+
+        // 1. Blokir tanggal yang sudah lewat
+        if (newDate < today) {
+            showToast("Tidak bisa memilih tanggal yang sudah lewat.", "warning");
+            return;
+        }
+
+        // 2. Blokir duplikat hari (kecuali saat edit item yang sama)
+        const excludeId = editMode && editTarget ? editTarget.id : null;
+        if (isDayTaken(newDate, excludeId)) {
+            const dayName = getDayName(newDate);
+            showToast(`Hari ${dayName} sudah memiliki menu. Pilih tanggal lain.`, "warning");
+            return;
+        }
+
+        setModalDate(newDate);
+    };
+
     const openEditMenu = (data) => {
         setEditMode(true);
         setEditTarget({ type: "menu", id: data.id });
         setForm({
-            nama_menu: data.nama_menu         || "",
-            kategori:  data.kategori          || "",
-            deskripsi: data.deskripsi         || "",
-            kalori:    data.kalori            ?? "",
-            protein:   data.protein           ?? "",
-            lemak:     data.lemak             ?? "",
-            karbo:     data.karbohidrat       ?? "",
-            serat:     data.serat             ?? "",
+            nama_menu: data.nama_menu   || "",
+            kategori:  data.kategori   || "",
+            deskripsi: data.deskripsi  || "",
+            kalori:    data.kalori     ?? "",
+            protein:   data.protein    ?? "",
+            lemak:     data.lemak      ?? "",
+            karbo:     data.karbohidrat ?? "",
+            serat:     data.serat      ?? "",
         });
-        if (data.tanggal) setDate(data.tanggal);
-        setImagePreview(data.gambar_menu || null);
+        setModalDate(data.tanggal || "");
+        setImagePreview(resolveImage(data.gambar_menu)); // FIX: pakai resolveImage juga di preview
         setOpenModal(true);
     };
 
-    const openEditWeekly = (item) => {
+    // FIX (edit menu mingguan kehilangan data): data di list `weekly` cuma ringkas
+    // (hari, menu, gambar_menu, id) — tidak bawa kalori/protein/lemak/dll.
+    // Makanya sebelum isi form, fetch detail lengkap dulu dari endpoint menu,
+    // sama persis seperti pola data lengkap yang dipakai openEditMenu di atas.
+    const openEditWeekly = async (item) => {
         setEditMode(true);
         setEditTarget({ type: "weekly", id: item.id });
+        setLoadingEdit(true);
+
+        // Isi dulu dengan apa yang ada (biar form tidak kosong total sambil nunggu fetch)
         setForm({
             nama_menu: item.menu || "",
-            kategori: "", deskripsi: "",
-            kalori: "", protein: "", lemak: "", karbo: "", serat: "",
+            kategori:  item.kategori    || "",
+            deskripsi: item.deskripsi   || "",
+            kalori:    item.kalori      ?? "",
+            protein:   item.protein     ?? "",
+            lemak:     item.lemak       ?? "",
+            karbo:     item.karbohidrat ?? "",
+            serat:     item.serat       ?? "",
         });
-        setImagePreview(null);
+        setModalDate(item.tanggal || "");
+        setImagePreview(resolveImage(item.gambar_menu));
         setOpenModal(true);
+
+        try {
+            // Sesuaikan endpoint ini dengan route detail menu di backend kamu
+            const res = await axios.get(`/sppg/menus/${item.id}`, {
+                headers: { Authorization: `Bearer ${getToken()}` },
+            });
+            // Sesuaikan dengan struktur response asli (ada yang wrap di `data`, ada yang tidak)
+            const data = res.data?.data || res.data;
+
+            setForm({
+                nama_menu: data.nama_menu   || item.menu || "",
+                kategori:  data.kategori    || "",
+                deskripsi: data.deskripsi   || "",
+                kalori:    data.kalori      ?? "",
+                protein:   data.protein     ?? "",
+                lemak:     data.lemak       ?? "",
+                karbo:     data.karbohidrat ?? "",
+                serat:     data.serat       ?? "",
+            });
+            setModalDate(data.tanggal || item.tanggal || "");
+            setImagePreview(resolveImage(data.gambar_menu || item.gambar_menu));
+        } catch (err) {
+            console.error("Gagal memuat detail menu mingguan:", err);
+            showToast("Gagal memuat detail lengkap menu. Beberapa data mungkin tidak lengkap.", "warning");
+        } finally {
+            setLoadingEdit(false);
+        }
     };
 
     const openAddModal = () => {
@@ -304,12 +547,37 @@ export default function MenuHarianSPPG() {
         setEditTarget(null);
         setForm({ nama_menu: "", kategori: "", deskripsi: "", kalori: "", protein: "", lemak: "", karbo: "", serat: "" });
         setImagePreview(null);
+        setModalDate(""); // user harus pilih tanggal baru
         setOpenModal(true);
+    };
+
+    /* ── Tentukan apakah tombol Simpan harus disabled ── */
+    const isSaveBlocked = () => {
+        if (saving || loadingEdit) return true;
+        if (!modalDate) return false; // biarkan validasi saat submit
+        if (modalDate < today) return true; // past date
+        if (!editMode && isDayTaken(modalDate)) return true; // duplikat hari (tambah baru)
+        if (editMode && editTarget && isDayTaken(modalDate, editTarget.id)) return true; // duplikat hari (edit)
+        return false;
     };
 
     const handleSaveMenu = async () => {
         if (!form.nama_menu.trim()) { showToast("Nama menu wajib diisi."); return; }
-        if (!date)                  { showToast("Tanggal wajib dipilih."); return; }
+        if (!modalDate)             { showToast("Tanggal wajib dipilih."); return; }
+
+        // Guard: past date
+        if (modalDate < today) {
+            showToast("Tidak bisa menyimpan menu dengan tanggal yang sudah lewat.", "warning");
+            return;
+        }
+
+        // Guard: duplikat hari
+        const excludeId = editMode && editTarget ? editTarget.id : null;
+        if (isDayTaken(modalDate, excludeId)) {
+            const dayName = getDayName(modalDate);
+            showToast(`Hari ${dayName} sudah memiliki menu. Pilih tanggal lain.`, "warning");
+            return;
+        }
 
         setSaving(true);
         try {
@@ -323,7 +591,7 @@ export default function MenuHarianSPPG() {
             const formData = new FormData();
             formData.append("nama_menu",   form.nama_menu);
             formData.append("deskripsi",   form.deskripsi);
-            formData.append("tanggal",     date);
+            formData.append("tanggal",     modalDate);
             formData.append("kalori",      parseNum(form.kalori));
             formData.append("protein",     parseNum(form.protein));
             formData.append("lemak",       parseNum(form.lemak));
@@ -347,6 +615,7 @@ export default function MenuHarianSPPG() {
             setOpenModal(false);
             setForm({ nama_menu: "", kategori: "", deskripsi: "", kalori: "", protein: "", lemak: "", karbo: "", serat: "" });
             setImagePreview(null);
+            setModalDate("");
         } catch (err) {
             console.error("Save menu error:", err.response?.data || err);
             const serverMsg = err.response?.data?.message
@@ -381,7 +650,9 @@ export default function MenuHarianSPPG() {
         if (file) { setImagePreview(URL.createObjectURL(file)); setForm({ ...form, gambar: file }); }
     };
 
-    const getDayName = (d) => d ? new Date(d).toLocaleDateString("id-ID", { weekday: "long" }) : "";
+    // Cek warning duplikat hari di modal (untuk info box)
+    const modalDayWarning = modalDate && !editMode && isDayTaken(modalDate);
+    const modalPastWarning = modalDate && modalDate < today;
 
     return (
         <div style={{ minHeight: "100vh", background: T.bg, fontFamily: T.font }}>
@@ -416,6 +687,7 @@ export default function MenuHarianSPPG() {
                             background: T.elevated, border: `0.5px solid ${T.border}`,
                         }}>
                             <Calendar size={14} strokeWidth={1.8} color={T.accent} />
+                            {/* Top bar date hanya untuk filter/display, bukan untuk input menu */}
                             <input
                                 type="date" value={date}
                                 onChange={(e) => setDate(e.target.value)}
@@ -506,7 +778,8 @@ export default function MenuHarianSPPG() {
                                         flexShrink: 0, overflow: "hidden",
                                     }}>
                                         {menu.gambar_menu
-                                            ? <img src={menu.gambar_menu} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+                                            // FIX (gambar tidak muncul): pakai resolveImage()
+                                            ? <img src={resolveImage(menu.gambar_menu)} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
                                             : <span style={{ fontSize: 30 }}>🍱</span>}
                                     </div>
                                     <div style={{ flex: 1 }}>
@@ -541,11 +814,11 @@ export default function MenuHarianSPPG() {
                                 {weekly.length > 0 ? weekly.map((item, i) => (
                                     <WeeklyRow
                                         key={i}
-                                        hari={item.hari}
-                                        menu={item.menu}
+                                        item={item}
                                         active={item.hari === getDayName(date)}
                                         onEdit={() => openEditWeekly(item)}
                                         onDelete={() => setConfirmDelete({ id: item.id, label: item.menu })}
+                                        onClick={() => setWeeklyDetail(item)}
                                     />
                                 )) : (
                                     <div style={{ padding: "20px", textAlign: "center", color: T.muted, fontSize: "13px", background: T.card, borderRadius: "12px", border: `0.5px solid ${T.border}` }}>
@@ -597,7 +870,7 @@ export default function MenuHarianSPPG() {
                 </div>
             </div>
 
-            {/* ── MODAL ── */}
+            {/* ── MODAL TAMBAH / EDIT ── */}
             {openModal && (
                 <div style={{
                     position: "fixed", top: 0, left: "260px", right: 0, bottom: 0,
@@ -619,7 +892,9 @@ export default function MenuHarianSPPG() {
                                 <div style={{ fontSize: "16px", fontWeight: 700, color: T.text, letterSpacing: "-.3px" }}>
                                     {editMode ? "Edit Menu" : "Tambah Menu Harian"}
                                 </div>
-                                <div style={{ fontSize: "12px", color: T.muted, marginTop: "3px" }}>Lengkapi informasi menu dan nilai gizi</div>
+                                <div style={{ fontSize: "12px", color: T.muted, marginTop: "3px" }}>
+                                    {loadingEdit ? "Memuat detail menu..." : "Lengkapi informasi menu dan nilai gizi"}
+                                </div>
                             </div>
                             <button onClick={() => setOpenModal(false)} style={{
                                 background: "rgba(255,255,255,0.06)", border: `0.5px solid ${T.border}`,
@@ -642,22 +917,64 @@ export default function MenuHarianSPPG() {
                                 }}>
                                     <ClipboardList size={12} /> Informasi Menu
                                 </div>
-                                <Field name="nama_menu" placeholder="Nama menu *" value={form.nama_menu} onChange={handleChange} />
-                                <Field name="kategori"  placeholder="Kategori"    value={form.kategori}  onChange={handleChange} />
+                                <Field name="nama_menu" placeholder="Nama menu *" value={form.nama_menu} onChange={handleChange} disabled={loadingEdit} />
+                                <Field name="kategori"  placeholder="Kategori"    value={form.kategori}  onChange={handleChange} disabled={loadingEdit} />
                                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-                                    <Field name="tanggal" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-                                    <Field placeholder="Hari (otomatis)" value={getDayName(date)} disabled />
+                                    {/* Input tanggal dengan min=today supaya tanggal lampau tidak bisa dipilih */}
+                                    <input
+                                        type="date"
+                                        value={modalDate}
+                                        min={today}
+                                        onChange={handleModalDateChange}
+                                        disabled={loadingEdit}
+                                        style={{
+                                            background: "rgba(255,255,255,0.04)", border: `0.5px solid ${T.borderMd}`,
+                                            color: T.text, borderRadius: "10px", padding: "9px 12px",
+                                            fontSize: "13px", fontFamily: T.font, width: "100%", outline: "none",
+                                            opacity: loadingEdit ? 0.4 : 1,
+                                        }}
+                                        onFocus={e => e.target.style.borderColor = `${T.accent}80`}
+                                        onBlur={e => e.target.style.borderColor = T.borderMd}
+                                    />
+                                    <Field placeholder="Hari (otomatis)" value={getDayName(modalDate)} disabled />
                                 </div>
+
+                                {/* Warning: tanggal lampau */}
+                                {modalPastWarning && (
+                                    <div style={{
+                                        display: "flex", alignItems: "center", gap: "8px",
+                                        padding: "8px 12px", background: `${T.red}12`,
+                                        border: `0.5px solid ${T.red}40`, borderRadius: "8px",
+                                        fontSize: "12px", color: T.red,
+                                    }}>
+                                        <span>✕</span> Tanggal yang dipilih sudah lewat. Pilih tanggal hari ini atau ke depan.
+                                    </div>
+                                )}
+
+                                {/* Warning: duplikat hari */}
+                                {!modalPastWarning && modalDayWarning && (
+                                    <div style={{
+                                        display: "flex", alignItems: "center", gap: "8px",
+                                        padding: "8px 12px", background: `${T.amber}12`,
+                                        border: `0.5px solid ${T.amber}40`, borderRadius: "8px",
+                                        fontSize: "12px", color: T.amber,
+                                    }}>
+                                        <span>⚠</span> Hari {getDayName(modalDate)} sudah ada menu. Pilih tanggal lain.
+                                    </div>
+                                )}
+
                                 <textarea
                                     name="deskripsi"
                                     placeholder="Deskripsi menu..."
                                     value={form.deskripsi}
                                     onChange={handleChange}
+                                    disabled={loadingEdit}
                                     style={{
                                         background: "rgba(255,255,255,0.04)", border: `0.5px solid ${T.borderMd}`,
                                         color: T.text, borderRadius: "10px", padding: "9px 12px",
                                         fontSize: "13px", fontFamily: T.font, width: "100%",
                                         minHeight: "70px", resize: "none", outline: "none",
+                                        opacity: loadingEdit ? 0.4 : 1,
                                     }}
                                     onFocus={e => e.target.style.borderColor = `${T.accent}80`}
                                     onBlur={e => e.target.style.borderColor = T.borderMd}
@@ -691,11 +1008,11 @@ export default function MenuHarianSPPG() {
                                 }}>
                                     <Leaf size={12} /> Nilai Gizi
                                 </div>
-                                <Field name="kalori"  placeholder="Kalori (kkal)"   value={form.kalori}  onChange={handleChange} />
-                                <Field name="protein" placeholder="Protein (g)"     value={form.protein} onChange={handleChange} />
-                                <Field name="lemak"   placeholder="Lemak (g)"       value={form.lemak}   onChange={handleChange} />
-                                <Field name="karbo"   placeholder="Karbohidrat (g)" value={form.karbo}   onChange={handleChange} />
-                                <Field name="serat"   placeholder="Serat (g)"       value={form.serat}   onChange={handleChange} />
+                                <Field name="kalori"  placeholder="Kalori (kkal)"   value={form.kalori}  onChange={handleChange} disabled={loadingEdit} />
+                                <Field name="protein" placeholder="Protein (g)"     value={form.protein} onChange={handleChange} disabled={loadingEdit} />
+                                <Field name="lemak"   placeholder="Lemak (g)"       value={form.lemak}   onChange={handleChange} disabled={loadingEdit} />
+                                <Field name="karbo"   placeholder="Karbohidrat (g)" value={form.karbo}   onChange={handleChange} disabled={loadingEdit} />
+                                <Field name="serat"   placeholder="Serat (g)"       value={form.serat}   onChange={handleChange} disabled={loadingEdit} />
                                 <div style={{
                                     background: `${T.accent}08`, border: `0.5px solid ${T.accent}25`,
                                     borderRadius: "12px", padding: "13px 15px", marginTop: "4px",
@@ -721,22 +1038,33 @@ export default function MenuHarianSPPG() {
                                 fontSize: "13px", cursor: "pointer", fontFamily: T.font,
                                 opacity: saving ? 0.5 : 1,
                             }}>Batal</button>
-                            <button onClick={handleSaveMenu} disabled={saving} style={{
-                                background: saving ? T.muted : T.accent, border: "none",
-                                color: "#fff", padding: "8px 20px", borderRadius: "9px",
-                                fontSize: "13px", fontWeight: 600,
-                                cursor: saving ? "not-allowed" : "pointer",
-                                fontFamily: T.font, display: "flex", alignItems: "center", gap: "6px",
-                                transition: "background .2s",
-                            }}
-                                onMouseEnter={e => { if (!saving) e.currentTarget.style.background = "#1d4ed8"; }}
-                                onMouseLeave={e => { if (!saving) e.currentTarget.style.background = T.accent; }}
+                            <button
+                                onClick={handleSaveMenu}
+                                disabled={isSaveBlocked()}
+                                style={{
+                                    background: isSaveBlocked() ? T.muted : T.accent,
+                                    border: "none", color: "#fff", padding: "8px 20px", borderRadius: "9px",
+                                    fontSize: "13px", fontWeight: 600,
+                                    cursor: isSaveBlocked() ? "not-allowed" : "pointer",
+                                    fontFamily: T.font, display: "flex", alignItems: "center", gap: "6px",
+                                    transition: "background .2s",
+                                }}
+                                onMouseEnter={e => { if (!isSaveBlocked()) e.currentTarget.style.background = "#1d4ed8"; }}
+                                onMouseLeave={e => { if (!isSaveBlocked()) e.currentTarget.style.background = T.accent; }}
                             >
                                 {saving ? "Menyimpan..." : editMode ? "Simpan Perubahan" : "Simpan Menu"}
                             </button>
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* ── WEEKLY DETAIL MODAL ── */}
+            {weeklyDetail && (
+                <WeeklyDetailModal
+                    item={weeklyDetail}
+                    onClose={() => setWeeklyDetail(null)}
+                />
             )}
 
             {/* ── CONFIRM DELETE ── */}

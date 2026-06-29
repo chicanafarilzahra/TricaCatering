@@ -97,15 +97,27 @@ function KpiCard({ label, value, icon: Icon, accent }) {
     );
 }
 
+/* ── Status Badge dengan pulse animasi untuk "Dikirim" ────────── */
 function StatusBadge({ status }) {
     const s = STATUS[status] || STATUS.Diproses;
+    const isDikirim = status === "Dikirim";
     return (
         <span style={{
-            display: "inline-flex", alignItems: "center",
+            display: "inline-flex", alignItems: "center", gap: "6px",
             fontSize: "11px", fontWeight: 700,
             padding: "3px 10px", borderRadius: "20px",
             background: s.bg, border: `0.5px solid ${s.border}`, color: s.color,
-        }}>{status}</span>
+            animation: isDikirim ? "pulse-dikirim 1.8s ease-in-out infinite" : "none",
+        }}>
+            {isDikirim && (
+                <span style={{
+                    width: "6px", height: "6px", borderRadius: "50%",
+                    background: T.teal, flexShrink: 0,
+                    animation: "pulse-dikirim 1.8s ease-in-out infinite",
+                }} />
+            )}
+            {status}
+        </span>
     );
 }
 
@@ -315,6 +327,11 @@ export default function DistribusiSPPG() {
                 input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.4);cursor:pointer}
                 option{background:${T.card}}
                 tbody tr:hover td{background:rgba(255,255,255,0.015)!important;transition:background .15s}
+
+                @keyframes pulse-dikirim {
+                    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(14,165,233,0.4); }
+                    50%       { opacity: 0.85; box-shadow: 0 0 0 5px rgba(14,165,233,0); }
+                }
             `}</style>
 
             <SidebarSPPG />
