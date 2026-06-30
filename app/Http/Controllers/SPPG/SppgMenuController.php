@@ -44,6 +44,7 @@ class SppgMenuController extends Controller
             'sppg_id'     => Auth::id(),
             'nama_menu'   => $request->nama_menu,
             'deskripsi'   => $request->deskripsi,
+            'tanggal' => $request->tanggal,
             'harga'       => $request->harga ?? 0,
             'kalori'      => $request->kalori,
             'protein'     => $request->protein,
@@ -75,6 +76,7 @@ class SppgMenuController extends Controller
         $menu->update([
             'nama_menu'   => $request->nama_menu   ?? $menu->nama_menu,
             'deskripsi'   => $request->deskripsi   ?? $menu->deskripsi,
+            'tanggal' => $request->tanggal,
             'harga'       => $request->harga        ?? $menu->harga,
             'kalori'      => $request->kalori       ?? $menu->kalori,
             'protein'     => $request->protein      ?? $menu->protein,

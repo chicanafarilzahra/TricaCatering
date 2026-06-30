@@ -20,6 +20,12 @@ const T = {
     font:     "'Inter', system-ui, -apple-system, sans-serif",
 };
 
+/* ── Biaya pengiriman: kolom asli di tabel `orders` adalah
+   `courier_fee` (lihat App\Models\Order::$fillable). ── */
+function getBiaya(o) {
+    return o.courier_fee || 0;
+}
+
 /* ── StatCard (mirrors Home.jsx) ─────────────────────────────── */
 function StatCard({ title, value, icon, accentColor, bar }) {
     return (
@@ -68,17 +74,60 @@ function StatCard({ title, value, icon, accentColor, bar }) {
 export default function PengirimanAktif({ onLogout }) {
     const [orders, setOrders] = useState([]);
     const [user,   setUser]   = useState(null);
+    // id order yang sedang diproses (supaya tombolnya bisa di-disable/loading per-baris)
+    const [completingId, setCompletingId] = useState(null);
+    const [errorMsg, setErrorMsg] = useState("");
+
+    const fetchOrders = () => {
+        // Backend mengembalikan { data: [...] } (lihat KurirController::index()),
+        // jadi ambil res.data.data — bukan res.data langsung.
+        // Fallback ke [] kalau bentuk response berubah, supaya .filter()/.map()
+        // di bawah tidak crash.
+        return axios.get("/kurir/orders")
+            .then((res) => setOrders(Array.isArray(res.data?.data) ? res.data.data : []))
+            .catch((err) => {
+                console.error(err);
+                setOrders([]);
+            });
+    };
 
     useEffect(() => {
         const stored = localStorage.getItem("user");
         if (stored) setUser(JSON.parse(stored));
-        axios.get("/kurir/orders")
-            .then((res) => setOrders(res.data))
-            .catch((err) => console.error(err));
+
+        fetchOrders();
     }, []);
 
+    // ── Tandai pesanan sudah sampai (on_delivery → delivered) ──
+    const handleMarkDelivered = async (orderId) => {
+        if (completingId) return; // cegah klik ganda saat masih proses
+        setCompletingId(orderId);
+        setErrorMsg("");
+
+        try {
+            await axios.put(`/kurir/orders/${orderId}/update-status`, {
+                status: "delivered",
+            });
+            // Optimistic update: langsung tandai lokal supaya baris hilang
+            // dari daftar aktif tanpa menunggu refetch.
+            setOrders((prev) =>
+                prev.map((o) =>
+                    o.id === orderId ? { ...o, status: "delivered" } : o
+                )
+            );
+            // Sinkronkan ulang dengan server (jaga-jaga ada perubahan lain)
+            fetchOrders();
+        } catch (err) {
+            console.error(err);
+            const msg = err.response?.data?.message || "Gagal memperbarui status pengiriman.";
+            setErrorMsg(msg);
+        } finally {
+            setCompletingId(null);
+        }
+    };
+
     const activeOrders = orders.filter((o) => o.status === "on_delivery");
-    const totalBiaya    = activeOrders.reduce((sum, o) => sum + (o.delivery_fee || 0), 0);
+    const totalBiaya    = activeOrders.reduce((sum, o) => sum + getBiaya(o), 0);
 
     return (
         <div style={{
@@ -195,6 +244,20 @@ export default function PengirimanAktif({ onLogout }) {
                     </div>
                     <style>{`@keyframes pulseDot { 0%,100% { opacity: 1; } 50% { opacity: .35; } }`}</style>
 
+                    {errorMsg && (
+                        <div style={{
+                            padding: "12px 18px",
+                            borderRadius: "10px",
+                            background: "rgba(239,68,68,0.1)",
+                            border: "0.5px solid rgba(239,68,68,0.3)",
+                            color: "#F87171",
+                            fontSize: "13px",
+                            marginBottom: "16px",
+                        }}>
+                            {errorMsg}
+                        </div>
+                    )}
+
                     {/* ── Stat Cards ── */}
                     <div style={{ display: "flex", gap: "14px", marginBottom: "22px" }}>
                         <StatCard
@@ -245,7 +308,7 @@ export default function PengirimanAktif({ onLogout }) {
                             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "760px" }}>
                                 <thead>
                                     <tr>
-                                        {["No", "Klien", "Pesanan", "Alamat", "Waktu", "Status", "Biaya"].map((h) => (
+                                        {["No", "Klien", "Pesanan", "Alamat", "Waktu", "Status", "Biaya", "Aksi"].map((h) => (
                                             <th key={h} style={{
                                                 padding: "11px 20px",
                                                 textAlign: "left",
@@ -263,7 +326,7 @@ export default function PengirimanAktif({ onLogout }) {
                                 <tbody>
                                     {activeOrders.length === 0 ? (
                                         <tr>
-                                            <td colSpan={7} style={{
+                                            <td colSpan={8} style={{
                                                 padding: "56px 20px",
                                                 textAlign: "center",
                                                 color: T.muted, fontSize: "13px",
@@ -320,10 +383,10 @@ export default function PengirimanAktif({ onLogout }) {
                                                     maxWidth: "220px", overflow: "hidden",
                                                     textOverflow: "ellipsis", whiteSpace: "nowrap",
                                                 }}>
-                                                    {o.delivery_address || "—"}
+                                                    {o.address || "—"}
                                                 </td>
                                                 <td style={{ padding: "14px 20px", fontSize: "13px", color: T.sub, whiteSpace: "nowrap" }}>
-                                                    {o.delivery_time || "—"}
+                                                    {o.jam || "—"}
                                                 </td>
                                                 <td style={{ padding: "14px 20px" }}>
                                                     <span style={{
@@ -339,7 +402,29 @@ export default function PengirimanAktif({ onLogout }) {
                                                     </span>
                                                 </td>
                                                 <td style={{ padding: "14px 20px", fontSize: "13px", fontWeight: 700, color: "#34D399", whiteSpace: "nowrap" }}>
-                                                    Rp {(o.delivery_fee || 0).toLocaleString("id-ID")}
+                                                    Rp {getBiaya(o).toLocaleString("id-ID")}
+                                                </td>
+                                                <td style={{ padding: "14px 20px", whiteSpace: "nowrap" }}>
+                                                    <button
+                                                        onClick={() => handleMarkDelivered(o.id)}
+                                                        disabled={completingId === o.id}
+                                                        style={{
+                                                            padding: "7px 14px",
+                                                            borderRadius: "8px",
+                                                            border: "0.5px solid rgba(52,211,153,0.35)",
+                                                            background: completingId === o.id
+                                                                ? "rgba(52,211,153,0.08)"
+                                                                : "rgba(52,211,153,0.14)",
+                                                            color: "#34D399",
+                                                            fontSize: "12px",
+                                                            fontWeight: 700,
+                                                            cursor: completingId === o.id ? "default" : "pointer",
+                                                            opacity: completingId === o.id ? 0.6 : 1,
+                                                            transition: "opacity 0.15s, background 0.15s",
+                                                        }}
+                                                    >
+                                                        {completingId === o.id ? "Memproses..." : "Tandai Sampai"}
+                                                    </button>
                                                 </td>
                                             </tr>
                                         ))

@@ -33,13 +33,22 @@ export default function HomeKlien() {
         }
 
         axios
-            .get("/klien/pesanan")
-            .then((res) => {
-                setOrders(res.data || []);
-            })
-            .catch((err) => {
-                console.error(err);
-            });
+    .get("/klien/pesanan")
+    .then((res) => {
+        // handle Laravel paginate {data: [...]} atau array langsung
+        const result = res.data;
+        if (Array.isArray(result)) {
+            setOrders(result);
+        } else if (Array.isArray(result?.data)) {
+            setOrders(result.data);
+        } else {
+            setOrders([]);
+        }
+    })
+    .catch((err) => {
+        console.error(err);
+        setOrders([]);
+    });
     }, []);
 
     const activeOrders = orders.filter((item) =>

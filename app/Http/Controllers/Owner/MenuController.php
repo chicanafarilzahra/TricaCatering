@@ -52,9 +52,6 @@ public function store(Request $request): JsonResponse
             'ingredients' => json_decode($request->ingredients, true) ?? []
         ]);
     }
-    // debug sementara
-    \Log::info('auth user id: ' . ($user?->id ?? 'NULL'));
-    \Log::info('token: ' . $request->bearerToken());
 
     $user = $this->authUser();
 
@@ -77,16 +74,15 @@ public function store(Request $request): JsonResponse
     }
 
     $menu = Menu::create(array_merge($validated, [
-    'owner_id'  => $user->id,
-    'is_active' => ($validated['status'] ?? 'active') === 'active',
-    'image'     => $imagePath,
-    'category'  => $validated['category'] ?? '',
-]));
+        'owner_id'  => $user->id,
+        'is_active' => ($validated['status'] ?? 'active') === 'active',
+        'image'     => $imagePath,
+        'category'  => $validated['category'] ?? '',
+    ]));
 
     $this->syncIngredients($menu, $request->input('ingredients', []));
     return response()->json($menu->load('ingredients'), 201);
 }
-
 /* PUT /owner/menus/{menu} */
 public function update(Request $request, Menu $menu): JsonResponse
 {

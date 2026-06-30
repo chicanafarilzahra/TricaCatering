@@ -18,6 +18,7 @@ import {
     FaHourglassHalf,
 } from "react-icons/fa";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import NavbarKlien from "../../components/NavbarKlien";
 
 /*
@@ -50,6 +51,7 @@ export default function PesanMakan() {
     const [clientLocation, setClientLocation] = useState(null);
     const [distanceKm, setDistanceKm] = useState(0);
     const [durationMinute, setDurationMinute] = useState(0);
+    const navigate = useNavigate();
     const [geoStatus, setGeoStatus] = useState("idle"); // idle | searching | found | notfound
 
     const [payMethod, setPayMethod] = useState(null); // 'bank' | 'ewallet'
@@ -502,7 +504,7 @@ export default function PesanMakan() {
             });
 
             alert("✅ Pesanan & bukti pembayaran berhasil dikirim! Menunggu konfirmasi catering.");
-            setTimeout(() => { window.location.href = "/klien/pesanan-saya"; }, 500);
+            setTimeout(() => { navigate("/klien/pesanan"); }, 500);
         } catch (err) {
             console.error(err);
             alert("Gagal membuat pesanan.");
@@ -718,14 +720,20 @@ export default function PesanMakan() {
                                 {selectedType === "harian" ? (
                                     <>
                                         <div style={styles.inpRow}>
-                                            <FormInput
-                                                label={`Jumlah Porsi (min ${selectedMenu.min_porsi})`}
-                                                type="number"
-                                                min={selectedMenu.min_porsi}
-                                                value={form.jumlah}
-                                                onChange={(e) => setForm({ ...form, jumlah: e.target.value })}
-                                                placeholder={`${selectedMenu.min_porsi}`}
-                                            />
+                                            
+<FormInput
+    label={`Jumlah Porsi (min ${selectedMenu.min_porsi})`}
+    type="number"
+    min={selectedMenu.min_porsi}
+    value={form.jumlah}
+    onChange={(e) => setForm({ ...form, jumlah: e.target.value })}
+    placeholder={`${selectedMenu.min_porsi}`}
+    error={
+        form.jumlah && Number(form.jumlah) < Number(selectedMenu.min_porsi)
+            ? `Minimal pemesanan ${selectedMenu.min_porsi} porsi`
+            : null
+    }
+/>
                                             <FormInput
                                                 label="Durasi (Hari)"
                                                 type="number"
@@ -773,21 +781,28 @@ export default function PesanMakan() {
                                                 onChange={(e) => setForm({ ...form, jam: e.target.value })}
                                             />
                                         </div>
-                                        <div style={styles.inpRow}>
-                                            <FormInput
-                                                label={`Jumlah Porsi (min ${selectedMenu.min_porsi})`}
-                                                type="number"
-                                                min={selectedMenu.min_porsi}
-                                                value={form.jumlah}
-                                                onChange={(e) => setForm({ ...form, jumlah: e.target.value })}
-                                            />
-                                            <FormInput
-                                                label="Tema Event"
-                                                value={form.tema}
-                                                onChange={(e) => setForm({ ...form, tema: e.target.value })}
-                                                placeholder="Ulang Tahun..."
-                                            />
-                                        </div>
+
+                                            <div style={styles.inpRow}>
+    <FormInput
+        label={`Jumlah Porsi (min ${selectedMenu.min_porsi})`}
+        type="number"
+        min={selectedMenu.min_porsi}
+        value={form.jumlah}
+        onChange={(e) => setForm({ ...form, jumlah: e.target.value })}
+        error={
+            form.jumlah && Number(form.jumlah) < Number(selectedMenu.min_porsi)
+                ? `Minimal pemesanan ${selectedMenu.min_porsi} porsi`
+                : null
+        }
+    />
+    <FormInput
+        label="Tema Event"
+        value={form.tema}
+        onChange={(e) => setForm({ ...form, tema: e.target.value })}
+        placeholder="Ulang Tahun..."
+    />
+</div>
+                                        
                                     </>
                                 )}
 
@@ -1137,7 +1152,7 @@ function SectionLabel({ children }) {
     );
 }
 
-function FormInput({ label, ...props }) {
+function FormInput({ label, error, ...props }) {
     return (
         <div style={{ marginBottom: 12 }}>
             <label style={{ display: "block", color: "#64748b", fontSize: 12, fontWeight: 500, marginBottom: 6 }}>{label}</label>
@@ -1147,8 +1162,8 @@ function FormInput({ label, ...props }) {
                     width: "100%",
                     height: 46,
                     borderRadius: 12,
-                    border: "1px solid rgba(255,255,255,0.07)",
-                    background: "#0d1117",
+                    border: error ? "1.5px solid rgba(239,68,68,0.6)" : "1px solid rgba(255,255,255,0.07)",
+                    background: error ? "rgba(239,68,68,0.06)" : "#0d1117",
                     padding: "0 14px",
                     color: "#fff",
                     outline: "none",
@@ -1156,12 +1171,18 @@ function FormInput({ label, ...props }) {
                     fontFamily: "inherit",
                     fontWeight: 600,
                     opacity: props.readOnly ? 0.6 : 1,
+                    transition: "border .15s, background .15s",
                 }}
             />
+            {error && (
+                <div style={{ color: "#f87171", fontSize: 11, marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
+                    <FaExclamationTriangle style={{ fontSize: 10, flexShrink: 0 }} />
+                    {error}
+                </div>
+            )}
         </div>
     );
 }
-
 function SummaryRow({ label, value, yellow }) {
     return (
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 8, color: "#64748b" }}>

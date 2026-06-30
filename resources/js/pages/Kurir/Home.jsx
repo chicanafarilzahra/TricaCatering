@@ -25,6 +25,14 @@ const T = {
     font:     "'Inter', system-ui, -apple-system, sans-serif",
 };
 
+/* ── Biaya kurir: kolom asli di tabel `orders` adalah
+   `courier_fee` (lihat App\Models\Order::$fillable).
+   Ini BUKAN total harga pesanan (`total_price`) — itu field
+   yang dilihat owner. courier_fee = upah/ongkos antar kurir. ── */
+function getBiaya(o) {
+    return o.courier_fee || 0;
+}
+
 function getGreeting() {
     const h = new Date().getHours();
     if (h < 11) return "Selamat Pagi";
@@ -107,15 +115,23 @@ export default function KurirHome({ onLogout }) {
     useEffect(() => {
         const stored = localStorage.getItem("user");
         if (stored) setUser(JSON.parse(stored));
+
+        // Backend mengembalikan { data: [...] } (lihat KurirController::index()),
+        // jadi ambil res.data.data — bukan res.data langsung.
+        // Fallback ke [] kalau bentuk response berubah, supaya .filter()/.map()
+        // di bawah tidak crash.
         axios.get("/kurir/orders")
-            .then((res) => setOrders(res.data))
-            .catch((err) => console.error(err));
+            .then((res) => setOrders(Array.isArray(res.data?.data) ? res.data.data : []))
+            .catch((err) => {
+                console.error(err);
+                setOrders([]);
+            });
     }, []);
 
     const totalPengiriman = orders.length;
     const selesai         = orders.filter((o) => o.status === "delivered").length;
     const menunggu        = orders.filter((o) => o.status === "pending").length;
-    const totalBiaya      = orders.reduce((sum, o) => sum + (o.delivery_fee || 0), 0);
+    const totalBiaya      = orders.reduce((sum, o) => sum + getBiaya(o), 0);
 
     return (
         <div style={{
@@ -390,10 +406,11 @@ export default function KurirHome({ onLogout }) {
                                                         </div>
                                                     </td>
                                                     <td style={{ padding: "14px 20px", fontSize: "13px", fontWeight: 700, color: "#34D399", whiteSpace: "nowrap" }}>
-                                                        Rp {(o.delivery_fee || 0).toLocaleString("id-ID")}
+                                                        Rp {getBiaya(o).toLocaleString("id-ID")}
                                                     </td>
+                                                    {/* FIX: field "jam" — bukan "delivery_time" (tidak pernah diisi backend) */}
                                                     <td style={{ padding: "14px 20px", fontSize: "13px", color: T.sub, whiteSpace: "nowrap" }}>
-                                                        {o.delivery_time || "—"}
+                                                        {o.jam ? String(o.jam).substring(0, 5) : "—"}
                                                     </td>
                                                     <td style={{ padding: "14px 20px" }}>
                                                         <span style={{

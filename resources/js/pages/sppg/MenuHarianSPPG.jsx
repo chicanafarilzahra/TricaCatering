@@ -37,9 +37,12 @@ if (typeof document !== "undefined" && !document.getElementById("sppg-inter")) {
 }
 
 /* ─── Helpers ────────────────────────────────────────────────────── */
-const getDayName = (d) => d ? new Date(d).toLocaleDateString("id-ID", { weekday: "long" }) : "";
+const getDayName = (d) => {
+    if (!d) return "";
+    const [y, m, day] = d.split("-").map(Number);
+    return new Date(y, m - 1, day).toLocaleDateString("id-ID", { weekday: "long" });
+};
 
-// Kembalikan string "YYYY-MM-DD" untuk hari ini (local time)
 const getTodayStr = () => {
     const now = new Date();
     const y = now.getFullYear();
@@ -48,21 +51,12 @@ const getTodayStr = () => {
     return `${y}-${m}-${d}`;
 };
 
-// Cek apakah dateStr < hari ini
-const isPastDate = (dateStr) => {
-    if (!dateStr) return false;
-    return dateStr < getTodayStr();
-};
-
-// FIX (gambar tidak muncul): resolve path gambar dari backend jadi URL absolut.
-// Kalau axios.defaults.baseURL = "https://api.domainkamu.com/api", maka
-// API_ORIGIN = "https://api.domainkamu.com" — sesuaikan kalau struktur baseURL beda.
-const API_ORIGIN = (axios.defaults.baseURL || "").replace(/\/api\/?$/, "");
+/* Resolve path gambar dari backend menjadi URL absolut */
 const resolveImage = (path) => {
     if (!path) return null;
-    // sudah full URL (http/https) atau preview lokal (blob:) → pakai langsung
-    if (/^(https?:)?\/\//.test(path) || path.startsWith("blob:") || path.startsWith("data:")) return path;
-    return `${API_ORIGIN}${path.startsWith("/") ? "" : "/"}${path}`;
+    if (/^https?:\/\//.test(path) || path.startsWith("blob:") || path.startsWith("data:")) return path;
+    const base = (axios.defaults.baseURL || "").replace(/\/api\/?$/, "").replace(/\/$/, "");
+    return `${base}${path.startsWith("/") ? "" : "/"}${path}`;
 };
 
 function SectionHeader({ label, action, onAction }) {
@@ -152,8 +146,8 @@ function IconBtn({ icon: Icon, color, hoverBg, onClick, title }) {
     );
 }
 
-/* ─── Weekly Row — dengan gambar & klik ─────────────────────────── */
-function WeeklyRow({ item, active, onEdit, onDelete, onClick }) {
+/* ─── Weekly Row — read-only, tanpa tombol edit/hapus ───────────── */
+function WeeklyRow({ item, active, onClick }) {
     const [hovered, setHovered] = useState(false);
     return (
         <div
@@ -162,7 +156,7 @@ function WeeklyRow({ item, active, onEdit, onDelete, onClick }) {
             onMouseLeave={() => setHovered(false)}
             style={{
                 padding: "12px 15px", borderRadius: "12px",
-                background: active ? `${T.accent}10` : hovered ? `${T.elevated}` : T.card,
+                background: active ? `${T.accent}10` : hovered ? T.elevated : T.card,
                 border: `0.5px solid ${active ? T.accent + "40" : hovered ? T.borderMd : T.border}`,
                 display: "flex", alignItems: "center", gap: "12px",
                 cursor: "pointer", transition: "all .15s ease",
@@ -174,10 +168,15 @@ function WeeklyRow({ item, active, onEdit, onDelete, onClick }) {
                 border: `0.5px solid ${T.border}`,
                 overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center",
             }}>
-                {item.gambar_menu && (
-                    // FIX (gambar tidak muncul): pakai resolveImage()
-                    <img src={resolveImage(item.gambar_menu)} alt={item.menu} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                )}
+                {item.gambar_menu
+                    ? <img
+                        src={resolveImage(item.gambar_menu)}
+                        alt={item.menu}
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        onError={e => { e.target.style.display = "none"; }}
+                      />
+                    : <span style={{ fontSize: "20px" }}>🍱</span>
+                }
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: "11px", color: active ? T.accent : T.muted, fontWeight: active ? 600 : 400, marginBottom: "2px" }}>
@@ -187,12 +186,8 @@ function WeeklyRow({ item, active, onEdit, onDelete, onClick }) {
                     fontSize: "12.5px", fontWeight: 600, color: T.text,
                     whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
                 }}>
-                    {item.menu}
+                    {item.menu || item.nama_menu}
                 </div>
-            </div>
-            <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
-                <IconBtn icon={Pencil} color={T.accent} hoverBg={`${T.accent}18`} onClick={onEdit}   title="Edit" />
-                <IconBtn icon={Trash2} color={T.red}    hoverBg={`${T.red}18`}    onClick={onDelete} title="Hapus" />
             </div>
         </div>
     );
@@ -314,7 +309,6 @@ function WeeklyDetailModal({ item, onClose }) {
                     position: "relative", overflow: "hidden",
                 }}>
                     {item.gambar_menu
-                        // FIX (gambar tidak muncul): pakai resolveImage()
                         ? <img src={resolveImage(item.gambar_menu)} alt={item.menu} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                         : (
                             <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -344,7 +338,7 @@ function WeeklyDetailModal({ item, onClose }) {
                     </button>
                     <div style={{ position: "absolute", bottom: "14px", left: "16px", right: "16px" }}>
                         <div style={{ fontSize: "17px", fontWeight: 800, color: T.text, letterSpacing: "-.4px" }}>
-                            {item.menu}
+                            {item.menu || item.nama_menu}
                         </div>
                     </div>
                 </div>
@@ -407,20 +401,19 @@ function WeeklyDetailModal({ item, onClose }) {
 
 /* ─── Main Component ─────────────────────────────────────────────── */
 export default function MenuHarianSPPG() {
-    const [menu,             setMenu]             = useState(null);
-    const [gizi,             setGizi]             = useState(null);
-    const [weekly,           setWeekly]           = useState([]);
-    const [date,             setDate]             = useState("");
-    const [openModal,        setOpenModal]        = useState(false);
-    const [imagePreview,     setImagePreview]     = useState(null);
-    const [saving,           setSaving]           = useState(false);
-    const [loadingEdit,      setLoadingEdit]      = useState(false); // FIX: indikator loading saat fetch detail weekly
-    const [toast,            setToast]            = useState(null);
-    const [editMode,         setEditMode]         = useState(false);
-    const [editTarget,       setEditTarget]       = useState(null);
-    const [confirmDelete,    setConfirmDelete]    = useState(null);
-    const [weeklyDetail,     setWeeklyDetail]     = useState(null);
-    const [modalDate,        setModalDate]        = useState(""); // ← tanggal khusus di modal
+    const [menu,          setMenu]          = useState(null);
+    const [gizi,          setGizi]          = useState(null);
+    const [weekly,        setWeekly]        = useState([]);
+    const [date,          setDate]          = useState("");
+    const [openModal,     setOpenModal]     = useState(false);
+    const [imagePreview,  setImagePreview]  = useState(null);
+    const [saving,        setSaving]        = useState(false);
+    const [toast,         setToast]         = useState(null);
+    const [editMode,      setEditMode]      = useState(false);
+    const [editTarget,    setEditTarget]    = useState(null);
+    const [confirmDelete, setConfirmDelete] = useState(null);
+    const [weeklyDetail,  setWeeklyDetail]  = useState(null);
+    const [modalDate,     setModalDate]     = useState("");
     const [form, setForm] = useState({
         nama_menu: "", kategori: "", deskripsi: "",
         kalori: "", protein: "", lemak: "", karbo: "", serat: "",
@@ -430,7 +423,7 @@ export default function MenuHarianSPPG() {
 
     const getToken  = () => localStorage.getItem("auth_token");
     const showToast = (message, type = "error") => setToast({ message, type });
-    const today     = getTodayStr(); // "YYYY-MM-DD" hari ini
+    const today     = getTodayStr();
 
     const loadData = async () => {
         try {
@@ -444,102 +437,46 @@ export default function MenuHarianSPPG() {
         } catch (err) { console.log(err); }
     };
 
-    /* ── Cek apakah hari dari tanggal sudah ada di weekly ── */
     const isDayTaken = (dateStr, excludeId = null) => {
-        if (!dateStr) return false;
-        const dayName = getDayName(dateStr);
-        return weekly.some(w => w.hari === dayName && w.id !== excludeId);
-    };
+    if (!dateStr) return false;
+    // Hitung nama hari dengan fix timezone
+    const [y, m, day] = dateStr.split("-").map(Number);
+    const dayName = new Date(y, m - 1, day).toLocaleDateString("id-ID", { weekday: "long" });
+    return weekly.some(w => w.hari === dayName && w.id !== excludeId);
+};
 
-    /* ── Validasi tanggal di modal (past date + duplikat hari) ── */
     const handleModalDateChange = (e) => {
         const newDate = e.target.value;
-
-        // 1. Blokir tanggal yang sudah lewat
         if (newDate < today) {
             showToast("Tidak bisa memilih tanggal yang sudah lewat.", "warning");
             return;
         }
-
-        // 2. Blokir duplikat hari (kecuali saat edit item yang sama)
         const excludeId = editMode && editTarget ? editTarget.id : null;
         if (isDayTaken(newDate, excludeId)) {
             const dayName = getDayName(newDate);
             showToast(`Hari ${dayName} sudah memiliki menu. Pilih tanggal lain.`, "warning");
             return;
         }
-
         setModalDate(newDate);
     };
 
+    /* ── Edit menu harian (data lengkap dari API) ── */
     const openEditMenu = (data) => {
         setEditMode(true);
         setEditTarget({ type: "menu", id: data.id });
         setForm({
-            nama_menu: data.nama_menu   || "",
-            kategori:  data.kategori   || "",
-            deskripsi: data.deskripsi  || "",
-            kalori:    data.kalori     ?? "",
-            protein:   data.protein    ?? "",
-            lemak:     data.lemak      ?? "",
+            nama_menu: data.nama_menu    || "",
+            kategori:  data.kategori    || "",
+            deskripsi: data.deskripsi   || "",
+            kalori:    data.kalori      ?? "",
+            protein:   data.protein     ?? "",
+            lemak:     data.lemak       ?? "",
             karbo:     data.karbohidrat ?? "",
-            serat:     data.serat      ?? "",
+            serat:     data.serat       ?? "",
         });
         setModalDate(data.tanggal || "");
-        setImagePreview(resolveImage(data.gambar_menu)); // FIX: pakai resolveImage juga di preview
+        setImagePreview(resolveImage(data.gambar_menu));
         setOpenModal(true);
-    };
-
-    // FIX (edit menu mingguan kehilangan data): data di list `weekly` cuma ringkas
-    // (hari, menu, gambar_menu, id) — tidak bawa kalori/protein/lemak/dll.
-    // Makanya sebelum isi form, fetch detail lengkap dulu dari endpoint menu,
-    // sama persis seperti pola data lengkap yang dipakai openEditMenu di atas.
-    const openEditWeekly = async (item) => {
-        setEditMode(true);
-        setEditTarget({ type: "weekly", id: item.id });
-        setLoadingEdit(true);
-
-        // Isi dulu dengan apa yang ada (biar form tidak kosong total sambil nunggu fetch)
-        setForm({
-            nama_menu: item.menu || "",
-            kategori:  item.kategori    || "",
-            deskripsi: item.deskripsi   || "",
-            kalori:    item.kalori      ?? "",
-            protein:   item.protein     ?? "",
-            lemak:     item.lemak       ?? "",
-            karbo:     item.karbohidrat ?? "",
-            serat:     item.serat       ?? "",
-        });
-        setModalDate(item.tanggal || "");
-        setImagePreview(resolveImage(item.gambar_menu));
-        setOpenModal(true);
-
-        try {
-            // Sesuaikan endpoint ini dengan route detail menu di backend kamu
-            const res = await axios.get(`/sppg/menus/${item.id}`, {
-                headers: { Authorization: `Bearer ${getToken()}` },
-            });
-            // Sesuaikan dengan struktur response asli (ada yang wrap di `data`, ada yang tidak)
-            const data = res.data?.data || res.data;
-
-            setForm({
-                nama_menu: data.nama_menu   || item.menu || "",
-                kategori:  data.kategori    || "",
-                deskripsi: data.deskripsi   || "",
-                kalori:    data.kalori      ?? "",
-                protein:   data.protein     ?? "",
-                lemak:     data.lemak       ?? "",
-                karbo:     data.karbohidrat ?? "",
-                serat:     data.serat       ?? "",
-            });
-            setModalDate(data.tanggal || item.tanggal || "");
-            setImagePreview(resolveImage(data.gambar_menu || item.gambar_menu));
-        } catch (err) {
-            console.error("Gagal memuat detail menu mingguan:", err);
-            showToast("Gagal memuat detail lengkap menu. Beberapa data mungkin tidak lengkap.", "warning");
-        } finally {
-            setLoadingEdit(false);
-        }
     };
 
     const openAddModal = () => {
@@ -547,31 +484,26 @@ export default function MenuHarianSPPG() {
         setEditTarget(null);
         setForm({ nama_menu: "", kategori: "", deskripsi: "", kalori: "", protein: "", lemak: "", karbo: "", serat: "" });
         setImagePreview(null);
-        setModalDate(""); // user harus pilih tanggal baru
+        setModalDate("");
         setOpenModal(true);
     };
 
-    /* ── Tentukan apakah tombol Simpan harus disabled ── */
     const isSaveBlocked = () => {
-        if (saving || loadingEdit) return true;
-        if (!modalDate) return false; // biarkan validasi saat submit
-        if (modalDate < today) return true; // past date
-        if (!editMode && isDayTaken(modalDate)) return true; // duplikat hari (tambah baru)
-        if (editMode && editTarget && isDayTaken(modalDate, editTarget.id)) return true; // duplikat hari (edit)
+        if (saving) return true;
+        if (!modalDate) return false;
+        if (modalDate < today) return true;
+        if (!editMode && isDayTaken(modalDate)) return true;
+        if (editMode && editTarget && isDayTaken(modalDate, editTarget.id)) return true;
         return false;
     };
 
     const handleSaveMenu = async () => {
         if (!form.nama_menu.trim()) { showToast("Nama menu wajib diisi."); return; }
         if (!modalDate)             { showToast("Tanggal wajib dipilih."); return; }
-
-        // Guard: past date
         if (modalDate < today) {
             showToast("Tidak bisa menyimpan menu dengan tanggal yang sudah lewat.", "warning");
             return;
         }
-
-        // Guard: duplikat hari
         const excludeId = editMode && editTarget ? editTarget.id : null;
         if (isDayTaken(modalDate, excludeId)) {
             const dayName = getDayName(modalDate);
@@ -590,6 +522,7 @@ export default function MenuHarianSPPG() {
 
             const formData = new FormData();
             formData.append("nama_menu",   form.nama_menu);
+            formData.append("kategori",    form.kategori);
             formData.append("deskripsi",   form.deskripsi);
             formData.append("tanggal",     modalDate);
             formData.append("kalori",      parseNum(form.kalori));
@@ -629,6 +562,7 @@ export default function MenuHarianSPPG() {
         }
     };
 
+    /* ── Hapus hanya untuk menu harian (dari hero / detail card) ── */
     const handleDelete = async () => {
         if (!confirmDelete) return;
         try {
@@ -650,8 +584,7 @@ export default function MenuHarianSPPG() {
         if (file) { setImagePreview(URL.createObjectURL(file)); setForm({ ...form, gambar: file }); }
     };
 
-    // Cek warning duplikat hari di modal (untuk info box)
-    const modalDayWarning = modalDate && !editMode && isDayTaken(modalDate);
+    const modalDayWarning  = modalDate && !editMode && isDayTaken(modalDate);
     const modalPastWarning = modalDate && modalDate < today;
 
     return (
@@ -687,7 +620,6 @@ export default function MenuHarianSPPG() {
                             background: T.elevated, border: `0.5px solid ${T.border}`,
                         }}>
                             <Calendar size={14} strokeWidth={1.8} color={T.accent} />
-                            {/* Top bar date hanya untuk filter/display, bukan untuk input menu */}
                             <input
                                 type="date" value={date}
                                 onChange={(e) => setDate(e.target.value)}
@@ -765,7 +697,7 @@ export default function MenuHarianSPPG() {
                 <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: "16px" }}>
                     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
 
-                        {/* Detail Menu */}
+                        {/* Detail Menu Harian */}
                         <div style={{ background: T.elevated, border: `0.5px solid ${T.border}`, borderRadius: "18px", padding: "22px" }}>
                             <SectionHeader label="Detail Menu Hari Ini" />
                             {menu ? (
@@ -778,9 +710,14 @@ export default function MenuHarianSPPG() {
                                         flexShrink: 0, overflow: "hidden",
                                     }}>
                                         {menu.gambar_menu
-                                            // FIX (gambar tidak muncul): pakai resolveImage()
-                                            ? <img src={resolveImage(menu.gambar_menu)} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
-                                            : <span style={{ fontSize: 30 }}>🍱</span>}
+                                            ? <img
+                                                src={resolveImage(menu.gambar_menu)}
+                                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                                alt=""
+                                                onError={e => { e.target.style.display = "none"; }}
+                                              />
+                                            : <span style={{ fontSize: 30 }}>🍱</span>
+                                        }
                                     </div>
                                     <div style={{ flex: 1 }}>
                                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
@@ -807,7 +744,7 @@ export default function MenuHarianSPPG() {
                             )}
                         </div>
 
-                        {/* Menu Mingguan */}
+                        {/* Menu Mingguan — read-only, klik untuk lihat detail */}
                         <div style={{ background: T.elevated, border: `0.5px solid ${T.border}`, borderRadius: "18px", padding: "22px" }}>
                             <SectionHeader label="Menu Mingguan" />
                             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -816,8 +753,6 @@ export default function MenuHarianSPPG() {
                                         key={i}
                                         item={item}
                                         active={item.hari === getDayName(date)}
-                                        onEdit={() => openEditWeekly(item)}
-                                        onDelete={() => setConfirmDelete({ id: item.id, label: item.menu })}
                                         onClick={() => setWeeklyDetail(item)}
                                     />
                                 )) : (
@@ -870,7 +805,7 @@ export default function MenuHarianSPPG() {
                 </div>
             </div>
 
-            {/* ── MODAL TAMBAH / EDIT ── */}
+            {/* ── MODAL TAMBAH / EDIT MENU HARIAN ── */}
             {openModal && (
                 <div style={{
                     position: "fixed", top: 0, left: "260px", right: 0, bottom: 0,
@@ -883,7 +818,6 @@ export default function MenuHarianSPPG() {
                         borderRadius: "20px", boxShadow: "0 32px 80px rgba(0,0,0,0.6)",
                         overflow: "hidden", fontFamily: T.font,
                     }}>
-                        {/* Header */}
                         <div style={{
                             padding: "20px 24px", borderBottom: `0.5px solid ${T.border}`,
                             display: "flex", justifyContent: "space-between", alignItems: "flex-start",
@@ -892,9 +826,7 @@ export default function MenuHarianSPPG() {
                                 <div style={{ fontSize: "16px", fontWeight: 700, color: T.text, letterSpacing: "-.3px" }}>
                                     {editMode ? "Edit Menu" : "Tambah Menu Harian"}
                                 </div>
-                                <div style={{ fontSize: "12px", color: T.muted, marginTop: "3px" }}>
-                                    {loadingEdit ? "Memuat detail menu..." : "Lengkapi informasi menu dan nilai gizi"}
-                                </div>
+                                <div style={{ fontSize: "12px", color: T.muted, marginTop: "3px" }}>Lengkapi informasi menu dan nilai gizi</div>
                             </div>
                             <button onClick={() => setOpenModal(false)} style={{
                                 background: "rgba(255,255,255,0.06)", border: `0.5px solid ${T.border}`,
@@ -905,7 +837,6 @@ export default function MenuHarianSPPG() {
                             </button>
                         </div>
 
-                        {/* Body */}
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1px", background: T.border }}>
                             {/* Left */}
                             <div style={{ background: T.elevated, padding: "20px 22px", display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -917,21 +848,16 @@ export default function MenuHarianSPPG() {
                                 }}>
                                     <ClipboardList size={12} /> Informasi Menu
                                 </div>
-                                <Field name="nama_menu" placeholder="Nama menu *" value={form.nama_menu} onChange={handleChange} disabled={loadingEdit} />
-                                <Field name="kategori"  placeholder="Kategori"    value={form.kategori}  onChange={handleChange} disabled={loadingEdit} />
+                                <Field name="nama_menu" placeholder="Nama menu *" value={form.nama_menu} onChange={handleChange} />
+                                <Field name="kategori"  placeholder="Kategori"    value={form.kategori}  onChange={handleChange} />
                                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-                                    {/* Input tanggal dengan min=today supaya tanggal lampau tidak bisa dipilih */}
                                     <input
-                                        type="date"
-                                        value={modalDate}
-                                        min={today}
+                                        type="date" value={modalDate} min={today}
                                         onChange={handleModalDateChange}
-                                        disabled={loadingEdit}
                                         style={{
                                             background: "rgba(255,255,255,0.04)", border: `0.5px solid ${T.borderMd}`,
                                             color: T.text, borderRadius: "10px", padding: "9px 12px",
                                             fontSize: "13px", fontFamily: T.font, width: "100%", outline: "none",
-                                            opacity: loadingEdit ? 0.4 : 1,
                                         }}
                                         onFocus={e => e.target.style.borderColor = `${T.accent}80`}
                                         onBlur={e => e.target.style.borderColor = T.borderMd}
@@ -939,7 +865,6 @@ export default function MenuHarianSPPG() {
                                     <Field placeholder="Hari (otomatis)" value={getDayName(modalDate)} disabled />
                                 </div>
 
-                                {/* Warning: tanggal lampau */}
                                 {modalPastWarning && (
                                     <div style={{
                                         display: "flex", alignItems: "center", gap: "8px",
@@ -947,11 +872,9 @@ export default function MenuHarianSPPG() {
                                         border: `0.5px solid ${T.red}40`, borderRadius: "8px",
                                         fontSize: "12px", color: T.red,
                                     }}>
-                                        <span>✕</span> Tanggal yang dipilih sudah lewat. Pilih tanggal hari ini atau ke depan.
+                                        <span>✕</span> Tanggal yang dipilih sudah lewat.
                                     </div>
                                 )}
-
-                                {/* Warning: duplikat hari */}
                                 {!modalPastWarning && modalDayWarning && (
                                     <div style={{
                                         display: "flex", alignItems: "center", gap: "8px",
@@ -959,22 +882,18 @@ export default function MenuHarianSPPG() {
                                         border: `0.5px solid ${T.amber}40`, borderRadius: "8px",
                                         fontSize: "12px", color: T.amber,
                                     }}>
-                                        <span>⚠</span> Hari {getDayName(modalDate)} sudah ada menu. Pilih tanggal lain.
+                                        <span>⚠</span> Hari {getDayName(modalDate)} sudah ada menu.
                                     </div>
                                 )}
 
                                 <textarea
-                                    name="deskripsi"
-                                    placeholder="Deskripsi menu..."
-                                    value={form.deskripsi}
-                                    onChange={handleChange}
-                                    disabled={loadingEdit}
+                                    name="deskripsi" placeholder="Deskripsi menu..."
+                                    value={form.deskripsi} onChange={handleChange}
                                     style={{
                                         background: "rgba(255,255,255,0.04)", border: `0.5px solid ${T.borderMd}`,
                                         color: T.text, borderRadius: "10px", padding: "9px 12px",
                                         fontSize: "13px", fontFamily: T.font, width: "100%",
                                         minHeight: "70px", resize: "none", outline: "none",
-                                        opacity: loadingEdit ? 0.4 : 1,
                                     }}
                                     onFocus={e => e.target.style.borderColor = `${T.accent}80`}
                                     onBlur={e => e.target.style.borderColor = T.borderMd}
@@ -1008,11 +927,11 @@ export default function MenuHarianSPPG() {
                                 }}>
                                     <Leaf size={12} /> Nilai Gizi
                                 </div>
-                                <Field name="kalori"  placeholder="Kalori (kkal)"   value={form.kalori}  onChange={handleChange} disabled={loadingEdit} />
-                                <Field name="protein" placeholder="Protein (g)"     value={form.protein} onChange={handleChange} disabled={loadingEdit} />
-                                <Field name="lemak"   placeholder="Lemak (g)"       value={form.lemak}   onChange={handleChange} disabled={loadingEdit} />
-                                <Field name="karbo"   placeholder="Karbohidrat (g)" value={form.karbo}   onChange={handleChange} disabled={loadingEdit} />
-                                <Field name="serat"   placeholder="Serat (g)"       value={form.serat}   onChange={handleChange} disabled={loadingEdit} />
+                                <Field name="kalori"  placeholder="Kalori (kkal)"   value={form.kalori}  onChange={handleChange} />
+                                <Field name="protein" placeholder="Protein (g)"     value={form.protein} onChange={handleChange} />
+                                <Field name="lemak"   placeholder="Lemak (g)"       value={form.lemak}   onChange={handleChange} />
+                                <Field name="karbo"   placeholder="Karbohidrat (g)" value={form.karbo}   onChange={handleChange} />
+                                <Field name="serat"   placeholder="Serat (g)"       value={form.serat}   onChange={handleChange} />
                                 <div style={{
                                     background: `${T.accent}08`, border: `0.5px solid ${T.accent}25`,
                                     borderRadius: "12px", padding: "13px 15px", marginTop: "4px",
@@ -1027,7 +946,6 @@ export default function MenuHarianSPPG() {
                             </div>
                         </div>
 
-                        {/* Footer */}
                         <div style={{
                             padding: "14px 22px", borderTop: `0.5px solid ${T.border}`,
                             display: "flex", justifyContent: "flex-end", gap: "8px",
@@ -1059,15 +977,10 @@ export default function MenuHarianSPPG() {
                 </div>
             )}
 
-            {/* ── WEEKLY DETAIL MODAL ── */}
             {weeklyDetail && (
-                <WeeklyDetailModal
-                    item={weeklyDetail}
-                    onClose={() => setWeeklyDetail(null)}
-                />
+                <WeeklyDetailModal item={weeklyDetail} onClose={() => setWeeklyDetail(null)} />
             )}
 
-            {/* ── CONFIRM DELETE ── */}
             {confirmDelete && (
                 <ConfirmModal
                     message={`Yakin ingin menghapus "${confirmDelete.label}"? Tindakan ini tidak bisa dibatalkan.`}
@@ -1076,7 +989,6 @@ export default function MenuHarianSPPG() {
                 />
             )}
 
-            {/* ── TOAST ── */}
             {toast && (
                 <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
             )}

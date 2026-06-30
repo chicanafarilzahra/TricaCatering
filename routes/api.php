@@ -12,6 +12,7 @@ use App\Http\Controllers\AdminClientController;
 use App\Http\Controllers\AdminStockController;
 use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\Admin\AdminInvoiceController;
+use App\Http\Controllers\AdminDistribusiController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\OrderController;
 
@@ -30,6 +31,7 @@ use App\Http\Controllers\Api\OwnerPaymentAccountController;
 
 use App\Http\Controllers\Owner\CourierController as OwnerCourierController;
 use App\Http\Controllers\Owner\OwnerInvoiceController;
+use App\Http\Controllers\Owner\OrderController as OwnerOrderController;
 
 use App\Http\Controllers\SPPG\DashboardSPPGController;
 use App\Http\Controllers\SPPG\MenuHarianController;
@@ -221,6 +223,7 @@ Route::get(
         [AdminStockController::class, 'detailSPPG']
     );
 
+    Route::get('/admin/distribusis', [AdminDistribusiController::class, 'index']);
 
 Route::apiResource(
     'packages',
@@ -273,6 +276,22 @@ Route::middleware(['auth:sanctum'])->group(function () {
 | KURIR
 |--------------------------------------------------------------------------
 */
+
+// Endpoint khusus kurir (panel "Jadwal Pengiriman", "Rute Hari Ini", update status & lokasi GPS)
+Route::middleware('auth:sanctum')
+    ->prefix('kurir')
+    ->group(function () {
+        Route::get('/orders', [KurirController::class, 'index']);
+        Route::get('/orders/{id}', [KurirController::class, 'show']);
+        Route::get('/rute', [KurirController::class, 'ruteHariIni']);
+        Route::put('/orders/{id}/update-status', [KurirController::class, 'updateStatus']);
+        Route::post('/orders/{id}/location', [KurirController::class, 'updateLocation']);
+
+        // ── Laporan Harian ──
+        Route::get('/laporan_harian', [LaporanHarianController::class, 'index']);
+        Route::post('/laporan_harian', [LaporanHarianController::class, 'store']);
+    });
+
 Route::get('/klien/menus', function () {
  
     return \App\Models\Menu::with('owner.paymentAccounts')
@@ -288,8 +307,8 @@ Route::get('/klien/menus', function () {
                 'price' => $menu->price,
                 'image' => $menu->image,
  
-                'category' => $menu->jenis_catering,
-                'min_porsi' => $menu->min_porsi,
+                'category'  => $menu->jenis_catering,
+                'min_porsi' => $menu->min_pax,
  
                 // PENTING: dibutuhkan saat submit pesanan
                 'catering_id' => $menu->owner_id,
@@ -401,16 +420,18 @@ Route::middleware('auth:sanctum')
     );
 
     Route::get('/menus', [OwnerMenuController2::class, 'index']);
-Route::post('/menus', [OwnerMenuController2::class, 'store']);
-Route::put('/menus/{menu}', [OwnerMenuController2::class, 'update']);
-Route::delete('/menus/{menu}', [OwnerMenuController2::class, 'destroy']);
-Route::get('/menus/{menu}/ingredients', [OwnerMenuController2::class, 'ingredients']); 
+    Route::post('/menus', [OwnerMenuController2::class, 'store']);
+    Route::put('/menus/{menu}', [OwnerMenuController2::class, 'update']);
+    Route::delete('/menus/{menu}', [OwnerMenuController2::class, 'destroy']);
+    Route::get('/menus/{menu}/ingredients', [OwnerMenuController2::class, 'ingredients']);
 
-    Route::get('/orders',                [OrderController::class, 'ownerOrders']);
-    Route::put('/orders/{id}/approve',   [OrderController::class, 'approve']);
-    Route::put('/orders/{id}/reject',    [OrderController::class, 'reject']);
-    Route::put('/orders/{id}/process',   [OrderController::class, 'process']);
-    Route::put('/orders/{id}/dispatch',  [OrderController::class, 'dispatch']);
+    // ── Orders (FIX: parameter {order} harus sama dengan nama variabel
+    // di method controller agar route model binding bekerja otomatis) ──
+    Route::get('/orders',                  [OwnerOrderController::class, 'ownerOrders']);
+    Route::put('/orders/{order}/approve',  [OwnerOrderController::class, 'approve']);
+    Route::put('/orders/{order}/reject',   [OwnerOrderController::class, 'reject']);
+    Route::put('/orders/{order}/process',  [OwnerOrderController::class, 'process']);
+    Route::put('/orders/{order}/dispatch', [OwnerOrderController::class, 'dispatch']);
 
     Route::get('/payment-accounts', [OwnerPaymentAccountController::class, 'index']);
     Route::post('/payment-accounts', [OwnerPaymentAccountController::class, 'store']);
@@ -419,17 +440,17 @@ Route::get('/menus/{menu}/ingredients', [OwnerMenuController2::class, 'ingredien
     Route::delete('/payment-accounts/{id}', [OwnerPaymentAccountController::class, 'destroy']);
 
     Route::get('/invoices', [OwnerInvoiceController::class, 'index']);
-Route::get('/invoices/{id}', [OwnerInvoiceController::class, 'show']);
+    Route::get('/invoices/{id}', [OwnerInvoiceController::class, 'show']);
 
-Route::get('/invoice-payments', [OwnerInvoiceController::class, 'pending']);
+    Route::get('/invoice-payments', [OwnerInvoiceController::class, 'pending']);
 
-Route::put('/invoice-payments/{paymentId}/confirm',
-    [OwnerInvoiceController::class, 'confirm']);
+    Route::put('/invoice-payments/{paymentId}/confirm',
+        [OwnerInvoiceController::class, 'confirm']);
 
-Route::put('/invoice-payments/{paymentId}/reject',
-    [OwnerInvoiceController::class, 'reject']);
+    Route::put('/invoice-payments/{paymentId}/reject',
+        [OwnerInvoiceController::class, 'reject']);
 
-}); 
+});
 
 Route::get(
     '/distribusi',

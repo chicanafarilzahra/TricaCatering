@@ -18,19 +18,18 @@ class Distribusi extends Model
         'status'
     ];
 
+    public function sppg()
+    {
+        return $this->belongsTo(User::class, 'sppg_id');
+    }
+
     public function sekolah()
     {
-        return $this->belongsTo(
-            Sekolah::class,
-            'sekolah_id'
-        );
+        return $this->belongsTo(Sekolah::class, 'sekolah_id');
     }
 
     public function menu()
-{
-    return $this->belongsTo(
-        SppgMenu::class,  // ganti dari MenuHarian
-        'menu_id'
-    );
-}
+    {
+        return $this->belongsTo(SppgMenu::class, 'menu_id');
+    }
 }

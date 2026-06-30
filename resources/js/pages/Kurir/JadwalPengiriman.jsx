@@ -25,16 +25,25 @@ const T = {
     font:     "'Inter', system-ui, -apple-system, sans-serif",
 };
 
+/* ── Biaya pengiriman: kolom asli di tabel `orders` adalah
+   `courier_fee` (lihat App\Models\Order::$fillable). ── */
+function getBiaya(o) {
+    return o.courier_fee || 0;
+}
+
 function statusMeta(status) {
     switch (status) {
         case "delivered":
-            return { label: "Selesai",   bg: "rgba(34,197,94,0.12)",  border: "rgba(34,197,94,0.25)",  color: "#4ADE80" };
+            return { label: "Selesai",       bg: "rgba(34,197,94,0.12)",  border: "rgba(34,197,94,0.25)",  color: "#4ADE80" };
         case "on_delivery":
-            return { label: "Dikirim",   bg: "rgba(59,130,246,0.12)", border: "rgba(59,130,246,0.28)", color: "#60A5FA" };
+            return { label: "Dikirim",       bg: "rgba(59,130,246,0.12)", border: "rgba(59,130,246,0.28)", color: "#60A5FA" };
         case "dispatched":
-            return { label: "Disiapkan", bg: "rgba(168,85,247,0.12)", border: "rgba(168,85,247,0.28)", color: "#C084FC" };
+            // FIX: "dispatched" artinya order sudah ditugaskan & siap diantar,
+            // bukan "sedang disiapkan di dapur" (itu status "preparing").
+            // Label lama ("Disiapkan") membingungkan — diganti jadi lebih akurat.
+            return { label: "Siap Diantar",  bg: "rgba(168,85,247,0.12)", border: "rgba(168,85,247,0.28)", color: "#C084FC" };
         default:
-            return { label: "Menunggu",  bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.25)", color: "#FCD34D" };
+            return { label: "Menunggu",      bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.25)", color: "#FCD34D" };
     }
 }
 
@@ -84,22 +93,57 @@ function StatCard({ title, value, icon, accentColor, bar }) {
 
 /* ── Main ─────────────────────────────────────────────────── */
 export default function JadwalPengiriman({ onLogout }) {
-    const [orders, setOrders] = useState([]);
-    const [user,   setUser]   = useState(null);
+    const [orders, setOrders]     = useState([]);
+    const [user,   setUser]       = useState(null);
+    const [updatingId, setUpdatingId] = useState(null); // id order yang sedang diupdate (loading state tombol)
+
+    const fetchOrders = () => {
+        axios.get("/kurir/orders")
+            .then((res) => setOrders(Array.isArray(res.data?.data) ? res.data.data : []))
+            .catch((err) => {
+                console.error(err);
+                setOrders([]);
+            });
+    };
 
     useEffect(() => {
         const stored = localStorage.getItem("user");
         if (stored) setUser(JSON.parse(stored));
-        axios.get("/kurir/orders")
-            .then((res) => setOrders(res.data))
-            .catch((err) => console.error(err));
+
+        // Backend mengembalikan { data: [...] } (lihat KurirController::index()),
+        // jadi ambil res.data.data — bukan res.data langsung.
+        // Fallback ke [] kalau bentuk response berubah, supaya .filter()/.map()
+        // di bawah tidak crash.
+        fetchOrders();
     }, []);
+
+    // FIX: transisi status manual dari tabel ini.
+    // dispatched -> on_delivery ("Mulai Antar")
+    // on_delivery -> delivered  ("Selesai Antar")
+    // Catatan: untuk tracking GPS realtime selama perjalanan, gunakan
+    // halaman "Rute Hari Ini" — tombol di sini hanya update status saja.
+    const handleUpdateStatus = async (order, nextStatus) => {
+        if (nextStatus === "delivered" && !window.confirm("Konfirmasi: pesanan sudah diterima klien?")) {
+            return;
+        }
+        setUpdatingId(order.id);
+        try {
+            await axios.put(`/kurir/orders/${order.id}/update-status`, { status: nextStatus });
+            setOrders((prev) =>
+                prev.map((o) => (o.id === order.id ? { ...o, status: nextStatus } : o))
+            );
+        } catch (err) {
+            alert(err.response?.data?.message ?? "Gagal memperbarui status.");
+        } finally {
+            setUpdatingId(null);
+        }
+    };
 
     const totalPengiriman = orders.length;
     const selesai         = orders.filter((o) => o.status === "delivered").length;
     const dikirim         = orders.filter((o) => o.status === "on_delivery").length;
     const menunggu        = orders.filter((o) => o.status === "pending").length;
-    const totalBiaya      = orders.reduce((sum, o) => sum + (o.delivery_fee || 0), 0);
+    const totalBiaya      = orders.reduce((sum, o) => sum + getBiaya(o), 0);
 
     return (
         <div style={{
@@ -314,6 +358,7 @@ export default function JadwalPengiriman({ onLogout }) {
                                         orders.map((o, idx) => {
                                             const sm = statusMeta(o.status);
                                             const isActive = o.status === "on_delivery" || o.status === "dispatched";
+                                            const isUpdating = updatingId === o.id;
                                             return (
                                                 <tr
                                                     key={o.id}
@@ -350,10 +395,12 @@ export default function JadwalPengiriman({ onLogout }) {
                                                         </div>
                                                     </td>
                                                     <td style={{ padding: "14px 20px", fontSize: "13px", fontWeight: 700, color: "#34D399", whiteSpace: "nowrap" }}>
-                                                        Rp {(o.delivery_fee || 0).toLocaleString("id-ID")}
+                                                        Rp {getBiaya(o).toLocaleString("id-ID")}
                                                     </td>
+                                                    {/* FIX: kolom waktu sebelumnya baca o.delivery_time (field yang
+                                                        tidak pernah diisi backend). Backend mengisi field "jam". */}
                                                     <td style={{ padding: "14px 20px", fontSize: "13px", color: T.sub, whiteSpace: "nowrap" }}>
-                                                        {o.delivery_time || "—"}
+                                                        {o.jam ? String(o.jam).substring(0, 5) : "—"}
                                                     </td>
                                                     <td style={{ padding: "14px 20px" }}>
                                                         <span style={{
@@ -368,23 +415,48 @@ export default function JadwalPengiriman({ onLogout }) {
                                                             {sm.label}
                                                         </span>
                                                     </td>
+                                                    {/* FIX: tombol aksi sebelumnya hanya muncul untuk status "pending"
+                                                        (yang tidak relevan di alur kurir). Sekarang menangani transisi
+                                                        nyata: dispatched -> on_delivery -> delivered. */}
                                                     <td style={{ padding: "14px 20px", whiteSpace: "nowrap" }}>
-                                                        {o.status === "pending" && (
-                                                            <button style={{
-                                                                border: "0.5px solid rgba(59,130,246,0.35)",
-                                                                padding: "7px 14px",
-                                                                borderRadius: "8px",
-                                                                background: T.blueGlow,
-                                                                color: "#60A5FA",
-                                                                fontSize: "12px",
-                                                                fontWeight: 700,
-                                                                cursor: "pointer",
-                                                                transition: "background 0.15s",
-                                                            }}
-                                                            onMouseEnter={(e) => e.currentTarget.style.background = "rgba(59,130,246,0.28)"}
-                                                            onMouseLeave={(e) => e.currentTarget.style.background = T.blueGlow}
+                                                        {o.status === "dispatched" && (
+                                                            <button
+                                                                disabled={isUpdating}
+                                                                onClick={() => handleUpdateStatus(o, "on_delivery")}
+                                                                style={{
+                                                                    border: "0.5px solid rgba(59,130,246,0.35)",
+                                                                    padding: "7px 14px",
+                                                                    borderRadius: "8px",
+                                                                    background: T.blueGlow,
+                                                                    color: "#60A5FA",
+                                                                    fontSize: "12px",
+                                                                    fontWeight: 700,
+                                                                    cursor: isUpdating ? "not-allowed" : "pointer",
+                                                                    opacity: isUpdating ? 0.6 : 1,
+                                                                    transition: "background 0.15s",
+                                                                }}
                                                             >
-                                                                Konfirmasi
+                                                                {isUpdating ? "Memproses…" : "Mulai Antar"}
+                                                            </button>
+                                                        )}
+                                                        {o.status === "on_delivery" && (
+                                                            <button
+                                                                disabled={isUpdating}
+                                                                onClick={() => handleUpdateStatus(o, "delivered")}
+                                                                style={{
+                                                                    border: "0.5px solid rgba(34,197,94,0.35)",
+                                                                    padding: "7px 14px",
+                                                                    borderRadius: "8px",
+                                                                    background: "rgba(34,197,94,0.12)",
+                                                                    color: "#4ADE80",
+                                                                    fontSize: "12px",
+                                                                    fontWeight: 700,
+                                                                    cursor: isUpdating ? "not-allowed" : "pointer",
+                                                                    opacity: isUpdating ? 0.6 : 1,
+                                                                    transition: "background 0.15s",
+                                                                }}
+                                                            >
+                                                                {isUpdating ? "Memproses…" : "Selesai Antar"}
                                                             </button>
                                                         )}
                                                     </td>

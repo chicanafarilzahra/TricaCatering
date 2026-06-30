@@ -62,52 +62,53 @@ export default function SPPG() {
     }, [search, sppgData, showFilter, statusFilter]);
 
     const stats = [
-        {
-            title: "Schools",
-            value: totalSchools,
-            icon: <School size={22} />,
-            color: "#3b82f6",
-            gradient: "linear-gradient(135deg,#1d4ed8,#3b82f6)",
-            border: "#3b82f6",
-            bg: "rgba(59,130,246,0.15)",
-        },
-        {
-            title: "Packages",
-            value: totalPackages,
-            icon: <Package size={22} />,
-            color: "#8b5cf6",
-            gradient: "linear-gradient(135deg,#5b21b6,#8b5cf6)",
-            border: "#8b5cf6",
-            bg: "rgba(139,92,246,0.15)",
-        },
-        {
-            title: "Deliveries",
-            value: sppgData.filter((item) => item.status === "on_delivery").length,
-            icon: <Truck size={22} />,
-            color: "#10b981",
-            gradient: "linear-gradient(135deg,#065f46,#10b981)",
-            border: "#10b981",
-            bg: "rgba(16,185,129,0.15)",
-        },
-        {
-            title: "Completed",
-            value: sppgData.filter((item) => item.status === "delivered").length,
-            icon: <CheckCircle2 size={22} />,
-            color: "#f59e0b",
-            gradient: "linear-gradient(135deg,#b45309,#f59e0b)",
-            border: "#f59e0b",
-            bg: "rgba(245,158,11,0.15)",
-        },
-    ];
+    {
+        title: "Schools",
+        value: totalSchools,
+        icon: <School size={22} />,
+        color: "#3b82f6",
+        gradient: "linear-gradient(135deg,#1d4ed8,#3b82f6)",
+        border: "#3b82f6",
+        bg: "rgba(59,130,246,0.15)",
+    },
+    {
+        title: "Packages",
+        value: totalPackages,
+        icon: <Package size={22} />,
+        color: "#8b5cf6",
+        gradient: "linear-gradient(135deg,#5b21b6,#8b5cf6)",
+        border: "#8b5cf6",
+        bg: "rgba(139,92,246,0.15)",
+    },
+    {
+        title: "Dikirim",  // ← ganti dari "Deliveries"
+        value: sppgData.filter((item) => item.status === "Dikirim").length,  // ← ganti dari "on_delivery"
+        icon: <Truck size={22} />,
+        color: "#10b981",
+        gradient: "linear-gradient(135deg,#065f46,#10b981)",
+        border: "#10b981",
+        bg: "rgba(16,185,129,0.15)",
+    },
+    {
+        title: "Selesai",  // ← ganti dari "Completed"
+        value: sppgData.filter((item) => item.status === "Selesai").length,  // ← ganti dari "delivered"
+        icon: <CheckCircle2 size={22} />,
+        color: "#f59e0b",
+        gradient: "linear-gradient(135deg,#b45309,#f59e0b)",
+        border: "#f59e0b",
+        bg: "rgba(245,158,11,0.15)",
+    },
+];
 
     const getStatusStyle = (status) => {
-        switch (status) {
-            case "delivered":    return { background: "rgba(16,185,129,0.14)", color: "#34d399" };
-            case "on_delivery":  return { background: "rgba(59,130,246,0.14)", color: "#60a5fa" };
-            case "pending":      return { background: "rgba(245,158,11,0.14)", color: "#fbbf24" };
-            default:             return { background: "rgba(148,163,184,0.14)", color: "#cbd5e1" };
-        }
-    };
+    switch (status) {
+        case "Diproses":  return { background: "rgba(148,163,184,0.15)", color: "#94a3b8" };
+        case "Disiapkan": return { background: "rgba(59,130,246,0.15)",  color: "#60a5fa" };
+        case "Dikirim":   return { background: "rgba(245,158,11,0.15)",  color: "#fbbf24" };
+        case "Selesai":   return { background: "rgba(16,185,129,0.15)",  color: "#34d399" };
+        default:          return { background: "rgba(148,163,184,0.15)", color: "#cbd5e1" };
+    }
+};
 
     return (
         <AdminLayout>
@@ -323,10 +324,11 @@ export default function SPPG() {
                                         outline: "none", minWidth: "150px",
                                     }}
                                 >
-                                    <option value="All" style={{ color: "black" }}>All Status</option>
-                                    <option value="delivered" style={{ color: "black" }}>Delivered</option>
-                                    <option value="on_delivery" style={{ color: "black" }}>On Delivery</option>
-                                    <option value="pending" style={{ color: "black" }}>Pending</option>
+                                    <option value="All"       style={{ color: "black" }}>All Status</option>
+                                    <option value="Diproses"  style={{ color: "black" }}>Diproses</option>
+                                    <option value="Disiapkan" style={{ color: "black" }}>Disiapkan</option>
+                                    <option value="Dikirim"   style={{ color: "black" }}>Dikirim</option>
+                                    <option value="Selesai"   style={{ color: "black" }}>Selesai</option>   
                                 </select>
                             )}
                         </div>

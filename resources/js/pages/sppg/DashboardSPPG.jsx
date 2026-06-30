@@ -52,12 +52,10 @@ function KpiCard({ label, value, icon: Icon, accent = T.accent, delta }) {
             overflow: "hidden",
             fontFamily: T.font,
         }}>
-            {/* subtle top glow */}
             <div style={{
                 position: "absolute", top: 0, left: "20%", right: "20%", height: "1px",
                 background: `linear-gradient(90deg, transparent, ${accent}60, transparent)`,
             }} />
-
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                 <span style={{ fontSize: "11px", fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: "1px" }}>
                     {label}
@@ -72,11 +70,9 @@ function KpiCard({ label, value, icon: Icon, accent = T.accent, delta }) {
                     <Icon size={16} strokeWidth={1.8} />
                 </div>
             </div>
-
             <div style={{ marginTop: "16px", fontSize: "32px", fontWeight: 800, color: T.text, letterSpacing: "-1px", lineHeight: 1 }}>
                 {num(value)}
             </div>
-
             {delta !== undefined && (
                 <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "4px", fontSize: "12px", color: T.green }}>
                     <TrendingUp size={12} strokeWidth={2} />
@@ -166,7 +162,6 @@ function SchoolRow({ item, index }) {
                     {num(item.jumlah_porsi)} porsi
                 </span>
             </div>
-            {/* progress bar */}
             <div style={{ marginTop: "12px", height: "3px", borderRadius: "99px", background: T.border, overflow: "hidden" }}>
                 <div style={{ height: "100%", width: `${pct}%`, background: `linear-gradient(90deg, ${T.accent}, ${T.teal})`, borderRadius: "99px" }} />
             </div>
@@ -313,7 +308,6 @@ export default function DashboardSPPG() {
                             overflow: "hidden",
                             position: "relative",
                         }}>
-                            {/* glow orb */}
                             <div style={{
                                 position: "absolute", right: "-80px", top: "-80px",
                                 width: "280px", height: "280px", borderRadius: "50%",
@@ -346,10 +340,10 @@ export default function DashboardSPPG() {
 
                         {/* ── KPI Grid ── */}
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "14px", marginBottom: "24px" }}>
-                            <KpiCard label="Sekolah"    value={summary?.total_sekolah}         icon={School}          accent={T.accent} />
-                            <KpiCard label="Total Siswa" value={summary?.total_siswa}           icon={Users}           accent={T.teal}   />
-                            <KpiCard label="Menu Aktif"  value={summary?.menu_hari_ini}         icon={UtensilsCrossed} accent={T.green}  />
-                            <KpiCard label="Distribusi"  value={summary?.distribusi_hari_ini}   icon={Truck}           accent={T.amber}  />
+                            <KpiCard label="Sekolah"      value={summary?.total_sekolah}       icon={School}          accent={T.accent} />
+                            <KpiCard label="Total Siswa"  value={summary?.total_siswa}         icon={Users}           accent={T.teal}   />
+                            <KpiCard label="Menu Aktif"   value={summary?.menu_hari_ini}       icon={UtensilsCrossed} accent={T.green}  />
+                            <KpiCard label="Distribusi"   value={summary?.distribusi_hari_ini} icon={Truck}           accent={T.amber}  />
                         </div>
 
                         {/* ── Quick Actions + Activity ── */}
@@ -362,12 +356,42 @@ export default function DashboardSPPG() {
                             }}>
                                 <SectionHeader label="Aksi Cepat" />
                                 <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: "10px" }}>
-                                    <QuickBtn icon={School}          label="Kelola Sekolah"   onClick={() => navigate("/sppg/sekolah")} accent={T.accent} />
-                                    <QuickBtn icon={UtensilsCrossed} label="Kelola Menu"      accent={T.green}  />
-                                    <QuickBtn icon={Truck}           label="Distribusi"       accent={T.amber}  />
-                                    <QuickBtn icon={Users}           label="Data Siswa"       accent={T.teal}   />
-                                    <QuickBtn icon={FileBarChart2}   label="Laporan"          accent="#A78BFA"  />
-                                    <QuickBtn icon={CalendarDays}    label="Jadwal"           accent="#F472B6"  />
+                                    <QuickBtn
+                                        icon={School}
+                                        label="Kelola Sekolah"
+                                        onClick={() => navigate("/sppg/sekolah")}
+                                        accent={T.accent}
+                                    />
+                                    <QuickBtn
+                                        icon={UtensilsCrossed}
+                                        label="Kelola Menu"
+                                        onClick={() => navigate("/sppg/menu-harian")}
+                                        accent={T.green}
+                                    />
+                                    <QuickBtn
+                                        icon={Truck}
+                                        label="Distribusi"
+                                        onClick={() => navigate("/sppg/distribusi")}
+                                        accent={T.amber}
+                                    />
+                                    <QuickBtn
+                                        icon={Package}
+                                        label="Stok Bahan"
+                                        onClick={() => navigate("/sppg/stok")}
+                                        accent={T.teal}
+                                    />
+                                    <QuickBtn
+                                        icon={FileBarChart2}
+                                        label="Laporan"
+                                        onClick={() => navigate("/sppg/laporan")}
+                                        accent="#A78BFA"
+                                    />
+                                    <QuickBtn
+                                        icon={Activity}
+                                        label="Riwayat"
+                                        onClick={() => navigate("/sppg/riwayat")}
+                                        accent="#F472B6"
+                                    />
                                 </div>
                             </div>
 
@@ -377,10 +401,9 @@ export default function DashboardSPPG() {
                                 borderRadius: "18px", padding: "22px",
                             }}>
                                 <SectionHeader label="Aktivitas Terbaru" action="Lihat semua" />
-
                                 {activities.length > 0
                                     ? activities.map((a, i) => (
-                                        <ActivityRow key={i} title={a.title} time={a.time} />
+                                        <ActivityRow key={i} title={a.title} time={a.time} desc={a.desc} />
                                     ))
                                     : (
                                         <>
@@ -402,7 +425,6 @@ export default function DashboardSPPG() {
                                 borderRadius: "18px", padding: "22px",
                             }}>
                                 <SectionHeader label="Sekolah Penerima MBG" action="Kelola sekolah" onAction={() => navigate("/sppg/sekolah")} />
-
                                 {summary?.jadwal?.length > 0 ? (
                                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                                         {summary.jadwal.map((item, i) => (
@@ -430,10 +452,10 @@ export default function DashboardSPPG() {
                                     borderRadius: "18px", padding: "22px", flex: 1,
                                 }}>
                                     <SectionHeader label="Ringkasan Hari Ini" />
-                                    <MetricRow label="Sekolah terdaftar" value={summary?.total_sekolah}       accent={T.accent} />
-                                    <MetricRow label="Total penerima"    value={summary?.total_siswa}         accent={T.teal}   />
-                                    <MetricRow label="Menu aktif"        value={summary?.menu_hari_ini}       accent={T.green}  />
-                                    <MetricRow label="Distribusi hari ini" value={summary?.distribusi_hari_ini} accent={T.amber} />
+                                    <MetricRow label="Sekolah terdaftar"   value={summary?.total_sekolah}       accent={T.accent} />
+                                    <MetricRow label="Total penerima"      value={summary?.total_siswa}         accent={T.teal}   />
+                                    <MetricRow label="Menu aktif"          value={summary?.menu_hari_ini}       accent={T.green}  />
+                                    <MetricRow label="Distribusi hari ini" value={summary?.distribusi_hari_ini} accent={T.amber}  />
                                 </div>
 
                                 {/* Status Card */}

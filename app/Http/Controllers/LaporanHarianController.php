@@ -7,10 +7,16 @@ use App\Models\LaporanHarian;
 
 class LaporanHarianController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // ambil semua laporan harian
-        return response()->json(LaporanHarian::latest()->get());
+        // FIX: sebelumnya mengembalikan SEMUA laporan dari semua kurir
+        // (LaporanHarian::latest()->get() tanpa filter). Sekarang hanya
+        // laporan milik kurir yang sedang login, berdasarkan user_id.
+        $laporan = LaporanHarian::where('user_id', $request->user()->id)
+            ->latest()
+            ->get();
+
+        return response()->json($laporan);
     }
 
     public function store(Request $request)
@@ -31,6 +37,9 @@ class LaporanHarianController extends Controller
         }
 
         $laporan = LaporanHarian::create([
+            // FIX: simpan user_id supaya laporan ini terikat ke kurir
+            // yang membuatnya — sebelumnya tidak diisi sama sekali.
+            'user_id' => $request->user()->id,
             'customer' => $request->customer,
             'pesanan' => $request->pesanan,
             'quantity' => $request->quantity,

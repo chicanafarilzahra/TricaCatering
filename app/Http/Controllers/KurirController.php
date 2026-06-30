@@ -22,7 +22,9 @@ class KurirController extends Controller
             return response()->json(['message' => 'Akses ditolak'], 403);
         }
 
-        $orders = Order::with(['client:id,name', 'courier:id,name'])
+        // FIX: tambahkan relasi 'menu' — tanpa ini, frontend (o.menu?.name)
+        // selalu null sehingga kolom "Pesanan" tampil "—" di panel kurir.
+        $orders = Order::with(['client:id,name', 'courier:id,name', 'menu:id,name'])
             ->where('kurir_id', $kurir->id)
             ->orderBy('tanggal', 'asc')
             ->orderBy('jam', 'asc')
@@ -38,7 +40,8 @@ class KurirController extends Controller
     {
         $kurir = $request->user();
 
-        $order = Order::with(['client:id,name', 'courier:id,name'])
+        // FIX: sama seperti index(), tambahkan relasi 'menu'.
+        $order = Order::with(['client:id,name', 'courier:id,name', 'menu:id,name'])
             ->where('id', $id)
             ->where('kurir_id', $kurir->id)
             ->firstOrFail();

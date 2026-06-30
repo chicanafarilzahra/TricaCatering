@@ -21,7 +21,7 @@ return new class extends Migration
                 ->cascadeOnDelete();
 
             // kebutuhan per 1 porsi
-            $table->decimal('qty',10,2);
+            $table->decimal('qty_per_portion', 10, 2); 
 
             $table->timestamps();
         });

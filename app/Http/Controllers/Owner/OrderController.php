@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\Stock;
 use App\Models\MenuIngredient;
 use App\Models\DeliverySchedule;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -15,9 +16,15 @@ use Carbon\Carbon;
 class OrderController extends Controller
 {
     /* GET /owner/orders */
-    public function index(): JsonResponse
+    public function ownerOrders(): JsonResponse
     {
-        $orders = Order::with(['menu', 'kurir'])->latest()->get();
+        $ownerId = auth()->id();
+
+        $orders = Order::with(['menu', 'courier'])
+            ->where('owner_id', $ownerId)
+            ->latest()
+            ->get();
+
         return response()->json(['data' => $orders]);
     }
 
@@ -109,7 +116,7 @@ class OrderController extends Controller
             DB::commit();
             return response()->json([
                 'message' => 'Pesanan disetujui, stok dikurangi, dan jadwal kirim dibuat.',
-                'order'   => $order->fresh(['menu', 'kurir', 'deliverySchedules']),
+                'order'   => $order->fresh(['menu', 'courier', 'deliverySchedules']),
             ]);
 
         } catch (\Throwable $e) {
@@ -129,29 +136,55 @@ class OrderController extends Controller
         return response()->json(['message' => 'Pesanan ditolak.']);
     }
 
-    /* PUT /owner/orders/{id}/process */
+    /* PUT /owner/orders/{id}/process
+     * confirmed → preparing (langsung, tanpa pilih kurir manual)
+     */
     public function process(Request $request, Order $order): JsonResponse
-    {
-        $request->validate(['kurir_id' => 'required|exists:kurirs,id']);
-
-        $order->update([
-            'status'   => 'preparing',
-            'kurir_id' => $request->kurir_id,
-        ]);
-
-        return response()->json(['message' => 'Pesanan sedang diproses.', 'order' => $order->fresh(['menu', 'kurir'])]);
+{
+    if ($order->status !== 'confirmed') {
+        return response()->json(['message' => 'Pesanan tidak dalam status confirmed.'], 422);
     }
 
-    /* PUT /owner/orders/{id}/send */
-    public function send(Request $request, Order $order): JsonResponse
+    $order->update(['status' => 'preparing']);
+
+    return response()->json([
+        'message' => 'Pesanan sedang diproses.',
+        'order'   => $order->fresh(['menu', 'courier']),
+    ]);
+}
+
+    /* PUT /owner/orders/{id}/dispatch
+     * preparing → dispatched, kurir di-assign otomatis (round-robin)
+     */
+    public function dispatch(Request $request, Order $order): JsonResponse
     {
+        if ($order->status !== 'preparing') {
+            return response()->json(['message' => 'Pesanan tidak dalam status preparing.'], 422);
+        }
+
+        // Cari kurir milik owner ini yang sedang tersedia
+        $kurir = User::where('role', 'kurir')
+            ->where('owner_id', $order->owner_id)
+            ->where('status', 'approved')
+            ->where('is_available', true)
+            ->inRandomOrder()
+            ->first();
+
         $estimasi = $request->input('estimasi', 20);
 
         $order->update([
             'status'         => 'dispatched',
+            'kurir_id'       => $kurir->id ?? $order->kurir_id,
             'estimasi_menit' => $estimasi,
+            'dispatched_at'  => now(),
         ]);
 
-        return response()->json(['message' => 'Pesanan dikirim.', 'order' => $order->fresh(['menu', 'kurir'])]);
+        return response()->json([
+            'message' => 'Pesanan dikirim.',
+            'data'    => [
+                'kurir' => $kurir->name ?? null,
+            ],
+            'order' => $order->fresh(['menu', 'courier']),
+        ]);
     }
 }

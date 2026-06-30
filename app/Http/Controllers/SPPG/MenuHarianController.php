@@ -63,13 +63,30 @@ class MenuHarianController extends Controller
                 ],
             ] : null,
 
-            "menu_mingguan" => $menus->take(5)->values()->map(function ($menu, $i) {
-                $hari = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"];
-                return [
-                    "id"   => $menu->id,
-                    "hari" => $hari[$i] ?? "-",
-                    "menu" => $menu->nama_menu,
-                ];
+           "menu_mingguan" => $menus->take(5)->values()->map(function ($menu) {
+    $hariMap = [
+        0 => 'Minggu', 1 => 'Senin', 2 => 'Selasa',
+        3 => 'Rabu', 4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu',
+    ];
+    $tanggal = $menu->tanggal ?? $menu->created_at?->toDateString();
+    $dayOfWeek = $tanggal
+        ? \Carbon\Carbon::createFromFormat('Y-m-d', $tanggal)->dayOfWeek
+        : null;
+    return [
+        "id"          => $menu->id,
+        "hari"        => $dayOfWeek !== null ? ($hariMap[$dayOfWeek] ?? "-") : "-",
+        "menu"        => $menu->nama_menu,
+        "gambar_menu" => $menu->gambar
+            ? asset('storage/' . ltrim(str_replace('storage/app/public/', '', $menu->gambar), '/'))
+            : null,
+        "kalori"      => $menu->kalori,
+        "protein"     => $menu->protein,
+        "lemak"       => $menu->lemak,
+        "karbohidrat" => $menu->karbohidrat,
+        "serat"       => $menu->serat,
+        "deskripsi"   => $menu->deskripsi,
+        "kategori"    => $menu->kategori,
+    ];
             }),
         ]);
     }

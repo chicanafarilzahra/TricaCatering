@@ -11,7 +11,12 @@ class LaporanHarian extends Model
 
     protected $table = 'laporan_harian';
 
-        protected $fillable = [
+    protected $fillable = [
+        // FIX: user_id belum ada di fillable sebelumnya, jadi
+        // LaporanHarianController::store() yang mengisi 'user_id'
+        // selalu dibuang diam-diam oleh mass assignment protection.
+        // Akibatnya index() (yang filter by user_id) selalu kosong.
+        'user_id',
         'customer',
         'pesanan',
         'quantity',
