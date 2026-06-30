@@ -1,7 +1,6 @@
 // resources/js/pages/Klien/InvoiceKlien.jsx
-// ✅ UPDATED: Inline payment form untuk DP & Pelunasan langsung di halaman detail invoice
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import NavbarKlien from "../../components/NavbarKlien";
 import {
@@ -9,7 +8,7 @@ import {
     Wallet, Building2, ChevronRight, History, AlertTriangle, Ban, RefreshCw,
     Loader2, Sparkles, Activity, ClipboardList, Smartphone, CreditCard,
     CalendarClock, ShieldCheck, CircleDollarSign, Upload, X, CheckCheck,
-    Send, Info,
+    Send, Info, CalendarDays, Repeat, Timer, Zap,
 } from "lucide-react";
 
 /* ─────────────────── DESIGN TOKENS ─────────────────── */
@@ -21,10 +20,16 @@ const STATUS_MAP = {
     selesai:   { label: "Lunas",               color: "#34d399", accent: "#10b981", bg: "rgba(16,185,129,0.1)",   border: "rgba(16,185,129,0.2)",   icon: CheckCircle2 },
     cancelled: { label: "Dibatalkan",          color: "#f87171", accent: "#ef4444", bg: "rgba(239,68,68,0.1)",    border: "rgba(239,68,68,0.2)",    icon: Ban },
     dp_paid:   { label: "DP Terbayar",         color: "#38bdf8", accent: "#0ea5e9", bg: "rgba(14,165,233,0.1)",   border: "rgba(14,165,233,0.2)",   icon: CheckCircle2 },
+    failed:    { label: "Pembayaran Gagal",    color: "#f87171", accent: "#ef4444", bg: "rgba(239,68,68,0.1)",    border: "rgba(239,68,68,0.2)",    icon: XCircle },
 };
 
 const statusInfo = (s) =>
     STATUS_MAP[s] || { label: s, color: "#94a3b8", accent: "#64748b", bg: "rgba(148,163,184,0.1)", border: "rgba(148,163,184,0.2)", icon: Clock3 };
+
+// ✅ Status efektif: catering harian selalu dianggap "Lunas" di tampilan,
+// terlepas dari status mentah yang dikirim backend (jaga-jaga kalau
+// backend belum sempat set status invoice harian dengan benar).
+const effectiveStatus = (inv) => (inv?.order?.type === "harian" ? "paid" : inv?.status);
 
 const fmt = (n) => "Rp " + Number(n || 0).toLocaleString("id-ID");
 
@@ -43,11 +48,19 @@ const sisaHari = (dueDate) => {
     return diff;
 };
 
+/* Batas waktu pembayaran pelunasan: 5 menit */
+const PAY_WINDOW_SECONDS = 5 * 60;
+
+const fmtCountdown = (totalSeconds) => {
+    const m = Math.floor(totalSeconds / 60);
+    const s = totalSeconds % 60;
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+};
+
 /* ─────────────────── SHARED ATOMS ─────────────────── */
 
 function Badge({ status, size = "sm" }) {
     const info = statusInfo(status);
-    const Icon = info.icon;
     return (
         <span style={{
             display: "inline-flex", alignItems: "center", gap: "6px",
@@ -59,6 +72,24 @@ function Badge({ status, size = "sm" }) {
         }}>
             <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: info.color, flexShrink: 0 }} />
             {info.label}
+        </span>
+    );
+}
+
+function CateringTypeBadge({ isHarian, size = "sm" }) {
+    const Icon = isHarian ? Repeat : CalendarDays;
+    return (
+        <span style={{
+            display: "inline-flex", alignItems: "center", gap: "6px",
+            padding: size === "lg" ? "7px 14px" : "5px 12px",
+            borderRadius: "8px", fontWeight: "700",
+            fontSize: size === "lg" ? "13px" : "11px",
+            background: isHarian ? "rgba(59,130,246,0.1)" : "rgba(139,92,246,0.1)",
+            color: isHarian ? "#60a5fa" : "#a78bfa",
+            border: `1px solid ${isHarian ? "rgba(59,130,246,0.2)" : "rgba(139,92,246,0.2)"}`,
+        }}>
+            <Icon size={size === "lg" ? 14 : 12} />
+            {isHarian ? "Catering Harian" : "Catering Insidentil"}
         </span>
     );
 }
@@ -164,28 +195,73 @@ function DueDateBanner({ dueDate }) {
     );
 }
 
+/* Tombol pilih metode (Bank / E-Wallet) — gaya PesanMakan */
+function PayMethodBtn({ icon, label, active, onClick }) {
+    return (
+        <button onClick={onClick} type="button" style={{
+            flex: 1, height: "56px",
+            background: active ? "rgba(59,130,246,0.12)" : "rgba(255,255,255,0.02)",
+            border: active ? "1.5px solid #3b82f6" : "1px solid rgba(255,255,255,0.07)",
+            borderRadius: "14px", color: active ? "#60a5fa" : "#64748b",
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+            gap: "4px", cursor: "pointer", fontSize: "11px", fontWeight: "600",
+            fontFamily: "Inter, system-ui, sans-serif", transition: "all .2s",
+        }}>
+            <span style={{ fontSize: "18px", display: "flex" }}>{icon}</span>
+            {label}
+        </button>
+    );
+}
+
+/* Tombol pilih rekening spesifik — gaya PesanMakan */
+function PayOptionBtn({ label, sub, active, onClick }) {
+    return (
+        <button onClick={onClick} type="button" style={{
+            background: active ? "rgba(59,130,246,0.12)" : "rgba(255,255,255,0.02)",
+            border: active ? "1.5px solid #3b82f6" : "1px solid rgba(255,255,255,0.07)",
+            borderRadius: "10px", color: active ? "#60a5fa" : "#64748b",
+            padding: "10px 12px", cursor: "pointer", fontSize: "12px", textAlign: "left",
+            transition: "all .2s", fontFamily: "Inter, system-ui, sans-serif", fontWeight: "600",
+        }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                {active && <CheckCircle2 size={12} />}
+                <span>{label}</span>
+            </div>
+            {sub && (
+                <div style={{ fontSize: "10px", color: active ? "#93c5fd" : "#475569", marginTop: "3px", fontWeight: "500" }}>
+                    {sub}
+                </div>
+            )}
+        </button>
+    );
+}
+
 /* ══════════════════════════════════════════════════════════
-   ✅ INLINE PAYMENT FORM — tampil langsung di detail invoice
+   ✅ FORM BAYAR PELUNASAN DP
 ══════════════════════════════════════════════════════════ */
 
-function InlinePaymentForm({ invoice, onSuccess }) {
-    const [open, setOpen]                     = useState(false);
-    const [metode, setMetode]                 = useState(null);
-    const [bankSelected, setBankSelected]     = useState(null);
-    const [bukti, setBukti]                   = useState(null);
-    const [buktiPreview, setBuktiPreview]     = useState(null);
-    const [catatan, setCatatan]               = useState("");
-    const [loading, setLoading]               = useState(false);
-    const [channels, setChannels]             = useState({ banks: [], ewallets: [] });
+function PelunasanPaymentForm({ invoice, onSuccess }) {
+    const [open, setOpen]                       = useState(false);
+    const [payMethod, setPayMethod]             = useState(null); // 'bank' | 'ewallet'
+    const [channelSelected, setChannelSelected] = useState(null);
+    const [tanggalBayar, setTanggalBayar]       = useState(() => new Date().toISOString().slice(0, 10));
+    const [bukti, setBukti]                     = useState(null);
+    const [buktiPreview, setBuktiPreview]       = useState(null);
+    const [catatan, setCatatan]                 = useState("");
+    const [loading, setLoading]                 = useState(false);
+    const [channels, setChannels]               = useState({ banks: [], ewallets: [] });
     const [loadingChannels, setLoadingChannels] = useState(false);
-    const [submitted, setSubmitted]           = useState(false);
+    const [submitted, setSubmitted]             = useState(false);
+    const [secondsLeft, setSecondsLeft]         = useState(PAY_WINDOW_SECONDS);
+    const [expired, setExpired]                 = useState(false);
+    const timerRef = useRef(null);
 
-    const isPelunasan = invoice.status === "dp_paid";
     const dpAmount    = invoice.dp_amount || 0;
     const totalAmount = invoice.total_amount || 0;
-    const bayarAmount = isPelunasan ? totalAmount - dpAmount : Math.round(totalAmount * 0.5);
+    const bayarAmount = totalAmount - dpAmount; // nominal dikunci
 
-    const displayChannels = metode === "bank" ? (channels.banks || []) : metode === "ewallet" ? (channels.ewallets || []) : [];
+    const deliveryDate = invoice.order?.delivery_date || invoice.order?.order_date;
+    const dueDate       = hitungJatuhTempo(deliveryDate);
 
     const fetchChannels = async () => {
         if (channels.banks.length > 0 || channels.ewallets.length > 0) return;
@@ -197,9 +273,34 @@ function InlinePaymentForm({ invoice, onSuccess }) {
         finally { setLoadingChannels(false); }
     };
 
+    const startTimer = () => {
+        clearInterval(timerRef.current);
+        setSecondsLeft(PAY_WINDOW_SECONDS);
+        setExpired(false);
+        timerRef.current = setInterval(() => {
+            setSecondsLeft(prev => {
+                if (prev <= 1) {
+                    clearInterval(timerRef.current);
+                    setExpired(true);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+    };
+
+    useEffect(() => () => clearInterval(timerRef.current), []);
+
     const handleOpen = () => {
         setOpen(true);
         fetchChannels();
+        startTimer();
+    };
+
+    const handleRestartTimer = () => {
+        setPayMethod(null); setChannelSelected(null); setBukti(null); setBuktiPreview(null); setCatatan("");
+        setTanggalBayar(new Date().toISOString().slice(0, 10));
+        startTimer();
     };
 
     const handleBukti = (e) => {
@@ -208,16 +309,18 @@ function InlinePaymentForm({ invoice, onSuccess }) {
     };
 
     const handleSubmit = async () => {
-        if (!bankSelected || !bukti) return;
+        if (!channelSelected || !bukti || expired) return;
         setLoading(true);
         try {
             const fd = new FormData();
-            fd.append("payment_channel_id", bankSelected.id);
+            fd.append("payment_channel_id", channelSelected.id);
             fd.append("payment_proof", bukti);
             fd.append("note", catatan);
-            fd.append("type", isPelunasan ? "pelunasan" : "dp");
+            fd.append("type", "pelunasan");
             fd.append("amount", bayarAmount);
+            fd.append("payment_date", tanggalBayar);
             await axios.post(`/klien/invoice/${invoice.id}/pay`, fd, { headers: { "Content-Type": "multipart/form-data" } });
+            clearInterval(timerRef.current);
             setSubmitted(true);
             if (onSuccess) onSuccess();
         } catch (err) {
@@ -226,11 +329,11 @@ function InlinePaymentForm({ invoice, onSuccess }) {
     };
 
     const reset = () => {
-        setOpen(false); setMetode(null); setBankSelected(null);
-        setBukti(null); setBuktiPreview(null); setCatatan(""); setSubmitted(false);
+        clearInterval(timerRef.current);
+        setOpen(false); setPayMethod(null); setChannelSelected(null);
+        setBukti(null); setBuktiPreview(null); setCatatan(""); setSubmitted(false); setExpired(false);
     };
 
-    /* ── Jika sudah submitted → tampil sukses ── */
     if (submitted) {
         return (
             <GCard style={{ padding: "32px", textAlign: "center" }}>
@@ -242,49 +345,53 @@ function InlinePaymentForm({ invoice, onSuccess }) {
                     <CheckCheck size={32} color="#34d399" />
                 </div>
                 <h3 style={{ margin: "0 0 8px", fontSize: "20px", fontWeight: "800", letterSpacing: "-0.5px" }}>
-                    {isPelunasan ? "Pelunasan Berhasil Dikirim!" : "DP Berhasil Dikirim!"}
+                    Pelunasan Berhasil Dikirim!
                 </h3>
                 <p style={{ color: "#64748b", margin: "0 0 20px", fontSize: "14px", lineHeight: "1.7" }}>
-                    Bukti transfer Anda telah dikirim. Owner akan memverifikasi dalam 1×24 jam.
-                    {!isPelunasan && " Setelah DP dikonfirmasi, Anda bisa melunasi sisa 50%."}
+                    Bukti transfer pelunasan Anda telah dikirim dan akan tampil di halaman Revenue Owner untuk diverifikasi.
+                    Jika owner mengkonfirmasi, invoice ini otomatis berubah menjadi <strong style={{ color: "#34d399" }}>Lunas</strong>.
+                    Jika ditolak, status pembayaran akan otomatis <strong style={{ color: "#f87171" }}>Gagal</strong>.
                 </p>
                 <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", padding: "16px", marginBottom: "20px", textAlign: "left" }}>
-                    <RowFlex label="Tipe" value={isPelunasan ? "Pelunasan 50%" : "DP 50%"} />
+                    <RowFlex label="Tipe" value="Pelunasan 50%" />
                     <RowFlex label="Jumlah" value={fmt(bayarAmount)} bold color="#34d399" />
-                    <RowFlex label="Via" value={bankSelected?.bank_name || bankSelected?.wallet_name || bankSelected?.provider_name || "—"} />
+                    <RowFlex label="Via" value={channelSelected?.provider_name || "—"} />
                 </div>
-                <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-                    <button onClick={reset} style={{
-                        padding: "10px 20px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.08)",
-                        background: "transparent", color: "#94a3b8", cursor: "pointer",
-                        fontFamily: "Inter, system-ui, sans-serif", fontSize: "13px", fontWeight: "600",
-                    }}>
-                        Tutup
-                    </button>
-                </div>
+                <button onClick={reset} style={{
+                    padding: "10px 20px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.08)",
+                    background: "transparent", color: "#94a3b8", cursor: "pointer",
+                    fontFamily: "Inter, system-ui, sans-serif", fontSize: "13px", fontWeight: "600",
+                }}>
+                    Tutup
+                </button>
             </GCard>
         );
     }
 
-    /* ── Tombol trigger sebelum form dibuka ── */
     if (!open) {
         return (
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                <PrimaryBtn variant={isPelunasan ? "green" : "amber"} onClick={handleOpen} style={{ width: "100%", padding: "14px", fontSize: "15px" }}>
+                <PrimaryBtn variant="green" onClick={handleOpen} style={{ width: "100%", padding: "14px", fontSize: "15px" }}>
                     <Wallet size={16} />
-                    {isPelunasan ? "Lunasi Sekarang (50%)" : "Bayar DP Sekarang (50%)"}
+                    Bayar Pelunasan DP (50%)
                 </PrimaryBtn>
                 <div style={{ textAlign: "center", color: "#475569", fontSize: "12px" }}>
-                    Jumlah yang dibayar: <strong style={{ color: "#fbbf24" }}>{fmt(bayarAmount)}</strong>
+                    Sisa yang harus dilunasi: <strong style={{ color: "#fbbf24" }}>{fmt(bayarAmount)}</strong>
                 </div>
             </div>
         );
     }
 
-    /* ── FORM PEMBAYARAN INLINE ── */
+    const inputStyle = {
+        width: "100%", background: "rgba(255,255,255,0.03)",
+        border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px",
+        padding: "10px 12px", color: "white", fontSize: "13px",
+        boxSizing: "border-box", fontFamily: "Inter, system-ui, sans-serif", outline: "none",
+    };
+    const labelStyle = { fontSize: "11px", fontWeight: "600", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "8px", display: "block" };
+
     return (
         <GCard style={{ overflow: "hidden" }}>
-            {/* Header form */}
             <div style={{
                 padding: "18px 22px", borderBottom: "1px solid rgba(255,255,255,0.06)",
                 display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -293,239 +400,214 @@ function InlinePaymentForm({ invoice, onSuccess }) {
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                     <div style={{
                         width: "36px", height: "36px", borderRadius: "10px",
-                        background: isPelunasan ? "rgba(16,185,129,0.1)" : "rgba(245,158,11,0.1)",
-                        border: `1px solid ${isPelunasan ? "rgba(16,185,129,0.2)" : "rgba(245,158,11,0.2)"}`,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        color: isPelunasan ? "#34d399" : "#fbbf24",
+                        background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)",
+                        display: "flex", alignItems: "center", justifyContent: "center", color: "#34d399",
                     }}>
                         <Send size={16} />
                     </div>
                     <div>
-                        <div style={{ fontWeight: "700", fontSize: "15px" }}>
-                            {isPelunasan ? "Form Pelunasan" : "Form Pembayaran DP"}
-                        </div>
-                        <div style={{ color: "#64748b", fontSize: "12px" }}>
-                            {isPelunasan ? "Pelunasan 50% sisa tagihan" : "Uang Muka 50% dari total"}
-                        </div>
+                        <div style={{ fontWeight: "700", fontSize: "15px" }}>Pembayaran Pelunasan</div>
+                        <div style={{ color: "#64748b", fontSize: "12px" }}>Silakan lakukan pembayaran sisa tagihan dan unggah bukti transfer untuk proses verifikasi</div>
                     </div>
                 </div>
                 <button onClick={reset} style={{
                     width: "30px", height: "30px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.07)",
                     background: "rgba(255,255,255,0.03)", color: "#64748b", cursor: "pointer",
-                    display: "flex", alignItems: "center", justifyContent: "center",
+                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
                 }}>
                     <X size={14} />
                 </button>
             </div>
 
-            <div style={{ padding: "22px" }}>
-                {/* Ringkasan jumlah */}
+            <div style={{
+                padding: "12px 22px",
+                background: expired ? "rgba(239,68,68,0.08)" : secondsLeft <= 60 ? "rgba(245,158,11,0.08)" : "rgba(59,130,246,0.06)",
+                borderBottom: "1px solid rgba(255,255,255,0.05)",
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+            }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", color: expired ? "#f87171" : secondsLeft <= 60 ? "#fbbf24" : "#60a5fa", fontSize: "13px", fontWeight: "700" }}>
+                    <Timer size={15} />
+                    {expired ? "Waktu pembayaran habis" : "Batas waktu pembayaran"}
+                </div>
+                <div style={{ fontFamily: "monospace", fontSize: "18px", fontWeight: "800", color: expired ? "#f87171" : secondsLeft <= 60 ? "#fbbf24" : "#60a5fa", letterSpacing: "1px" }}>
+                    {fmtCountdown(secondsLeft)}
+                </div>
+            </div>
+
+            {expired ? (
+                <div style={{ padding: "32px 22px", textAlign: "center" }}>
+                    <AlertTriangle size={28} color="#f87171" style={{ marginBottom: "12px" }} />
+                    <div style={{ fontWeight: "700", fontSize: "15px", marginBottom: "6px" }}>Waktu pembayaran telah habis</div>
+                    <p style={{ color: "#64748b", fontSize: "13px", lineHeight: "1.7", margin: "0 0 18px" }}>
+                        Silakan ulangi proses pelunasan dari awal.
+                    </p>
+                    <PrimaryBtn variant="amber" onClick={handleRestartTimer}>
+                        <RefreshCw size={14} /> Ulangi Pelunasan
+                    </PrimaryBtn>
+                </div>
+            ) : (
+            <div style={{ padding: "22px", maxHeight: "60vh", overflowY: "auto" }}>
                 <div style={{
                     background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
                     borderRadius: "14px", padding: "16px 18px", marginBottom: "22px",
+                    display: "grid", gridTemplateColumns: "1fr 1fr", rowGap: "12px",
                 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <div>
-                            <div style={{ color: "#64748b", fontSize: "12px", marginBottom: "4px" }}>
-                                {isPelunasan ? "Sisa yang harus dilunasi" : "DP 50% yang dibayar sekarang"}
-                            </div>
-                            <div style={{ fontSize: "28px", fontWeight: "800", color: "#fbbf24", letterSpacing: "-1px" }}>
-                                {fmt(bayarAmount)}
-                            </div>
-                        </div>
-                        <div style={{ textAlign: "right" }}>
-                            <div style={{ color: "#64748b", fontSize: "12px" }}>Total Invoice</div>
-                            <div style={{ fontWeight: "700", color: "white" }}>{fmt(totalAmount)}</div>
-                            {isPelunasan && dpAmount > 0 && (
-                                <div style={{ color: "#34d399", fontSize: "12px", marginTop: "2px" }}>DP terbayar: {fmt(dpAmount)}</div>
-                            )}
-                        </div>
-                    </div>
+                    <RowFlex label="Total Tagihan" value={fmt(totalAmount)} />
+                    <RowFlex label="Uang Muka (DP)" value={fmt(dpAmount)} color="#34d399" />
+                    <RowFlex label="Sisa Pembayaran" value={fmt(bayarAmount)} bold color="#fbbf24" />
+                    <RowFlex label="Batas Pelunasan" value={dueDate ? dueDate.toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" }) : "—"} />
                 </div>
 
-                {/* LANGKAH 1: Pilih Metode */}
-                <div style={{ marginBottom: "20px" }}>
-                    <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
-                        <span style={{ width: "20px", height: "20px", borderRadius: "50%", background: "rgba(59,130,246,0.15)", border: "1px solid rgba(59,130,246,0.3)", color: "#60a5fa", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: "800", flexShrink: 0 }}>1</span>
-                        Pilih Metode Pembayaran
-                    </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                        {[
-                            { key: "bank",    label: "Transfer Bank",  desc: "BCA, BNI, BRI, dll",   Icon: Building2 },
-                            { key: "ewallet", label: "E-Wallet",       desc: "GoPay, OVO, DANA",      Icon: Smartphone },
-                        ].map(m => {
-                            const active = metode === m.key;
-                            return (
-                                <div key={m.key} onClick={() => { setMetode(m.key); setBankSelected(null); }} style={{
-                                    border: `1px solid ${active ? "rgba(59,130,246,0.4)" : "rgba(255,255,255,0.07)"}`,
-                                    borderRadius: "14px", padding: "14px 16px", cursor: "pointer",
-                                    background: active ? "rgba(59,130,246,0.07)" : "rgba(255,255,255,0.02)",
-                                    display: "flex", alignItems: "center", gap: "12px", transition: "all 0.2s",
-                                }}>
-                                    <div style={{
-                                        width: "36px", height: "36px", borderRadius: "10px", flexShrink: 0,
-                                        background: active ? "rgba(59,130,246,0.15)" : "rgba(255,255,255,0.04)",
-                                        border: `1px solid ${active ? "rgba(59,130,246,0.3)" : "rgba(255,255,255,0.07)"}`,
-                                        display: "flex", alignItems: "center", justifyContent: "center",
-                                        color: active ? "#60a5fa" : "#64748b",
-                                    }}>
-                                        <m.Icon size={16} />
-                                    </div>
-                                    <div>
-                                        <div style={{ fontWeight: "700", fontSize: "13px", color: "white" }}>{m.label}</div>
-                                        <div style={{ color: "#64748b", fontSize: "11px", marginTop: "2px" }}>{m.desc}</div>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                {/* LANGKAH 2: Pilih Rekening */}
-                {metode && (
-                    <div style={{ marginBottom: "20px" }}>
-                        <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
-                            <span style={{ width: "20px", height: "20px", borderRadius: "50%", background: "rgba(59,130,246,0.15)", border: "1px solid rgba(59,130,246,0.3)", color: "#60a5fa", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: "800", flexShrink: 0 }}>2</span>
-                            Pilih {metode === "bank" ? "Rekening Bank" : "Akun E-Wallet"} Tujuan
+                <div style={{ marginBottom: "18px" }}>
+                    <label style={labelStyle}>Metode Pembayaran</label>
+                    {loadingChannels ? (
+                        <div style={{ color: "#64748b", fontSize: "13px", display: "flex", alignItems: "center", gap: "8px" }}>
+                            <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> Memuat rekening...
                         </div>
-
-                        {loadingChannels ? (
-                            <div style={{ textAlign: "center", padding: "20px", color: "#64748b", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-                                <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
-                                <span style={{ fontSize: "13px" }}>Memuat rekening...</span>
-                            </div>
-                        ) : displayChannels.length === 0 ? (
-                            <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", padding: "20px", textAlign: "center", color: "#64748b", fontSize: "13px" }}>
-                                Belum ada {metode === "bank" ? "rekening bank" : "akun e-wallet"} tersedia. Hubungi admin.
-                            </div>
-                        ) : (
-                            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                                {displayChannels.map(ch => {
-                                    const active = bankSelected?.id === ch.id;
-                                    return (
-                                        <div key={ch.id} onClick={() => setBankSelected(ch)} style={{
-                                            border: `1px solid ${active ? "rgba(16,185,129,0.4)" : "rgba(255,255,255,0.07)"}`,
-                                            borderRadius: "14px", padding: "14px 16px", cursor: "pointer",
-                                            background: active ? "rgba(16,185,129,0.06)" : "rgba(255,255,255,0.02)",
-                                            display: "flex", alignItems: "center", gap: "12px", transition: "all 0.15s",
-                                        }}>
-                                            <div style={{
-                                                width: "40px", height: "40px", borderRadius: "10px", flexShrink: 0,
-                                                background: metode === "bank" ? "rgba(59,130,246,0.1)" : "rgba(139,92,246,0.1)",
-                                                border: `1px solid ${metode === "bank" ? "rgba(59,130,246,0.2)" : "rgba(139,92,246,0.2)"}`,
-                                                display: "flex", alignItems: "center", justifyContent: "center",
-                                                color: metode === "bank" ? "#60a5fa" : "#a78bfa",
-                                            }}>
-                                                {metode === "bank" ? <CreditCard size={18} /> : <Smartphone size={18} />}
-                                            </div>
-                                            <div style={{ flex: 1 }}>
-                                                <div style={{ fontWeight: "700", color: "white", fontSize: "14px" }}>
-                                                    {ch.bank_name || ch.wallet_name || ch.provider_name}
-                                                </div>
-                                                <div style={{ color: "#60a5fa", fontWeight: "700", fontSize: "16px", marginTop: "2px", letterSpacing: "0.5px" }}>
-                                                    {ch.account_number}
-                                                </div>
-                                                <div style={{ color: "#64748b", fontSize: "12px" }}>a.n. {ch.account_name}</div>
-                                            </div>
-                                            {active && <CheckCircle2 size={20} color="#34d399" style={{ flexShrink: 0 }} />}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* LANGKAH 3: Upload Bukti */}
-                {bankSelected && (
-                    <div style={{ marginBottom: "20px" }}>
-                        <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
-                            <span style={{ width: "20px", height: "20px", borderRadius: "50%", background: "rgba(59,130,246,0.15)", border: "1px solid rgba(59,130,246,0.3)", color: "#60a5fa", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: "800", flexShrink: 0 }}>3</span>
-                            Upload Bukti Transfer
-                        </div>
-
-                        {/* Info transfer */}
-                        <div style={{
-                            background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.18)",
-                            borderRadius: "12px", padding: "14px 16px", marginBottom: "14px",
-                            display: "flex", alignItems: "flex-start", gap: "10px",
-                        }}>
-                            <Info size={14} color="#34d399" style={{ marginTop: "1px", flexShrink: 0 }} />
-                            <div style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.7" }}>
-                                Transfer <strong style={{ color: "#fbbf24", fontSize: "15px" }}>{fmt(bayarAmount)}</strong> ke{" "}
-                                <strong style={{ color: "white" }}>{bankSelected.bank_name || bankSelected.wallet_name || bankSelected.provider_name}</strong>
-                                {" "}<strong style={{ color: "#60a5fa" }}>{bankSelected.account_number}</strong>
-                                {" "}a.n. <strong style={{ color: "white" }}>{bankSelected.account_name}</strong>
-                            </div>
-                        </div>
-
-                        {/* Upload area */}
-                        <label style={{
-                            display: "block",
-                            border: `2px dashed ${buktiPreview ? "rgba(16,185,129,0.4)" : "rgba(255,255,255,0.08)"}`,
-                            borderRadius: "14px", padding: "24px", textAlign: "center",
-                            cursor: "pointer",
-                            background: buktiPreview ? "rgba(16,185,129,0.04)" : "rgba(255,255,255,0.01)",
-                            transition: "all 0.2s",
-                        }}>
-                            <input type="file" accept="image/*,.pdf" onChange={handleBukti} style={{ display: "none" }} />
-                            {buktiPreview ? (
-                                <div>
-                                    <img src={buktiPreview} alt="bukti" style={{ maxHeight: "180px", maxWidth: "100%", borderRadius: "8px", objectFit: "contain" }} />
-                                    <div style={{ marginTop: "10px", color: "#34d399", fontSize: "12px", fontWeight: "600", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
-                                        <CheckCircle2 size={13} /> Bukti terpilih — klik untuk ganti
-                                    </div>
-                                </div>
-                            ) : (
-                                <>
-                                    <div style={{ width: "44px", height: "44px", borderRadius: "12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
-                                        <Upload size={20} color="#475569" />
-                                    </div>
-                                    <div style={{ color: "#94a3b8", fontWeight: "600", fontSize: "14px" }}>Klik untuk upload bukti transfer</div>
-                                    <div style={{ color: "#475569", fontSize: "12px", marginTop: "4px" }}>PNG, JPG, PDF — maks. 5MB</div>
-                                </>
-                            )}
-                        </label>
-
-                        {/* Catatan */}
-                        <div style={{ marginTop: "14px" }}>
-                            <div style={{ fontSize: "11px", fontWeight: "600", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "8px" }}>Catatan (opsional)</div>
-                            <textarea value={catatan} onChange={e => setCatatan(e.target.value)}
-                                placeholder="Contoh: Transfer dari BCA atas nama Budi Santoso..."
-                                rows={2}
-                                style={{
-                                    width: "100%", background: "rgba(255,255,255,0.03)",
-                                    border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px",
-                                    padding: "10px 12px", color: "white", fontSize: "13px",
-                                    resize: "none", boxSizing: "border-box",
-                                    fontFamily: "Inter, system-ui, sans-serif", outline: "none",
-                                }}
+                    ) : (
+                        <div style={{ display: "flex", gap: "10px" }}>
+                            <PayMethodBtn
+                                icon={<Building2 size={18} />}
+                                label="Transfer Bank"
+                                active={payMethod === "bank"}
+                                onClick={() => { setPayMethod("bank"); setChannelSelected(null); }}
+                            />
+                            <PayMethodBtn
+                                icon={<Smartphone size={18} />}
+                                label="E-Wallet"
+                                active={payMethod === "ewallet"}
+                                onClick={() => { setPayMethod("ewallet"); setChannelSelected(null); }}
                             />
                         </div>
+                    )}
+                </div>
+
+                {payMethod === "bank" && (
+                    (channels.banks || []).length === 0 ? (
+                        <div style={{ background: "rgba(255,255,255,0.02)", border: "1px dashed rgba(255,255,255,0.1)", borderRadius: "12px", padding: "14px", color: "#475569", fontSize: "12px", marginBottom: "18px" }}>
+                            Catering ini belum menambahkan rekening bank.
+                        </div>
+                    ) : (
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "8px", marginBottom: "18px" }}>
+                            {channels.banks.map(acc => (
+                                <PayOptionBtn
+                                    key={acc.id}
+                                    label={acc.provider_name}
+                                    sub={`${acc.account_number} • a.n. ${acc.account_name}`}
+                                    active={channelSelected?.id === acc.id}
+                                    onClick={() => setChannelSelected(acc)}
+                                />
+                            ))}
+                        </div>
+                    )
+                )}
+
+                {payMethod === "ewallet" && (
+                    (channels.ewallets || []).length === 0 ? (
+                        <div style={{ background: "rgba(255,255,255,0.02)", border: "1px dashed rgba(255,255,255,0.1)", borderRadius: "12px", padding: "14px", color: "#475569", fontSize: "12px", marginBottom: "18px" }}>
+                            Catering ini belum menambahkan e-wallet.
+                        </div>
+                    ) : (
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "8px", marginBottom: "18px" }}>
+                            {channels.ewallets.map(acc => (
+                                <PayOptionBtn
+                                    key={acc.id}
+                                    label={acc.provider_name}
+                                    sub={`${acc.account_number} • a.n. ${acc.account_name}`}
+                                    active={channelSelected?.id === acc.id}
+                                    onClick={() => setChannelSelected(acc)}
+                                />
+                            ))}
+                        </div>
+                    )
+                )}
+
+                {channelSelected && (
+                    <div style={{
+                        background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.18)",
+                        borderRadius: "12px", padding: "14px 16px", marginBottom: "18px",
+                        display: "flex", alignItems: "flex-start", gap: "10px",
+                    }}>
+                        <Info size={14} color="#34d399" style={{ marginTop: "1px", flexShrink: 0 }} />
+                        <div style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.7" }}>
+                            Transfer ke <strong style={{ color: "white" }}>{channelSelected.provider_name}</strong>{" "}
+                            <strong style={{ color: "#60a5fa" }}>{channelSelected.account_number}</strong>{" "}
+                            a.n. <strong style={{ color: "white" }}>{channelSelected.account_name}</strong>
+                        </div>
                     </div>
                 )}
 
-                {/* TOMBOL SUBMIT */}
-                {bankSelected && (
-                    <div style={{ paddingTop: "16px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-                        <PrimaryBtn
-                            variant={isPelunasan ? "green" : "amber"}
-                            onClick={handleSubmit}
-                            disabled={!bukti}
-                            loading={loading}
-                            style={{ width: "100%", padding: "14px", fontSize: "15px" }}
-                        >
-                            <Send size={16} />
-                            {isPelunasan ? "Kirim Bukti Pelunasan" : "Kirim Bukti Pembayaran DP"}
-                        </PrimaryBtn>
-                        {!bukti && (
-                            <div style={{ textAlign: "center", color: "#475569", fontSize: "12px", marginTop: "8px" }}>
-                                Upload bukti transfer terlebih dahulu
+                <div style={{ marginBottom: "18px" }}>
+                    <label style={labelStyle}>Tanggal Pembayaran</label>
+                    <input type="date" value={tanggalBayar} onChange={e => setTanggalBayar(e.target.value)} style={inputStyle} />
+                </div>
+
+                <div style={{ marginBottom: "18px" }}>
+                    <label style={labelStyle}>Nominal Pelunasan</label>
+                    <input type="text" value={fmt(bayarAmount)} readOnly disabled
+                        style={{ ...inputStyle, opacity: 0.7, cursor: "not-allowed" }} />
+                </div>
+
+                <div style={{ marginBottom: "18px" }}>
+                    <label style={labelStyle}>Upload Bukti Pembayaran</label>
+                    <label style={{
+                        display: "block",
+                        border: `2px dashed ${buktiPreview ? "rgba(16,185,129,0.4)" : "rgba(255,255,255,0.08)"}`,
+                        borderRadius: "14px", padding: "20px", textAlign: "center",
+                        cursor: "pointer",
+                        background: buktiPreview ? "rgba(16,185,129,0.04)" : "rgba(255,255,255,0.01)",
+                    }}>
+                        <input type="file" accept="image/*,.pdf" onChange={handleBukti} style={{ display: "none" }} />
+                        {buktiPreview ? (
+                            <div>
+                                <img src={buktiPreview} alt="bukti" style={{ maxHeight: "160px", maxWidth: "100%", borderRadius: "8px", objectFit: "contain" }} />
+                                <div style={{ marginTop: "10px", color: "#34d399", fontSize: "12px", fontWeight: "600", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+                                    <CheckCircle2 size={13} /> Bukti terpilih — klik untuk ganti
+                                </div>
                             </div>
+                        ) : (
+                            <>
+                                <Upload size={20} color="#475569" style={{ marginBottom: "8px" }} />
+                                <div style={{ color: "#94a3b8", fontWeight: "600", fontSize: "13px" }}>Pilih File</div>
+                                <div style={{ color: "#475569", fontSize: "11px", marginTop: "4px" }}>PNG, JPG, PDF — maks. 5MB</div>
+                            </>
                         )}
-                    </div>
-                )}
+                    </label>
+                </div>
+
+                <div style={{ marginBottom: "16px" }}>
+                    <label style={labelStyle}>Catatan (Opsional)</label>
+                    <textarea value={catatan} onChange={e => setCatatan(e.target.value)}
+                        placeholder="Contoh: Transfer dari BCA atas nama Budi Santoso..."
+                        rows={2} style={{ ...inputStyle, resize: "none" }} />
+                </div>
+
+                <div style={{
+                    display: "flex", alignItems: "flex-start", gap: "8px",
+                    color: "#fbbf24", fontSize: "12px", marginBottom: "20px",
+                    background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.15)",
+                    borderRadius: "10px", padding: "10px 12px",
+                }}>
+                    <AlertTriangle size={14} style={{ marginTop: "1px", flexShrink: 0 }} />
+                    Pastikan nominal pembayaran sesuai dengan sisa tagihan.
+                </div>
+
+                <div style={{ display: "flex", gap: "10px" }}>
+                    <PrimaryBtn
+                        variant="green"
+                        onClick={handleSubmit}
+                        disabled={!channelSelected || !bukti}
+                        loading={loading}
+                        style={{ flex: 1, padding: "13px" }}
+                    >
+                        <Send size={16} /> Kirim Pembayaran
+                    </PrimaryBtn>
+                    <PrimaryBtn variant="ghost" onClick={reset} style={{ padding: "13px 22px" }}>
+                        Batal
+                    </PrimaryBtn>
+                </div>
             </div>
+            )}
         </GCard>
     );
 }
@@ -539,25 +621,24 @@ function ViewDaftar({ invoices, loading, onDetail, totalTagihan }) {
 
     const tabs = [
         { key: "semua",     label: "Semua" },
-        { key: "unpaid",    label: "Belum Dibayar" },
         { key: "dp_paid",   label: "Menunggu Pelunasan" },
         { key: "pending",   label: "Menunggu Konfirmasi" },
         { key: "paid",      label: "Lunas" },
+        { key: "failed",    label: "Gagal" },
         { key: "cancelled", label: "Dibatalkan" },
     ];
 
-    const count    = (k) => k === "semua" ? invoices.length : invoices.filter(i => i.status === k).length;
-    const filtered = tab === "semua" ? invoices : invoices.filter(i => i.status === tab);
+    const count    = (k) => k === "semua" ? invoices.length : invoices.filter(i => effectiveStatus(i) === k).length;
+    const filtered = tab === "semua" ? invoices : invoices.filter(i => effectiveStatus(i) === tab);
 
     const stats = [
         { label: "Total Tagihan", value: fmt(totalTagihan), icon: <ClipboardList size={20} />, color: "#34d399", accent: "#10b981", bg: "rgba(16,185,129,0.08)", border: "rgba(16,185,129,0.2)" },
-        { label: "Belum Dibayar", value: `${invoices.filter(i => i.status === "unpaid").length} Invoice`, icon: <Clock3 size={20} />, color: "#fbbf24", accent: "#f59e0b", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.2)" },
-        { label: "Lunas", value: `${invoices.filter(i => ["paid","selesai"].includes(i.status)).length} Invoice`, icon: <CheckCircle2 size={20} />, color: "#34d399", accent: "#10b981", bg: "rgba(16,185,129,0.08)", border: "rgba(16,185,129,0.2)" },
+        { label: "Menunggu Pelunasan", value: `${invoices.filter(i => effectiveStatus(i) === "dp_paid").length} Invoice`, icon: <Clock3 size={20} />, color: "#fbbf24", accent: "#f59e0b", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.2)" },
+        { label: "Lunas", value: `${invoices.filter(i => ["paid","selesai"].includes(effectiveStatus(i))).length} Invoice`, icon: <CheckCircle2 size={20} />, color: "#34d399", accent: "#10b981", bg: "rgba(16,185,129,0.08)", border: "rgba(16,185,129,0.2)" },
     ];
 
     return (
         <div>
-            {/* Hero */}
             <div style={{
                 position: "relative", borderRadius: "24px", padding: "40px",
                 background: "linear-gradient(135deg, #0d1117 0%, #0f172a 60%, #131c2e 100%)",
@@ -583,7 +664,6 @@ function ViewDaftar({ invoices, loading, onDetail, totalTagihan }) {
                 </div>
             </div>
 
-            {/* Stat Cards */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px", marginBottom: "24px" }}>
                 {stats.map((item, i) => (
                     <div key={i} style={{
@@ -606,7 +686,6 @@ function ViewDaftar({ invoices, loading, onDetail, totalTagihan }) {
                 ))}
             </div>
 
-            {/* Table Card */}
             <GCard>
                 <div style={{ padding: "24px 28px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                     <h2 style={{ margin: "0 0 18px", color: "white", fontSize: "18px", fontWeight: "700", letterSpacing: "-0.3px" }}>Daftar Invoice</h2>
@@ -651,8 +730,9 @@ function ViewDaftar({ invoices, loading, onDetail, totalTagihan }) {
                                     const isHarian   = inv.order?.type === "harian";
                                     const dueDate    = !isHarian ? hitungJatuhTempo(inv.order?.delivery_date || inv.order?.order_date) : null;
                                     const sisa       = dueDate ? sisaHari(dueDate) : null;
-                                    const overdue    = sisa !== null && sisa < 0 && !["paid","selesai","cancelled"].includes(inv.status);
-                                    const nearDue    = sisa !== null && sisa <= 2 && sisa >= 0 && !["paid","selesai","cancelled"].includes(inv.status);
+                                    const eStatus    = effectiveStatus(inv);
+                                    const overdue    = sisa !== null && sisa < 0 && !["paid","selesai","cancelled","failed"].includes(eStatus);
+                                    const nearDue    = sisa !== null && sisa <= 2 && sisa >= 0 && !["paid","selesai","cancelled","failed"].includes(eStatus);
                                     const dpAmount   = inv.dp_amount || 0;
                                     const totalAmt   = inv.total_amount || 0;
                                     const remaining  = totalAmt - dpAmount;
@@ -670,13 +750,13 @@ function ViewDaftar({ invoices, loading, onDetail, totalTagihan }) {
                                             <td style={tdStyle}><div style={{ color: "white", fontSize: "13px" }}>{inv.created_at ? new Date(inv.created_at).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" }) : "—"}</div></td>
                                             <td style={tdStyle}>
                                                 {isHarian ? (
-                                                    <span style={{ color: "#34d399", fontSize: "12px", fontWeight: "600" }}>Lunas di awal</span>
+                                                    <span style={{ color: "#34d399", fontSize: "12px", fontWeight: "600" }}>Lunas otomatis</span>
                                                 ) : dueDate ? (
                                                     <div>
                                                         <div style={{ color: overdue ? "#f87171" : nearDue ? "#fbbf24" : "#94a3b8", fontSize: "13px", fontWeight: overdue || nearDue ? "700" : "400" }}>
                                                             {dueDate.toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}
                                                         </div>
-                                                        {!["paid","selesai","cancelled"].includes(inv.status) && sisa !== null && (
+                                                        {!["paid","selesai","cancelled","failed"].includes(eStatus) && sisa !== null && (
                                                             <div style={{ fontSize: "11px", color: overdue ? "#f87171" : nearDue ? "#fbbf24" : "#475569", marginTop: "2px" }}>
                                                                 {overdue ? `Lewat ${Math.abs(sisa)} hari` : sisa === 0 ? "Hari ini!" : `${sisa} hari lagi`}
                                                             </div>
@@ -685,22 +765,18 @@ function ViewDaftar({ invoices, loading, onDetail, totalTagihan }) {
                                                 ) : <span style={{ color: "#475569" }}>—</span>}
                                             </td>
                                             <td style={tdStyle}><div style={{ color: "white", fontSize: "14px" }}>{inv.order?.catering_package?.name || inv.order?.menu?.name || "Catering"}</div></td>
-                                            <td style={tdStyle}>
-                                                <span style={{ display: "inline-flex", alignItems: "center", padding: "4px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: "700", background: inv.order?.type === "harian" ? "rgba(59,130,246,0.1)" : "rgba(139,92,246,0.1)", color: inv.order?.type === "harian" ? "#60a5fa" : "#a78bfa", border: `1px solid ${inv.order?.type === "harian" ? "rgba(59,130,246,0.2)" : "rgba(139,92,246,0.2)"}`, textTransform: "capitalize" }}>
-                                                    {inv.order?.type || "—"}
-                                                </span>
-                                            </td>
+                                            <td style={tdStyle}><CateringTypeBadge isHarian={isHarian} /></td>
                                             <td style={tdStyle}><span style={{ color: "#34d399", fontWeight: "700", fontSize: "14px" }}>{fmt(totalAmt)}</span></td>
                                             <td style={tdStyle}>
-                                                {isHarian ? <span style={{ color: "#34d399", fontSize: "12px" }}>Lunas</span> :
+                                                {isHarian ? <span style={{ color: "#34d399", fontSize: "12px" }}>Lunas otomatis</span> :
                                                     dpAmount > 0 ? (
                                                         <div>
                                                             <div style={{ fontSize: "12px", color: "#34d399" }}>DP: {fmt(dpAmount)}</div>
                                                             <div style={{ fontSize: "12px", color: remaining > 0 ? "#fbbf24" : "#34d399" }}>Sisa: {fmt(remaining)}</div>
                                                         </div>
-                                                    ) : <span style={{ color: "#475569", fontSize: "12px" }}>Belum DP</span>}
+                                                    ) : <span style={{ color: "#475569", fontSize: "12px" }}>—</span>}
                                             </td>
-                                            <td style={tdStyle}><Badge status={inv.status} /></td>
+                                            <td style={tdStyle}><Badge status={eStatus} /></td>
                                             <td style={tdStyle}>
                                                 <button onClick={() => onDetail(inv)} style={{
                                                     display: "inline-flex", alignItems: "center", gap: "6px", padding: "8px 16px", borderRadius: "10px",
@@ -721,7 +797,7 @@ function ViewDaftar({ invoices, loading, onDetail, totalTagihan }) {
                                             <FileText size={22} color="#334155" />
                                         </div>
                                         <div style={{ color: "white", fontWeight: "700", fontSize: "17px", marginBottom: "8px" }}>Belum ada invoice</div>
-                                        <p style={{ color: "#475569", margin: 0, fontSize: "14px" }}>Invoice akan muncul setelah pesanan Anda diproses.</p>
+                                        <p style={{ color: "#475569", margin: 0, fontSize: "14px" }}>Invoice akan muncul otomatis setelah pesanan Anda disetujui owner.</p>
                                     </td></tr>
                                 )}
                             </tbody>
@@ -740,26 +816,47 @@ function ViewDaftar({ invoices, loading, onDetail, totalTagihan }) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   VIEW 2 — DETAIL INVOICE (dengan InlinePaymentForm)
+   VIEW 2 — DETAIL INVOICE
 ══════════════════════════════════════════════════════════ */
 
 function ViewDetail({ invoice, onBack, onRiwayat, onRefresh }) {
     const isHarian    = invoice.order?.type === "harian";
-    const isPelunasan = invoice.status === "dp_paid";
-    const isUnpaid    = invoice.status === "unpaid";
-    const canPay      = !isHarian && (isUnpaid || isPelunasan);
-    const isPending   = invoice.status === "pending";
+    const eStatus     = effectiveStatus(invoice);
+    const sudahLunas  = ["paid", "selesai"].includes(eStatus);
+    const isCancelled = eStatus === "cancelled";
+    const isPelunasan = !isHarian && !sudahLunas && !isCancelled;
+    const isPending   = eStatus === "pending";
+    const isFailed    = eStatus === "failed";
 
     const dpAmount    = invoice.dp_amount || 0;
     const totalAmount = invoice.total_amount || 0;
     const remaining   = totalAmount - dpAmount;
 
     const deliveryDate = invoice.order?.delivery_date || invoice.order?.order_date;
-    const dueDate      = !isHarian ? hitungJatuhTempo(deliveryDate) : null;
+    const dueDate       = !isHarian ? hitungJatuhTempo(deliveryDate) : null;
+
+    const order        = invoice.order || {};
+    const pkg           = order.catering_package;
+    const menu           = order.menu;
+    const portions       = order.portions || order.jumlah_porsi || order.quantity || 1;
+    const itemName       = pkg?.name || menu?.name || invoice.items?.[0]?.description || "Layanan Catering";
+    const itemUnitPrice  = pkg?.price ?? menu?.price ?? (invoice.items?.[0]?.unit_price) ?? (portions ? Math.round(totalAmount / portions) : totalAmount);
+    const itemNote       = isHarian
+        ? (order.duration_days ? `Catering harian selama ${order.duration_days} hari — lunas otomatis saat pesanan disetujui` : "Catering harian — lunas otomatis saat pesanan disetujui")
+        : "DP 50% otomatis terbayar saat pesanan disetujui owner";
+
+    const rincianItems = (invoice.items && invoice.items.length > 0)
+        ? invoice.items
+        : [{
+            description: itemName,
+            quantity: portions,
+            unit_price: itemUnitPrice,
+            total_price: totalAmount,
+            note: itemNote,
+        }];
 
     return (
         <div>
-            {/* Breadcrumb */}
             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "24px", color: "#64748b", fontSize: "14px" }}>
                 <button onClick={onBack} style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", fontFamily: "Inter, system-ui, sans-serif", fontSize: "14px" }}>
                     <ArrowLeft size={14} /> Invoice
@@ -768,8 +865,9 @@ function ViewDetail({ invoice, onBack, onRiwayat, onRefresh }) {
                 <span style={{ color: "white" }}>Detail Invoice</span>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", flexWrap: "wrap", gap: "12px" }}>
                 <div>
+                    <div style={{ marginBottom: "8px" }}><CateringTypeBadge isHarian={isHarian} size="lg" /></div>
                     <h1 style={{ margin: "0 0 6px", fontSize: "clamp(24px, 3vw, 34px)", fontWeight: "800", letterSpacing: "-1px" }}>Detail Invoice</h1>
                     <p style={{ margin: 0, color: "#64748b", fontSize: "14px" }}>{invoice.invoice_number || `INV-${invoice.id}`}</p>
                 </div>
@@ -778,28 +876,34 @@ function ViewDetail({ invoice, onBack, onRiwayat, onRefresh }) {
                 </PrimaryBtn>
             </div>
 
-            {/* Due date banner */}
-            {!isHarian && canPay && dueDate && (
+            {!isHarian && isPelunasan && dueDate && (
                 <div style={{ marginBottom: "20px" }}>
                     <DueDateBanner dueDate={dueDate} />
                 </div>
             )}
 
-            {/* Status menunggu konfirmasi */}
             {isPending && (
                 <div style={{ marginBottom: "20px", background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.2)", borderRadius: "14px", padding: "16px 18px", display: "flex", alignItems: "center", gap: "12px" }}>
                     <Clock3 size={18} color="#a78bfa" style={{ flexShrink: 0 }} />
                     <div>
                         <div style={{ color: "#a78bfa", fontWeight: "700", fontSize: "14px" }}>Menunggu Konfirmasi Owner</div>
-                        <div style={{ color: "#64748b", fontSize: "13px", marginTop: "2px" }}>Bukti pembayaran Anda sedang diverifikasi. Mohon tunggu 1×24 jam.</div>
+                        <div style={{ color: "#64748b", fontSize: "13px", marginTop: "2px" }}>Bukti pelunasan Anda sedang diverifikasi di halaman Revenue Owner. Jika disetujui, invoice otomatis Lunas.</div>
+                    </div>
+                </div>
+            )}
+
+            {isFailed && (
+                <div style={{ marginBottom: "20px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "14px", padding: "16px 18px", display: "flex", alignItems: "center", gap: "12px" }}>
+                    <XCircle size={18} color="#f87171" style={{ flexShrink: 0 }} />
+                    <div>
+                        <div style={{ color: "#f87171", fontWeight: "700", fontSize: "14px" }}>Pembayaran Ditolak Owner</div>
+                        <div style={{ color: "#64748b", fontSize: "13px", marginTop: "2px" }}>Bukti pelunasan tidak diterima. Silakan ulangi pembayaran pelunasan.</div>
                     </div>
                 </div>
             )}
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: "20px" }}>
-                {/* LEFT */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-                    {/* Info invoice */}
                     <GCard style={{ padding: "24px" }}>
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
                             {[
@@ -807,7 +911,7 @@ function ViewDetail({ invoice, onBack, onRiwayat, onRefresh }) {
                                 { label: "Tanggal Dibuat",  value: invoice.created_at ? new Date(invoice.created_at).toLocaleDateString("id-ID") : "—" },
                                 {
                                     label: "Jatuh Tempo Pelunasan",
-                                    value: isHarian ? "Lunas di awal" : dueDate ? dueDate.toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" }) : "—",
+                                    value: isHarian ? "Tidak ada (lunas otomatis)" : dueDate ? dueDate.toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" }) : "—",
                                     valueColor: !isHarian && dueDate && sisaHari(dueDate) !== null && sisaHari(dueDate) <= 3 ? "#fbbf24" : undefined,
                                 },
                                 { label: "Tanggal Pengiriman", value: deliveryDate ? new Date(deliveryDate).toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" }) : "—" },
@@ -819,54 +923,29 @@ function ViewDetail({ invoice, onBack, onRiwayat, onRefresh }) {
                             ))}
                             <div>
                                 <div style={{ color: "#64748b", fontSize: "12px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px" }}>Status</div>
-                                <Badge status={invoice.status} size="lg" />
+                                <Badge status={eStatus} size="lg" />
                             </div>
                             <div>
                                 <div style={{ color: "#64748b", fontSize: "12px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px" }}>Tipe Catering</div>
-                                <span style={{ display: "inline-flex", alignItems: "center", padding: "5px 12px", borderRadius: "7px", fontSize: "13px", fontWeight: "700", background: isHarian ? "rgba(59,130,246,0.1)" : "rgba(139,92,246,0.1)", color: isHarian ? "#60a5fa" : "#a78bfa", border: `1px solid ${isHarian ? "rgba(59,130,246,0.2)" : "rgba(139,92,246,0.2)"}`, textTransform: "capitalize" }}>
-                                    {invoice.order?.type || "—"}
-                                </span>
+                                <CateringTypeBadge isHarian={isHarian} />
                             </div>
                         </div>
-
-                        <Divider />
-                        {isHarian ? (
-                            <div style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.15)", borderRadius: "10px", padding: "12px 16px", display: "flex", alignItems: "flex-start", gap: "10px" }}>
-                                <ShieldCheck size={15} color="#60a5fa" style={{ marginTop: "1px", flexShrink: 0 }} />
-                                <span style={{ color: "#64748b", fontSize: "13px", lineHeight: "1.6" }}>
-                                    <strong style={{ color: "#60a5fa" }}>Catering Harian</strong> — Pembayaran dilakukan <strong style={{ color: "white" }}>lunas di awal</strong> saat pemesanan.
-                                </span>
-                            </div>
-                        ) : (
-                            <div style={{ background: "rgba(139,92,246,0.06)", border: "1px solid rgba(139,92,246,0.15)", borderRadius: "10px", padding: "12px 16px", display: "flex", alignItems: "flex-start", gap: "10px" }}>
-                                <CircleDollarSign size={15} color="#a78bfa" style={{ marginTop: "1px", flexShrink: 0 }} />
-                                <span style={{ color: "#64748b", fontSize: "13px", lineHeight: "1.6" }}>
-                                    <strong style={{ color: "#a78bfa" }}>Catering Insidentil</strong> — DP 50% dibayar saat pesan. Pelunasan 50% sisa wajib sebelum <strong style={{ color: "white" }}>3 hari menjelang pengiriman</strong>.
-                                </span>
-                            </div>
-                        )}
                     </GCard>
 
-                    {/* Info penagihan */}
                     <GCard style={{ padding: "24px" }}>
                         <div style={{ fontWeight: "700", fontSize: "16px", marginBottom: "18px", letterSpacing: "-0.2px" }}>Informasi Penagihan</div>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-                            <div>
-                                <div style={{ color: "#64748b", fontSize: "12px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px" }}>Ditujukan Kepada</div>
-                                <div style={{ fontWeight: "700", fontSize: "15px" }}>{invoice.client?.name || "—"}</div>
-                                <div style={{ color: "#94a3b8", fontSize: "13px", marginTop: "4px" }}>{invoice.client?.address || ""}</div>
-                            </div>
-                            <div>
-                                <div style={{ color: "#64748b", fontSize: "12px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px" }}>Kontak</div>
-                                <div style={{ fontSize: "13px", color: "#94a3b8" }}>{invoice.client?.email || "—"}</div>
-                                <div style={{ fontSize: "13px", color: "#94a3b8" }}>{invoice.client?.phone || ""}</div>
-                            </div>
+                        <div>
+                            <div style={{ color: "#64748b", fontSize: "12px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px" }}>Ditujukan Kepada</div>
+                            <div style={{ fontWeight: "700", fontSize: "15px" }}>{invoice.client?.name || "—"}</div>
+                            <div style={{ color: "#94a3b8", fontSize: "13px", marginTop: "4px" }}>{invoice.client?.address || ""}</div>
                         </div>
                     </GCard>
 
-                    {/* Rincian item */}
                     <GCard style={{ overflow: "hidden" }}>
-                        <div style={{ padding: "20px 24px", borderBottom: "1px solid rgba(255,255,255,0.05)", fontWeight: "700", fontSize: "16px" }}>Rincian Item</div>
+                        <div style={{ padding: "20px 24px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                            <div style={{ fontWeight: "700", fontSize: "16px" }}>Rincian Item</div>
+                            <CateringTypeBadge isHarian={isHarian} />
+                        </div>
                         <div style={{ overflowX: "auto" }}>
                             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "500px" }}>
                                 <thead>
@@ -877,56 +956,41 @@ function ViewDetail({ invoice, onBack, onRiwayat, onRefresh }) {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {(invoice.items || [invoice]).map((item, i) => (
+                                    {rincianItems.map((item, i) => (
                                         <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
                                             <td style={{ ...tdStyle, color: "#64748b" }}>{i + 1}</td>
-                                            <td style={tdStyle}>{item.description || item.menu?.name || "Layanan Catering"}</td>
-                                            <td style={tdStyle}>{item.quantity || 1}</td>
+                                            <td style={tdStyle}>
+                                                <div>{item.description}</div>
+                                                {item.note && <div style={{ color: "#64748b", fontSize: "12px", marginTop: "3px" }}>{item.note}</div>}
+                                            </td>
+                                            <td style={tdStyle}>{item.quantity || 1} {isHarian ? "porsi" : "paket"}</td>
                                             <td style={tdStyle}>{fmt(item.unit_price || item.price || 0)}</td>
-                                            <td style={{ ...tdStyle, color: "#34d399", fontWeight: "700" }}>{fmt(item.total_price || item.total_amount || 0)}</td>
+                                            <td style={{ ...tdStyle, color: "#34d399", fontWeight: "700" }}>{fmt(item.total_price || item.total_amount || totalAmount)}</td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
                         </div>
                     </GCard>
-
-                    {/* Bukti bayar harian */}
-                    {isHarian && invoice.order?.payment_proof && (
-                        <GCard style={{ padding: "24px" }}>
-                            <div style={{ fontWeight: "700", fontSize: "16px", marginBottom: "16px" }}>Bukti Pembayaran</div>
-                            <RowFlex label="Metode" value={invoice.order?.payment_method === "bank" ? "Transfer Bank" : "E-Wallet"} />
-                            <RowFlex label="Provider / Bank" value={invoice.order?.payment_provider || "—"} />
-                            <RowFlex label="No. Rekening / Akun" value={invoice.order?.payment_account_number || "—"} />
-                            <RowFlex label="Tanggal Bayar" value={invoice.order?.order_date ? new Date(invoice.order.order_date).toLocaleDateString("id-ID") : "—"} />
-                            <div style={{ marginTop: "14px" }}>
-                                <a href={`/storage/${invoice.order.payment_proof}`} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "#60a5fa", fontSize: "13px", fontWeight: "600", textDecoration: "none", background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)", padding: "8px 14px", borderRadius: "10px" }}>
-                                    <Eye size={13} /> Lihat Bukti Transfer
-                                </a>
-                            </div>
-                        </GCard>
-                    )}
                 </div>
 
-                {/* RIGHT sidebar */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                    {/* Ringkasan Pembayaran */}
                     <GCard style={{ padding: "24px" }}>
                         <div style={{ fontWeight: "700", fontSize: "16px", marginBottom: "16px" }}>Ringkasan Pembayaran</div>
                         <RowFlex label="Total" value={fmt(totalAmount)} bold />
                         {isHarian ? (
                             <>
                                 <Divider />
-                                <RowFlex label="Dibayar Lunas" value={fmt(invoice.order?.amount_paid || totalAmount)} color="#34d399" bold />
-                                <RowFlex label="Sisa Tagihan" value={fmt(0)} color="#34d399" />
+                                <RowFlex label="Dibayar Lunas" value={fmt(totalAmount)} color="#34d399" bold />
+                                <RowFlex label="Sisa Tagihan" value="Tidak ada" color="#34d399" />
                             </>
                         ) : (
                             <>
-                                {dpAmount > 0 && <RowFlex label="DP Terbayar (50%)" value={`- ${fmt(dpAmount)}`} color="#34d399" />}
+                                <RowFlex label="DP Terbayar (50%)" value={`- ${fmt(dpAmount)}`} color="#34d399" />
                                 <Divider />
                                 <RowFlex
-                                    label={isPelunasan ? "Sisa Pelunasan (50%)" : "Belum ada DP"}
-                                    value={fmt(remaining > 0 ? remaining : totalAmount)}
+                                    label={isPelunasan ? "Sisa Pelunasan (50%)" : "Sisa Tagihan"}
+                                    value={fmt(remaining > 0 ? remaining : 0)}
                                     bold
                                     color={remaining > 0 ? "#fbbf24" : "#34d399"}
                                 />
@@ -934,18 +998,25 @@ function ViewDetail({ invoice, onBack, onRiwayat, onRefresh }) {
                         )}
                     </GCard>
 
-                    {/* ✅ FORM PEMBAYARAN INLINE — tampil jika bisa bayar */}
-                    {canPay && (
-                        <InlinePaymentForm invoice={invoice} onSuccess={onRefresh} />
+                    {!isHarian && isPelunasan && (
+                        <PelunasanPaymentForm invoice={invoice} onSuccess={onRefresh} />
                     )}
 
-                    {/* Harian: info lunas */}
                     {isHarian && (
+                        <div style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: "14px", padding: "18px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#34d399", fontWeight: "700", fontSize: "14px", marginBottom: "10px" }}>
+                                <Zap size={16} /> Lunas Otomatis
+                            </div>
+                            <div style={{ color: "#64748b", fontSize: "13px", lineHeight: "1.7" }}>Catering harian otomatis dinyatakan lunas begitu pesanan disetujui owner. Tidak ada tagihan tersisa.</div>
+                        </div>
+                    )}
+
+                    {!isHarian && sudahLunas && (
                         <div style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: "14px", padding: "18px" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#34d399", fontWeight: "700", fontSize: "14px", marginBottom: "10px" }}>
                                 <CheckCircle2 size={16} /> Pembayaran Lunas
                             </div>
-                            <div style={{ color: "#64748b", fontSize: "13px", lineHeight: "1.7" }}>Catering harian telah dibayar lunas saat pemesanan.</div>
+                            <div style={{ color: "#64748b", fontSize: "13px", lineHeight: "1.7" }}>Pelunasan telah dikonfirmasi owner. Invoice ini sudah lunas.</div>
                         </div>
                     )}
 
@@ -953,7 +1024,7 @@ function ViewDetail({ invoice, onBack, onRiwayat, onRefresh }) {
                         <History size={15} /> Riwayat Pembayaran
                     </PrimaryBtn>
 
-                    {canPay && dueDate && (
+                    {!isHarian && isPelunasan && dueDate && (
                         <div style={{ background: "rgba(245,158,11,0.08)", borderRadius: "14px", padding: "16px", border: "1px solid rgba(245,158,11,0.2)", color: "#fbbf24", fontSize: "13px", display: "flex", alignItems: "flex-start", gap: "10px" }}>
                             <AlertTriangle size={15} style={{ marginTop: "1px", flexShrink: 0 }} />
                             <span>Pelunasan paling lambat <strong>{dueDate.toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" })}</strong> (3 hari sebelum pengiriman).</span>
@@ -974,6 +1045,7 @@ function ViewRiwayat({ invoice, onBack }) {
     const [loading, setLoading]   = useState(true);
 
     const isHarian     = invoice.order?.type === "harian";
+    const eStatus      = effectiveStatus(invoice);
     const dpAmount     = invoice.dp_amount || 0;
     const totalAmount  = invoice.total_amount || 0;
     const deliveryDate = invoice.order?.delivery_date || invoice.order?.order_date;
@@ -992,22 +1064,18 @@ function ViewRiwayat({ invoice, onBack }) {
 
     const timeline = isHarian
         ? [
-            { label: "Invoice Dibuat",      desc: "Invoice telah dibuat dan dikirim ke Anda.", time: invoice.created_at, done: true },
-            { label: "Pembayaran Lunas",    desc: "Dibayar lunas saat pemesanan.", time: invoice.order?.order_date, done: true },
-            { label: "Menunggu Konfirmasi", desc: "Pembayaran dikonfirmasi oleh owner.", time: null, done: ["paid","selesai"].includes(invoice.status) },
-            { label: "Selesai",             desc: "Invoice dinyatakan lunas dan pesanan berjalan.", time: null, done: ["paid","selesai"].includes(invoice.status) },
+            { label: "Pesanan Disetujui Owner", desc: "Owner menyetujui pesanan harian Anda.", time: invoice.created_at, done: true },
+            { label: "Lunas Otomatis", desc: "Pembayaran otomatis dinyatakan lunas — tidak ada tagihan tersisa.", time: invoice.created_at, done: true },
           ]
         : [
-            { label: "Invoice Dibuat",    desc: "Invoice dibuat setelah pesanan diapprove.", time: invoice.created_at, done: true },
-            { label: "DP 50% Dikirim",   desc: "Klien mengirim DP 50% dan upload bukti.", time: payments.find(p => p.type === "dp")?.created_at, done: dpAmount > 0 },
-            { label: "DP Dikonfirmasi",   desc: "Owner mengkonfirmasi penerimaan DP 50%.", time: payments.find(p => p.type === "dp" && p.status === "confirmed")?.updated_at, done: ["dp_paid","paid","selesai"].includes(invoice.status) },
-            { label: "Jatuh Tempo Pelunasan", desc: dueDate ? `Batas pelunasan: ${dueDate.toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" })}` : "3 hari sebelum pengiriman.", time: null, done: ["paid","selesai"].includes(invoice.status), warning: dueDate && sisaHari(dueDate) !== null && sisaHari(dueDate) < 0 && !["paid","selesai"].includes(invoice.status) },
+            { label: "Pesanan Disetujui & DP Terbayar", desc: "Owner menyetujui pesanan dan DP 50% otomatis tercatat terbayar.", time: invoice.created_at, done: true },
+            { label: "Jatuh Tempo Pelunasan", desc: dueDate ? `Batas pelunasan: ${dueDate.toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" })}` : "3 hari sebelum pengiriman.", time: null, done: ["paid","selesai"].includes(eStatus), warning: dueDate && sisaHari(dueDate) !== null && sisaHari(dueDate) < 0 && !["paid","selesai"].includes(eStatus) },
             { label: "Pelunasan Dikirim", desc: "Klien mengirim sisa 50% dan upload bukti.", time: payments.find(p => p.type === "pelunasan")?.created_at, done: payments.some(p => p.type === "pelunasan") },
-            { label: "Lunas",             desc: "Owner mengkonfirmasi pelunasan. Invoice selesai.", time: payments.find(p => p.type === "pelunasan" && p.status === "confirmed")?.updated_at, done: ["paid","selesai"].includes(invoice.status) },
+            { label: "Lunas",             desc: "Owner mengkonfirmasi pelunasan di halaman Revenue. Invoice selesai.", time: payments.find(p => p.type === "pelunasan" && p.status === "confirmed")?.updated_at, done: ["paid","selesai"].includes(eStatus) },
           ];
 
     const confirmedPelunasan = payments.filter(p => p.type === "pelunasan" && p.status === "confirmed").reduce((a, p) => a + parseFloat(p.amount || 0), 0);
-    const sisaTagihan        = Math.max(0, totalAmount - dpAmount - confirmedPelunasan);
+    const sisaTagihan        = isHarian ? 0 : Math.max(0, totalAmount - dpAmount - confirmedPelunasan);
 
     return (
         <div>
@@ -1032,7 +1100,7 @@ function ViewRiwayat({ invoice, onBack }) {
                                     {!isHarian && dueDate && (<span style={{ fontSize: "11px", color: "#64748b" }}>{" · "}Jatuh tempo: {dueDate.toLocaleDateString("id-ID")}</span>)}
                                 </div>
                             </div>
-                            <Badge status={invoice.status} size="lg" />
+                            <Badge status={eStatus} size="lg" />
                         </div>
                     </GCard>
 
@@ -1063,7 +1131,6 @@ function ViewRiwayat({ invoice, onBack }) {
                         )}
                     </GCard>
 
-                    {/* Detail pembayaran insidentil */}
                     {!isHarian && payments.length > 0 && (
                         <GCard style={{ overflow: "hidden" }}>
                             <div style={{ padding: "20px 24px", borderBottom: "1px solid rgba(255,255,255,0.05)", fontWeight: "700", fontSize: "16px" }}>Detail Pembayaran</div>
@@ -1071,16 +1138,17 @@ function ViewRiwayat({ invoice, onBack }) {
                                 <div key={i} style={{ padding: "20px 24px", borderBottom: i < payments.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
                                         <div>
-                                            <div style={{ fontWeight: "700" }}>{p.type === "dp" ? "Uang Muka (DP 50%)" : p.type === "pelunasan" ? "Pelunasan (50%)" : "Pembayaran Penuh"}</div>
-                                            <div style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}>{p.payment_channel?.bank_name || p.payment_channel?.wallet_name || p.payment_channel?.provider_name || "—"}</div>
+                                            <div style={{ fontWeight: "700" }}>{p.type === "pelunasan" ? "Pelunasan (50%)" : "Pembayaran"}</div>
+                                            <div style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}>{p.payment_channel?.provider_name || "—"}</div>
                                         </div>
-                                        <Badge status={p.status === "confirmed" ? "paid" : "pending"} />
+                                        <Badge status={p.status === "confirmed" ? "paid" : p.status === "rejected" ? "failed" : "pending"} />
                                     </div>
                                     <RowFlex label="Jumlah" value={fmt(p.amount)} bold />
                                     <RowFlex label="Rekening/No." value={p.payment_channel?.account_number || "—"} />
                                     <RowFlex label="a.n." value={p.payment_channel?.account_name || "—"} />
                                     <RowFlex label="Tanggal Kirim" value={p.created_at ? new Date(p.created_at).toLocaleDateString("id-ID") : "—"} />
                                     {p.status === "confirmed" && <RowFlex label="Dikonfirmasi" value={p.updated_at ? new Date(p.updated_at).toLocaleDateString("id-ID") : "—"} color="#34d399" />}
+                                    {p.status === "rejected" && <RowFlex label="Ditolak" value="Pembayaran tidak diterima owner" color="#f87171" />}
                                     {p.proof_url && (
                                         <div style={{ marginTop: "10px" }}>
                                             <a href={p.proof_url} target="_blank" rel="noreferrer" style={{ color: "#60a5fa", fontSize: "13px", display: "inline-flex", alignItems: "center", gap: "6px", textDecoration: "none", background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)", padding: "8px 14px", borderRadius: "10px", fontWeight: "600" }}>
@@ -1100,9 +1168,9 @@ function ViewRiwayat({ invoice, onBack }) {
                         <RowFlex label="Total Invoice" value={fmt(totalAmount)} />
                         {isHarian ? (
                             <>
-                                <RowFlex label="Dibayar Lunas" value={fmt(invoice.order?.amount_paid || totalAmount)} color="#34d399" />
+                                <RowFlex label="Dibayar Lunas" value={fmt(totalAmount)} color="#34d399" />
                                 <Divider />
-                                <RowFlex label="Sisa Tagihan" value="Rp 0" bold color="#34d399" />
+                                <RowFlex label="Sisa Tagihan" value="Tidak ada" bold color="#34d399" />
                             </>
                         ) : (
                             <>
@@ -1112,7 +1180,7 @@ function ViewRiwayat({ invoice, onBack }) {
                                 <RowFlex label="Sisa Tagihan" value={fmt(sisaTagihan)} bold color={sisaTagihan > 0 ? "#fbbf24" : "#34d399"} />
                             </>
                         )}
-                        {!isHarian && dueDate && !["paid","selesai","cancelled"].includes(invoice.status) && (
+                        {!isHarian && dueDate && !["paid","selesai","cancelled","failed"].includes(eStatus) && (
                             <div style={{ marginTop: "14px" }}>
                                 <DueDateBanner dueDate={dueDate} />
                             </div>
@@ -1151,7 +1219,6 @@ export default function InvoiceKlien() {
         finally { setLoading(false); }
     };
 
-    // Refresh active invoice setelah pembayaran berhasil
     const refreshActiveInvoice = async () => {
         if (!activeInvoice) return;
         try {

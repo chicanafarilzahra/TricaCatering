@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Invoice;
-use App\Models\PaymentChannel;
+use App\Models\PaymentAccount;
 use App\Models\User;
 
 class InvoicePayment extends Model
@@ -36,7 +36,7 @@ class InvoicePayment extends Model
 
     public function paymentChannel()
     {
-        return $this->belongsTo(PaymentChannel::class);
+        return $this->belongsTo(PaymentAccount::class, 'payment_channel_id');
     }
 
     public function confirmedBy()

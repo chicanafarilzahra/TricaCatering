@@ -31,6 +31,8 @@ use App\Http\Controllers\Api\OwnerPaymentAccountController;
 use App\Http\Controllers\Api\PublicMenuController;
 
 use App\Http\Controllers\Owner\CourierController as OwnerCourierController;
+use App\Http\Controllers\Owner\OrderController as OwnerOrderController;
+use App\Http\Controllers\Owner\RevenueController as OwnerRevenueController;
 use App\Http\Controllers\Owner\OwnerInvoiceController;
 
 use App\Http\Controllers\SPPG\DashboardSPPGController;
@@ -354,7 +356,6 @@ Route::middleware('auth:sanctum')->group(function () {
  
     Route::post('klien/orders', [KlienController::class, 'storePesanan']);
     Route::get('klien/orders',  [KlienController::class, 'pesananSaya']); // histori — dipakai Tracking.jsx & PesananSaya.jsx
-    Route::get('/klien/orders', [OrderController::class, 'klienOrders']);
  
     Route::get('/klien/lacak/{order_id}', [TrackingController::class, 'show']);
  
@@ -394,18 +395,20 @@ Route::middleware('auth:sanctum')
     ->prefix('owner')
     ->group(function () {
         
-        Route::get('/dashboard', function () {
+       Route::get('/dashboard', function () {
 
-        $ownerId = auth()->id();
+    $ownerId = auth()->id();
 
-        return response()->json([
-            'total_orders' => \App\Models\Order::where('owner_id', $ownerId)->count(),
-            'pending' => \App\Models\Order::where('owner_id', $ownerId)->where('status','pending')->count(),
-            'processed' => \App\Models\Order::where('owner_id', $ownerId)->where('status','Diproses')->count(),
-            'sent' => \App\Models\Order::where('owner_id', $ownerId)->where('status','Dikirim')->count(),
-        ]);
+    return response()->json([
+        'totalOrders' => \App\Models\Order::where('owner_id', $ownerId)->count(),
 
-    });
+        'packages' => \App\Models\Menu::where('owner_id', $ownerId)->count(),
+
+        'revenue' => \App\Models\Order::where('owner_id', $ownerId)
+            ->where('status', 'delivered')
+            ->sum('total_price'),
+    ]);
+});
 
 
     Route::get(
@@ -434,9 +437,9 @@ Route::put('/menus/{menu}', [OwnerMenuController2::class, 'update']);
 Route::delete('/menus/{menu}', [OwnerMenuController2::class, 'destroy']);
 Route::get('/menus/{menu}/ingredients', [OwnerMenuController2::class, 'ingredients']); 
 
-    Route::get('/orders',                [OrderController::class, 'ownerOrders']);
-    Route::put('/orders/{id}/approve',   [OrderController::class, 'approve']);
-    Route::put('/orders/{id}/reject',    [OrderController::class, 'reject']);
+   Route::get('/orders',                [OrderController::class, 'ownerOrders']);
+    Route::put('/orders/{id}/approve',   [OwnerOrderController::class, 'approve']);
+    Route::put('/orders/{id}/reject',    [OwnerOrderController::class, 'reject']);
     Route::put('/orders/{id}/process',   [OrderController::class, 'process']);
     Route::put('/orders/{id}/dispatch',  [OrderController::class, 'dispatch']);
 
@@ -445,6 +448,14 @@ Route::get('/menus/{menu}/ingredients', [OwnerMenuController2::class, 'ingredien
     Route::put('/payment-accounts/{id}', [OwnerPaymentAccountController::class, 'update']);
     Route::put('/payment-accounts/{id}/set-default', [OwnerPaymentAccountController::class, 'setDefault']);
     Route::delete('/payment-accounts/{id}', [OwnerPaymentAccountController::class, 'destroy']);
+
+    // ── Revenue: konfirmasi pembayaran masuk, riwayat transaksi, fee kurir ──
+    Route::get('/payments',                          [OwnerRevenueController::class, 'index']);
+    Route::put('/payments/{id}/confirm',              [OwnerRevenueController::class, 'confirm']);
+    Route::put('/payments/{id}/reject',                [OwnerRevenueController::class, 'reject']);
+    Route::get('/transactions',                       [OwnerRevenueController::class, 'transactions']);
+    Route::post('/orders/{id}/dispatch-courier-fee',  [OwnerRevenueController::class, 'dispatchCourierFee']);
+
 
     Route::get('/invoices', [OwnerInvoiceController::class, 'index']);
 Route::get('/invoices/{id}', [OwnerInvoiceController::class, 'show']);

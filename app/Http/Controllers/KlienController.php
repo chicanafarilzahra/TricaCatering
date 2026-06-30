@@ -44,23 +44,29 @@ class KlienController extends Controller
      * PESANAN SAYA
      *
      * PERBAIKAN:
-     * 1. Sebelumnya method ini mengambil SEMUA order milik SEMUA klien
-     *    (tidak ada filter sama sekali) -- bug keamanan + data salah.
-     *    Sekarang difilter dengan where('client_id', $user->id).
-     * 2. Response dibungkus { data: [...] } agar konsisten dengan
-     *    kontrak yang dipakai frontend (Tracking.jsx, PesananSaya.jsx
-     *    membaca res.data.data).
-     * 3. Eager-load 'courier' ditambahkan supaya nama kurir ikut
-     *    terkirim ke frontend (dipakai di Tracking.jsx).
+     * 1. Filter where('client_id', $user->id) — tiap klien cuma lihat
+     *    pesanannya sendiri.
+     * 2. Response dibungkus { data: [...] } sesuai kontrak frontend
+     *    (Tracking.jsx, PesananSaya.jsx membaca res.data.data).
+     * 3. Eager-load 'courier' supaya nama kurir ikut terkirim.
+     * 4. Eager-load 'owner' + tambahkan field lat_dapur/lng_dapur —
+     *    dibutuhkan Tracking.jsx (resolveDapurPos) untuk menampilkan
+     *    marker dapur catering & menggambar rute di peta. Tanpa ini,
+     *    peta cuma menampilkan titik kurir tanpa rute/marker dapur.
      */
     public function pesananSaya()
     {
         $user = Auth::user();
 
-        $orders = Order::with(['menu', 'courier'])
+        $orders = Order::with(['menu', 'courier', 'owner:id,name,nama_catering,latitude,longitude'])
             ->where('client_id', $user->id)
             ->latest()
-            ->get();
+            ->get()
+            ->map(function ($order) {
+                $order->lat_dapur = $order->owner?->latitude;
+                $order->lng_dapur = $order->owner?->longitude;
+                return $order;
+            });
 
         return response()->json([
             'data' => $orders,
@@ -70,17 +76,14 @@ class KlienController extends Controller
     /**
      * TRACKING PENGIRIMAN
      *
-     * PERBAIKAN: tambah filter client_id (sebelumnya juga mengambil
-     * order milik semua klien), dan ikut status 'confirmed' &
-     * 'preparing' & 'dispatched' supaya tracking sudah muncul sejak
-     * owner approve -- bukan baru muncul saat on_delivery. Eager-load
-     * 'courier' juga ditambahkan untuk alasan yang sama seperti di atas.
+     * Sama seperti pesananSaya(): tambah filter client_id, status yang
+     * relevan untuk tracking, dan eager-load 'owner' untuk marker dapur.
      */
     public function lacakPengiriman()
     {
         $user = Auth::user();
 
-        $orders = Order::with(['menu', 'courier'])
+        $orders = Order::with(['menu', 'courier', 'owner:id,name,nama_catering,latitude,longitude'])
             ->where('client_id', $user->id)
             ->whereIn('status', [
                 'confirmed',
@@ -90,7 +93,12 @@ class KlienController extends Controller
                 'delivered',
             ])
             ->latest()
-            ->get();
+            ->get()
+            ->map(function ($order) {
+                $order->lat_dapur = $order->owner?->latitude;
+                $order->lng_dapur = $order->owner?->longitude;
+                return $order;
+            });
 
         return response()->json([
             'data' => $orders,
@@ -99,9 +107,6 @@ class KlienController extends Controller
 
     /**
      * INVOICE
-     *
-     * PERBAIKAN: tambah filter client_id (sebelumnya juga bug yang
-     * sama -- mengambil order & total tagihan milik semua klien).
      */
     public function invoice()
     {
@@ -146,11 +151,6 @@ class KlienController extends Controller
             'duration'      => 'required_if:type,harian|nullable|integer|min:1',
             'event_date'    => 'required_if:type,insidentil|nullable|date',
 
-            // === TAMBAHAN: jadwal kirim & pembayaran ===
-            // Catering harian kirim 'tanggal' (tanggal mulai langganan, dipakai
-            // bersama 'duration' untuk generate baris delivery_schedules saat
-            // owner approve). Catering insidentil pakai 'event_date' yang sudah
-            // ada di validasi lama.
             'tanggal'                => 'required_if:type,harian|nullable|date',
             'jam'                    => 'required|date_format:H:i',
             'payment_method'         => 'required|in:bank,ewallet',
@@ -184,7 +184,6 @@ class KlienController extends Controller
             'courier_fee'   => $request->courier_fee,
             'status'        => 'pending',
 
-            // === TAMBAHAN ===
             'tanggal'                => $request->tanggal,
             'jam'                    => $request->jam,
             'payment_method'         => $request->payment_method,

@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Models\Stock;
 use App\Models\MenuIngredient;
 use App\Models\DeliverySchedule;
+use App\Models\Invoice;
+use App\Models\Wallet;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +20,7 @@ class OrderController extends Controller
     /* GET /owner/orders */
     public function index(): JsonResponse
     {
-        $orders = Order::with(['menu', 'kurir', 'owner'])->latest()->get();
+        $orders = Order::with(['menu', 'courier', 'owner'])->latest()->get();
         return response()->json(['data' => $orders]);
     }
 
@@ -27,10 +29,17 @@ class OrderController extends Controller
      * 1. Ubah status → confirmed
      * 2. Kurangi stok bahan sesuai resep menu × qty pesanan
      * 3. Generate jadwal kirim (delivery_schedules) sesuai tanggal pemesanan
-     * 4. Jika stok tidak cukup → rollback & return 422
+     * 4. Buat/ambil invoice untuk order ini, lalu cairkan uang ke wallet owner
+     *    (revenue):
+     *      - harian      -> lunas penuh, invoice langsung "paid"
+     *      - insidentil  -> DP 50% otomatis "dp_paid", sisanya menyusul lewat
+     *                       alur pelunasan klien (invoice_payments)
+     * 5. Jika stok tidak cukup → rollback & return 422
      */
-    public function approve(Request $request, Order $order): JsonResponse
+    public function approve(Request $request, int $id): JsonResponse
     {
+        $order = Order::findOrFail($id);
+
         if ($order->status !== 'pending') {
             return response()->json(['message' => 'Pesanan tidak dalam status pending.'], 422);
         }
@@ -107,10 +116,14 @@ class OrderController extends Controller
                 ]);
             }
 
+            // ── Revenue: buat invoice & cairkan uang ke wallet owner ──
+            $invoice = $this->generateInvoiceAndCreditRevenue($order);
+
             DB::commit();
             return response()->json([
-                'message' => 'Pesanan disetujui, stok dikurangi, dan jadwal kirim dibuat.',
-                'order'   => $order->fresh(['menu', 'kurir', 'deliverySchedules']),
+                'message' => 'Pesanan disetujui, stok dikurangi, jadwal kirim dibuat, dan revenue diperbarui.',
+                'order'   => $order->fresh(['menu', 'courier', 'deliverySchedules']),
+                'invoice' => $invoice,
             ]);
 
         } catch (\Throwable $e) {
@@ -119,14 +132,85 @@ class OrderController extends Controller
         }
     }
 
-    /* PUT /owner/orders/{id}/reject */
-    public function reject(Order $order): JsonResponse
+    /**
+     * Buat invoice (kalau belum ada) untuk order ini, lalu masukkan uang
+     * ke wallet owner sesuai tipe pesanan.
+     *   - harian      : lunas 100% langsung saat approve
+     *   - insidentil  : DP 50% otomatis masuk saat approve, sisanya
+     *                   menyusul lewat alur pelunasan klien di Invoice
+     *                   Klien -> dikonfirmasi owner di halaman Revenue.
+     */
+    private function generateInvoiceAndCreditRevenue(Order $order): Invoice
     {
+        $courierFee = (float) ($order->courier_fee ?? 0);
+        $totalPrice = (float) ($order->total_price ?? 0);
+        $menuAmount = max($totalPrice - $courierFee, 0);
+
+        $isHarian = $order->type === 'harian';
+        $dpAmount = $isHarian ? $totalPrice : round($totalPrice * 0.5, 2);
+
+        $invoice = Invoice::firstOrCreate(
+            ['order_id' => $order->id],
+            [
+                'invoice_number' => 'INV-' . now()->format('Ym') . '-' . $order->id,
+                'client_id'      => $order->client_id,
+                'subtotal'       => $menuAmount,
+                'tax'            => 0,
+                'discount'       => 0,
+                'total_amount'   => $totalPrice,
+                'dp_amount'      => 0,
+                'status'         => 'unpaid',
+                'due_date'       => $order->event_date ?? $order->tanggal ?? null,
+            ]
+        );
+
+        // Kalau sebelumnya sudah pernah diproses (invoice sudah ada & sudah
+        // tercatat dp/paid), jangan dobel kreditkan uang.
+        if (in_array($invoice->status, ['dp_paid', 'paid'])) {
+            return $invoice;
+        }
+
+        $creditAmount = $isHarian ? $menuAmount : round($menuAmount * 0.5, 2);
+
+        if ($creditAmount > 0) {
+            $ownerWallet = Wallet::firstOrCreate(['user_id' => $order->owner_id]);
+            $ownerWallet->credit(
+                amount: $creditAmount,
+                category: $isHarian ? 'menu_payment' : 'dp_payment',
+                orderId: $order->id,
+                description: $isHarian
+                    ? "Pembayaran lunas pesanan harian #{$order->id}"
+                    : "DP 50% pesanan insidentil #{$order->id}",
+            );
+        }
+
+        $invoice->update([
+            'dp_amount' => $dpAmount,
+            'status'    => $isHarian ? 'paid' : 'dp_paid',
+            'paid_at'   => $isHarian ? now() : $invoice->paid_at,
+        ]);
+
+        return $invoice->fresh();
+    }
+
+    /* PUT /owner/orders/{id}/reject */
+    public function reject(int $id): JsonResponse
+    {
+        $order = Order::findOrFail($id);
+
         if (!in_array($order->status, ['pending', 'confirmed'])) {
             return response()->json(['message' => 'Tidak bisa menolak pesanan ini.'], 422);
         }
 
         $order->update(['status' => 'cancelled']);
+
+        // Kalau ada invoice nyangkut & belum dibayar, tandai gagal —
+        // tidak ada uang yang masuk ke revenue.
+        $invoice = Invoice::where('order_id', $order->id)->first();
+        if ($invoice && !in_array($invoice->status, ['dp_paid', 'paid'])) {
+            $invoice->update(['status' => 'cancelled']);
+        }
+
         return response()->json(['message' => 'Pesanan ditolak.']);
     }
 
@@ -154,9 +238,8 @@ class OrderController extends Controller
 
         $ownerId = $order->owner_id;
 
-        // semua user dengan role kurir, milik owner ini, urutan tetap (id ascending)
         $kurirIds = User::where('role', 'kurir')
-            ->where('owner_id', $ownerId) // sesuaikan nama kolom ini kalau scoping kurir->owner kamu beda
+            ->where('owner_id', $ownerId)
             ->orderBy('id')
             ->pluck('id');
 
@@ -164,7 +247,6 @@ class OrderController extends Controller
             return response()->json(['message' => 'Belum ada kurir terdaftar untuk toko ini.'], 422);
         }
 
-        // round-robin: lanjut dari kurir yang TERAKHIR dapat giliran dispatch dari owner ini
         $lastDispatched = Order::where('owner_id', $ownerId)
             ->whereNotNull('kurir_id')
             ->whereNotNull('dispatched_at')
@@ -183,11 +265,11 @@ class OrderController extends Controller
             'estimasi_menit' => $request->input('estimasi', 20),
         ]);
 
-        $order->load('kurir');
+        $order->load('courier');
 
         return response()->json([
             'message' => 'Pesanan dikirim.',
-            'data'    => ['kurir' => $order->kurir->name],
+            'data'    => ['kurir' => $order->courier->name],
         ]);
     }
 }

@@ -24,7 +24,7 @@ class OrderController extends Controller
         $order = Order::with([
             'courier:id,name,phone',
             'menu:id,name',
-            'owner:id,name,latitude,longitude',
+            'owner:id,name,lat,lng',
         ])->findOrFail($id);
 
         if ($user->role === 'klien' && $order->client_id !== $user->id) {
@@ -48,8 +48,8 @@ class OrderController extends Controller
                 'menu'          => $order->menu?->name,
                 'lat_klien'     => $order->lat,
                 'lng_klien'     => $order->lng,
-                'lat_dapur' => $order->owner?->latitude,
-                'lng_dapur' => $order->owner?->longitude,
+                'lat_dapur'     => $order->owner?->lat,
+                'lng_dapur'     => $order->owner?->lng,
                 'kurir_lat'     => $order->last_kurir_lat,
                 'kurir_lng'     => $order->last_kurir_lng,
                 'last_update'   => $order->last_location_at,
@@ -113,6 +113,8 @@ class OrderController extends Controller
             $order->update([
                 'status'   => 'dispatched',
                 'kurir_id' => $courier->id,
+                'courier_fee_dispatched'    => $courierFee > 0,
+                'courier_fee_dispatched_at' => $courierFee > 0 ? now() : null,
             ]);
  
             // Kurir jadi tidak available sampai pesanan ini selesai diantar
@@ -176,54 +178,6 @@ class OrderController extends Controller
 
         return response()->json(['data' => $orders]);
     }
-
-    // GET /klien/orders
-public function klienOrders(Request $request): JsonResponse
-{
-    $klien = $request->user();
-
-    $orders = Order::with([
-        'menu:id,name,image',
-        'courier:id,name,phone',
-        'owner:id,name,latitude,longitude',
-    ])
-        ->where('client_id', $klien->id)
-        ->orderByDesc('id')
-        ->get()
-        ->map(function ($order) {
-            return [
-                'id'             => $order->id,
-                'type'           => $order->type,
-                'status'         => $order->status,
-                'customer_name'  => $order->customer_name,
-                'address'        => $order->address,
-                'order_date'     => $order->order_date,
-                'tanggal'        => $order->tanggal,
-                'jam'            => $order->jam,
-                'event_date'     => $order->event_date,
-                'quantity'       => $order->quantity,
-                'duration'       => $order->duration,
-                'total_price'    => $order->total_price,
-                'courier_fee'    => $order->courier_fee,
-                'notes'          => $order->notes,
-                // koordinat klien
-                'lat'            => $order->lat,
-                'lng'            => $order->lng,
-                // koordinat dapur dari relasi owner
-                'lat_dapur' => $order->owner?->latitude,
-                'lng_dapur' => $order->owner?->longitude,
-                // posisi kurir terakhir
-                'last_kurir_lat' => $order->last_kurir_lat,
-                'last_kurir_lng' => $order->last_kurir_lng,
-                // relasi
-                'menu'           => $order->menu,
-                'courier'        => $order->courier,
-                'owner'          => $order->owner,
-            ];
-        });
-
-    return response()->json(['data' => $orders]);
-}
 
     // ──────────────────────────────────────────────────────────
     // PUT /api/orders/{id}/approve
