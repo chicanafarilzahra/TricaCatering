@@ -22,11 +22,13 @@ use App\Http\Controllers\Api\CourierController;
 use App\Http\Controllers\Api\TrackingController;
 use App\Http\Controllers\Klien\InvoiceKlienController;
 use App\Http\Controllers\Klien\GeoController;
+use App\Http\Controllers\Kurir\KurirOrderController;
 
 use App\Http\Controllers\Api\OwnerMenuController;
 use App\Http\Controllers\Owner\MenuController as OwnerMenuController2;
 use App\Http\Controllers\Api\OwnerStockController;
 use App\Http\Controllers\Api\OwnerPaymentAccountController;
+use App\Http\Controllers\Api\PublicMenuController;
 
 use App\Http\Controllers\Owner\CourierController as OwnerCourierController;
 use App\Http\Controllers\Owner\OwnerInvoiceController;
@@ -108,6 +110,9 @@ Route::post('/register', function (Request $request) {
         'email' => 'required|email|unique:users,email',
         'password' => 'required|string|min:6|confirmed',
         'role' => 'required|in:owner,klien,kurir,operator_sppg',
+
+        'phone' => 'required_if:role,kurir|nullable|string|max:20',
+
         'nama_catering' => 'nullable|string|max:255',
         'alamat_catering' => 'nullable|string',
         'nama_sppg' => 'nullable|string|max:255',
@@ -116,7 +121,7 @@ Route::post('/register', function (Request $request) {
         'latitude' => 'nullable|numeric',
         'longitude' => 'nullable|numeric',
 
-        'owner_id' => 'required_if:role,kurir|nullable|exists:users,id',
+        'owner_id' => 'nullable|exists:users,id',
 
         'nama_tempat_kurir' => 'nullable|string|max:255',
         'alamat_tempat_kurir' => 'nullable|string',
@@ -141,15 +146,36 @@ if ($request->role === 'owner') {
     Log::info('Longitude: ' . $longitude);
 }
 
+$ownerId = null;
+
+if ($request->role === 'kurir') {
+
+    $owner = User::where('role', 'owner')
+        ->whereRaw('LOWER(TRIM(nama_catering)) = ?', [
+            strtolower(trim($request->nama_tempat_kurir))
+        ])
+        ->first();
+
+    if (!$owner) {
+        return response()->json([
+            'message' => 'Nama catering tidak ditemukan'
+        ], 422);
+    }
+
+    $ownerId = $owner->id;
+}
     $user = User::create([
         'name' => $request->name,
         'email' => $request->email,
         'password' => Hash::make($request->password),
         'role' => $request->role,
+
+        'phone' => $request->phone,
+
         'nama_catering' => $request->nama_catering,
         'alamat_catering' => $request->alamat_catering,
 
-        'owner_id' => $request->role === 'kurir' ? $request->owner_id : null,
+        'owner_id' => $ownerId,
 
         'nama_tempat_kurir' => $request->nama_tempat_kurir,
         'alamat_tempat_kurir' => $request->alamat_tempat_kurir,
@@ -328,6 +354,7 @@ Route::middleware('auth:sanctum')->group(function () {
  
     Route::post('klien/orders', [KlienController::class, 'storePesanan']);
     Route::get('klien/orders',  [KlienController::class, 'pesananSaya']); // histori — dipakai Tracking.jsx & PesananSaya.jsx
+    Route::get('/klien/orders', [OrderController::class, 'klienOrders']);
  
     Route::get('/klien/lacak/{order_id}', [TrackingController::class, 'show']);
  
@@ -352,6 +379,7 @@ Route::middleware('auth:sanctum')->group(function () {
  
     Route::get('/klien/geocode', [GeoController::class, 'geocode']);
     Route::get('/klien/route',   [GeoController::class, 'route']);
+
  
 });
 
@@ -435,6 +463,7 @@ Route::get(
     '/distribusi',
     [DistribusiController::class,'index']
 );
+Route::get('/menus-sppg', [PublicMenuController::class, 'index']);
 /*
 |--------------------------------------------------------------------------
 | SPPG
@@ -586,4 +615,15 @@ Route::get('/dashboard-stats', function () {
 
     ]);
 
+});
+
+Route::middleware(['auth:sanctum'])->prefix('kurir')->group(function () {
+    Route::get('/rute', [KurirOrderController::class, 'rute']);
+    Route::get('/orders', [KurirOrderController::class, 'orders']);
+    Route::put('/orders/{order}/update-status', [KurirOrderController::class, 'updateStatus']);
+    Route::post('/orders/{order}/location', [KurirOrderController::class, 'updateLocation']);
+    Route::put('/orders/{order}/mulai-antar', [KurirOrderController::class, 'mulaiAntar']);
+
+    Route::get('/laporan_harian',  [KurirOrderController::class, 'laporanHarian']);
+    Route::post('/laporan_harian', [KurirOrderController::class, 'simpanLaporan']);
 });

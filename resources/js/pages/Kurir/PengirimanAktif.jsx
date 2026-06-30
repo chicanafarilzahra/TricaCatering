@@ -1,10 +1,10 @@
 // resources/js/pages/Kurir/PengirimanAktif.jsx
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaTruck, FaMoneyBillWave, FaBell } from "react-icons/fa";
+import { FaTruck, FaMoneyBillWave, FaBell, FaMapMarkerAlt, FaCheckCircle } from "react-icons/fa";
 import SidebarKurir from "../../components/SidebarKurir";
 
-/* ── Design tokens — same system as Home.jsx / JadwalPengiriman.jsx ── */
 const T = {
     bg:       "#060D1F",
     surface:  "#0C1529",
@@ -16,11 +16,11 @@ const T = {
     muted:    "#3D5070",
     blue:     "#3B82F6",
     blueGlow: "rgba(59,130,246,0.15)",
+    green:    "#22C55E",
     amber:    "#F59E0B",
     font:     "'Inter', system-ui, -apple-system, sans-serif",
 };
 
-/* ── StatCard (mirrors Home.jsx) ─────────────────────────────── */
 function StatCard({ title, value, icon, accentColor, bar }) {
     return (
         <div style={{
@@ -64,21 +64,157 @@ function StatCard({ title, value, icon, accentColor, bar }) {
     );
 }
 
-/* ── Main ─────────────────────────────────────────────────── */
 export default function PengirimanAktif({ onLogout }) {
-    const [orders, setOrders] = useState([]);
-    const [user,   setUser]   = useState(null);
+    const [orders,  setOrders]  = useState([]);
+    const [user,    setUser]    = useState(null);
+    const [loading, setLoading] = useState({}); // { [orderId]: 'depart' | 'done' | null }
+    const navigate = useNavigate();
+
+    const fetchOrders = () => {
+        axios.get("/kurir/orders")
+            .then((res) => setOrders(res.data.data))
+            .catch((err) => console.error(err));
+    };
 
     useEffect(() => {
         const stored = localStorage.getItem("user");
         if (stored) setUser(JSON.parse(stored));
-        axios.get("/kurir/orders")
-            .then((res) => setOrders(res.data))
-            .catch((err) => console.error(err));
+        fetchOrders();
     }, []);
 
-    const activeOrders = orders.filter((o) => o.status === "on_delivery");
-    const totalBiaya    = activeOrders.reduce((sum, o) => sum + (o.delivery_fee || 0), 0);
+    // Tampilkan order dispatched (belum berangkat) DAN on_delivery (sedang jalan)
+    const activeOrders = orders.filter((o) =>
+        o.status === "dispatched" || o.status === "on_delivery"
+    );
+    const totalBiaya = activeOrders.reduce((sum, o) => sum + (o.courier_fee || 0), 0);
+
+    // Kurir klik "Menuju Lokasi" — dispatched → on_delivery
+    const handleMenujuLokasi = async (order) => {
+        setLoading((prev) => ({ ...prev, [order.id]: "depart" }));
+        try {
+            await axios.put(`/kurir/orders/${order.id}/mulai-antar`);
+            fetchOrders(); // refresh agar badge status berubah
+        } catch (err) {
+            console.error(err);
+            alert(err.response?.data?.message || "Gagal memulai pengiriman.");
+        } finally {
+            setLoading((prev) => ({ ...prev, [order.id]: null }));
+        }
+    };
+
+    // Kurir klik "Selesai" — on_delivery → delivered, lalu redirect laporan harian
+    const handleSelesai = async (order) => {
+        if (!window.confirm(`Tandai pengiriman ke ${order.customer_name} sebagai selesai?`)) return;
+        setLoading((prev) => ({ ...prev, [order.id]: "done" }));
+        try {
+            await axios.put(`/kurir/orders/${order.id}/update-status`, {
+                status: "delivered",
+            });
+            // Langsung ke halaman laporan harian yang sudah ada
+            navigate("/kurir/laporan");
+        } catch (err) {
+            console.error(err);
+            alert(err.response?.data?.message || "Gagal menyelesaikan pengiriman.");
+            setLoading((prev) => ({ ...prev, [order.id]: null }));
+        }
+    };
+
+    // Render tombol aksi berdasarkan status order
+    const renderAksi = (o) => {
+        const isLoadingDepart = loading[o.id] === "depart";
+        const isLoadingDone   = loading[o.id] === "done";
+
+        if (o.status === "dispatched") {
+            return (
+                <button
+                    onClick={() => handleMenujuLokasi(o)}
+                    disabled={isLoadingDepart}
+                    style={{
+                        display: "inline-flex", alignItems: "center", gap: "6px",
+                        padding: "7px 14px", borderRadius: "8px",
+                        background: isLoadingDepart
+                            ? T.muted
+                            : "linear-gradient(135deg,#3B82F6,#6366F1)",
+                        border: "none",
+                        color: "#fff", fontSize: "12px", fontWeight: 700,
+                        cursor: isLoadingDepart ? "not-allowed" : "pointer",
+                        whiteSpace: "nowrap",
+                        opacity: isLoadingDepart ? 0.7 : 1,
+                        transition: "opacity 0.15s",
+                        fontFamily: T.font,
+                    }}
+                >
+                    <FaMapMarkerAlt style={{ fontSize: "11px" }} />
+                    {isLoadingDepart ? "Memulai..." : "Menuju Lokasi"}
+                </button>
+            );
+        }
+
+        if (o.status === "on_delivery") {
+            return (
+                <button
+                    onClick={() => handleSelesai(o)}
+                    disabled={isLoadingDone}
+                    style={{
+                        display: "inline-flex", alignItems: "center", gap: "6px",
+                        padding: "7px 14px", borderRadius: "8px",
+                        background: isLoadingDone
+                            ? T.muted
+                            : "linear-gradient(135deg,#22C55E,#10B981)",
+                        border: "none",
+                        color: "#fff", fontSize: "12px", fontWeight: 700,
+                        cursor: isLoadingDone ? "not-allowed" : "pointer",
+                        whiteSpace: "nowrap",
+                        opacity: isLoadingDone ? 0.7 : 1,
+                        transition: "opacity 0.15s",
+                        fontFamily: T.font,
+                    }}
+                >
+                    <FaCheckCircle style={{ fontSize: "11px" }} />
+                    {isLoadingDone ? "Menyimpan..." : "Selesai"}
+                </button>
+            );
+        }
+
+        return null;
+    };
+
+    // Badge status per row
+    const renderStatusBadge = (status) => {
+        if (status === "dispatched") {
+            return (
+                <span style={{
+                    display: "inline-flex", alignItems: "center",
+                    padding: "4px 11px", borderRadius: "20px",
+                    fontSize: "11px", fontWeight: 700,
+                    background: "rgba(245,158,11,0.12)",
+                    border: "0.5px solid rgba(245,158,11,0.28)",
+                    color: "#FCD34D",
+                    textTransform: "uppercase", letterSpacing: ".4px",
+                }}>
+                    Siap Antar
+                </span>
+            );
+        }
+        return (
+            <span style={{
+                display: "inline-flex", alignItems: "center", gap: "5px",
+                padding: "4px 11px", borderRadius: "20px",
+                fontSize: "11px", fontWeight: 700,
+                background: "rgba(59,130,246,0.12)",
+                border: "0.5px solid rgba(59,130,246,0.28)",
+                color: "#60A5FA",
+                textTransform: "uppercase", letterSpacing: ".4px",
+            }}>
+                <span style={{
+                    width: "5px", height: "5px", borderRadius: "50%",
+                    background: "#60A5FA", display: "inline-block",
+                    animation: "pulseDot 1.6s ease-in-out infinite",
+                }} />
+                Sedang Dikirim
+            </span>
+        );
+    };
 
     return (
         <div style={{
@@ -94,7 +230,7 @@ export default function PengirimanAktif({ onLogout }) {
             {/* MAIN */}
             <div style={{ flex: 1, minWidth: 0, height: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
-                {/* ── NAVBAR ── */}
+                {/* NAVBAR */}
                 <div style={{
                     height: "64px", flexShrink: 0,
                     background: T.surface,
@@ -130,7 +266,6 @@ export default function PengirimanAktif({ onLogout }) {
                                 }} />
                             )}
                         </div>
-
                         <div style={{
                             width: "38px", height: "38px", borderRadius: "10px",
                             background: "linear-gradient(135deg,#3B82F6,#6366F1)",
@@ -142,14 +277,14 @@ export default function PengirimanAktif({ onLogout }) {
                     </div>
                 </div>
 
-                {/* ── CONTENT ── */}
+                {/* CONTENT */}
                 <div style={{
                     flex: 1, overflowY: "auto", overflowX: "hidden",
                     padding: "28px 28px 40px",
                     background: T.bg,
                 }}>
 
-                    {/* ── Hero strip ── */}
+                    {/* Hero strip */}
                     <div style={{
                         position: "relative",
                         borderRadius: "16px",
@@ -193,9 +328,8 @@ export default function PengirimanAktif({ onLogout }) {
                             </div>
                         </div>
                     </div>
-                    <style>{`@keyframes pulseDot { 0%,100% { opacity: 1; } 50% { opacity: .35; } }`}</style>
 
-                    {/* ── Stat Cards ── */}
+                    {/* Stat Cards */}
                     <div style={{ display: "flex", gap: "14px", marginBottom: "22px" }}>
                         <StatCard
                             title="Pengiriman Aktif"
@@ -213,7 +347,7 @@ export default function PengirimanAktif({ onLogout }) {
                         />
                     </div>
 
-                    {/* ── Table ── */}
+                    {/* Table */}
                     <div style={{
                         background: T.surface,
                         border: `0.5px solid ${T.border}`,
@@ -228,7 +362,7 @@ export default function PengirimanAktif({ onLogout }) {
                             <div>
                                 <div style={{ fontSize: "15px", fontWeight: 700, color: T.text }}>Daftar Pengiriman Aktif</div>
                                 <div style={{ fontSize: "12px", color: T.muted, marginTop: "2px" }}>
-                                    Pesanan yang sedang dalam perjalanan
+                                    Pesanan yang siap diantar dan sedang dalam perjalanan
                                 </div>
                             </div>
                             <div style={{
@@ -242,10 +376,10 @@ export default function PengirimanAktif({ onLogout }) {
                         </div>
 
                         <div style={{ overflowX: "auto" }}>
-                            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "760px" }}>
+                            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "820px" }}>
                                 <thead>
                                     <tr>
-                                        {["No", "Klien", "Pesanan", "Alamat", "Waktu", "Status", "Biaya"].map((h) => (
+                                        {["No", "Klien", "Pesanan", "Alamat", "Waktu", "Status", "Biaya", "Aksi"].map((h) => (
                                             <th key={h} style={{
                                                 padding: "11px 20px",
                                                 textAlign: "left",
@@ -263,7 +397,7 @@ export default function PengirimanAktif({ onLogout }) {
                                 <tbody>
                                     {activeOrders.length === 0 ? (
                                         <tr>
-                                            <td colSpan={7} style={{
+                                            <td colSpan={8} style={{
                                                 padding: "56px 20px",
                                                 textAlign: "center",
                                                 color: T.muted, fontSize: "13px",
@@ -287,24 +421,22 @@ export default function PengirimanAktif({ onLogout }) {
                                                 style={{
                                                     borderBottom: `0.5px solid rgba(255,255,255,0.03)`,
                                                     transition: "background 0.15s",
-                                                    position: "relative",
                                                 }}
                                                 onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.02)"}
                                                 onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
                                             >
-                                                {/* pulse bar — every row here is in transit */}
                                                 <td style={{ padding: "14px 20px", color: T.muted, fontSize: "13px", position: "relative" }}>
                                                     <div style={{
                                                         position: "absolute", left: 0, top: "20%", bottom: "20%",
                                                         width: "2px", borderRadius: "2px",
-                                                        background: T.blue,
-                                                        boxShadow: `0 0 8px ${T.blue}`,
+                                                        background: o.status === "on_delivery" ? T.blue : T.amber,
+                                                        boxShadow: `0 0 8px ${o.status === "on_delivery" ? T.blue : T.amber}`,
                                                     }} />
                                                     {idx + 1}
                                                 </td>
                                                 <td style={{ padding: "14px 20px" }}>
                                                     <div style={{ fontWeight: 600, color: T.text, fontSize: "13px" }}>
-                                                        {o.client?.name || "—"}
+                                                        {o.customer_name || "—"}
                                                     </div>
                                                 </td>
                                                 <td style={{ padding: "14px 20px" }}>
@@ -317,29 +449,22 @@ export default function PengirimanAktif({ onLogout }) {
                                                 </td>
                                                 <td style={{
                                                     padding: "14px 20px", fontSize: "13px", color: T.sub,
-                                                    maxWidth: "220px", overflow: "hidden",
+                                                    maxWidth: "200px", overflow: "hidden",
                                                     textOverflow: "ellipsis", whiteSpace: "nowrap",
                                                 }}>
-                                                    {o.delivery_address || "—"}
+                                                    {o.address || "—"}
                                                 </td>
                                                 <td style={{ padding: "14px 20px", fontSize: "13px", color: T.sub, whiteSpace: "nowrap" }}>
-                                                    {o.delivery_time || "—"}
+                                                    {o.jam ? String(o.jam).substring(0, 5) : "—"}
                                                 </td>
                                                 <td style={{ padding: "14px 20px" }}>
-                                                    <span style={{
-                                                        display: "inline-flex", alignItems: "center",
-                                                        padding: "4px 11px", borderRadius: "20px",
-                                                        fontSize: "11px", fontWeight: 700,
-                                                        background: "rgba(59,130,246,0.12)",
-                                                        border: "0.5px solid rgba(59,130,246,0.28)",
-                                                        color: "#60A5FA",
-                                                        textTransform: "uppercase", letterSpacing: ".4px",
-                                                    }}>
-                                                        Sedang Dikirim
-                                                    </span>
+                                                    {renderStatusBadge(o.status)}
                                                 </td>
                                                 <td style={{ padding: "14px 20px", fontSize: "13px", fontWeight: 700, color: "#34D399", whiteSpace: "nowrap" }}>
-                                                    Rp {(o.delivery_fee || 0).toLocaleString("id-ID")}
+                                                    Rp {(o.courier_fee || 0).toLocaleString("id-ID")}
+                                                </td>
+                                                <td style={{ padding: "14px 20px", whiteSpace: "nowrap" }}>
+                                                    {renderAksi(o)}
                                                 </td>
                                             </tr>
                                         ))
@@ -348,9 +473,12 @@ export default function PengirimanAktif({ onLogout }) {
                             </table>
                         </div>
                     </div>
-
                 </div>
             </div>
+
+            <style>{`
+                @keyframes pulseDot { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+            `}</style>
         </div>
     );
 }

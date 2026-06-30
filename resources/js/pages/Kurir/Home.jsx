@@ -107,15 +107,21 @@ export default function KurirHome({ onLogout }) {
     useEffect(() => {
         const stored = localStorage.getItem("user");
         if (stored) setUser(JSON.parse(stored));
-        axios.get("/kurir/orders")
-            .then((res) => setOrders(res.data))
-            .catch((err) => console.error(err));
-    }, []);
+    axios.get("/kurir/orders")
+        .then((res) => {
+            setOrders(Array.isArray(res.data.data) ? res.data.data : []);
+        })
+        .catch((err) => {
+            console.error(err);
+            setOrders([]);
+        });
+}, []);
 
     const totalPengiriman = orders.length;
     const selesai         = orders.filter((o) => o.status === "delivered").length;
     const menunggu        = orders.filter((o) => o.status === "pending").length;
-    const totalBiaya      = orders.reduce((sum, o) => sum + (o.delivery_fee || 0), 0);
+    const totalBiaya      = orders.reduce((sum, o) => sum + Number(o.courier_fee || 0),
+                            0);
 
     return (
         <div style={{
@@ -378,7 +384,7 @@ export default function KurirHome({ onLogout }) {
                                                     </td>
                                                     <td style={{ padding: "14px 20px" }}>
                                                         <div style={{ fontWeight: 600, color: T.text, fontSize: "13px" }}>
-                                                            {o.client?.name || "—"}
+                                                                {o.customer_name}
                                                         </div>
                                                     </td>
                                                     <td style={{ padding: "14px 20px" }}>
@@ -390,10 +396,10 @@ export default function KurirHome({ onLogout }) {
                                                         </div>
                                                     </td>
                                                     <td style={{ padding: "14px 20px", fontSize: "13px", fontWeight: 700, color: "#34D399", whiteSpace: "nowrap" }}>
-                                                        Rp {(o.delivery_fee || 0).toLocaleString("id-ID")}
+                                                        Rp {(o.courier_fee || 0).toLocaleString("id-ID")}
                                                     </td>
                                                     <td style={{ padding: "14px 20px", fontSize: "13px", color: T.sub, whiteSpace: "nowrap" }}>
-                                                        {o.delivery_time || "—"}
+                                                         {o.jam}
                                                     </td>
                                                     <td style={{ padding: "14px 20px" }}>
                                                         <span style={{

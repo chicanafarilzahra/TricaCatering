@@ -4,11 +4,6 @@ import axios from "axios";
 import { FaTruck, FaCheckCircle, FaClock, FaMoneyBillWave, FaBell } from "react-icons/fa";
 import SidebarKurir from "../../components/SidebarKurir";
 
-/* ── Design tokens ────────────────────────────────────────────
-   Same system as Kurir/Home.jsx — deep navy base, cool slate
-   surface, blue accent. Kept identical so both pages read as
-   one product instead of two different builds.
-─────────────────────────────────────────────────────────────── */
 const T = {
     bg:       "#060D1F",
     surface:  "#0C1529",
@@ -28,17 +23,18 @@ const T = {
 function statusMeta(status) {
     switch (status) {
         case "delivered":
-            return { label: "Selesai",   bg: "rgba(34,197,94,0.12)",  border: "rgba(34,197,94,0.25)",  color: "#4ADE80" };
+            return { label: "Selesai",    bg: "rgba(34,197,94,0.12)",  border: "rgba(34,197,94,0.25)",  color: "#4ADE80" };
         case "on_delivery":
-            return { label: "Dikirim",   bg: "rgba(59,130,246,0.12)", border: "rgba(59,130,246,0.28)", color: "#60A5FA" };
+            return { label: "Dikirim",    bg: "rgba(59,130,246,0.12)", border: "rgba(59,130,246,0.28)", color: "#60A5FA" };
         case "dispatched":
-            return { label: "Disiapkan", bg: "rgba(168,85,247,0.12)", border: "rgba(168,85,247,0.28)", color: "#C084FC" };
+            return { label: "Disiapkan",  bg: "rgba(168,85,247,0.12)", border: "rgba(168,85,247,0.28)", color: "#C084FC" };
+        case "cancelled":
+            return { label: "Dibatalkan", bg: "rgba(239,68,68,0.12)",  border: "rgba(239,68,68,0.25)",  color: "#F87171" };
         default:
-            return { label: "Menunggu",  bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.25)", color: "#FCD34D" };
+            return { label: status,       bg: "rgba(255,255,255,0.05)", border: T.border,               color: T.sub };
     }
 }
 
-/* ── StatCard (mirrors Home.jsx) ─────────────────────────────── */
 function StatCard({ title, value, icon, accentColor, bar }) {
     return (
         <div style={{
@@ -82,7 +78,6 @@ function StatCard({ title, value, icon, accentColor, bar }) {
     );
 }
 
-/* ── Main ─────────────────────────────────────────────────── */
 export default function JadwalPengiriman({ onLogout }) {
     const [orders, setOrders] = useState([]);
     const [user,   setUser]   = useState(null);
@@ -91,15 +86,14 @@ export default function JadwalPengiriman({ onLogout }) {
         const stored = localStorage.getItem("user");
         if (stored) setUser(JSON.parse(stored));
         axios.get("/kurir/orders")
-            .then((res) => setOrders(res.data))
+            .then((res) => setOrders(res.data.data))
             .catch((err) => console.error(err));
     }, []);
 
     const totalPengiriman = orders.length;
     const selesai         = orders.filter((o) => o.status === "delivered").length;
     const dikirim         = orders.filter((o) => o.status === "on_delivery").length;
-    const menunggu        = orders.filter((o) => o.status === "pending").length;
-    const totalBiaya      = orders.reduce((sum, o) => sum + (o.delivery_fee || 0), 0);
+    const totalBiaya      = orders.reduce((sum, o) => sum + (o.courier_fee || 0), 0);
 
     return (
         <div style={{
@@ -115,7 +109,7 @@ export default function JadwalPengiriman({ onLogout }) {
             {/* MAIN */}
             <div style={{ flex: 1, minWidth: 0, height: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
-                {/* ── NAVBAR ── */}
+                {/* NAVBAR */}
                 <div style={{
                     height: "64px", flexShrink: 0,
                     background: T.surface,
@@ -140,18 +134,9 @@ export default function JadwalPengiriman({ onLogout }) {
                             background: T.card, border: `0.5px solid ${T.borderMd}`,
                             display: "flex", alignItems: "center", justifyContent: "center",
                             cursor: "pointer", color: T.sub, fontSize: "16px",
-                            position: "relative",
                         }}>
                             <FaBell />
-                            {menunggu > 0 && (
-                                <span style={{
-                                    position: "absolute", top: "7px", right: "7px",
-                                    width: "7px", height: "7px", borderRadius: "50%",
-                                    background: T.amber, boxShadow: `0 0 6px ${T.amber}`,
-                                }} />
-                            )}
                         </div>
-
                         <div style={{
                             width: "38px", height: "38px", borderRadius: "10px",
                             background: "linear-gradient(135deg,#3B82F6,#6366F1)",
@@ -163,14 +148,14 @@ export default function JadwalPengiriman({ onLogout }) {
                     </div>
                 </div>
 
-                {/* ── CONTENT ── */}
+                {/* CONTENT */}
                 <div style={{
                     flex: 1, overflowY: "auto", overflowX: "hidden",
                     padding: "28px 28px 40px",
                     background: T.bg,
                 }}>
 
-                    {/* ── Hero strip ── */}
+                    {/* Hero strip */}
                     <div style={{
                         position: "relative",
                         borderRadius: "16px",
@@ -206,44 +191,20 @@ export default function JadwalPengiriman({ onLogout }) {
                                 }
                             </div>
                             <div style={{ marginTop: "6px", fontSize: "13px", color: T.sub }}>
-                                {totalPengiriman} total pesanan · {selesai} selesai · {menunggu} menunggu konfirmasi
+                                {totalPengiriman} total pesanan · {selesai} selesai
                             </div>
                         </div>
                     </div>
 
-                    {/* ── 4 Stat Cards ── */}
+                    {/* Stat Cards */}
                     <div style={{ display: "flex", gap: "14px", marginBottom: "22px" }}>
-                        <StatCard
-                            title="Total Pengiriman"
-                            value={totalPengiriman}
-                            icon={<FaTruck />}
-                            accentColor="#3B82F6"
-                            bar="linear-gradient(90deg,#3B82F6,#6366F1)"
-                        />
-                        <StatCard
-                            title="Sedang Dikirim"
-                            value={dikirim}
-                            icon={<FaClock />}
-                            accentColor="#F59E0B"
-                            bar="linear-gradient(90deg,#F59E0B,#FBBF24)"
-                        />
-                        <StatCard
-                            title="Selesai"
-                            value={selesai}
-                            icon={<FaCheckCircle />}
-                            accentColor="#22C55E"
-                            bar="linear-gradient(90deg,#22C55E,#10B981)"
-                        />
-                        <StatCard
-                            title="Total Biaya"
-                            value={`Rp ${totalBiaya.toLocaleString("id-ID")}`}
-                            icon={<FaMoneyBillWave />}
-                            accentColor="#A855F7"
-                            bar="linear-gradient(90deg,#A855F7,#6366F1)"
-                        />
+                        <StatCard title="Total Pengiriman" value={totalPengiriman} icon={<FaTruck />}         accentColor="#3B82F6" bar="linear-gradient(90deg,#3B82F6,#6366F1)" />
+                        <StatCard title="Sedang Dikirim"   value={dikirim}         icon={<FaClock />}         accentColor="#F59E0B" bar="linear-gradient(90deg,#F59E0B,#FBBF24)" />
+                        <StatCard title="Selesai"           value={selesai}         icon={<FaCheckCircle />}   accentColor="#22C55E" bar="linear-gradient(90deg,#22C55E,#10B981)" />
+                        <StatCard title="Total Biaya"       value={`Rp ${totalBiaya.toLocaleString("id-ID")}`} icon={<FaMoneyBillWave />} accentColor="#A855F7" bar="linear-gradient(90deg,#A855F7,#6366F1)" />
                     </div>
 
-                    {/* ── Table ── */}
+                    {/* Table */}
                     <div style={{
                         background: T.surface,
                         border: `0.5px solid ${T.border}`,
@@ -272,10 +233,10 @@ export default function JadwalPengiriman({ onLogout }) {
                         </div>
 
                         <div style={{ overflowX: "auto" }}>
-                            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "760px" }}>
+                            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "700px" }}>
                                 <thead>
                                     <tr>
-                                        {["No", "Klien", "Pesanan", "Biaya", "Waktu", "Status", "Aksi"].map((h) => (
+                                        {["No", "Klien", "Pesanan", "Biaya", "Waktu", "Status"].map((h) => (
                                             <th key={h} style={{
                                                 padding: "11px 20px",
                                                 textAlign: "left",
@@ -293,7 +254,7 @@ export default function JadwalPengiriman({ onLogout }) {
                                 <tbody>
                                     {orders.length === 0 ? (
                                         <tr>
-                                            <td colSpan={7} style={{
+                                            <td colSpan={6} style={{
                                                 padding: "56px 20px",
                                                 textAlign: "center",
                                                 color: T.muted, fontSize: "13px",
@@ -320,7 +281,6 @@ export default function JadwalPengiriman({ onLogout }) {
                                                     style={{
                                                         borderBottom: `0.5px solid rgba(255,255,255,0.03)`,
                                                         transition: "background 0.15s",
-                                                        position: "relative",
                                                     }}
                                                     onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.02)"}
                                                     onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
@@ -330,15 +290,14 @@ export default function JadwalPengiriman({ onLogout }) {
                                                             <div style={{
                                                                 position: "absolute", left: 0, top: "20%", bottom: "20%",
                                                                 width: "2px", borderRadius: "2px",
-                                                                background: T.blue,
-                                                                boxShadow: `0 0 8px ${T.blue}`,
+                                                                background: T.blue, boxShadow: `0 0 8px ${T.blue}`,
                                                             }} />
                                                         )}
                                                         {idx + 1}
                                                     </td>
                                                     <td style={{ padding: "14px 20px" }}>
                                                         <div style={{ fontWeight: 600, color: T.text, fontSize: "13px" }}>
-                                                            {o.client?.name || "—"}
+                                                            {o.customer_name || "—"}
                                                         </div>
                                                     </td>
                                                     <td style={{ padding: "14px 20px" }}>
@@ -350,10 +309,10 @@ export default function JadwalPengiriman({ onLogout }) {
                                                         </div>
                                                     </td>
                                                     <td style={{ padding: "14px 20px", fontSize: "13px", fontWeight: 700, color: "#34D399", whiteSpace: "nowrap" }}>
-                                                        Rp {(o.delivery_fee || 0).toLocaleString("id-ID")}
+                                                        Rp {(o.courier_fee || 0).toLocaleString("id-ID")}
                                                     </td>
                                                     <td style={{ padding: "14px 20px", fontSize: "13px", color: T.sub, whiteSpace: "nowrap" }}>
-                                                        {o.delivery_time || "—"}
+                                                        {o.jam ? String(o.jam).substring(0, 5) : "—"}
                                                     </td>
                                                     <td style={{ padding: "14px 20px" }}>
                                                         <span style={{
@@ -368,26 +327,6 @@ export default function JadwalPengiriman({ onLogout }) {
                                                             {sm.label}
                                                         </span>
                                                     </td>
-                                                    <td style={{ padding: "14px 20px", whiteSpace: "nowrap" }}>
-                                                        {o.status === "pending" && (
-                                                            <button style={{
-                                                                border: "0.5px solid rgba(59,130,246,0.35)",
-                                                                padding: "7px 14px",
-                                                                borderRadius: "8px",
-                                                                background: T.blueGlow,
-                                                                color: "#60A5FA",
-                                                                fontSize: "12px",
-                                                                fontWeight: 700,
-                                                                cursor: "pointer",
-                                                                transition: "background 0.15s",
-                                                            }}
-                                                            onMouseEnter={(e) => e.currentTarget.style.background = "rgba(59,130,246,0.28)"}
-                                                            onMouseLeave={(e) => e.currentTarget.style.background = T.blueGlow}
-                                                            >
-                                                                Konfirmasi
-                                                            </button>
-                                                        )}
-                                                    </td>
                                                 </tr>
                                             );
                                         })
@@ -396,7 +335,6 @@ export default function JadwalPengiriman({ onLogout }) {
                             </table>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>

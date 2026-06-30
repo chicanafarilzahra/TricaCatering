@@ -11,17 +11,19 @@ return new class extends Migration
      */
    public function up()
 {
-    Schema::create('distribusis', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('sekolah_id')->constrained('sekolahs');
-        $table->foreignId('menu_id')->nullable()->constrained('menus');
-        $table->date('tanggal');
-        $table->integer('jumlah_porsi');
-        $table->time('jam_distribusi');
-        $table->enum('status', ['Diproses', 'Disiapkan', 'Dikirim', 'Selesai'])
-              ->default('Diproses');
-        $table->timestamps();
-    });
+    if (!Schema::hasTable('distribusis')) {
+        Schema::create('distribusis', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('sekolah_id')->constrained('sekolahs');
+            $table->foreignId('menu_id')->nullable()->constrained('menus');
+            $table->date('tanggal');
+            $table->integer('jumlah_porsi');
+            $table->time('jam_distribusi');
+            $table->enum('status', ['Diproses', 'Disiapkan', 'Dikirim', 'Selesai'])
+                  ->default('Diproses');
+            $table->timestamps();
+        });
+    }
 }
 
 public function down(): void

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Owner;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\User;
 use App\Models\Stock;
 use App\Models\MenuIngredient;
 use App\Models\DeliverySchedule;
@@ -17,7 +18,7 @@ class OrderController extends Controller
     /* GET /owner/orders */
     public function index(): JsonResponse
     {
-        $orders = Order::with(['menu', 'kurir'])->latest()->get();
+        $orders = Order::with(['menu', 'kurir', 'owner'])->latest()->get();
         return response()->json(['data' => $orders]);
     }
 
@@ -43,9 +44,9 @@ class OrderController extends Controller
                 $ingredients = MenuIngredient::where('menu_id', $menu->id)->with('stock')->get();
 
                 foreach ($ingredients as $ingredient) {
-                    $stock       = $ingredient->stock;
-                    $needed      = $ingredient->qty_per_portion * $quantity;
-                    $currentQty  = (float) $stock->qty;
+                    $stock      = $ingredient->stock;
+                    $needed     = $ingredient->qty_per_portion * $quantity;
+                    $currentQty = (float) $stock->qty;
 
                     if ($currentQty < $needed) {
                         DB::rollBack();
@@ -53,8 +54,8 @@ class OrderController extends Controller
                             'message' => "Stok '{$stock->name}' tidak cukup. " .
                                          "Dibutuhkan: {$needed} {$stock->unit}, " .
                                          "tersedia: {$currentQty} {$stock->unit}.",
-                            'stock'   => $stock->name,
-                            'needed'  => $needed,
+                            'stock'     => $stock->name,
+                            'needed'    => $needed,
                             'available' => $currentQty,
                         ], 422);
                     }
@@ -129,29 +130,64 @@ class OrderController extends Controller
         return response()->json(['message' => 'Pesanan ditolak.']);
     }
 
-    /* PUT /owner/orders/{id}/process */
+    /* PUT /owner/orders/{id}/process — confirmed -> preparing, TANPA pilih kurir manual */
     public function process(Request $request, Order $order): JsonResponse
     {
-        $request->validate(['kurir_id' => 'required|exists:kurirs,id']);
+        if ($order->status !== 'confirmed') {
+            return response()->json(['message' => 'Pesanan tidak dalam status confirmed.'], 422);
+        }
 
-        $order->update([
-            'status'   => 'preparing',
-            'kurir_id' => $request->kurir_id,
+        $order->update(['status' => 'preparing']);
+
+        return response()->json([
+            'message' => 'Pesanan sedang diproses.',
+            'order'   => $order->fresh(['menu', 'owner']),
         ]);
-
-        return response()->json(['message' => 'Pesanan sedang diproses.', 'order' => $order->fresh(['menu', 'kurir'])]);
     }
 
-    /* PUT /owner/orders/{id}/send */
-    public function send(Request $request, Order $order): JsonResponse
+    /* PUT /owner/orders/{id}/dispatch — preparing -> dispatched, KURIR DIPILIH OTOMATIS (round-robin) */
+    public function dispatch(Request $request, Order $order): JsonResponse
     {
-        $estimasi = $request->input('estimasi', 20);
+        if ($order->status !== 'preparing') {
+            return response()->json(['message' => 'Pesanan belum siap dikirim.'], 422);
+        }
+
+        $ownerId = $order->owner_id;
+
+        // semua user dengan role kurir, milik owner ini, urutan tetap (id ascending)
+        $kurirIds = User::where('role', 'kurir')
+            ->where('owner_id', $ownerId) // sesuaikan nama kolom ini kalau scoping kurir->owner kamu beda
+            ->orderBy('id')
+            ->pluck('id');
+
+        if ($kurirIds->isEmpty()) {
+            return response()->json(['message' => 'Belum ada kurir terdaftar untuk toko ini.'], 422);
+        }
+
+        // round-robin: lanjut dari kurir yang TERAKHIR dapat giliran dispatch dari owner ini
+        $lastDispatched = Order::where('owner_id', $ownerId)
+            ->whereNotNull('kurir_id')
+            ->whereNotNull('dispatched_at')
+            ->orderByDesc('dispatched_at')
+            ->first();
+
+        $nextIndex = 0;
+        if ($lastDispatched && $kurirIds->contains($lastDispatched->kurir_id)) {
+            $nextIndex = ($kurirIds->search($lastDispatched->kurir_id) + 1) % $kurirIds->count();
+        }
 
         $order->update([
+            'kurir_id'       => $kurirIds[$nextIndex],
             'status'         => 'dispatched',
-            'estimasi_menit' => $estimasi,
+            'dispatched_at'  => now(),
+            'estimasi_menit' => $request->input('estimasi', 20),
         ]);
 
-        return response()->json(['message' => 'Pesanan dikirim.', 'order' => $order->fresh(['menu', 'kurir'])]);
+        $order->load('kurir');
+
+        return response()->json([
+            'message' => 'Pesanan dikirim.',
+            'data'    => ['kurir' => $order->kurir->name],
+        ]);
     }
 }

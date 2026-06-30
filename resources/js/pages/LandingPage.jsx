@@ -12,6 +12,7 @@ import {
   FaBoxes,
   FaArrowRight,
   FaCheckCircle,
+  FaSchool,
 } from "react-icons/fa";
 
 export default function LandingPage() {
@@ -25,7 +26,7 @@ export default function LandingPage() {
   });
 
   useEffect(() => {
-    fetch("/api/menus")
+    fetch("/api/menus-sppg")
       .then((res) => res.json())
       .then((data) => {
         setMenus(Array.isArray(data) ? data : data.data ?? []);
@@ -415,10 +416,10 @@ export default function LandingPage() {
                 color: "#f1f5f9",
               }}
             >
-              Pilihan Menu Catering
+              Menu SPPG Hari Ini
             </h2>
             <p style={{ color: "#475569", marginTop: "10px", fontSize: "15px" }}>
-              Menu terupdate otomatis saat owner menambahkan menu baru.
+              Menu otomatis berganti setiap hari setelah SPPG mengunggah menu terbaru.
             </p>
           </div>
 
@@ -439,12 +440,12 @@ export default function LandingPage() {
           </Link>
         </div>
 
-        {/* Grid 3 columns, 2 rows = 6 items */}
+        {/* Grid — 1 card per SPPG, menu terbaru */}
         <div className="menu-grid-3">
           {loadingMenu ? (
             <p style={{ color: "#475569" }}>Loading menu...</p>
           ) : menus.length > 0 ? (
-            menus.slice(0, 6).map((menu) => (
+            menus.map((menu) => (
               <div
                 key={menu.id}
                 className="glass card-hover"
@@ -458,76 +459,180 @@ export default function LandingPage() {
                 {/* Image */}
                 <div style={{ position: "relative", height: "200px", overflow: "hidden" }}>
                   <img
-                    src={
-                      menu.image
-                        ? `/storage/${menu.image}`
-                        : "https://via.placeholder.com/500x300?text=Menu+Catering"
-                    }
-                    alt={menu.name || "Menu Catering"}
+                    src={menu.image ?? "https://via.placeholder.com/500x300?text=Menu+SPPG"}
+                    alt={menu.name || "Menu SPPG"}
                     style={{
                       width: "100%",
                       height: "100%",
                       objectFit: "cover",
                       transition: "transform 0.4s ease",
                     }}
-                    onMouseEnter={e => e.currentTarget.style.transform = "scale(1.06)"}
-                    onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+                    onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.06)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
                   />
+                  {/* Badge terbaru */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "12px",
+                      left: "12px",
+                      background: "rgba(37,99,235,0.82)",
+                      backdropFilter: "blur(8px)",
+                      color: "white",
+                      fontSize: "11px",
+                      fontWeight: "700",
+                      padding: "4px 10px",
+                      borderRadius: "999px",
+                      letterSpacing: "0.3px",
+                    }}
+                  >
+                    Menu Terbaru
+                  </div>
                 </div>
 
                 {/* Content */}
                 <div
                   style={{
-                    padding: "20px 22px 22px",
+                    padding: "20px 22px 24px",
                     display: "flex",
                     flexDirection: "column",
                     flex: 1,
+                    gap: "12px",
                   }}
                 >
+                  {/* ① Tanggal */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <div
+                      style={{
+                        width: "6px",
+                        height: "6px",
+                        borderRadius: "50%",
+                        background: "#3b82f6",
+                        flexShrink: 0,
+                      }}
+                    />
+                    <p
+                      style={{
+                        fontSize: "12px",
+                        fontWeight: "600",
+                        color: "#3b82f6",
+                        letterSpacing: "0.3px",
+                        margin: 0,
+                      }}
+                    >
+                      {menu.tanggal
+                        ? new Date(menu.tanggal).toLocaleDateString("id-ID", {
+                            weekday: "long",
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          })
+                        : "Tanggal belum tersedia"}
+                    </p>
+                  </div>
+
+                  {/* ② Nama Menu */}
                   <h3
                     style={{
                       fontSize: "17px",
                       fontWeight: "700",
                       color: "#f1f5f9",
-                      marginBottom: "8px",
                       lineHeight: "1.35",
+                      margin: 0,
                     }}
                   >
                     {menu.name || "Menu Catering"}
                   </h3>
 
-                  <p
+                  {/* Divider tipis */}
+                  <div
                     style={{
-                      color: "#64748b",
-                      fontSize: "13px",
-                      lineHeight: "1.7",
-                      flex: 1,
-                      marginBottom: "18px",
-                      overflow: "hidden",
-                      display: "-webkit-box",
-                      WebkitLineClamp: 3,
-                      WebkitBoxOrient: "vertical",
+                      height: "1px",
+                      background: "rgba(255,255,255,0.06)",
                     }}
-                  >
-                    {menu.description || "Menu catering tersedia"}
-                  </p>
+                  />
 
-                  <Link
-                    to="/login"
-                    style={{
-                      display: "block",
-                      textAlign: "center",
-                      padding: "11px",
-                      borderRadius: "10px",
-                      background: "linear-gradient(135deg,#2563eb,#3b82f6)",
-                      color: "white",
-                      textDecoration: "none",
-                      fontWeight: "700",
-                      fontSize: "13px",
-                    }}
-                  >
-                    Pesan Sekarang
-                  </Link>
+                  {/* ③ Nama SPPG */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <FaClipboardList size={12} color="#60a5fa" style={{ flexShrink: 0 }} />
+                    <div>
+                      <p
+                        style={{
+                          fontSize: "10px",
+                          fontWeight: "600",
+                          color: "#475569",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.8px",
+                          margin: "0 0 2px",
+                        }}
+                      >
+                        SPPG
+                      </p>
+                      <p
+                        style={{
+                          fontSize: "13px",
+                          fontWeight: "600",
+                          color: "#cbd5e1",
+                          margin: 0,
+                        }}
+                      >
+                        {menu.sppg_name || "SPPG belum tersedia"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* ④ Sekolah */}
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
+                    <FaSchool size={12} color="#60a5fa" style={{ marginTop: "14px", flexShrink: 0 }} />
+                    <div style={{ flex: 1 }}>
+                      <p
+                        style={{
+                          fontSize: "10px",
+                          fontWeight: "600",
+                          color: "#475569",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.8px",
+                          margin: "0 0 6px",
+                        }}
+                      >
+                        Sekolah
+                      </p>
+                      {Array.isArray(menu.sekolah) && menu.sekolah.length > 0 ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                          {menu.sekolah.map((s, idx) => (
+                            <div
+                              key={idx}
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "6px",
+                                fontSize: "12px",
+                                color: "#94a3b8",
+                                lineHeight: "1.5",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  width: "4px",
+                                  height: "4px",
+                                  borderRadius: "50%",
+                                  background: "#334155",
+                                  flexShrink: 0,
+                                }}
+                              />
+                              {s}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p style={{ fontSize: "12px", color: "#475569", margin: 0 }}>
+                          {typeof menu.sekolah === "string"
+                            ? menu.sekolah
+                            : "Belum ada data sekolah"}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             ))

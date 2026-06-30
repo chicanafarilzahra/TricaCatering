@@ -33,13 +33,14 @@ export default function HomeKlien() {
         }
 
         axios
-            .get("/klien/pesanan")
-            .then((res) => {
-                setOrders(res.data || []);
-            })
-            .catch((err) => {
-                console.error(err);
-            });
+    .get("/klien/pesanan")
+    .then((res) => {
+        console.log(res.data);
+        setOrders(res.data.data || []);
+    })
+    .catch((err) => {
+        console.error(err);
+    });
     }, []);
 
     const activeOrders = orders.filter((item) =>

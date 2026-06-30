@@ -58,7 +58,7 @@ class Order extends Model
     const STATUS_CANCELLED   = 'cancelled';
 
     // Owner catering (users dengan role owner)
-    public function owner(): BelongsTo
+    public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id');
     }
