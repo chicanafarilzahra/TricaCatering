@@ -2,15 +2,11 @@
 
 import {
     LayoutDashboard,
-    ShoppingCart,
     UtensilsCrossed,
-    Package,
     Users,
     Boxes,
     Truck,
-    Factory,
     ClipboardList,
-    FileBarChart2,
     LogOut,
     ChevronRight,
 } from "lucide-react";
@@ -69,7 +65,6 @@ export default function Sidebar() {
             title: "MAIN MENU",
             items: [
                 { label: "Dashboard",     path: "/dashboard",           icon: <LayoutDashboard size={17} /> },
-                { label: "Orders",        path: "/orders",              icon: <ShoppingCart size={17} /> },
             ],
         },
         {
@@ -77,7 +72,6 @@ export default function Sidebar() {
             items: [
                 { label: "Produk Catering", path: "/menus",       icon: <UtensilsCrossed size={17} /> },
                 { label: "Inventori",       path: "/stocks",      icon: <Boxes size={17} /> },
-                { label: "Produksi",        path: "/productions", icon: <Factory size={17} /> },
                 { label: "Pengiriman",      path: "/deliveries",  icon: <Truck size={17} /> },
             ],
         },
@@ -86,12 +80,6 @@ export default function Sidebar() {
             items: [
                 { label: "SPPG",          path: "/admin/sppg",          icon: <ClipboardList size={17} /> },
                 { label: "Validasi User", path: "/admin-validasi-user", icon: <Users size={17} /> },
-            ],
-        },
-        {
-            title: "LAPORAN",
-            items: [
-                { label: "Reports", path: "/reports", icon: <FileBarChart2 size={17} /> },
             ],
         },
     ];

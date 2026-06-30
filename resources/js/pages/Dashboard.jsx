@@ -1,16 +1,16 @@
 // resources/js/pages/Dashboard.jsx
 
 import {
-    ShoppingCart,
     Users,
     Truck,
-    TrendingUp,
     Clock3,
     Activity,
-    ArrowUpRight,
     Store,
     School,
     ChevronRight,
+    CheckCircle2,
+    UserCheck,
+    MapPin,
 } from "lucide-react";
 
 import { useNavigate } from "react-router-dom";
@@ -22,11 +22,6 @@ import AdminLayout from "../layouts/AdminLayout";
 export default function Dashboard() {
     const navigate = useNavigate();
 
-    const orders = [];
-    const revenue = 0;
-    const pendingOrders = 0;
-    const recentOrders = [];
-
     const [dashboardData, setDashboardData] = useState({
         customers: 0,
         kurirs:    0,
@@ -34,14 +29,54 @@ export default function Dashboard() {
         sppgs:     0,
     });
 
+    const [sppgList, setSppgList] = useState([]);
+    const [pendingUsers, setPendingUsers] = useState(0);
+    const [verifiedUsers, setVerifiedUsers] = useState(0);
+
     useEffect(() => {
         fetchStats();
+        fetchSppgSummary();
+        fetchValidationSummary();
     }, []);
 
     const fetchStats = async () => {
         try {
             const res = await axios.get("http://localhost:8000/api/dashboard-stats");
             setDashboardData(res.data);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const fetchSppgSummary = async () => {
+        try {
+            const token = localStorage.getItem("auth_token");
+            const res = await axios.get("http://localhost:8000/api/sppg/distribusi", {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: "application/json",
+                },
+            });
+            setSppgList(Array.isArray(res.data) ? res.data : (res.data?.data || []));
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const fetchValidationSummary = async () => {
+        try {
+            const res = await axios.get("/users");
+
+            const VALIDATABLE_ROLES = ["owner", "kurir", "operator_sppg"];
+            const relevantUsers = res.data.filter((u) =>
+                VALIDATABLE_ROLES.includes(u.role)
+            );
+
+            const pending  = relevantUsers.filter((u) => u.status === "pending").length;
+            const approved = relevantUsers.filter((u) => u.status === "approved").length;
+
+            setPendingUsers(pending);
+            setVerifiedUsers(approved);
         } catch (err) {
             console.error(err);
         }
@@ -97,8 +132,8 @@ export default function Dashboard() {
                 .dash-root * { font-family: 'Inter', system-ui, sans-serif; box-sizing: border-box; }
                 .stat-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
                 .stat-card:hover { transform: translateY(-3px); box-shadow: 0 16px 48px rgba(0,0,0,0.35); }
-                .order-row { transition: background 0.15s ease; }
-                .order-row:hover { background: rgba(255,255,255,0.04) !important; }
+                .sppg-row { transition: background 0.15s ease; }
+                .sppg-row:hover { background: rgba(255,255,255,0.04) !important; }
                 .view-all-btn { transition: background 0.15s ease, color 0.15s ease; }
                 .view-all-btn:hover { background: rgba(255,255,255,0.08) !important; }
                 .pulse-dot { animation: pulse 2s ease-in-out infinite; }
@@ -177,8 +212,8 @@ export default function Dashboard() {
                                 margin: "16px 0 0", color: "#64748b",
                                 fontSize: "15px", lineHeight: "1.8", maxWidth: "560px",
                             }}>
-                                Kelola order, customer, pengiriman, produksi,
-                                hingga laporan dalam satu sistem admin yang clean dan profesional.
+                                Kelola SPPG, customer, pengiriman, inventori,
+                                hingga validasi user dalam satu sistem admin yang clean dan profesional.
                             </p>
                         </div>
 
@@ -269,7 +304,7 @@ export default function Dashboard() {
                 <div className="bottom-grid" style={{
                     display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: "16px",
                 }}>
-                    {/* Recent Orders */}
+                    {/* SPPG Summary */}
                     <div style={{
                         background: "linear-gradient(160deg, #0f172a 0%, #0d1117 100%)",
                         border: "1px solid rgba(255,255,255,0.07)",
@@ -281,15 +316,15 @@ export default function Dashboard() {
                         }}>
                             <div>
                                 <h2 style={{ margin: 0, color: "white", fontSize: "18px", fontWeight: "700", letterSpacing: "-0.3px" }}>
-                                    Recent Orders
+                                    Ringkasan SPPG
                                 </h2>
                                 <p style={{ margin: "4px 0 0", color: "#475569", fontSize: "13px" }}>
-                                    Pesanan terbaru masuk
+                                    Daftar SPPG terdaftar dalam sistem
                                 </p>
                             </div>
                             <button
                                 className="view-all-btn"
-                                onClick={() => navigate("/orders")}
+                                onClick={() => navigate("/admin/sppg")}
                                 style={{
                                     height: "38px", padding: "0 16px",
                                     border: "1px solid rgba(255,255,255,0.08)",
@@ -303,10 +338,20 @@ export default function Dashboard() {
                             </button>
                         </div>
 
-                        {recentOrders.length > 0 ? (
+                        {sppgList.length > 0 ? (
                             <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                                {recentOrders.map((order, index) => (
-                                    <div key={index} className="order-row" style={{
+                                {sppgList.slice(0, 5).map((item, index) => {
+                                    const statusStyle = (() => {
+                                        switch (item.status) {
+                                            case "Diproses":  return { background: "rgba(148,163,184,0.15)", color: "#94a3b8" };
+                                            case "Disiapkan": return { background: "rgba(59,130,246,0.15)",  color: "#60a5fa" };
+                                            case "Dikirim":   return { background: "rgba(245,158,11,0.15)",  color: "#fbbf24" };
+                                            case "Selesai":   return { background: "rgba(16,185,129,0.15)", color: "#34d399" };
+                                            default:          return { background: "rgba(148,163,184,0.15)", color: "#cbd5e1" };
+                                        }
+                                    })();
+                                    return (
+                                    <div key={index} className="sppg-row" style={{
                                         padding: "14px 16px", borderRadius: "12px",
                                         display: "flex", justifyContent: "space-between",
                                         alignItems: "center", cursor: "pointer",
@@ -314,28 +359,34 @@ export default function Dashboard() {
                                         <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
                                             <div style={{
                                                 width: "38px", height: "38px", borderRadius: "12px",
-                                                background: "rgba(59,130,246,0.12)",
-                                                border: "1px solid rgba(59,130,246,0.2)",
-                                                color: "#60a5fa",
+                                                background: "rgba(245,158,11,0.12)",
+                                                border: "1px solid rgba(245,158,11,0.2)",
+                                                color: "#fbbf24",
                                                 display: "flex", alignItems: "center", justifyContent: "center",
-                                                fontSize: "14px", fontWeight: "700", flexShrink: 0,
+                                                flexShrink: 0,
                                             }}>
-                                                {(order.customer_name || "?")[0].toUpperCase()}
+                                                <School size={17} />
                                             </div>
                                             <div>
                                                 <div style={{ color: "white", fontWeight: "600", fontSize: "14px", marginBottom: "2px" }}>
-                                                    {order.customer_name}
+                                                    {item.sekolah?.nama_sekolah || "-"}
                                                 </div>
-                                                <div style={{ color: "#475569", fontSize: "12px" }}>
-                                                    {order.package_name}
+                                                <div style={{ color: "#475569", fontSize: "12px", display: "flex", alignItems: "center", gap: "4px" }}>
+                                                    <MapPin size={11} />
+                                                    {item.menu?.nama_menu || "Menu belum diisi"}
                                                 </div>
                                             </div>
                                         </div>
-                                        <div style={{ color: "white", fontWeight: "700", fontSize: "14px" }}>
-                                            Rp {Number(order.total).toLocaleString("id-ID")}
+                                        <div style={{
+                                            padding: "5px 12px", borderRadius: "999px",
+                                            fontSize: "11px", fontWeight: "700",
+                                            ...statusStyle,
+                                        }}>
+                                            {item.status || "-"}
                                         </div>
                                     </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         ) : (
                             <div style={{
@@ -348,10 +399,10 @@ export default function Dashboard() {
                                     display: "flex", alignItems: "center", justifyContent: "center",
                                     margin: "0 auto 16px",
                                 }}>
-                                    <ShoppingCart size={20} color="#334155" />
+                                    <School size={20} color="#334155" />
                                 </div>
                                 <div style={{ color: "#475569", fontSize: "14px" }}>
-                                    Belum ada pesanan masuk
+                                    Belum ada data SPPG
                                 </div>
                             </div>
                         )}
@@ -359,51 +410,53 @@ export default function Dashboard() {
 
                     {/* Right column */}
                     <div style={{ display: "grid", gridTemplateRows: "1fr 1fr", gap: "16px" }}>
-                        {/* Revenue */}
+                        {/* Verified Users */}
                         <div style={{
                             background: "linear-gradient(160deg, #0f172a 0%, #0d1117 100%)",
-                            border: "1px solid rgba(59,130,246,0.15)",
+                            border: "1px solid rgba(34,197,94,0.15)",
                             borderRadius: "20px", padding: "26px",
                             position: "relative", overflow: "hidden",
                         }}>
                             <div style={{
                                 position: "absolute", top: 0, left: "26px", right: "26px",
-                                height: "2px", background: "linear-gradient(90deg, #3b82f6, transparent)",
+                                height: "2px", background: "linear-gradient(90deg, #22c55e, transparent)",
                             }} />
                             <div style={{
                                 position: "absolute", bottom: "-30px", right: "-30px",
                                 width: "120px", height: "120px", borderRadius: "999px",
-                                background: "rgba(59,130,246,0.08)", filter: "blur(30px)", pointerEvents: "none",
+                                background: "rgba(34,197,94,0.08)", filter: "blur(30px)", pointerEvents: "none",
                             }} />
                             <div style={{ position: "relative", zIndex: 2 }}>
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
                                     <div style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "0.08em", textTransform: "uppercase", color: "#475569" }}>
-                                        Total Revenue
+                                        User Tervalidasi
                                     </div>
                                     <div style={{
                                         width: "38px", height: "38px", borderRadius: "12px",
-                                        background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.2)",
+                                        background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)",
                                         display: "flex", alignItems: "center", justifyContent: "center",
                                     }}>
-                                        <TrendingUp size={18} color="#60a5fa" />
+                                        <CheckCircle2 size={18} color="#22c55e" />
                                     </div>
                                 </div>
-                                <div style={{ color: "white", fontSize: "26px", fontWeight: "800", letterSpacing: "-0.8px", lineHeight: 1.2 }}>
-                                    Rp {revenue.toLocaleString("id-ID")}
+                                <div style={{ color: "white", fontSize: "48px", fontWeight: "800", letterSpacing: "-2px", lineHeight: 1 }}>
+                                    {verifiedUsers}
                                 </div>
-                                <div style={{ marginTop: "12px", display: "inline-flex", alignItems: "center", gap: "5px", color: "#22c55e", fontSize: "12px", fontWeight: "600" }}>
-                                    <ArrowUpRight size={13} /> Total keseluruhan
+                                <div style={{ marginTop: "12px", color: "#475569", fontSize: "12px" }}>
+                                    Akun sudah diverifikasi admin
                                 </div>
                             </div>
                         </div>
 
-                        {/* Pending Orders */}
-                        <div style={{
-                            background: "linear-gradient(160deg, #0f172a 0%, #0d1117 100%)",
-                            border: "1px solid rgba(245,158,11,0.15)",
-                            borderRadius: "20px", padding: "26px",
-                            position: "relative", overflow: "hidden",
-                        }}>
+                        {/* Pending Validation */}
+                        <div
+                            onClick={() => navigate("/admin-validasi-user")}
+                            style={{
+                                background: "linear-gradient(160deg, #0f172a 0%, #0d1117 100%)",
+                                border: "1px solid rgba(245,158,11,0.15)",
+                                borderRadius: "20px", padding: "26px",
+                                position: "relative", overflow: "hidden", cursor: "pointer",
+                            }}>
                             <div style={{
                                 position: "absolute", top: 0, left: "26px", right: "26px",
                                 height: "2px", background: "linear-gradient(90deg, #f59e0b, transparent)",
@@ -416,21 +469,21 @@ export default function Dashboard() {
                             <div style={{ position: "relative", zIndex: 2 }}>
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
                                     <div style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "0.08em", textTransform: "uppercase", color: "#475569" }}>
-                                        Pending Orders
+                                        Menunggu Validasi
                                     </div>
                                     <div style={{
                                         width: "38px", height: "38px", borderRadius: "12px",
                                         background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)",
                                         display: "flex", alignItems: "center", justifyContent: "center",
                                     }}>
-                                        <Clock3 size={18} color="#fbbf24" />
+                                        <UserCheck size={18} color="#fbbf24" />
                                     </div>
                                 </div>
                                 <div style={{ color: "white", fontSize: "48px", fontWeight: "800", letterSpacing: "-2px", lineHeight: 1 }}>
-                                    {pendingOrders}
+                                    {pendingUsers}
                                 </div>
                                 <div style={{ marginTop: "12px", color: "#475569", fontSize: "12px" }}>
-                                    {pendingOrders === 0 ? "Tidak ada antrian" : `${pendingOrders} pesanan menunggu konfirmasi`}
+                                    {pendingUsers === 0 ? "Tidak ada user menunggu" : `${pendingUsers} user menunggu validasi`}
                                 </div>
                             </div>
                         </div>
