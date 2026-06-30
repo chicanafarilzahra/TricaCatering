@@ -33,22 +33,21 @@ export default function HomeKlien() {
         }
 
         axios
-    .get("/klien/pesanan")
-    .then((res) => {
-        // handle Laravel paginate {data: [...]} atau array langsung
-        const result = res.data;
-        if (Array.isArray(result)) {
-            setOrders(result);
-        } else if (Array.isArray(result?.data)) {
-            setOrders(result.data);
-        } else {
-            setOrders([]);
-        }
-    })
-    .catch((err) => {
-        console.error(err);
-        setOrders([]);
-    });
+            .get("/klien/pesanan")
+            .then((res) => {
+                const result = res.data;
+                if (Array.isArray(result)) {
+                    setOrders(result);
+                } else if (Array.isArray(result?.data)) {
+                    setOrders(result.data);
+                } else {
+                    setOrders([]);
+                }
+            })
+            .catch((err) => {
+                console.error(err);
+                setOrders([]);
+            });
     }, []);
 
     const activeOrders = orders.filter((item) =>
@@ -210,7 +209,6 @@ export default function HomeKlien() {
                     overflow: "hidden",
                     marginBottom: "24px",
                 }}>
-                    {/* Grid texture overlay */}
                     <div style={{
                         position: "absolute", inset: 0,
                         backgroundImage: "radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)",
@@ -218,7 +216,6 @@ export default function HomeKlien() {
                         pointerEvents: "none",
                     }} />
 
-                    {/* Glow orbs */}
                     <div style={{
                         position: "absolute", top: "-80px", right: "60px",
                         width: "300px", height: "300px", borderRadius: "999px",
@@ -237,7 +234,6 @@ export default function HomeKlien() {
                         display: "flex", justifyContent: "space-between",
                         alignItems: "center", gap: "32px", flexWrap: "wrap",
                     }}>
-                        {/* Left */}
                         <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{
                                 display: "inline-flex", alignItems: "center", gap: "8px",
@@ -304,7 +300,6 @@ export default function HomeKlien() {
                             </div>
                         </div>
 
-                        {/* Right status card */}
                         <div className="hero-card-klien" style={{
                             width: "300px", flexShrink: 0,
                             background: "rgba(255,255,255,0.03)",
@@ -433,7 +428,6 @@ export default function HomeKlien() {
                     gap: "16px",
                     marginBottom: "24px",
                 }}>
-                    {/* ── TIMELINE STATUS ── */}
                     <div style={{
                         background: "linear-gradient(160deg, #0f172a 0%, #0d1117 100%)",
                         border: "1px solid rgba(255,255,255,0.07)",
@@ -475,7 +469,6 @@ export default function HomeKlien() {
                         />
                     </div>
 
-                    {/* ── AKTIVITAS ── */}
                     <div style={{
                         background: "linear-gradient(160deg, #0f172a 0%, #0d1117 100%)",
                         border: "1px solid rgba(255,255,255,0.07)",
@@ -598,8 +591,6 @@ export default function HomeKlien() {
         </div>
     );
 }
-
-/* ===================== */
 
 function TimelineItem({ title, subtitle, active, progress, last }) {
     return (

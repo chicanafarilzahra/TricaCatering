@@ -1,10 +1,10 @@
 // resources/js/pages/Kurir/PengirimanAktif.jsx
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaTruck, FaMoneyBillWave, FaBell } from "react-icons/fa";
+import { FaTruck, FaMoneyBillWave, FaBell, FaMapMarkerAlt, FaCheckCircle } from "react-icons/fa";
 import SidebarKurir from "../../components/SidebarKurir";
 
-/* ── Design tokens — same system as Home.jsx / JadwalPengiriman.jsx ── */
 const T = {
     bg:       "#060D1F",
     surface:  "#0C1529",
@@ -16,17 +16,11 @@ const T = {
     muted:    "#3D5070",
     blue:     "#3B82F6",
     blueGlow: "rgba(59,130,246,0.15)",
+    green:    "#22C55E",
     amber:    "#F59E0B",
     font:     "'Inter', system-ui, -apple-system, sans-serif",
 };
 
-/* ── Biaya pengiriman: kolom asli di tabel `orders` adalah
-   `courier_fee` (lihat App\Models\Order::$fillable). ── */
-function getBiaya(o) {
-    return o.courier_fee || 0;
-}
-
-/* ── StatCard (mirrors Home.jsx) ─────────────────────────────── */
 function StatCard({ title, value, icon, accentColor, bar }) {
     return (
         <div style={{
@@ -70,19 +64,13 @@ function StatCard({ title, value, icon, accentColor, bar }) {
     );
 }
 
-/* ── Main ─────────────────────────────────────────────────── */
 export default function PengirimanAktif({ onLogout }) {
-    const [orders, setOrders] = useState([]);
-    const [user,   setUser]   = useState(null);
-    // id order yang sedang diproses (supaya tombolnya bisa di-disable/loading per-baris)
-    const [completingId, setCompletingId] = useState(null);
-    const [errorMsg, setErrorMsg] = useState("");
+    const [orders,  setOrders]  = useState([]);
+    const [user,    setUser]    = useState(null);
+    const [loading, setLoading] = useState({});
+    const navigate = useNavigate();
 
     const fetchOrders = () => {
-        // Backend mengembalikan { data: [...] } (lihat KurirController::index()),
-        // jadi ambil res.data.data — bukan res.data langsung.
-        // Fallback ke [] kalau bentuk response berubah, supaya .filter()/.map()
-        // di bawah tidak crash.
         return axios.get("/kurir/orders")
             .then((res) => setOrders(Array.isArray(res.data?.data) ? res.data.data : []))
             .catch((err) => {
@@ -94,40 +82,124 @@ export default function PengirimanAktif({ onLogout }) {
     useEffect(() => {
         const stored = localStorage.getItem("user");
         if (stored) setUser(JSON.parse(stored));
-
         fetchOrders();
     }, []);
 
-    // ── Tandai pesanan sudah sampai (on_delivery → delivered) ──
-    const handleMarkDelivered = async (orderId) => {
-        if (completingId) return; // cegah klik ganda saat masih proses
-        setCompletingId(orderId);
-        setErrorMsg("");
+    const activeOrders = orders.filter((o) =>
+        o.status === "dispatched" || o.status === "on_delivery"
+    );
+    const totalBiaya = activeOrders.reduce((sum, o) => sum + (o.courier_fee || 0), 0);
 
+    const handleMenujuLokasi = async (order) => {
+        setLoading((prev) => ({ ...prev, [order.id]: "depart" }));
         try {
-            await axios.put(`/kurir/orders/${orderId}/update-status`, {
-                status: "delivered",
-            });
-            // Optimistic update: langsung tandai lokal supaya baris hilang
-            // dari daftar aktif tanpa menunggu refetch.
-            setOrders((prev) =>
-                prev.map((o) =>
-                    o.id === orderId ? { ...o, status: "delivered" } : o
-                )
-            );
-            // Sinkronkan ulang dengan server (jaga-jaga ada perubahan lain)
+            await axios.put(`/kurir/orders/${order.id}/mulai-antar`);
             fetchOrders();
         } catch (err) {
             console.error(err);
-            const msg = err.response?.data?.message || "Gagal memperbarui status pengiriman.";
-            setErrorMsg(msg);
+            alert(err.response?.data?.message || "Gagal memulai pengiriman.");
         } finally {
-            setCompletingId(null);
+            setLoading((prev) => ({ ...prev, [order.id]: null }));
         }
     };
 
-    const activeOrders = orders.filter((o) => o.status === "on_delivery");
-    const totalBiaya    = activeOrders.reduce((sum, o) => sum + getBiaya(o), 0);
+    const handleSelesai = async (order) => {
+        if (!window.confirm(`Tandai pengiriman ke ${order.customer_name} sebagai selesai?`)) return;
+        setLoading((prev) => ({ ...prev, [order.id]: "done" }));
+        try {
+            await axios.put(`/kurir/orders/${order.id}/update-status`, { status: "delivered" });
+            navigate("/kurir/laporan");
+        } catch (err) {
+            console.error(err);
+            alert(err.response?.data?.message || "Gagal menyelesaikan pengiriman.");
+            setLoading((prev) => ({ ...prev, [order.id]: null }));
+        }
+    };
+
+    const renderAksi = (o) => {
+        const isLoadingDepart = loading[o.id] === "depart";
+        const isLoadingDone   = loading[o.id] === "done";
+
+        if (o.status === "dispatched") {
+            return (
+                <button
+                    onClick={() => handleMenujuLokasi(o)}
+                    disabled={isLoadingDepart}
+                    style={{
+                        display: "inline-flex", alignItems: "center", gap: "6px",
+                        padding: "7px 14px", borderRadius: "8px",
+                        background: isLoadingDepart ? T.muted : "linear-gradient(135deg,#3B82F6,#6366F1)",
+                        border: "none", color: "#fff", fontSize: "12px", fontWeight: 700,
+                        cursor: isLoadingDepart ? "not-allowed" : "pointer",
+                        whiteSpace: "nowrap", opacity: isLoadingDepart ? 0.7 : 1,
+                        transition: "opacity 0.15s", fontFamily: T.font,
+                    }}
+                >
+                    <FaMapMarkerAlt style={{ fontSize: "11px" }} />
+                    {isLoadingDepart ? "Memulai..." : "Menuju Lokasi"}
+                </button>
+            );
+        }
+
+        if (o.status === "on_delivery") {
+            return (
+                <button
+                    onClick={() => handleSelesai(o)}
+                    disabled={isLoadingDone}
+                    style={{
+                        display: "inline-flex", alignItems: "center", gap: "6px",
+                        padding: "7px 14px", borderRadius: "8px",
+                        background: isLoadingDone ? T.muted : "linear-gradient(135deg,#22C55E,#10B981)",
+                        border: "none", color: "#fff", fontSize: "12px", fontWeight: 700,
+                        cursor: isLoadingDone ? "not-allowed" : "pointer",
+                        whiteSpace: "nowrap", opacity: isLoadingDone ? 0.7 : 1,
+                        transition: "opacity 0.15s", fontFamily: T.font,
+                    }}
+                >
+                    <FaCheckCircle style={{ fontSize: "11px" }} />
+                    {isLoadingDone ? "Menyimpan..." : "Selesai"}
+                </button>
+            );
+        }
+
+        return null;
+    };
+
+    const renderStatusBadge = (status) => {
+        if (status === "dispatched") {
+            return (
+                <span style={{
+                    display: "inline-flex", alignItems: "center",
+                    padding: "4px 11px", borderRadius: "20px",
+                    fontSize: "11px", fontWeight: 700,
+                    background: "rgba(245,158,11,0.12)",
+                    border: "0.5px solid rgba(245,158,11,0.28)",
+                    color: "#FCD34D",
+                    textTransform: "uppercase", letterSpacing: ".4px",
+                }}>
+                    Siap Antar
+                </span>
+            );
+        }
+        return (
+            <span style={{
+                display: "inline-flex", alignItems: "center", gap: "5px",
+                padding: "4px 11px", borderRadius: "20px",
+                fontSize: "11px", fontWeight: 700,
+                background: "rgba(59,130,246,0.12)",
+                border: "0.5px solid rgba(59,130,246,0.28)",
+                color: "#60A5FA",
+                textTransform: "uppercase", letterSpacing: ".4px",
+            }}>
+                <span style={{
+                    width: "5px", height: "5px", borderRadius: "50%",
+                    background: "#60A5FA", display: "inline-block",
+                    animation: "pulseDot 1.6s ease-in-out infinite",
+                }} />
+                Sedang Dikirim
+            </span>
+        );
+    };
 
     return (
         <div style={{
@@ -135,15 +207,12 @@ export default function PengirimanAktif({ onLogout }) {
             display: "flex", overflow: "hidden",
             background: T.bg, fontFamily: T.font,
         }}>
-            {/* SIDEBAR */}
             <div style={{ width: "260px", height: "100%", flexShrink: 0 }}>
                 <SidebarKurir onLogout={onLogout} />
             </div>
 
-            {/* MAIN */}
             <div style={{ flex: 1, minWidth: 0, height: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
-                {/* ── NAVBAR ── */}
                 <div style={{
                     height: "64px", flexShrink: 0,
                     background: T.surface,
@@ -179,7 +248,6 @@ export default function PengirimanAktif({ onLogout }) {
                                 }} />
                             )}
                         </div>
-
                         <div style={{
                             width: "38px", height: "38px", borderRadius: "10px",
                             background: "linear-gradient(135deg,#3B82F6,#6366F1)",
@@ -191,22 +259,16 @@ export default function PengirimanAktif({ onLogout }) {
                     </div>
                 </div>
 
-                {/* ── CONTENT ── */}
                 <div style={{
                     flex: 1, overflowY: "auto", overflowX: "hidden",
                     padding: "28px 28px 40px",
                     background: T.bg,
                 }}>
-
-                    {/* ── Hero strip ── */}
                     <div style={{
-                        position: "relative",
-                        borderRadius: "16px",
-                        padding: "24px 28px",
-                        background: T.surface,
+                        position: "relative", borderRadius: "16px",
+                        padding: "24px 28px", background: T.surface,
                         border: `0.5px solid ${T.border}`,
-                        marginBottom: "20px",
-                        overflow: "hidden",
+                        marginBottom: "20px", overflow: "hidden",
                     }}>
                         <div style={{
                             position: "absolute", top: "-40px", right: "40px",
@@ -242,62 +304,29 @@ export default function PengirimanAktif({ onLogout }) {
                             </div>
                         </div>
                     </div>
-                    <style>{`@keyframes pulseDot { 0%,100% { opacity: 1; } 50% { opacity: .35; } }`}</style>
 
-                    {errorMsg && (
-                        <div style={{
-                            padding: "12px 18px",
-                            borderRadius: "10px",
-                            background: "rgba(239,68,68,0.1)",
-                            border: "0.5px solid rgba(239,68,68,0.3)",
-                            color: "#F87171",
-                            fontSize: "13px",
-                            marginBottom: "16px",
-                        }}>
-                            {errorMsg}
-                        </div>
-                    )}
-
-                    {/* ── Stat Cards ── */}
                     <div style={{ display: "flex", gap: "14px", marginBottom: "22px" }}>
-                        <StatCard
-                            title="Pengiriman Aktif"
-                            value={activeOrders.length}
-                            icon={<FaTruck />}
-                            accentColor="#3B82F6"
-                            bar="linear-gradient(90deg,#3B82F6,#6366F1)"
-                        />
-                        <StatCard
-                            title="Total Biaya"
-                            value={`Rp ${totalBiaya.toLocaleString("id-ID")}`}
-                            icon={<FaMoneyBillWave />}
-                            accentColor="#A855F7"
-                            bar="linear-gradient(90deg,#A855F7,#6366F1)"
-                        />
+                        <StatCard title="Pengiriman Aktif" value={activeOrders.length} icon={<FaTruck />} accentColor="#3B82F6" bar="linear-gradient(90deg,#3B82F6,#6366F1)" />
+                        <StatCard title="Total Biaya" value={`Rp ${totalBiaya.toLocaleString("id-ID")}`} icon={<FaMoneyBillWave />} accentColor="#A855F7" bar="linear-gradient(90deg,#A855F7,#6366F1)" />
                     </div>
 
-                    {/* ── Table ── */}
                     <div style={{
-                        background: T.surface,
-                        border: `0.5px solid ${T.border}`,
-                        borderRadius: "16px",
-                        overflow: "hidden",
+                        background: T.surface, border: `0.5px solid ${T.border}`,
+                        borderRadius: "16px", overflow: "hidden",
                     }}>
                         <div style={{
-                            padding: "18px 24px",
-                            borderBottom: `0.5px solid ${T.border}`,
+                            padding: "18px 24px", borderBottom: `0.5px solid ${T.border}`,
                             display: "flex", alignItems: "center", justifyContent: "space-between",
                         }}>
                             <div>
                                 <div style={{ fontSize: "15px", fontWeight: 700, color: T.text }}>Daftar Pengiriman Aktif</div>
                                 <div style={{ fontSize: "12px", color: T.muted, marginTop: "2px" }}>
-                                    Pesanan yang sedang dalam perjalanan
+                                    Pesanan yang siap diantar dan sedang dalam perjalanan
                                 </div>
                             </div>
                             <div style={{
                                 padding: "5px 12px", borderRadius: "8px",
-                                background: T.blueGlow,
-                                border: "0.5px solid rgba(59,130,246,0.25)",
+                                background: T.blueGlow, border: "0.5px solid rgba(59,130,246,0.25)",
                                 fontSize: "12px", fontWeight: 700, color: "#60A5FA",
                             }}>
                                 {activeOrders.length} Aktif
@@ -305,18 +334,15 @@ export default function PengirimanAktif({ onLogout }) {
                         </div>
 
                         <div style={{ overflowX: "auto" }}>
-                            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "760px" }}>
+                            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "820px" }}>
                                 <thead>
                                     <tr>
                                         {["No", "Klien", "Pesanan", "Alamat", "Waktu", "Status", "Biaya", "Aksi"].map((h) => (
                                             <th key={h} style={{
-                                                padding: "11px 20px",
-                                                textAlign: "left",
-                                                fontSize: "11px", fontWeight: 600,
-                                                color: T.muted,
+                                                padding: "11px 20px", textAlign: "left",
+                                                fontSize: "11px", fontWeight: 600, color: T.muted,
                                                 textTransform: "uppercase", letterSpacing: ".6px",
-                                                borderBottom: `0.5px solid ${T.border}`,
-                                                whiteSpace: "nowrap",
+                                                borderBottom: `0.5px solid ${T.border}`, whiteSpace: "nowrap",
                                             }}>
                                                 {h}
                                             </th>
@@ -326,17 +352,12 @@ export default function PengirimanAktif({ onLogout }) {
                                 <tbody>
                                     {activeOrders.length === 0 ? (
                                         <tr>
-                                            <td colSpan={8} style={{
-                                                padding: "56px 20px",
-                                                textAlign: "center",
-                                                color: T.muted, fontSize: "13px",
-                                            }}>
+                                            <td colSpan={8} style={{ padding: "56px 20px", textAlign: "center", color: T.muted, fontSize: "13px" }}>
                                                 <div style={{
                                                     width: "48px", height: "48px", borderRadius: "14px",
                                                     background: T.card, border: `0.5px solid ${T.border}`,
                                                     display: "flex", alignItems: "center", justifyContent: "center",
-                                                    color: T.muted, fontSize: "20px",
-                                                    margin: "0 auto 12px",
+                                                    color: T.muted, fontSize: "20px", margin: "0 auto 12px",
                                                 }}>
                                                     <FaTruck />
                                                 </div>
@@ -347,85 +368,37 @@ export default function PengirimanAktif({ onLogout }) {
                                         activeOrders.map((o, idx) => (
                                             <tr
                                                 key={o.id}
-                                                style={{
-                                                    borderBottom: `0.5px solid rgba(255,255,255,0.03)`,
-                                                    transition: "background 0.15s",
-                                                    position: "relative",
-                                                }}
+                                                style={{ borderBottom: `0.5px solid rgba(255,255,255,0.03)`, transition: "background 0.15s" }}
                                                 onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.02)"}
                                                 onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
                                             >
-                                                {/* pulse bar — every row here is in transit */}
                                                 <td style={{ padding: "14px 20px", color: T.muted, fontSize: "13px", position: "relative" }}>
                                                     <div style={{
                                                         position: "absolute", left: 0, top: "20%", bottom: "20%",
                                                         width: "2px", borderRadius: "2px",
-                                                        background: T.blue,
-                                                        boxShadow: `0 0 8px ${T.blue}`,
+                                                        background: o.status === "on_delivery" ? T.blue : T.amber,
+                                                        boxShadow: `0 0 8px ${o.status === "on_delivery" ? T.blue : T.amber}`,
                                                     }} />
                                                     {idx + 1}
                                                 </td>
                                                 <td style={{ padding: "14px 20px" }}>
-                                                    <div style={{ fontWeight: 600, color: T.text, fontSize: "13px" }}>
-                                                        {o.client?.name || "—"}
-                                                    </div>
+                                                    <div style={{ fontWeight: 600, color: T.text, fontSize: "13px" }}>{o.customer_name || "—"}</div>
                                                 </td>
                                                 <td style={{ padding: "14px 20px" }}>
-                                                    <div style={{ fontSize: "13px", color: T.text, fontWeight: 500 }}>
-                                                        {o.menu?.name || "—"}
-                                                    </div>
-                                                    <div style={{ fontSize: "11px", color: T.muted, marginTop: "2px" }}>
-                                                        {o.quantity} porsi
-                                                    </div>
+                                                    <div style={{ fontSize: "13px", color: T.text, fontWeight: 500 }}>{o.menu?.name || "—"}</div>
+                                                    <div style={{ fontSize: "11px", color: T.muted, marginTop: "2px" }}>{o.quantity} porsi</div>
                                                 </td>
-                                                <td style={{
-                                                    padding: "14px 20px", fontSize: "13px", color: T.sub,
-                                                    maxWidth: "220px", overflow: "hidden",
-                                                    textOverflow: "ellipsis", whiteSpace: "nowrap",
-                                                }}>
+                                                <td style={{ padding: "14px 20px", fontSize: "13px", color: T.sub, maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                                     {o.address || "—"}
                                                 </td>
                                                 <td style={{ padding: "14px 20px", fontSize: "13px", color: T.sub, whiteSpace: "nowrap" }}>
-                                                    {o.jam || "—"}
+                                                    {o.jam ? String(o.jam).substring(0, 5) : "—"}
                                                 </td>
-                                                <td style={{ padding: "14px 20px" }}>
-                                                    <span style={{
-                                                        display: "inline-flex", alignItems: "center",
-                                                        padding: "4px 11px", borderRadius: "20px",
-                                                        fontSize: "11px", fontWeight: 700,
-                                                        background: "rgba(59,130,246,0.12)",
-                                                        border: "0.5px solid rgba(59,130,246,0.28)",
-                                                        color: "#60A5FA",
-                                                        textTransform: "uppercase", letterSpacing: ".4px",
-                                                    }}>
-                                                        Sedang Dikirim
-                                                    </span>
-                                                </td>
+                                                <td style={{ padding: "14px 20px" }}>{renderStatusBadge(o.status)}</td>
                                                 <td style={{ padding: "14px 20px", fontSize: "13px", fontWeight: 700, color: "#34D399", whiteSpace: "nowrap" }}>
-                                                    Rp {getBiaya(o).toLocaleString("id-ID")}
+                                                    Rp {(o.courier_fee || 0).toLocaleString("id-ID")}
                                                 </td>
-                                                <td style={{ padding: "14px 20px", whiteSpace: "nowrap" }}>
-                                                    <button
-                                                        onClick={() => handleMarkDelivered(o.id)}
-                                                        disabled={completingId === o.id}
-                                                        style={{
-                                                            padding: "7px 14px",
-                                                            borderRadius: "8px",
-                                                            border: "0.5px solid rgba(52,211,153,0.35)",
-                                                            background: completingId === o.id
-                                                                ? "rgba(52,211,153,0.08)"
-                                                                : "rgba(52,211,153,0.14)",
-                                                            color: "#34D399",
-                                                            fontSize: "12px",
-                                                            fontWeight: 700,
-                                                            cursor: completingId === o.id ? "default" : "pointer",
-                                                            opacity: completingId === o.id ? 0.6 : 1,
-                                                            transition: "opacity 0.15s, background 0.15s",
-                                                        }}
-                                                    >
-                                                        {completingId === o.id ? "Memproses..." : "Tandai Sampai"}
-                                                    </button>
-                                                </td>
+                                                <td style={{ padding: "14px 20px", whiteSpace: "nowrap" }}>{renderAksi(o)}</td>
                                             </tr>
                                         ))
                                     )}
@@ -433,9 +406,12 @@ export default function PengirimanAktif({ onLogout }) {
                             </table>
                         </div>
                     </div>
-
                 </div>
             </div>
+
+            <style>{`
+                @keyframes pulseDot { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+            `}</style>
         </div>
     );
 }

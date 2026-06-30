@@ -113,6 +113,8 @@ class OrderController extends Controller
             $order->update([
                 'status'   => 'dispatched',
                 'kurir_id' => $courier->id,
+                'courier_fee_dispatched'    => $courierFee > 0,
+                'courier_fee_dispatched_at' => $courierFee > 0 ? now() : null,
             ]);
  
             // Kurir jadi tidak available sampai pesanan ini selesai diantar

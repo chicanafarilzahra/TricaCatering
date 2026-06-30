@@ -250,6 +250,7 @@ export default function Register() {
     const [alamatSppg, setAlamatSppg] = useState("");
     const [namaTempatKurir, setNamaTempatKurir] = useState("");
     const [alamatTempatKurir, setAlamatTempatKurir] = useState("");
+    const [phone, setPhone] = useState("");
     const [message, setMessage] = useState("");
     const [loading, setLoading] = useState(false);
     const [focusedField, setFocusedField] = useState(null);
@@ -281,6 +282,7 @@ export default function Register() {
             await axios.post("/register", {
                 name,
                 email,
+                phone: role === "kurir" ? phone : null,
                 password,
                 password_confirmation: passwordConfirmation,
                 role,
@@ -555,6 +557,19 @@ export default function Register() {
                     {/* KURIR FIELDS */}
                     {role === "kurir" && (
                         <>
+                        <div style={styles.inputWrap}>
+                            <label style={styles.label}>No. Telepon</label>
+                            <input
+                                type="text"
+                                placeholder="08xxxxxxxxxx"
+                                value={phone}
+                                onChange={e => setPhone(e.target.value)}
+                                onFocus={() => setFocusedField("phone")}
+                                onBlur={() => setFocusedField(null)}
+                                required
+                                style={inputStyle("phone")}
+                            />
+                        </div>
                             <div style={styles.inputWrap}>
                                 <label style={styles.label}>Nama Tempat yang Dilamar</label>
                                 <input
