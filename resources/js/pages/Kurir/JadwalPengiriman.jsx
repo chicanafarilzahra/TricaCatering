@@ -30,6 +30,8 @@ function statusMeta(status) {
             return { label: "Siap Diantar", bg: "rgba(168,85,247,0.12)",  border: "rgba(168,85,247,0.28)",  color: "#C084FC" };
         case "cancelled":
             return { label: "Dibatalkan",   bg: "rgba(239,68,68,0.12)",   border: "rgba(239,68,68,0.25)",   color: "#F87171" };
+        case "preparing":
+            return { label: "Diproses",     bg: "rgba(245,158,11,0.12)",  border: "rgba(245,158,11,0.25)",  color: "#FCD34D" };
         default:
             return { label: "Menunggu",     bg: "rgba(245,158,11,0.12)",  border: "rgba(245,158,11,0.25)",  color: "#FCD34D" };
     }
@@ -83,8 +85,14 @@ export default function JadwalPengiriman({ onLogout }) {
     const [user,       setUser]       = useState(null);
     const [updatingId, setUpdatingId] = useState(null);
 
-    const fetchOrders = () => {
-        axios.get("/kurir/orders")
+    // Kurir SPPG punya sppg_id terisi di akunnya (lihat routes/api.php /register),
+    // kurir catering punya owner_id terisi. Ini menentukan sumber data mana yang dipakai.
+    const isSppgKurir = !!user?.sppg_id;
+
+    const fetchOrders = (currentUser) => {
+        const sppg = currentUser?.sppg_id;
+        const endpoint = sppg ? "/kurir/distribusi" : "/kurir/orders";
+        axios.get(endpoint)
             .then((res) => setOrders(Array.isArray(res.data?.data) ? res.data.data : []))
             .catch((err) => {
                 console.error(err);
@@ -94,20 +102,28 @@ export default function JadwalPengiriman({ onLogout }) {
 
     useEffect(() => {
         const stored = localStorage.getItem("user");
-        if (stored) setUser(JSON.parse(stored));
-        fetchOrders();
+        const parsedUser = stored ? JSON.parse(stored) : null;
+        setUser(parsedUser);
+        fetchOrders(parsedUser);
     }, []);
 
+    // Aksi "mulai antar" / "selesai" — endpoint & payload beda tergantung sumber datanya
     const handleUpdateStatus = async (order, nextStatus) => {
-        if (nextStatus === "delivered" && !window.confirm("Konfirmasi: pesanan sudah diterima klien?")) {
+        if (nextStatus === "delivered" && !window.confirm("Konfirmasi: pesanan sudah diterima?")) {
             return;
         }
         setUpdatingId(order.id);
         try {
-            await axios.put(`/kurir/orders/${order.id}/update-status`, { status: nextStatus });
-            setOrders((prev) =>
-                prev.map((o) => (o.id === order.id ? { ...o, status: nextStatus } : o))
-            );
+            if (order.source === "distribusi") {
+                if (nextStatus === "on_delivery") {
+                    await axios.put(`/kurir/distribusi/${order.id}/mulai-antar`);
+                } else if (nextStatus === "delivered") {
+                    await axios.put(`/kurir/distribusi/${order.id}/selesai`);
+                }
+            } else {
+                await axios.put(`/kurir/orders/${order.id}/update-status`, { status: nextStatus });
+            }
+            fetchOrders(user);
         } catch (err) {
             alert(err.response?.data?.message ?? "Gagal memperbarui status.");
         } finally {
@@ -223,10 +239,12 @@ export default function JadwalPengiriman({ onLogout }) {
 
                     {/* Stat Cards */}
                     <div style={{ display: "flex", gap: "14px", marginBottom: "22px" }}>
-                        <StatCard title="Total Pengiriman" value={totalPengiriman} icon={<FaTruck />}           accentColor="#3B82F6" bar="linear-gradient(90deg,#3B82F6,#6366F1)" />
-                        <StatCard title="Sedang Dikirim"   value={dikirim}         icon={<FaClock />}           accentColor="#F59E0B" bar="linear-gradient(90deg,#F59E0B,#FBBF24)" />
-                        <StatCard title="Selesai"           value={selesai}         icon={<FaCheckCircle />}     accentColor="#22C55E" bar="linear-gradient(90deg,#22C55E,#10B981)" />
-                        <StatCard title="Total Biaya"       value={`Rp ${totalBiaya.toLocaleString("id-ID")}`} icon={<FaMoneyBillWave />} accentColor="#A855F7" bar="linear-gradient(90deg,#A855F7,#6366F1)" />
+                        <StatCard title="Total Pengiriman" value={totalPengiriman} icon={<FaTruck />}       accentColor="#3B82F6" bar="linear-gradient(90deg,#3B82F6,#6366F1)" />
+                        <StatCard title="Sedang Dikirim"   value={dikirim}         icon={<FaClock />}       accentColor="#F59E0B" bar="linear-gradient(90deg,#F59E0B,#FBBF24)" />
+                        <StatCard title="Selesai"           value={selesai}         icon={<FaCheckCircle />} accentColor="#22C55E" bar="linear-gradient(90deg,#22C55E,#10B981)" />
+                        {!isSppgKurir && (
+                            <StatCard title="Total Biaya" value={`Rp ${totalBiaya.toLocaleString("id-ID")}`} icon={<FaMoneyBillWave />} accentColor="#A855F7" bar="linear-gradient(90deg,#A855F7,#6366F1)" />
+                        )}
                     </div>
 
                     {/* Table */}
@@ -244,7 +262,9 @@ export default function JadwalPengiriman({ onLogout }) {
                             <div>
                                 <div style={{ fontSize: "15px", fontWeight: 700, color: T.text }}>Delivery Schedule</div>
                                 <div style={{ fontSize: "12px", color: T.muted, marginTop: "2px" }}>
-                                    Seluruh jadwal pengiriman yang ditugaskan kepada Anda
+                                    {isSppgKurir
+                                        ? "Jadwal distribusi dari SPPG Anda — klaim yang masih tersedia"
+                                        : "Seluruh jadwal pengiriman yang ditugaskan kepada Anda"}
                                 </div>
                             </div>
                             <div style={{
@@ -253,7 +273,7 @@ export default function JadwalPengiriman({ onLogout }) {
                                 border: "0.5px solid rgba(59,130,246,0.25)",
                                 fontSize: "12px", fontWeight: 700, color: "#60A5FA",
                             }}>
-                                {totalPengiriman} Pesanan
+                                {totalPengiriman} {isSppgKurir ? "Distribusi" : "Pesanan"}
                             </div>
                         </div>
 
@@ -261,7 +281,7 @@ export default function JadwalPengiriman({ onLogout }) {
                             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "700px" }}>
                                 <thead>
                                     <tr>
-                                        {["No", "Klien", "Pesanan", "Biaya", "Waktu", "Status", "Aksi"].map((h) => (
+                                        {["No", isSppgKurir ? "Sekolah" : "Klien", "Menu", ...(isSppgKurir ? [] : ["Biaya"]), "Waktu", "Status", "Aksi"].map((h) => (
                                             <th key={h} style={{
                                                 padding: "11px 20px",
                                                 textAlign: "left",
@@ -279,7 +299,7 @@ export default function JadwalPengiriman({ onLogout }) {
                                 <tbody>
                                     {orders.length === 0 ? (
                                         <tr>
-                                            <td colSpan={7} style={{
+                                            <td colSpan={isSppgKurir ? 6 : 7} style={{
                                                 padding: "56px 20px",
                                                 textAlign: "center",
                                                 color: T.muted, fontSize: "13px",
@@ -301,9 +321,11 @@ export default function JadwalPengiriman({ onLogout }) {
                                             const sm = statusMeta(o.status);
                                             const isActive   = o.status === "on_delivery" || o.status === "dispatched";
                                             const isUpdating = updatingId === o.id;
+                                            const canStart  = o.status === "dispatched" && (o.source !== "distribusi" || o.claimable);
+                                            const canFinish = o.status === "on_delivery" && (o.source !== "distribusi" || o.is_mine);
                                             return (
                                                 <tr
-                                                    key={o.id}
+                                                    key={`${o.source || "order"}-${o.id}`}
                                                     style={{
                                                         borderBottom: `0.5px solid rgba(255,255,255,0.03)`,
                                                         transition: "background 0.15s",
@@ -334,9 +356,11 @@ export default function JadwalPengiriman({ onLogout }) {
                                                             {o.quantity} porsi
                                                         </div>
                                                     </td>
-                                                    <td style={{ padding: "14px 20px", fontSize: "13px", fontWeight: 700, color: "#34D399", whiteSpace: "nowrap" }}>
-                                                        Rp {(o.courier_fee || 0).toLocaleString("id-ID")}
-                                                    </td>
+                                                    {!isSppgKurir && (
+                                                        <td style={{ padding: "14px 20px", fontSize: "13px", fontWeight: 700, color: "#34D399", whiteSpace: "nowrap" }}>
+                                                            Rp {(o.courier_fee || 0).toLocaleString("id-ID")}
+                                                        </td>
+                                                    )}
                                                     <td style={{ padding: "14px 20px", fontSize: "13px", color: T.sub, whiteSpace: "nowrap" }}>
                                                         {o.jam ? String(o.jam).substring(0, 5) : "—"}
                                                     </td>
@@ -354,7 +378,7 @@ export default function JadwalPengiriman({ onLogout }) {
                                                         </span>
                                                     </td>
                                                     <td style={{ padding: "14px 20px", whiteSpace: "nowrap" }}>
-                                                        {o.status === "dispatched" && (
+                                                        {canStart && (
                                                             <button
                                                                 disabled={isUpdating}
                                                                 onClick={() => handleUpdateStatus(o, "on_delivery")}
@@ -371,10 +395,10 @@ export default function JadwalPengiriman({ onLogout }) {
                                                                     transition: "background 0.15s",
                                                                 }}
                                                             >
-                                                                {isUpdating ? "Memproses…" : "Mulai Antar"}
+                                                                {isUpdating ? "Memproses…" : (o.source === "distribusi" ? "Ambil & Antar" : "Mulai Antar")}
                                                             </button>
                                                         )}
-                                                        {o.status === "on_delivery" && (
+                                                        {canFinish && (
                                                             <button
                                                                 disabled={isUpdating}
                                                                 onClick={() => handleUpdateStatus(o, "delivered")}

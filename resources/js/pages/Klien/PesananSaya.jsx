@@ -21,6 +21,9 @@ import NavbarKlien from "../../components/NavbarKlien";
 
 const FILTERS = ["Semua", "Pending", "Diproses", "Dikirim", "Selesai", "Dibatalkan"];
 
+// Rate ongkir kurir per kilometer (fixed)
+const COURIER_RATE_PER_KM = 5000;
+
 // Mapping status ASLI dari database (Inggris) -> tampilan (label Indonesia,
 // warna, dan filter group). DB tetap menyimpan:
 // pending, confirmed, preparing, dispatched, on_delivery, delivered, cancelled
@@ -95,6 +98,10 @@ function DetailModal({ item, onClose }) {
               day: "2-digit", month: "short", year: "numeric",
           }) + (item.jam ? `, ${item.jam.slice(0, 5)}` : "")
         : "—";
+
+    // Biaya kurir + estimasi jarak tempuh berdasarkan rate per km
+    const courierFee = Number(item.courier_fee || 0);
+    const estimasiJarakKm = courierFee > 0 ? (courierFee / COURIER_RATE_PER_KM).toFixed(1) : null;
 
     return (
         <div
@@ -222,6 +229,7 @@ function DetailModal({ item, onClose }) {
                         { label: "Jumlah",         value: `${item.quantity || item.qty || 1} Porsi` },
                         ...(isHarian ? [{ label: "Durasi", value: item.duration ? `${item.duration} Hari` : "—" }] : []),
                         { label: "Harga Satuan",   value: formatRupiah(item.menu?.price || item.price_per_item) },
+                        { label: "Biaya Kurir",    value: formatRupiah(courierFee) },
                         { label: "Total Harga",    value: formatRupiah(item.total_price || item.total), accent: "#34d399" },
                         { label: "Alamat Kirim",   value: item.delivery_address || item.address || "—" },
                         { label: "Tanggal Kirim",  value: tanggalKirimValue },
@@ -237,6 +245,26 @@ function DetailModal({ item, onClose }) {
                         </div>
                     ))}
                 </div>
+
+                {/* Penjelasan rate ongkir per km */}
+                {courierFee > 0 && (
+                    <div style={{
+                        marginTop: "14px",
+                        display: "flex", alignItems: "flex-start", gap: "10px",
+                        background: "rgba(96,165,250,0.06)",
+                        border: "1px solid rgba(96,165,250,0.15)",
+                        borderRadius: "12px", padding: "12px 14px",
+                        position: "relative", zIndex: 2,
+                    }}>
+                        <Truck size={15} color="#60a5fa" style={{ flexShrink: 0, marginTop: "1px" }} />
+                        <div style={{ color: "#94a3b8", fontSize: "12.5px", lineHeight: "1.7" }}>
+                            Ongkir dihitung <strong style={{ color: "#cbd5e1" }}>{formatRupiah(COURIER_RATE_PER_KM)}/km</strong>
+                            {estimasiJarakKm && (
+                                <> &middot; estimasi jarak tempuh sekitar <strong style={{ color: "#cbd5e1" }}>{estimasiJarakKm} km</strong></>
+                            )}.
+                        </div>
+                    </div>
+                )}
 
                 {item.notes && (
                     <div style={{ marginTop: "20px", position: "relative", zIndex: 2 }}>

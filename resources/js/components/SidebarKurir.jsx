@@ -4,7 +4,6 @@ import {
     LayoutDashboard,
     CalendarDays,
     Truck,
-    MapPinned,
     ClipboardList,
     LogOut,
     ChevronRight,
@@ -76,7 +75,6 @@ export default function SidebarKurir({ onLogout }) {
             items: [
                 { label: "Jadwal Pengiriman", path: "/kurir/jadwal", icon: <CalendarDays size={17} /> },
                 { label: "Pengiriman Aktif", path: "/kurir/aktif", icon: <Truck size={17} /> },
-                { label: "Rute Hari Ini", path: "/kurir/rute", icon: <MapPinned size={17} /> },
             ],
         },
         {

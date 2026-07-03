@@ -10,6 +10,7 @@ class Distribusi extends Model
 
     protected $fillable = [
         'sppg_id',
+        'kurir_id',
         'sekolah_id',
         'menu_id',
         'tanggal',
@@ -21,6 +22,10 @@ class Distribusi extends Model
     public function sppg()
     {
         return $this->belongsTo(User::class, 'sppg_id');
+    }
+    public function kurir()
+    {
+        return $this->belongsTo(User::class, 'kurir_id');
     }
 
     public function sekolah()

@@ -4,29 +4,9 @@ import React, { useEffect, useState, useCallback, useMemo } from "react";
 import axios from "axios";
 import NavbarKlien from "../../components/NavbarKlien";
 import { FaStar, FaRegStar, FaEdit, FaTrash, FaTimes, FaCheck } from "react-icons/fa";
-import { MessageSquare, Star, Filter, Search, TrendingUp } from "lucide-react";
+import { MessageSquare, Star, Filter, Search, TrendingUp, ChevronRight, Activity } from "lucide-react";
 
 /* ─────────────────── CONSTANTS ─────────────────── */
-
-const C = {
-  bg:       "#020817",
-  card:     "linear-gradient(160deg, #0f172a 0%, #0d1117 100%)",
-  cardSolid:"#0f172a",
-  input:    "#0a1120",
-  border:   "rgba(255,255,255,0.07)",
-  borderBlue:"rgba(59,130,246,0.2)",
-  white:    "#ffffff",
-  muted:    "#94a3b8",
-  dim:      "#475569",
-  amber:    "#f59e0b",
-  blue:     "#3b82f6",
-  blueD:    "#2563eb",
-  blueL:    "#60a5fa",
-  purple:   "#a78bfa",
-  green:    "#34d399",
-  red:      "#ef4444",
-  blueGrad: "linear-gradient(90deg,#2563eb,#3b82f6)",
-};
 
 const RATING_FILTERS = ["Semua", "5", "4", "3", "2", "1"];
 
@@ -42,7 +22,7 @@ const formatTanggal = (d) => {
   return new Date(d).toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" });
 };
 
-/* ─────────────────── GLOBAL STYLES ─────────────────── */
+/* ─────────────────── GLOBAL STYLES (Home.jsx pattern) ─────────────────── */
 
 const GLOBAL_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
@@ -56,9 +36,12 @@ const GLOBAL_CSS = `
   #app, #root, body > div { margin:0!important; padding:0!important; max-width:none!important; width:100%!important; }
   * { box-sizing: border-box; }
 
-  .ruk-card {
-    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
-  }
+  .ruk-root * { font-family: 'Inter', system-ui, sans-serif; box-sizing: border-box; }
+
+  .stat-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+  .stat-card:hover { transform: translateY(-3px); box-shadow: 0 16px 48px rgba(0,0,0,0.35); }
+
+  .ruk-card { transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
   .ruk-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 16px 48px rgba(0,0,0,0.4) !important;
@@ -91,8 +74,11 @@ const GLOBAL_CSS = `
   .pulse-dot { animation: pulse 2s ease-in-out infinite; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-  @media (max-width: 768px) {
+  @media (max-width: 900px) {
     .ruk-hero-inner { flex-direction: column !important; }
+    .ruk-hero-card { width: 100% !important; }
+  }
+  @media (max-width: 768px) {
     .ruk-summary-bar { flex-direction: column !important; gap: 16px !important; }
     .ruk-divider-v { display: none !important; }
   }
@@ -124,7 +110,7 @@ function Stars({ value, size = 16, interactive = false, hoverVal = 0, onHover, o
             onClick={() => interactive && onClick?.(s)}
             style={{
               fontSize: size + "px",
-              color: filled ? C.amber : "rgba(255,255,255,0.15)",
+              color: filled ? "#fbbf24" : "rgba(255,255,255,0.15)",
               cursor: interactive ? "pointer" : "default",
               transition: "color .12s, transform .12s",
               display: "inline-block",
@@ -158,6 +144,154 @@ function SkeletonCard() {
       <div className="ruk-skeleton" style={{ height: "14px", width: "90%", marginBottom: "8px" }} />
       <div className="ruk-skeleton" style={{ height: "14px", width: "70%" }} />
     </div>
+  );
+}
+
+/* ─────────────────── CREATE MODAL (Beri Ulasan) ─────────────────── */
+
+function CreateModal({ pesanan, onClose, onSaved }) {
+  const [rating,      setRating]      = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [komentar,    setKomentar]    = useState("");
+  const [tags,        setTags]        = useState([]);
+  const [loading,     setLoading]     = useState(false);
+
+  const toggleTag = (t) =>
+    setTags((prev) => prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]);
+
+  const handleSave = async () => {
+    if (!rating) { alert("Rating wajib diisi."); return; }
+    setLoading(true);
+    try {
+      await axios.post("/klien/ulasan", {
+        pesanan_id: pesanan.id,
+        rating, komentar, tags,
+      });
+      onSaved();
+    } catch (err) {
+      console.error(err);
+      alert(err?.response?.data?.message || "Gagal mengirim ulasan.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Overlay onClose={onClose}>
+      <div
+        className="ruk-scroll"
+        style={{
+          background: "linear-gradient(160deg, #0f172a 0%, #0d1117 100%)",
+          border: "1px solid rgba(52,211,153,0.25)",
+          borderRadius: "24px", padding: "28px",
+          width: "100%", maxWidth: "500px",
+          maxHeight: "90vh", overflowY: "auto",
+          position: "relative", overflow: "hidden",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{
+          position: "absolute", top: "-60px", right: "-40px",
+          width: "200px", height: "200px", borderRadius: "999px",
+          background: "rgba(52,211,153,0.1)", filter: "blur(60px)",
+          pointerEvents: "none",
+        }} />
+        <div style={{
+          position: "absolute", top: 0, left: "28px", right: "28px",
+          height: "2px", borderRadius: "0 0 4px 4px",
+          background: "linear-gradient(90deg, #059669, #34d399, transparent)",
+        }} />
+
+        <div style={{ position: "relative", zIndex: 2 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "14px", minWidth: 0 }}>
+              {pesanan.menu?.image_url ? (
+                <img
+                  src={pesanan.menu.image_url}
+                  alt={pesanan.menu?.name}
+                  style={{ width: "44px", height: "44px", borderRadius: "13px", objectFit: "cover", flexShrink: 0, border: "1px solid rgba(255,255,255,0.07)" }}
+                />
+              ) : (
+                <div style={{
+                  width: "44px", height: "44px", borderRadius: "13px",
+                  background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.15)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: "18px", flexShrink: 0,
+                }}>🍽️</div>
+              )}
+              <div style={{ minWidth: 0 }}>
+                <div style={{ color: "white", fontSize: "19px", fontWeight: "800", letterSpacing: "-0.3px" }}>Beri Ulasan</div>
+                <div style={{ color: "#94a3b8", fontSize: "13px", marginTop: "3px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {pesanan.menu?.name || "Menu"}
+                </div>
+              </div>
+            </div>
+            <CloseBtn onClick={onClose} />
+          </div>
+
+          <FieldLabel text="Rating" />
+          <Stars
+            value={rating} size={36} interactive
+            hoverVal={hoverRating}
+            onHover={setHoverRating}
+            onClick={setRating}
+          />
+
+          <FieldLabel text="Komentar (Opsional)" />
+          <textarea
+            rows={4}
+            value={komentar}
+            onChange={(e) => setKomentar(e.target.value)}
+            placeholder="Ceritakan pengalaman Anda..."
+            maxLength={300}
+            style={{
+              width: "100%", borderRadius: "14px",
+              border: "1px solid rgba(255,255,255,0.07)",
+              background: "rgba(0,0,0,0.3)", color: "white",
+              padding: "12px 14px", fontSize: "14px",
+              outline: "none", resize: "none", lineHeight: "1.55",
+              fontFamily: "'Inter', system-ui, sans-serif",
+            }}
+          />
+          <div style={{ textAlign: "right", color: "#475569", fontSize: "12px", marginTop: "4px" }}>
+            {komentar.length}/300
+          </div>
+
+          <FieldLabel text="Tag" />
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+            {TAGS_AVAILABLE.map((t) => {
+              const active = tags.includes(t);
+              return (
+                <button
+                  key={t}
+                  onClick={() => toggleTag(t)}
+                  style={tagChipStyle(active)}
+                >
+                  {t}
+                </button>
+              );
+            })}
+          </div>
+
+          <div style={{ display: "flex", gap: "12px", marginTop: "26px" }}>
+            <button onClick={onClose} style={cancelBtnStyle}>Batal</button>
+            <button
+              onClick={handleSave}
+              disabled={loading || !rating}
+              style={{
+                ...primaryBtnStyle,
+                background: "linear-gradient(90deg,#059669,#34d399)",
+                opacity: loading || !rating ? 0.5 : 1,
+                cursor: loading || !rating ? "not-allowed" : "pointer",
+              }}
+            >
+              <FaCheck style={{ fontSize: "13px" }} />
+              {loading ? "Mengirim..." : "Kirim Ulasan"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Overlay>
   );
 }
 
@@ -201,14 +335,12 @@ function EditModal({ ulasan, onClose, onSaved }) {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Glow */}
         <div style={{
           position: "absolute", top: "-60px", right: "-40px",
           width: "200px", height: "200px", borderRadius: "999px",
           background: "rgba(59,130,246,0.1)", filter: "blur(60px)",
           pointerEvents: "none",
         }} />
-        {/* Top accent line */}
         <div style={{
           position: "absolute", top: 0, left: "28px", right: "28px",
           height: "2px", borderRadius: "0 0 4px 4px",
@@ -216,11 +348,10 @@ function EditModal({ ulasan, onClose, onSaved }) {
         }} />
 
         <div style={{ position: "relative", zIndex: 2 }}>
-          {/* Header */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
             <div>
-              <div style={{ color: C.white, fontSize: "19px", fontWeight: "800", letterSpacing: "-0.3px" }}>Edit Ulasan</div>
-              <div style={{ color: C.muted, fontSize: "13px", marginTop: "3px" }}>
+              <div style={{ color: "white", fontSize: "19px", fontWeight: "800", letterSpacing: "-0.3px" }}>Edit Ulasan</div>
+              <div style={{ color: "#94a3b8", fontSize: "13px", marginTop: "3px" }}>
                 {ulasan.pesanan?.menu?.name || "Menu"}
               </div>
             </div>
@@ -245,13 +376,13 @@ function EditModal({ ulasan, onClose, onSaved }) {
             style={{
               width: "100%", borderRadius: "14px",
               border: "1px solid rgba(255,255,255,0.07)",
-              background: "rgba(0,0,0,0.3)", color: C.white,
+              background: "rgba(0,0,0,0.3)", color: "white",
               padding: "12px 14px", fontSize: "14px",
               outline: "none", resize: "none", lineHeight: "1.55",
               fontFamily: "'Inter', system-ui, sans-serif",
             }}
           />
-          <div style={{ textAlign: "right", color: C.dim, fontSize: "12px", marginTop: "4px" }}>
+          <div style={{ textAlign: "right", color: "#475569", fontSize: "12px", marginTop: "4px" }}>
             {komentar.length}/300
           </div>
 
@@ -324,10 +455,10 @@ function ConfirmDeleteModal({ onClose, onConfirm, loading }) {
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: "26px", margin: "0 auto 20px",
           }}>🗑️</div>
-          <div style={{ color: C.white, fontSize: "20px", fontWeight: "800", marginBottom: "10px", letterSpacing: "-0.3px" }}>
+          <div style={{ color: "white", fontSize: "20px", fontWeight: "800", marginBottom: "10px", letterSpacing: "-0.3px" }}>
             Hapus Ulasan?
           </div>
-          <p style={{ color: C.muted, fontSize: "14px", lineHeight: "1.7", marginBottom: "28px", margin: "0 0 28px" }}>
+          <p style={{ color: "#94a3b8", fontSize: "14px", lineHeight: "1.7", marginBottom: "28px", margin: "0 0 28px" }}>
             Ulasan yang dihapus tidak dapat dikembalikan.
             Anda tetap bisa memberi ulasan baru untuk pesanan ini.
           </p>
@@ -339,7 +470,7 @@ function ConfirmDeleteModal({ onClose, onConfirm, loading }) {
               style={{
                 flex: 1, height: "48px", borderRadius: "12px", border: "none",
                 background: "linear-gradient(90deg,#dc2626,#ef4444)",
-                color: C.white, fontSize: "14px", fontWeight: "700",
+                color: "white", fontSize: "14px", fontWeight: "700",
                 cursor: loading ? "not-allowed" : "pointer",
                 opacity: loading ? 0.6 : 1,
                 display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
@@ -356,10 +487,91 @@ function ConfirmDeleteModal({ onClose, onConfirm, loading }) {
   );
 }
 
+/* ─────────────────── PESANAN SELESAI CARD (belum diulas) ─────────────────── */
+
+function PesananSelesaiCard({ item, onReview }) {
+  return (
+    <div
+      className="ruk-card ruk-fadein"
+      style={{
+        background: "linear-gradient(160deg, #0f172a 0%, #0d1117 100%)",
+        border: "1px solid rgba(52,211,153,0.18)",
+        borderRadius: "20px", padding: "22px",
+        display: "flex", flexDirection: "column", gap: "14px",
+        position: "relative", overflow: "hidden",
+      }}
+    >
+      <div style={{
+        position: "absolute", top: 0, left: "22px", right: "22px",
+        height: "2px", borderRadius: "0 0 4px 4px",
+        background: "linear-gradient(90deg, #34d399, transparent)",
+      }} />
+      <div style={{
+        position: "absolute", top: "-50px", right: "-30px",
+        width: "120px", height: "120px", borderRadius: "999px",
+        background: "rgba(52,211,153,0.08)", filter: "blur(40px)",
+        pointerEvents: "none",
+      }} />
+
+      <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", gap: "16px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          {item.menu?.image_url ? (
+            <img
+              src={item.menu.image_url}
+              alt={item.menu?.name}
+              style={{ width: "48px", height: "48px", borderRadius: "14px", objectFit: "cover", flexShrink: 0, border: "1px solid rgba(255,255,255,0.07)" }}
+            />
+          ) : (
+            <div style={{
+              width: "48px", height: "48px", borderRadius: "14px",
+              background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.15)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "20px", flexShrink: 0,
+            }}>🍽️</div>
+          )}
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ color: "white", fontWeight: "700", fontSize: "15px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {item.menu?.name || "Menu"}
+            </div>
+            <div style={{ color: "#475569", fontSize: "12px", marginTop: "3px" }}>
+              Order #{item.id} &nbsp;·&nbsp; {formatTanggal(item.created_at)}
+            </div>
+          </div>
+          <span style={{
+            padding: "4px 12px", borderRadius: "20px",
+            background: "rgba(52,211,153,0.1)",
+            border: "1px solid rgba(52,211,153,0.25)",
+            color: "#34d399", fontSize: "11px", fontWeight: "700",
+            textTransform: "uppercase", letterSpacing: "0.5px",
+            flexShrink: 0,
+          }}>
+            Selesai
+          </span>
+        </div>
+
+        <button
+          onClick={() => onReview(item)}
+          style={{
+            height: "44px", borderRadius: "12px", border: "none",
+            background: "linear-gradient(90deg,#059669,#34d399)",
+            color: "white", fontSize: "13.5px", fontWeight: "700",
+            cursor: "pointer", display: "flex", alignItems: "center",
+            justifyContent: "center", gap: "8px",
+            fontFamily: "'Inter', system-ui, sans-serif",
+          }}
+        >
+          <Star size={15} />
+          Beri Rating &amp; Ulasan
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ─────────────────── ULASAN CARD ─────────────────── */
 
 function UlasanCard({ item, onEdit, onDelete }) {
-  const ratingColor = item.rating >= 4 ? C.green : item.rating === 3 ? C.amber : C.red;
+  const ratingColor = item.rating >= 4 ? "#34d399" : item.rating === 3 ? "#fbbf24" : "#ef4444";
 
   return (
     <div
@@ -373,14 +585,12 @@ function UlasanCard({ item, onEdit, onDelete }) {
         cursor: "default",
       }}
     >
-      {/* Top accent line color-coded by rating */}
       <div style={{
         position: "absolute", top: 0, left: "22px", right: "22px",
         height: "2px", borderRadius: "0 0 4px 4px",
         background: `linear-gradient(90deg, ${ratingColor}, transparent)`,
       }} />
 
-      {/* Subtle glow */}
       <div style={{
         position: "absolute", top: "-50px", right: "-30px",
         width: "120px", height: "120px", borderRadius: "999px",
@@ -389,7 +599,6 @@ function UlasanCard({ item, onEdit, onDelete }) {
       }} />
 
       <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", gap: "14px" }}>
-        {/* Top: menu info + aksi */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1, minWidth: 0 }}>
             {item.pesanan?.menu?.image_url ? (
@@ -407,16 +616,15 @@ function UlasanCard({ item, onEdit, onDelete }) {
               }}>🍽️</div>
             )}
             <div style={{ minWidth: 0 }}>
-              <div style={{ color: C.white, fontWeight: "700", fontSize: "15px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              <div style={{ color: "white", fontWeight: "700", fontSize: "15px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                 {item.pesanan?.menu?.name || "Menu"}
               </div>
-              <div style={{ color: C.dim, fontSize: "12px", marginTop: "3px" }}>
+              <div style={{ color: "#475569", fontSize: "12px", marginTop: "3px" }}>
                 Order #{item.pesanan_id} &nbsp;·&nbsp; {formatTanggal(item.created_at)}
               </div>
             </div>
           </div>
 
-          {/* Edit + Delete */}
           <div style={{ display: "flex", gap: "6px", flexShrink: 0, marginLeft: "10px" }}>
             <button
               className="ruk-btn-icon"
@@ -433,7 +641,6 @@ function UlasanCard({ item, onEdit, onDelete }) {
           </div>
         </div>
 
-        {/* Rating */}
         <div style={{
           display: "flex", alignItems: "center", gap: "10px",
           padding: "10px 14px", borderRadius: "12px",
@@ -445,10 +652,9 @@ function UlasanCard({ item, onEdit, onDelete }) {
           </span>
         </div>
 
-        {/* Komentar */}
         {item.komentar && (
           <p style={{
-            color: C.muted, fontSize: "14px", lineHeight: "1.65",
+            color: "#94a3b8", fontSize: "14px", lineHeight: "1.65",
             margin: 0, background: "rgba(0,0,0,0.2)",
             borderRadius: "12px", padding: "12px 14px",
             border: "1px solid rgba(255,255,255,0.05)",
@@ -458,7 +664,6 @@ function UlasanCard({ item, onEdit, onDelete }) {
           </p>
         )}
 
-        {/* Tags */}
         {Array.isArray(item.tags) && item.tags.length > 0 && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
             {item.tags.map((t) => (
@@ -466,7 +671,7 @@ function UlasanCard({ item, onEdit, onDelete }) {
                 padding: "4px 12px", borderRadius: "20px",
                 background: "rgba(59,130,246,0.1)",
                 border: "1px solid rgba(59,130,246,0.2)",
-                color: C.blueL, fontSize: "12px", fontWeight: "600",
+                color: "#60a5fa", fontSize: "12px", fontWeight: "600",
               }}>{t}</span>
             ))}
           </div>
@@ -476,39 +681,45 @@ function UlasanCard({ item, onEdit, onDelete }) {
   );
 }
 
-/* ─────────────────── STAT MINI CARD ─────────────────── */
+/* ─────────────────── STAT CARD (Home.jsx pattern) ─────────────────── */
 
-function MiniStat({ icon, label, value, color, bg, border }) {
+function StatCard({ icon, title, value, color, accent, bg, border }) {
   return (
-    <div style={{
+    <div className="stat-card" style={{
       background: "linear-gradient(160deg, #0f172a 0%, #0d1117 100%)",
       border: `1px solid ${border}`,
-      borderRadius: "20px", padding: "22px 24px",
-      position: "relative", overflow: "hidden",
-      transition: "transform .2s ease, box-shadow .2s ease",
+      borderRadius: "20px", padding: "24px",
+      position: "relative", overflow: "hidden", cursor: "default",
     }}>
       <div style={{
         position: "absolute", top: 0, left: "24px", right: "24px",
-        height: "2px", background: `linear-gradient(90deg, ${color}, transparent)`,
+        height: "2px", borderRadius: "0 0 4px 4px",
+        background: `linear-gradient(90deg, ${accent}, transparent)`,
       }} />
       <div style={{
-        position: "absolute", top: "-30px", right: "-30px",
-        width: "100px", height: "100px", borderRadius: "999px",
+        position: "absolute", top: "-40px", right: "-40px",
+        width: "110px", height: "110px", borderRadius: "999px",
         background: bg, filter: "blur(30px)", pointerEvents: "none",
       }} />
       <div style={{ position: "relative", zIndex: 2 }}>
         <div style={{
-          width: "40px", height: "40px", borderRadius: "12px",
+          width: "44px", height: "44px", borderRadius: "14px",
           background: bg, border: `1px solid ${border}`,
+          color,
           display: "flex", alignItems: "center", justifyContent: "center",
-          color, marginBottom: "16px",
+          marginBottom: "20px",
         }}>
           {icon}
         </div>
-        <div style={{ color: C.white, fontSize: "24px", fontWeight: "800", letterSpacing: "-0.8px", marginBottom: "4px" }}>
+        <div style={{
+          color: "white", fontSize: "26px", fontWeight: "800",
+          lineHeight: 1, letterSpacing: "-0.8px", marginBottom: "8px",
+        }}>
           {value}
         </div>
-        <div style={{ color: C.dim, fontSize: "12px", fontWeight: "500" }}>{label}</div>
+        <div style={{ color: "#475569", fontSize: "13px", fontWeight: "500", letterSpacing: "0.01em" }}>
+          {title}
+        </div>
       </div>
     </div>
   );
@@ -520,10 +731,12 @@ export default function RiwayatUlasanKlien() {
   useGlobalStyles();
 
   const [ulasan,        setUlasan]        = useState([]);
+  const [pesananSelesai,setPesananSelesai]= useState([]);
   const [loading,       setLoading]       = useState(true);
   const [error,         setError]         = useState(null);
   const [ratingFilter,  setRatingFilter]  = useState("Semua");
   const [searchMenu,    setSearchMenu]    = useState("");
+  const [reviewTarget,  setReviewTarget]  = useState(null);
   const [editTarget,    setEditTarget]    = useState(null);
   const [deleteTarget,  setDeleteTarget]  = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -531,9 +744,14 @@ export default function RiwayatUlasanKlien() {
   const getUlasan = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      const res = await axios.get("/klien/ulasan");
-      const raw = Array.isArray(res.data) ? res.data : (res.data?.data || []);
-      setUlasan([...raw].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
+      const [resUlasan, resPesanan] = await Promise.all([
+        axios.get("/klien/ulasan"),
+        axios.get("/klien/pesanan-selesai"),
+      ]);
+      const rawUlasan = Array.isArray(resUlasan.data) ? resUlasan.data : (resUlasan.data?.data || []);
+      const rawPesanan = Array.isArray(resPesanan.data) ? resPesanan.data : (resPesanan.data?.data || []);
+      setUlasan([...rawUlasan].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
+      setPesananSelesai(rawPesanan);
     } catch (err) {
       console.error(err);
       setError(err?.response?.data?.message || "Gagal memuat ulasan.");
@@ -543,6 +761,10 @@ export default function RiwayatUlasanKlien() {
   }, []);
 
   useEffect(() => { getUlasan(); }, [getUlasan]);
+
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+  const dateStr = now.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
   const avgRating = useMemo(() => {
     if (!ulasan.length) return 0;
@@ -573,6 +795,42 @@ export default function RiwayatUlasanKlien() {
     return list;
   }, [ulasan, ratingFilter, searchMenu]);
 
+  const stats = [
+    {
+      title: "Total Ulasan",
+      value: ulasan.length,
+      icon: <MessageSquare size={20} />,
+      color: "#60a5fa", accent: "#3b82f6",
+      bg: "rgba(59,130,246,0.08)", border: "rgba(59,130,246,0.2)",
+    },
+    {
+      title: "Rating Rata-rata",
+      value: `${avgRating} / 5`,
+      icon: <Star size={20} />,
+      color: "#fbbf24", accent: "#f59e0b",
+      bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.2)",
+    },
+    {
+      title: "Ulasan Positif (≥4⭐)",
+      value: positiveCount,
+      icon: <TrendingUp size={20} />,
+      color: "#34d399", accent: "#10b981",
+      bg: "rgba(16,185,129,0.08)", border: "rgba(16,185,129,0.2)",
+    },
+    {
+      title: "Menunggu Diulas",
+      value: pesananSelesai.length,
+      icon: <Activity size={20} />,
+      color: "#a78bfa", accent: "#8b5cf6",
+      bg: "rgba(139,92,246,0.08)", border: "rgba(139,92,246,0.2)",
+    },
+  ];
+
+  const handleReviewSaved = async () => {
+    setReviewTarget(null);
+    await getUlasan();
+  };
+
   const handleEditSaved = async () => {
     setEditTarget(null);
     await getUlasan();
@@ -594,35 +852,32 @@ export default function RiwayatUlasanKlien() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", width: "100%", background: C.bg, overflowX: "hidden", fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div style={{ width: "100%", minHeight: "100vh", background: "#020817" }}>
       <NavbarKlien title="Ulasan Saya" />
 
-      <div style={{ padding: "30px" }}>
+      <div className="ruk-root" style={{ padding: "30px" }}>
 
-        {/* ── HERO HEADER ── */}
+        {/* ── HERO (pola Home.jsx) ── */}
         <div style={{
-          position: "relative",
-          borderRadius: "24px", padding: "40px",
+          position: "relative", borderRadius: "24px", padding: "40px",
           background: "linear-gradient(135deg, #0d1117 0%, #0f172a 60%, #131c2e 100%)",
           border: "1px solid rgba(255,255,255,0.07)",
           overflow: "hidden", marginBottom: "24px",
         }}>
-          {/* Grid texture */}
           <div style={{
             position: "absolute", inset: 0,
             backgroundImage: "radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)",
             backgroundSize: "28px 28px", pointerEvents: "none",
           }} />
-          {/* Glow orbs */}
           <div style={{
-            position: "absolute", top: "-80px", right: "80px",
-            width: "280px", height: "280px", borderRadius: "999px",
-            background: "rgba(59,130,246,0.1)", filter: "blur(90px)", pointerEvents: "none",
+            position: "absolute", top: "-80px", right: "60px",
+            width: "300px", height: "300px", borderRadius: "999px",
+            background: "rgba(59,130,246,0.12)", filter: "blur(90px)", pointerEvents: "none",
           }} />
           <div style={{
-            position: "absolute", bottom: "-60px", right: "-30px",
-            width: "180px", height: "180px", borderRadius: "999px",
-            background: "rgba(167,139,250,0.08)", filter: "blur(70px)", pointerEvents: "none",
+            position: "absolute", bottom: "-60px", right: "-40px",
+            width: "200px", height: "200px", borderRadius: "999px",
+            background: "rgba(139,92,246,0.1)", filter: "blur(70px)", pointerEvents: "none",
           }} />
 
           <div className="ruk-hero-inner" style={{
@@ -630,26 +885,28 @@ export default function RiwayatUlasanKlien() {
             display: "flex", justifyContent: "space-between",
             alignItems: "center", gap: "32px", flexWrap: "wrap",
           }}>
-            {/* Left */}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{
                 display: "inline-flex", alignItems: "center", gap: "8px",
                 padding: "6px 14px", borderRadius: "999px",
-                background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.22)",
-                color: C.blueL, fontSize: "12px", fontWeight: "600",
-                letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: "22px",
+                background: "rgba(59,130,246,0.1)",
+                border: "1px solid rgba(59,130,246,0.22)",
+                color: "#60a5fa", fontSize: "12px", fontWeight: "600",
+                letterSpacing: "0.04em", textTransform: "uppercase",
+                marginBottom: "22px",
               }}>
                 <span className="pulse-dot" style={{
                   width: "6px", height: "6px", borderRadius: "999px",
-                  background: C.blueL, display: "inline-block",
+                  background: "#60a5fa", display: "inline-block",
                 }} />
                 Riwayat Ulasan
               </div>
 
               <h1 style={{
-                margin: 0, fontSize: "clamp(26px, 3.5vw, 42px)",
-                lineHeight: 1.15, color: "white", fontWeight: "800",
-                letterSpacing: "-1.5px", maxWidth: "520px",
+                margin: 0,
+                fontSize: "clamp(28px, 3.5vw, 44px)",
+                lineHeight: 1.15, color: "white",
+                fontWeight: "800", letterSpacing: "-1.5px", maxWidth: "600px",
               }}>
                 Ulasan &amp; Feedback
                 <br />
@@ -657,22 +914,36 @@ export default function RiwayatUlasanKlien() {
                   background: "linear-gradient(90deg, #60a5fa, #a78bfa)",
                   WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
                 }}>
-                  Pesanan Anda 🌟
+                  pesanan Anda 🌟
                 </span>
               </h1>
 
               <p style={{
                 margin: "16px 0 0", color: "#64748b",
-                fontSize: "15px", lineHeight: "1.8", maxWidth: "480px",
+                fontSize: "15px", lineHeight: "1.8", maxWidth: "560px",
               }}>
-                Kelola seluruh ulasan yang pernah Anda kirimkan.
+                Kelola seluruh ulasan yang pernah Anda kirimkan untuk pesanan catering.
                 Edit atau hapus kapan saja.
               </p>
+
+              <div style={{
+                marginTop: "28px",
+                display: "inline-flex", alignItems: "center", gap: "10px",
+                padding: "8px 16px", borderRadius: "12px",
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.07)",
+                color: "#94a3b8", fontSize: "13px",
+              }}>
+                <Activity size={14} color="#60a5fa" />
+                <span>{dateStr}</span>
+                <span style={{ width: "1px", height: "14px", background: "rgba(255,255,255,0.1)" }} />
+                <span style={{ color: "white", fontWeight: "600" }}>{timeStr}</span>
+              </div>
             </div>
 
-            {/* Right: Rating summary card */}
+            {/* Right — rating summary card, gaya Home.jsx hero card */}
             {!loading && ulasan.length > 0 && (
-              <div style={{
+              <div className="ruk-hero-card" style={{
                 width: "280px", flexShrink: 0,
                 background: "rgba(255,255,255,0.03)",
                 border: "1px solid rgba(255,255,255,0.07)",
@@ -687,28 +958,26 @@ export default function RiwayatUlasanKlien() {
                   Ringkasan Rating
                 </div>
 
-                {/* Avg big number */}
                 <div style={{ display: "flex", alignItems: "flex-end", gap: "12px", marginBottom: "16px" }}>
-                  <div style={{ color: C.amber, fontSize: "48px", fontWeight: "800", lineHeight: 1, letterSpacing: "-2px" }}>
+                  <div style={{ color: "#fbbf24", fontSize: "48px", fontWeight: "800", lineHeight: 1, letterSpacing: "-2px" }}>
                     {avgRating}
                   </div>
                   <div style={{ paddingBottom: "6px" }}>
                     <Stars value={Math.round(Number(avgRating))} size={15} />
-                    <div style={{ color: C.dim, fontSize: "12px", marginTop: "4px" }}>
+                    <div style={{ color: "#475569", fontSize: "12px", marginTop: "4px" }}>
                       dari {ulasan.length} ulasan
                     </div>
                   </div>
                 </div>
 
-                {/* Mini bars */}
                 {[5, 4, 3, 2, 1].map((r) => {
                   const count = ratingDist[r] || 0;
                   const pct = ulasan.length ? Math.round((count / ulasan.length) * 100) : 0;
-                  const barColor = r >= 4 ? C.green : r === 3 ? C.amber : C.red;
+                  const barColor = r >= 4 ? "#34d399" : r === 3 ? "#fbbf24" : "#ef4444";
                   return (
                     <div key={r} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "5px" }}>
-                      <span style={{ color: C.dim, fontSize: "11px", width: "10px", textAlign: "right" }}>{r}</span>
-                      <FaStar style={{ color: C.amber, fontSize: "10px", flexShrink: 0 }} />
+                      <span style={{ color: "#475569", fontSize: "11px", width: "10px", textAlign: "right" }}>{r}</span>
+                      <FaStar style={{ color: "#fbbf24", fontSize: "10px", flexShrink: 0 }} />
                       <div style={{ flex: 1, height: "6px", borderRadius: "99px", background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
                         <div style={{
                           height: "100%", borderRadius: "99px",
@@ -716,7 +985,7 @@ export default function RiwayatUlasanKlien() {
                           transition: "width .5s ease",
                         }} />
                       </div>
-                      <span style={{ color: C.dim, fontSize: "11px", width: "28px" }}>{pct}%</span>
+                      <span style={{ color: "#475569", fontSize: "11px", width: "28px" }}>{pct}%</span>
                     </div>
                   );
                 })}
@@ -725,37 +994,48 @@ export default function RiwayatUlasanKlien() {
           </div>
         </div>
 
-        {/* ── MINI STATS ── */}
+        {/* ── STATS GRID (pola Home.jsx) ── */}
         {!loading && ulasan.length > 0 && (
           <div style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
             gap: "16px", marginBottom: "24px",
           }}>
-            <MiniStat
-              icon={<MessageSquare size={18} />}
-              label="Total Ulasan"
-              value={ulasan.length}
-              color="#60a5fa"
-              bg="rgba(59,130,246,0.08)"
-              border="rgba(59,130,246,0.2)"
-            />
-            <MiniStat
-              icon={<Star size={18} />}
-              label="Rating Rata-rata"
-              value={`${avgRating} / 5`}
-              color="#f59e0b"
-              bg="rgba(245,158,11,0.08)"
-              border="rgba(245,158,11,0.2)"
-            />
-            <MiniStat
-              icon={<TrendingUp size={18} />}
-              label="Ulasan Positif (≥4⭐)"
-              value={positiveCount}
-              color="#34d399"
-              bg="rgba(52,211,153,0.08)"
-              border="rgba(52,211,153,0.2)"
-            />
+            {stats.map((item, index) => (
+              <StatCard key={index} {...item} />
+            ))}
+          </div>
+        )}
+
+        {/* ── PESANAN SELESAI: BELUM DIULAS ── */}
+        {!loading && !error && pesananSelesai.length > 0 && (
+          <div style={{
+            background: "linear-gradient(160deg, #0f172a 0%, #0d1117 100%)",
+            border: "1px solid rgba(255,255,255,0.07)",
+            borderRadius: "20px", padding: "28px",
+            marginBottom: "24px",
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
+              <div>
+                <h2 style={{ margin: 0, color: "white", fontSize: "18px", fontWeight: "700", letterSpacing: "-0.3px" }}>
+                  Menu Selesai — Belum Diulas
+                </h2>
+                <p style={{ margin: "4px 0 0", color: "#475569", fontSize: "13px" }}>
+                  Bagikan pengalaman Anda untuk pesanan yang sudah selesai
+                </p>
+              </div>
+              <ChevronRight size={16} color="#334155" />
+            </div>
+
+            <div style={gridStyle}>
+              {pesananSelesai.map((item) => (
+                <PesananSelesaiCard
+                  key={item.id}
+                  item={item}
+                  onReview={setReviewTarget}
+                />
+              ))}
+            </div>
           </div>
         )}
 
@@ -767,11 +1047,10 @@ export default function RiwayatUlasanKlien() {
           display: "flex", gap: "14px", flexWrap: "wrap",
           alignItems: "center", marginBottom: "20px",
         }}>
-          {/* Search */}
           <div style={{ position: "relative", flex: "1 1 220px", maxWidth: "320px" }}>
             <Search size={14} style={{
               position: "absolute", left: "14px", top: "50%",
-              transform: "translateY(-50%)", color: C.dim,
+              transform: "translateY(-50%)", color: "#475569",
               pointerEvents: "none",
             }} />
             <input
@@ -783,7 +1062,7 @@ export default function RiwayatUlasanKlien() {
                 width: "100%", height: "42px",
                 background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.07)",
                 borderRadius: "12px", padding: "0 14px 0 38px",
-                color: C.white, fontSize: "13px", outline: "none",
+                color: "white", fontSize: "13px", outline: "none",
                 fontFamily: "'Inter', system-ui, sans-serif",
                 transition: "border-color .15s",
               }}
@@ -792,16 +1071,13 @@ export default function RiwayatUlasanKlien() {
             />
           </div>
 
-          {/* Divider */}
-          <div style={{ width: "1px", height: "32px", background: "rgba(255,255,255,0.07)", flexShrink: 0 }} />
+          <div className="ruk-divider-v" style={{ width: "1px", height: "32px", background: "rgba(255,255,255,0.07)", flexShrink: 0 }} />
 
-          {/* Label */}
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", color: C.dim, fontSize: "12px", fontWeight: "600" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#475569", fontSize: "12px", fontWeight: "600" }}>
             <Filter size={13} />
             Filter
           </div>
 
-          {/* Rating Tabs */}
           <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
             {RATING_FILTERS.map((f) => {
               const active = ratingFilter === f;
@@ -815,7 +1091,7 @@ export default function RiwayatUlasanKlien() {
                     padding: "7px 14px", borderRadius: "10px",
                     border: `1px solid ${active ? "transparent" : "rgba(255,255,255,0.07)"}`,
                     background: active ? "linear-gradient(90deg,#2563eb,#3b82f6)" : "rgba(255,255,255,0.03)",
-                    color: active ? C.white : C.muted,
+                    color: active ? "white" : "#94a3b8",
                     fontSize: "13px", fontWeight: "600",
                     cursor: "pointer", whiteSpace: "nowrap",
                     fontFamily: "'Inter', system-ui, sans-serif",
@@ -830,7 +1106,6 @@ export default function RiwayatUlasanKlien() {
 
         {/* ── CONTENT ── */}
 
-        {/* Error */}
         {error && (
           <EmptyState
             icon="⚠️"
@@ -840,14 +1115,12 @@ export default function RiwayatUlasanKlien() {
           />
         )}
 
-        {/* Skeleton */}
         {!error && loading && (
           <div style={gridStyle}>
             {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         )}
 
-        {/* Empty */}
         {!error && !loading && filtered.length === 0 && (
           <EmptyState
             icon="💬"
@@ -860,7 +1133,6 @@ export default function RiwayatUlasanKlien() {
           />
         )}
 
-        {/* Cards */}
         {!error && !loading && filtered.length > 0 && (
           <div style={gridStyle}>
             {filtered.map((item) => (
@@ -874,22 +1146,28 @@ export default function RiwayatUlasanKlien() {
           </div>
         )}
 
-        {/* Footer count */}
         {!error && !loading && filtered.length > 0 && (
           <div style={{
-            color: C.dim, fontSize: "13px", marginTop: "24px", textAlign: "center",
+            color: "#475569", fontSize: "13px", marginTop: "24px", textAlign: "center",
             padding: "16px",
             background: "linear-gradient(160deg, #0f172a 0%, #0d1117 100%)",
             border: "1px solid rgba(255,255,255,0.07)",
             borderRadius: "16px",
           }}>
-            Menampilkan <strong style={{ color: C.white }}>{filtered.length}</strong> dari{" "}
-            <strong style={{ color: C.white }}>{ulasan.length}</strong> ulasan
+            Menampilkan <strong style={{ color: "white" }}>{filtered.length}</strong> dari{" "}
+            <strong style={{ color: "white" }}>{ulasan.length}</strong> ulasan
           </div>
         )}
       </div>
 
       {/* ── MODALS ── */}
+      {reviewTarget && (
+        <CreateModal
+          pesanan={reviewTarget}
+          onClose={() => setReviewTarget(null)}
+          onSaved={handleReviewSaved}
+        />
+      )}
       {editTarget && (
         <EditModal
           ulasan={editTarget}
@@ -934,7 +1212,7 @@ function CloseBtn({ onClick }) {
       onClick={onClick}
       style={{
         background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)",
-        borderRadius: "10px", color: C.muted,
+        borderRadius: "10px", color: "#94a3b8",
         width: "36px", height: "36px",
         display: "flex", alignItems: "center", justifyContent: "center",
         cursor: "pointer", fontSize: "16px", flexShrink: 0,
@@ -951,7 +1229,7 @@ function CloseBtn({ onClick }) {
 function FieldLabel({ text }) {
   return (
     <div style={{
-      color: C.dim, fontSize: "11px", fontWeight: "700",
+      color: "#475569", fontSize: "11px", fontWeight: "700",
       textTransform: "uppercase", letterSpacing: "0.8px",
       marginTop: "20px", marginBottom: "10px",
     }}>{text}</div>
@@ -978,15 +1256,15 @@ function EmptyState({ icon, title, subtitle, action }) {
           display: "flex", alignItems: "center", justifyContent: "center",
           fontSize: "28px", margin: "0 auto 18px",
         }}>{icon}</div>
-        <div style={{ color: C.white, fontWeight: "800", fontSize: "18px", marginBottom: "8px", letterSpacing: "-0.3px" }}>{title}</div>
-        <p style={{ color: C.muted, margin: "0 0 26px", fontSize: "14px", lineHeight: "1.7" }}>{subtitle}</p>
+        <div style={{ color: "white", fontWeight: "800", fontSize: "18px", marginBottom: "8px", letterSpacing: "-0.3px" }}>{title}</div>
+        <p style={{ color: "#94a3b8", margin: "0 0 26px", fontSize: "14px", lineHeight: "1.7" }}>{subtitle}</p>
         {action && (
           <button
             onClick={action.onClick}
             style={{
               background: "linear-gradient(90deg,#2563eb,#3b82f6)",
               border: "none", borderRadius: "12px", padding: "12px 28px",
-              color: C.white, fontSize: "14px", fontWeight: "700", cursor: "pointer",
+              color: "white", fontSize: "14px", fontWeight: "700", cursor: "pointer",
               fontFamily: "'Inter', system-ui, sans-serif",
             }}
           >

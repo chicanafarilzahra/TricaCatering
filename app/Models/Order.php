@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use App\Models\TrackingLog;
 
 class Order extends Model
@@ -92,8 +93,15 @@ class Order extends Model
             self::STATUS_ON_DELIVERY,
         ]);
     }
-   public function deliverySchedules()
-{
-    return $this->hasMany(DeliverySchedule::class);
-}
+
+    public function deliverySchedules()
+    {
+        return $this->hasMany(DeliverySchedule::class);
+    }
+
+    // Ulasan klien untuk pesanan ini (1 pesanan = 1 ulasan)
+    public function ulasan(): HasOne
+    {
+        return $this->hasOne(Ulasan::class, 'order_id');
+    }
 }

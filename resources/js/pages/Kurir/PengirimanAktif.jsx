@@ -70,8 +70,12 @@ export default function PengirimanAktif({ onLogout }) {
     const [loading, setLoading] = useState({});
     const navigate = useNavigate();
 
-    const fetchOrders = () => {
-        return axios.get("/kurir/orders")
+    const isSppgKurir = !!user?.sppg_id;
+
+    const fetchOrders = (currentUser) => {
+        const sppg = currentUser?.sppg_id;
+        const endpoint = sppg ? "/kurir/distribusi" : "/kurir/orders";
+        return axios.get(endpoint)
             .then((res) => setOrders(Array.isArray(res.data?.data) ? res.data.data : []))
             .catch((err) => {
                 console.error(err);
@@ -81,8 +85,9 @@ export default function PengirimanAktif({ onLogout }) {
 
     useEffect(() => {
         const stored = localStorage.getItem("user");
-        if (stored) setUser(JSON.parse(stored));
-        fetchOrders();
+        const parsedUser = stored ? JSON.parse(stored) : null;
+        setUser(parsedUser);
+        fetchOrders(parsedUser);
     }, []);
 
     const activeOrders = orders.filter((o) =>
@@ -90,11 +95,17 @@ export default function PengirimanAktif({ onLogout }) {
     );
     const totalBiaya = activeOrders.reduce((sum, o) => sum + (o.courier_fee || 0), 0);
 
+    // "Mulai Antar" — kurir catering: pindah status pesanannya sendiri.
+    // Kurir SPPG: klaim distribusi yang masih tersedia (Disiapkan, belum ada kurir).
     const handleMenujuLokasi = async (order) => {
         setLoading((prev) => ({ ...prev, [order.id]: "depart" }));
         try {
-            await axios.put(`/kurir/orders/${order.id}/mulai-antar`);
-            fetchOrders();
+            if (order.source === "distribusi") {
+                await axios.put(`/kurir/distribusi/${order.id}/mulai-antar`);
+            } else {
+                await axios.put(`/kurir/orders/${order.id}/mulai-antar`);
+            }
+            fetchOrders(user);
         } catch (err) {
             console.error(err);
             alert(err.response?.data?.message || "Gagal memulai pengiriman.");
@@ -107,8 +118,13 @@ export default function PengirimanAktif({ onLogout }) {
         if (!window.confirm(`Tandai pengiriman ke ${order.customer_name} sebagai selesai?`)) return;
         setLoading((prev) => ({ ...prev, [order.id]: "done" }));
         try {
-            await axios.put(`/kurir/orders/${order.id}/update-status`, { status: "delivered" });
-            navigate("/kurir/laporan");
+            if (order.source === "distribusi") {
+                await axios.put(`/kurir/distribusi/${order.id}/selesai`);
+                fetchOrders(user);
+            } else {
+                await axios.put(`/kurir/orders/${order.id}/update-status`, { status: "delivered" });
+                navigate("/kurir/laporan");
+            }
         } catch (err) {
             console.error(err);
             alert(err.response?.data?.message || "Gagal menyelesaikan pengiriman.");
@@ -120,7 +136,10 @@ export default function PengirimanAktif({ onLogout }) {
         const isLoadingDepart = loading[o.id] === "depart";
         const isLoadingDone   = loading[o.id] === "done";
 
-        if (o.status === "dispatched") {
+        const canStart  = o.status === "dispatched" && (o.source !== "distribusi" || o.claimable);
+        const canFinish = o.status === "on_delivery" && (o.source !== "distribusi" || o.is_mine);
+
+        if (canStart) {
             return (
                 <button
                     onClick={() => handleMenujuLokasi(o)}
@@ -136,12 +155,12 @@ export default function PengirimanAktif({ onLogout }) {
                     }}
                 >
                     <FaMapMarkerAlt style={{ fontSize: "11px" }} />
-                    {isLoadingDepart ? "Memulai..." : "Menuju Lokasi"}
+                    {isLoadingDepart ? "Memulai..." : (o.source === "distribusi" ? "Ambil & Antar" : "Menuju Lokasi")}
                 </button>
             );
         }
 
-        if (o.status === "on_delivery") {
+        if (canFinish) {
             return (
                 <button
                     onClick={() => handleSelesai(o)}
@@ -165,7 +184,7 @@ export default function PengirimanAktif({ onLogout }) {
         return null;
     };
 
-    const renderStatusBadge = (status) => {
+    const renderStatusBadge = (status, o) => {
         if (status === "dispatched") {
             return (
                 <span style={{
@@ -177,7 +196,7 @@ export default function PengirimanAktif({ onLogout }) {
                     color: "#FCD34D",
                     textTransform: "uppercase", letterSpacing: ".4px",
                 }}>
-                    Siap Antar
+                    {o.source === "distribusi" ? "Siap Diambil" : "Siap Antar"}
                 </span>
             );
         }
@@ -300,14 +319,18 @@ export default function PengirimanAktif({ onLogout }) {
                                 }
                             </div>
                             <div style={{ marginTop: "6px", fontSize: "13px", color: T.sub }}>
-                                Pantau seluruh pengiriman yang sedang berlangsung hari ini
+                                {isSppgKurir
+                                    ? "Distribusi yang tersedia untuk diambil & sedang Anda antar hari ini"
+                                    : "Pantau seluruh pengiriman yang sedang berlangsung hari ini"}
                             </div>
                         </div>
                     </div>
 
                     <div style={{ display: "flex", gap: "14px", marginBottom: "22px" }}>
                         <StatCard title="Pengiriman Aktif" value={activeOrders.length} icon={<FaTruck />} accentColor="#3B82F6" bar="linear-gradient(90deg,#3B82F6,#6366F1)" />
-                        <StatCard title="Total Biaya" value={`Rp ${totalBiaya.toLocaleString("id-ID")}`} icon={<FaMoneyBillWave />} accentColor="#A855F7" bar="linear-gradient(90deg,#A855F7,#6366F1)" />
+                        {!isSppgKurir && (
+                            <StatCard title="Total Biaya" value={`Rp ${totalBiaya.toLocaleString("id-ID")}`} icon={<FaMoneyBillWave />} accentColor="#A855F7" bar="linear-gradient(90deg,#A855F7,#6366F1)" />
+                        )}
                     </div>
 
                     <div style={{
@@ -321,7 +344,9 @@ export default function PengirimanAktif({ onLogout }) {
                             <div>
                                 <div style={{ fontSize: "15px", fontWeight: 700, color: T.text }}>Daftar Pengiriman Aktif</div>
                                 <div style={{ fontSize: "12px", color: T.muted, marginTop: "2px" }}>
-                                    Pesanan yang siap diantar dan sedang dalam perjalanan
+                                    {isSppgKurir
+                                        ? "Distribusi siap diambil dan yang sedang Anda antar"
+                                        : "Pesanan yang siap diantar dan sedang dalam perjalanan"}
                                 </div>
                             </div>
                             <div style={{
@@ -337,7 +362,7 @@ export default function PengirimanAktif({ onLogout }) {
                             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "820px" }}>
                                 <thead>
                                     <tr>
-                                        {["No", "Klien", "Pesanan", "Alamat", "Waktu", "Status", "Biaya", "Aksi"].map((h) => (
+                                        {["No", isSppgKurir ? "Sekolah" : "Klien", "Menu", "Alamat", "Waktu", "Status", ...(isSppgKurir ? [] : ["Biaya"]), "Aksi"].map((h) => (
                                             <th key={h} style={{
                                                 padding: "11px 20px", textAlign: "left",
                                                 fontSize: "11px", fontWeight: 600, color: T.muted,
@@ -352,7 +377,7 @@ export default function PengirimanAktif({ onLogout }) {
                                 <tbody>
                                     {activeOrders.length === 0 ? (
                                         <tr>
-                                            <td colSpan={8} style={{ padding: "56px 20px", textAlign: "center", color: T.muted, fontSize: "13px" }}>
+                                            <td colSpan={isSppgKurir ? 7 : 8} style={{ padding: "56px 20px", textAlign: "center", color: T.muted, fontSize: "13px" }}>
                                                 <div style={{
                                                     width: "48px", height: "48px", borderRadius: "14px",
                                                     background: T.card, border: `0.5px solid ${T.border}`,
@@ -367,7 +392,7 @@ export default function PengirimanAktif({ onLogout }) {
                                     ) : (
                                         activeOrders.map((o, idx) => (
                                             <tr
-                                                key={o.id}
+                                                key={`${o.source || "order"}-${o.id}`}
                                                 style={{ borderBottom: `0.5px solid rgba(255,255,255,0.03)`, transition: "background 0.15s" }}
                                                 onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.02)"}
                                                 onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
@@ -394,10 +419,12 @@ export default function PengirimanAktif({ onLogout }) {
                                                 <td style={{ padding: "14px 20px", fontSize: "13px", color: T.sub, whiteSpace: "nowrap" }}>
                                                     {o.jam ? String(o.jam).substring(0, 5) : "—"}
                                                 </td>
-                                                <td style={{ padding: "14px 20px" }}>{renderStatusBadge(o.status)}</td>
-                                                <td style={{ padding: "14px 20px", fontSize: "13px", fontWeight: 700, color: "#34D399", whiteSpace: "nowrap" }}>
-                                                    Rp {(o.courier_fee || 0).toLocaleString("id-ID")}
-                                                </td>
+                                                <td style={{ padding: "14px 20px" }}>{renderStatusBadge(o.status, o)}</td>
+                                                {!isSppgKurir && (
+                                                    <td style={{ padding: "14px 20px", fontSize: "13px", fontWeight: 700, color: "#34D399", whiteSpace: "nowrap" }}>
+                                                        Rp {(o.courier_fee || 0).toLocaleString("id-ID")}
+                                                    </td>
+                                                )}
                                                 <td style={{ padding: "14px 20px", whiteSpace: "nowrap" }}>{renderAksi(o)}</td>
                                             </tr>
                                         ))

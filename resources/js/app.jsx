@@ -86,6 +86,7 @@ import DistribusiSPPG from "./pages/sppg/DistribusiSPPG";
 import StockSPPG from "./pages/sppg/StockSPPG";
 import RiwayatSPPG from "./pages/sppg/RiwayatSPPG";
 import LaporanSPPG from "./pages/sppg/LaporanSPPG";
+import KurirSPPG from "./pages/sppg/KurirSPPG";
 
 /* =========================
    COMPONENTS
@@ -513,6 +514,15 @@ function App() {
                         element={
                             <ProtectedRoute role="operator_sppg">
                                 <LaporanSPPG />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/sppg/kurir"
+                        element={
+                            <ProtectedRoute role="operator_sppg">
+                                <KurirSPPG />
                             </ProtectedRoute>
                         }
                     />

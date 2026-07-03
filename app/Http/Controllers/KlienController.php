@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Order;
+use App\Models\Ulasan;
 use Illuminate\Support\Facades\Auth;
 
 class KlienController extends Controller
@@ -125,11 +126,161 @@ class KlienController extends Controller
 
     /**
      * ULASAN & KOMPLAIN
+     *
+     * Daftar ulasan yang sudah pernah dikirim klien, lengkap dengan
+     * relasi pesanan + menu, supaya frontend bisa menampilkan nama
+     * menu, gambar, dsb (item.pesanan.menu.name).
      */
     public function ulasan()
     {
+        $user = Auth::user();
+
+        $ulasan = Ulasan::with(['pesanan.menu'])
+            ->where('client_id', $user->id)
+            ->latest()
+            ->get();
+
         return response()->json([
-            'message' => 'Halaman ulasan klien',
+            'data' => $ulasan,
+        ]);
+    }
+
+    /**
+     * PESANAN SELESAI (belum diulas)
+     *
+     * Pesanan milik klien berstatus 'delivered' yang belum punya
+     * relasi ulasan sama sekali. Dipakai oleh halaman Riwayat Ulasan
+     * untuk menampilkan tombol "Beri Rating & Ulasan".
+     */
+    public function pesananSelesai()
+    {
+        $user = Auth::user();
+
+        $orders = Order::with('menu')
+            ->where('client_id', $user->id)
+            ->where('status', Order::STATUS_DELIVERED)
+            ->whereDoesntHave('ulasan')
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'data' => $orders,
+        ]);
+    }
+
+    /**
+     * SIMPAN ULASAN BARU
+     *
+     * pesanan_id dari frontend dipetakan ke kolom order_id.
+     * Validasi: pesanan harus milik klien yang login, statusnya
+     * delivered, dan belum pernah diulas (constraint unique di DB
+     * juga jadi pengaman terakhir).
+     */
+    public function storeUlasan(Request $request)
+    {
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'pesanan_id' => 'required|exists:orders,id',
+            'rating'     => 'required|integer|min:1|max:5',
+            'komentar'   => 'nullable|string|max:300',
+            'tags'       => 'nullable|array',
+            'tags.*'     => 'string',
+        ]);
+
+        $order = Order::where('id', $validated['pesanan_id'])
+            ->where('client_id', $user->id)
+            ->first();
+
+        if (!$order) {
+            return response()->json([
+                'message' => 'Pesanan tidak ditemukan.',
+            ], 404);
+        }
+
+        if ($order->status !== Order::STATUS_DELIVERED) {
+            return response()->json([
+                'message' => 'Pesanan belum selesai, belum bisa diulas.',
+            ], 422);
+        }
+
+        if (Ulasan::where('order_id', $order->id)->exists()) {
+            return response()->json([
+                'message' => 'Pesanan ini sudah pernah diulas.',
+            ], 422);
+        }
+
+        $ulasan = Ulasan::create([
+            'order_id'  => $order->id,
+            'client_id' => $user->id,
+            'rating'    => $validated['rating'],
+            'komentar'  => $validated['komentar'] ?? null,
+            'tags'      => $validated['tags'] ?? [],
+        ]);
+
+        return response()->json([
+            'message' => 'Ulasan berhasil dikirim.',
+            'data'    => $ulasan->load('pesanan.menu'),
+        ], 201);
+    }
+
+    /**
+     * UPDATE ULASAN
+     */
+    public function updateUlasan(Request $request, $id)
+    {
+        $user = Auth::user();
+
+        $ulasan = Ulasan::where('id', $id)
+            ->where('client_id', $user->id)
+            ->first();
+
+        if (!$ulasan) {
+            return response()->json([
+                'message' => 'Ulasan tidak ditemukan.',
+            ], 404);
+        }
+
+        $validated = $request->validate([
+            'rating'   => 'required|integer|min:1|max:5',
+            'komentar' => 'nullable|string|max:300',
+            'tags'     => 'nullable|array',
+            'tags.*'   => 'string',
+        ]);
+
+        $ulasan->update([
+            'rating'   => $validated['rating'],
+            'komentar' => $validated['komentar'] ?? null,
+            'tags'     => $validated['tags'] ?? [],
+        ]);
+
+        return response()->json([
+            'message' => 'Ulasan berhasil diperbarui.',
+            'data'    => $ulasan->load('pesanan.menu'),
+        ]);
+    }
+
+    /**
+     * HAPUS ULASAN
+     */
+    public function destroyUlasan($id)
+    {
+        $user = Auth::user();
+
+        $ulasan = Ulasan::where('id', $id)
+            ->where('client_id', $user->id)
+            ->first();
+
+        if (!$ulasan) {
+            return response()->json([
+                'message' => 'Ulasan tidak ditemukan.',
+            ], 404);
+        }
+
+        $ulasan->delete();
+
+        return response()->json([
+            'message' => 'Ulasan berhasil dihapus.',
         ]);
     }
 

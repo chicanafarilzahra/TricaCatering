@@ -1,6 +1,6 @@
 // resources/js/pages/Register.jsx
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { FaEye, FaEyeSlash, FaArrowLeft } from "react-icons/fa";
@@ -230,6 +230,31 @@ const styles = {
         fontWeight: "600",
         border: "1px solid rgba(239,68,68,0.2)",
     },
+    segmentWrap: {
+        display: "flex",
+        gap: "8px",
+        padding: "4px",
+        background: "#07090f",
+        border: "1px solid rgba(255,255,255,0.07)",
+        borderRadius: "12px",
+    },
+    segmentBtn: {
+        flex: 1,
+        height: "42px",
+        border: "none",
+        borderRadius: "9px",
+        background: "transparent",
+        color: "#64748b",
+        fontWeight: "600",
+        fontSize: "13px",
+        cursor: "pointer",
+        transition: "all 0.15s",
+    },
+    segmentBtnActive: {
+        background: "rgba(37,99,235,0.18)",
+        color: "#60a5fa",
+        boxShadow: "0 0 0 1px rgba(59,130,246,0.4) inset",
+    },
 };
 
 export default function Register() {
@@ -248,12 +273,50 @@ export default function Register() {
     const [longitude, setLongitude] = useState(null);
     const [namaSppg, setNamaSppg] = useState("");
     const [alamatSppg, setAlamatSppg] = useState("");
-    const [namaTempatKurir, setNamaTempatKurir] = useState("");
-    const [alamatTempatKurir, setAlamatTempatKurir] = useState("");
     const [phone, setPhone] = useState("");
     const [message, setMessage] = useState("");
     const [loading, setLoading] = useState(false);
     const [focusedField, setFocusedField] = useState(null);
+
+    // ── Kurir: pilih daftar ke Catering atau ke SPPG ──
+    const [kurirType, setKurirType] = useState("catering"); // "catering" | "sppg"
+    const [employerId, setEmployerId] = useState(null);
+    const [employerList, setEmployerList] = useState([]);
+    const [loadingEmployers, setLoadingEmployers] = useState(false);
+
+    // Ambil daftar catering/SPPG setiap kali role=kurir & kurirType berubah
+    useEffect(() => {
+        if (role !== "kurir") return;
+
+        let active = true;
+        setLoadingEmployers(true);
+        setEmployerId(null);
+
+        const endpoint = kurirType === "sppg" ? "/sppgs/list" : "/owners/list";
+
+        axios.get(endpoint)
+            .then(res => {
+                if (active) setEmployerList(res.data ?? []);
+            })
+            .catch(err => {
+                console.error(err);
+                if (active) setEmployerList([]);
+            })
+            .finally(() => {
+                if (active) setLoadingEmployers(false);
+            });
+
+        return () => { active = false; };
+    }, [role, kurirType]);
+
+    const handleKurirTypeChange = (type) => {
+        setKurirType(type);
+        setEmployerId(null);
+    };
+
+    const selectedEmployer = employerList.find(
+        (item) => item.id === employerId
+    );
 
     const getLocation = () => {
         if (!navigator.geolocation) {
@@ -290,10 +353,12 @@ export default function Register() {
                 longitude: role === "owner" ? longitude : null,
                 nama_catering: role === "owner" ? namaCatering : null,
                 alamat_catering: role === "owner" ? alamatCatering : null,
-                nama_tempat_kurir: role === "kurir" ? namaTempatKurir : null,
-                alamat_tempat_kurir: role === "kurir" ? alamatTempatKurir : null,
                 nama_sppg: role === "operator_sppg" ? namaSppg : null,
                 alamat_sppg: role === "operator_sppg" ? alamatSppg : null,
+
+                // ── kurir: kirim pilihan tipe + id catering/SPPG yang dipilih ──
+                kurir_type: role === "kurir" ? kurirType : null,
+                employer_id: role === "kurir" ? employerId : null,
             });
 
             setMessage("Register berhasil! Silakan login.");
@@ -336,8 +401,6 @@ export default function Register() {
     });
 
     const isSuccess = message === "Register berhasil! Silakan login.";
-
-    console.log("ROLE =", role);
 
     return (
         <div style={styles.page}>
@@ -557,44 +620,82 @@ export default function Register() {
                     {/* KURIR FIELDS */}
                     {role === "kurir" && (
                         <>
-                        <div style={styles.inputWrap}>
-                            <label style={styles.label}>No. Telepon</label>
-                            <input
-                                type="text"
-                                placeholder="08xxxxxxxxxx"
-                                value={phone}
-                                onChange={e => setPhone(e.target.value)}
-                                onFocus={() => setFocusedField("phone")}
-                                onBlur={() => setFocusedField(null)}
-                                required
-                                style={inputStyle("phone")}
-                            />
-                        </div>
                             <div style={styles.inputWrap}>
-                                <label style={styles.label}>Nama Tempat yang Dilamar</label>
+                                <label style={styles.label}>No. Telepon</label>
                                 <input
                                     type="text"
-                                    placeholder="Contoh: TriCa Catering"
-                                    value={namaTempatKurir}
-                                    onChange={e => setNamaTempatKurir(e.target.value)}
-                                    onFocus={() => setFocusedField("namaKurir")}
+                                    placeholder="08xxxxxxxxxx"
+                                    value={phone}
+                                    onChange={e => setPhone(e.target.value)}
+                                    onFocus={() => setFocusedField("phone")}
                                     onBlur={() => setFocusedField(null)}
                                     required
-                                    style={inputStyle("namaKurir")}
+                                    style={inputStyle("phone")}
                                 />
                             </div>
 
+                            {/* Pilih daftar ke Catering atau SPPG */}
+                            <div style={styles.inputWrap}>
+                                <label style={styles.label}>Daftar Sebagai Kurir</label>
+                                <div style={styles.segmentWrap}>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleKurirTypeChange("catering")}
+                                        style={{
+                                            ...styles.segmentBtn,
+                                            ...(kurirType === "catering" ? styles.segmentBtnActive : {}),
+                                        }}
+                                    >
+                                        Kurir Catering
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleKurirTypeChange("sppg")}
+                                        style={{
+                                            ...styles.segmentBtn,
+                                            ...(kurirType === "sppg" ? styles.segmentBtnActive : {}),
+                                        }}
+                                    >
+                                        Kurir SPPG
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Dropdown pilihan catering / SPPG (data asli dari backend) */}
                             <div style={{ marginBottom: "28px" }}>
-                                <label style={styles.label}>Alamat Tempat yang Dilamar</label>
-                                <textarea
-                                    placeholder="Masukkan alamat lengkap"
-                                    value={alamatTempatKurir}
-                                    onChange={e => setAlamatTempatKurir(e.target.value)}
-                                    onFocus={() => setFocusedField("alamatKurir")}
+                                <label style={styles.label}>
+                                    {kurirType === "sppg" ? "Pilih SPPG" : "Pilih Catering"}
+                                </label>
+                                <select
+                                    value={employerId ?? ""}
+                                    onChange={e => setEmployerId(e.target.value ? Number(e.target.value) : null)}
+                                    onFocus={() => setFocusedField("employer")}
                                     onBlur={() => setFocusedField(null)}
                                     required
-                                    style={textareaStyle("alamatKurir")}
-                                />
+                                    disabled={loadingEmployers || employerList.length === 0}
+                                    style={selectStyle("employer")}
+                                >
+                                    <option value="" disabled>
+                                        {loadingEmployers
+                                            ? "Memuat data..."
+                                            : employerList.length === 0
+                                                ? (kurirType === "sppg" ? "Belum ada SPPG terdaftar" : "Belum ada catering terdaftar")
+                                                : "-- Pilih --"}
+                                    </option>
+                                    {employerList.map(item => (
+                                        <option key={item.id} value={item.id}>
+                                            {kurirType === "sppg" ? item.nama_sppg : item.nama_catering}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                {selectedEmployer && (
+                                    <div style={styles.locationInfo}>
+                                        {kurirType === "sppg"
+                                            ? selectedEmployer.alamat_sppg
+                                            : selectedEmployer.alamat_catering}
+                                    </div>
+                                )}
                             </div>
                         </>
                     )}

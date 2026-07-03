@@ -23,7 +23,10 @@ use App\Http\Controllers\Api\CourierController;
 use App\Http\Controllers\Api\TrackingController;
 use App\Http\Controllers\Klien\InvoiceKlienController;
 use App\Http\Controllers\Klien\GeoController;
+
 use App\Http\Controllers\Kurir\KurirOrderController;
+use App\Http\Controllers\Kurir\KurirDistribusiController;
+ 
 
 use App\Http\Controllers\Api\OwnerMenuController;
 use App\Http\Controllers\Owner\MenuController as OwnerMenuController2;
@@ -35,6 +38,7 @@ use App\Http\Controllers\Owner\CourierController as OwnerCourierController;
 use App\Http\Controllers\Owner\OrderController as OwnerOrderController;
 use App\Http\Controllers\Owner\RevenueController as OwnerRevenueController;
 use App\Http\Controllers\Owner\OwnerInvoiceController;
+use App\Http\Controllers\Owner\OwnerAnalyticsController;
 
 use App\Http\Controllers\SPPG\DashboardSPPGController;
 use App\Http\Controllers\SPPG\MenuHarianController;
@@ -44,6 +48,7 @@ use App\Http\Controllers\SPPG\DistribusiController;
 use App\Http\Controllers\SPPG\StocksSPPGController;
 use App\Http\Controllers\SPPG\RiwayatSPPGController;
 use App\Http\Controllers\SPPG\LaporanSPPGController;
+use App\Http\Controllers\SPPG\KurirSppgController;
 
 /*
 |--------------------------------------------------------------------------
@@ -106,111 +111,134 @@ if (
 });
 
 Route::post('/register', function (Request $request) {
-
+ 
     $request->validate([
-
+ 
         'name' => 'required|string|max:255',
         'email' => 'required|email|unique:users,email',
         'password' => 'required|string|min:6|confirmed',
         'role' => 'required|in:owner,klien,kurir,operator_sppg',
-
+ 
         'phone' => 'required_if:role,kurir|nullable|string|max:20',
-
+ 
         'nama_catering' => 'nullable|string|max:255',
         'alamat_catering' => 'nullable|string',
         'nama_sppg' => 'nullable|string|max:255',
         'alamat_sppg' => 'nullable|string',
-
+ 
         'latitude' => 'nullable|numeric',
         'longitude' => 'nullable|numeric',
-
-        'owner_id' => 'nullable|exists:users,id',
-
-        'nama_tempat_kurir' => 'nullable|string|max:255',
-        'alamat_tempat_kurir' => 'nullable|string',
+ 
+        // ── Kurir: pilih daftar ke catering atau ke SPPG ──
+        'kurir_type'  => 'required_if:role,kurir|nullable|in:catering,sppg',
+        'employer_id' => 'required_if:role,kurir|nullable|integer',
     ]);
-
+ 
     $status = in_array($request->role, ['owner', 'kurir', 'operator_sppg'])
         ? 'pending'
         : 'approved';
-
+ 
     $latitude = null;
     $longitude = null;
-
-$latitude = null;
-$longitude = null;
-
-if ($request->role === 'owner') {
-
-    $latitude = $request->latitude;
-    $longitude = $request->longitude;
-
-    Log::info('Latitude: ' . $latitude);
-    Log::info('Longitude: ' . $longitude);
-}
-
-$ownerId = null;
-
-if ($request->role === 'kurir') {
-
-    $owner = User::where('role', 'owner')
-        ->whereRaw('LOWER(TRIM(nama_catering)) = ?', [
-            strtolower(trim($request->nama_tempat_kurir))
-        ])
-        ->first();
-
-    if (!$owner) {
-        return response()->json([
-            'message' => 'Nama catering tidak ditemukan'
-        ], 422);
+ 
+    if ($request->role === 'owner') {
+        $latitude = $request->latitude;
+        $longitude = $request->longitude;
+ 
+        Log::info('Latitude: ' . $latitude);
+        Log::info('Longitude: ' . $longitude);
     }
-
-    $ownerId = $owner->id;
-}
+ 
+    $ownerId           = null;
+    $sppgId            = null;
+    $namaTempatKurir   = null;
+    $alamatTempatKurir = null;
+ 
+    if ($request->role === 'kurir') {
+ 
+        if ($request->kurir_type === 'catering') {
+ 
+            $employer = User::where('role', 'owner')
+                ->where('status', 'approved')
+                ->find($request->employer_id);
+ 
+            if (!$employer) {
+                return response()->json([
+                    'message' => 'Catering yang dipilih tidak ditemukan'
+                ], 422);
+            }
+ 
+            $ownerId           = $employer->id;
+            $namaTempatKurir   = $employer->nama_catering;
+            $alamatTempatKurir = $employer->alamat_catering;
+ 
+        } else { // kurir_type === 'sppg'
+ 
+            $employer = User::where('role', 'operator_sppg')
+                ->where('status', 'approved')
+                ->find($request->employer_id);
+ 
+            if (!$employer) {
+                return response()->json([
+                    'message' => 'SPPG yang dipilih tidak ditemukan'
+                ], 422);
+            }
+ 
+            $sppgId            = $employer->id;
+            $namaTempatKurir   = $employer->nama_sppg;
+            $alamatTempatKurir = $employer->alamat_sppg;
+        }
+    }
+ 
     $user = User::create([
         'name' => $request->name,
         'email' => $request->email,
         'password' => Hash::make($request->password),
         'role' => $request->role,
-
+ 
         'phone' => $request->phone,
-
+ 
         'nama_catering' => $request->nama_catering,
         'alamat_catering' => $request->alamat_catering,
-
+ 
         'owner_id' => $ownerId,
-
-        'nama_tempat_kurir' => $request->nama_tempat_kurir,
-        'alamat_tempat_kurir' => $request->alamat_tempat_kurir,
-
+        'sppg_id'  => $sppgId,
+ 
+        'nama_tempat_kurir' => $namaTempatKurir,
+        'alamat_tempat_kurir' => $alamatTempatKurir,
+ 
         'nama_sppg' => $request->nama_sppg,
         'alamat_sppg' => $request->alamat_sppg,
-
+ 
         'latitude' => $latitude,
         'longitude' => $longitude,
-
+ 
         'status' => $status,
     ]);
-
+ 
     // jika status approved, buat token otomatis untuk auto-login
     $token = null;
     if ($status === 'approved') {
         $token = $user->createToken('auth-token')->plainTextToken;
     }
-
+ 
     return response()->json([
         'message' => 'Register berhasil',
         'user' => $user,
         'token' => $token, // token null jika pending/rejected
     ]);
-
-
-    });
-
+});
     Route::get('/owners/list', function () {
     return User::where('role', 'owner')
         ->where('status', 'approved')
         ->select('id', 'nama_catering', 'alamat_catering')
+        ->get();
+});
+
+Route::get('/sppgs/list', function () {
+    return User::where('role', 'operator_sppg')
+        ->where('status', 'approved')
+        ->select('id', 'nama_sppg', 'alamat_sppg')
         ->get();
 });
 
@@ -317,6 +345,11 @@ Route::middleware('auth:sanctum')
         // ── Laporan Harian ──
         Route::get('/laporan_harian', [LaporanHarianController::class, 'index']);
         Route::post('/laporan_harian', [LaporanHarianController::class, 'store']);
+
+        Route::get('/distribusi',      [KurirDistribusiController::class, 'index']);
+        Route::get('/distribusi/rute', [KurirDistribusiController::class, 'rute']);
+        Route::put('/distribusi/{id}/mulai-antar', [KurirDistribusiController::class, 'mulaiAntar']);
+        Route::put('/distribusi/{id}/selesai',     [KurirDistribusiController::class, 'selesai']);
     });
 
 Route::get('/klien/menus', function () {
@@ -370,6 +403,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('klien/lacak-pengiriman',    [KlienController::class, 'lacakPengiriman']);
     Route::get('klien/invoice',             [KlienController::class, 'invoice']);
     Route::get('klien/ulasan',              [KlienController::class, 'ulasan']);
+    Route::get('klien/pesanan-selesai',     [KlienController::class, 'pesananSelesai']);
+    Route::post('klien/ulasan',             [KlienController::class, 'storeUlasan']);
+    Route::put('klien/ulasan/{id}',         [KlienController::class, 'updateUlasan']);
+    Route::delete('klien/ulasan/{id}',      [KlienController::class, 'destroyUlasan']);
     Route::get('klien/pesan',               [KlienController::class, 'PesanMakan']);
  
     Route::post('klien/orders', [KlienController::class, 'storePesanan']);
@@ -490,6 +527,10 @@ Route::put('/orders/{order}/dispatch', [OwnerOrderController::class, 'dispatch']
     Route::put('/invoice-payments/{paymentId}/reject',
         [OwnerInvoiceController::class, 'reject']);
 
+    Route::get('/kurirs', [OwnerCourierController::class, 'index']);
+    Route::get('/revenue-analytics', [OwnerAnalyticsController::class, 'revenueAnalytics']);
+    Route::get('/latest-transactions', [OwnerAnalyticsController::class, 'latestTransactions']);
+
 });
 
 Route::get(
@@ -497,6 +538,8 @@ Route::get(
     [DistribusiController::class,'index']
 );
 Route::get('/menus-sppg', [PublicMenuController::class, 'index']);
+
+
 /*
 |--------------------------------------------------------------------------
 | SPPG
@@ -624,6 +667,26 @@ Route::get(
     Route::get(
         '/laporan',
         [LaporanSPPGController::class,'index']
+    );
+
+Route::get(
+        '/kurir',
+        [KurirSppgController::class, 'index']
+    );
+
+    Route::put(
+        '/kurir/{id}/approve',
+        [KurirSppgController::class, 'approve']
+    );
+
+    Route::put(
+        '/kurir/{id}/reject',
+        [KurirSppgController::class, 'reject']
+    );
+
+    Route::delete(
+        '/kurir/{id}',
+        [KurirSppgController::class, 'destroy']
     );
 
 });

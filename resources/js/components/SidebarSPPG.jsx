@@ -4,6 +4,7 @@ import {
     CalendarDays,
     UtensilsCrossed,
     Package,
+    Truck,
     History,
     FileBarChart2,
     LogOut,
@@ -73,6 +74,7 @@ export default function SidebarSPPG() {
                 { label: "Distribusi",     path: "/sppg/distribusi",  icon: <CalendarDays size={17} /> },
                 { label: "Menu & Gizi",    path: "/sppg/menu-harian", icon: <UtensilsCrossed size={17} /> },
                 { label: "Stok Bahan",     path: "/sppg/stok",        icon: <Package size={17} /> },
+                { label: "Kurir SPPG",     path: "/sppg/kurir",       icon: <Truck size={17} /> },
             ],
         },
         {

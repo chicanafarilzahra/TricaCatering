@@ -25,7 +25,8 @@ class User extends Authenticatable
     // Kurir
     'nama_tempat_kurir',
     'alamat_tempat_kurir',
-    'owner_id',          // ← relasi kurir ke owner-nya
+    'owner_id',  
+    'sppg_id',        // ← relasi kurir ke owner-nya
     'is_available',      // ← status ketersediaan kurir untuk dispatch
 
     // Operator SPPG

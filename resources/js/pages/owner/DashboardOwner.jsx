@@ -13,6 +13,8 @@ import {
     Truck,
     CheckCircle2,
     XCircle,
+    Wallet,
+    Hourglass,
 } from "lucide-react";
 
 import OwnerLayout from "../../layouts/OwnerLayout";
@@ -37,6 +39,21 @@ const t = {
     },
 };
 
+/* ─── helpers ─── */
+const formatRupiah = (value) => `Rp ${Number(value || 0).toLocaleString("id-ID")}`;
+
+const formatDateTime = (value) => {
+    if (!value) return "—";
+    try {
+        return new Date(value).toLocaleString("id-ID", {
+            day: "2-digit", month: "short",
+            hour: "2-digit", minute: "2-digit",
+        });
+    } catch {
+        return value;
+    }
+};
+
 /* ─── stat card config ─── */
 const STAT_CARDS = (stats) => [
     {
@@ -57,7 +74,7 @@ const STAT_CARDS = (stats) => [
     },
     {
         title:  "Revenue",
-        value:  `Rp ${Number(stats.revenue).toLocaleString("id-ID")}`,
+        value:  formatRupiah(stats.revenue),
         icon:   <DollarSign size={18} />,
         accent: "#10b981",
         bg:     "rgba(16,185,129,0.10)",
@@ -138,6 +155,7 @@ function SectionCard({
     iconColor  = "#60a5fa",
     iconBg     = "rgba(59,130,246,0.10)",
     iconBorder = "rgba(59,130,246,0.18)",
+    right,
     children,
 }) {
     return (
@@ -152,13 +170,16 @@ function SectionCard({
                 }}>
                     {title}
                 </h3>
-                <div style={{
-                    width: "34px", height: "34px", borderRadius: t.radius.sm,
-                    background: iconBg, border: `1px solid ${iconBorder}`,
-                    color: iconColor, display: "flex", alignItems: "center",
-                    justifyContent: "center", flexShrink: 0,
-                }}>
-                    {icon}
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    {right}
+                    <div style={{
+                        width: "34px", height: "34px", borderRadius: t.radius.sm,
+                        background: iconBg, border: `1px solid ${iconBorder}`,
+                        color: iconColor, display: "flex", alignItems: "center",
+                        justifyContent: "center", flexShrink: 0,
+                    }}>
+                        {icon}
+                    </div>
                 </div>
             </div>
             {children}
@@ -242,7 +263,16 @@ function StockStatusPanel({ stocks }) {
 
 /* =========================================
    KURIR PANEL
+   Kurir adalah user dengan role "kurir" dan owner_id = owner yang login.
+   Status pendaftaran memakai enum users.status: pending | approved | rejected.
+   Ketersediaan realtime memakai users.is_available (1/0).
 ========================================= */
+const KURIR_STATUS_MAP = {
+    approved: { label: "Terdaftar", color: "#10b981", icon: CheckCircle2 },
+    pending:  { label: "Menunggu",  color: "#f59e0b", icon: Hourglass },
+    rejected: { label: "Ditolak",   color: "#ef4444", icon: XCircle },
+};
+
 function KurirPanel({ kurirs }) {
     if (!kurirs || kurirs.length === 0) {
         return <EmptyPlaceholder icon={<Truck size={26} />} label="Belum ada kurir terdaftar" />;
@@ -251,25 +281,33 @@ function KurirPanel({ kurirs }) {
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "6px", maxHeight: "260px", overflowY: "auto" }}>
             {kurirs.map((kurir) => {
-                const active  = kurir.status === "active";
-                const color   = active ? "#10b981" : "#64748b";
-                const bgColor = active ? "rgba(16,185,129,0.08)" : "rgba(100,116,139,0.08)";
-                const border  = active ? "rgba(16,185,129,0.20)" : "rgba(100,116,139,0.15)";
+                const meta   = KURIR_STATUS_MAP[kurir.status] ?? KURIR_STATUS_MAP.pending;
+                const color  = meta.color;
+                const Icon   = meta.icon;
+                const online = !!kurir.is_available;
 
                 return (
                     <div key={kurir.id} style={{
                         padding: "10px 12px", borderRadius: t.radius.md,
-                        background: bgColor, border: `1px solid ${border}`,
+                        background: color + "10", border: `1px solid ${color}30`,
                         display: "flex", alignItems: "center", gap: "10px",
                     }}>
                         {/* Avatar */}
-                        <div style={{
-                            width: "32px", height: "32px", borderRadius: "10px",
-                            background: "linear-gradient(135deg,#2563eb,#1d4ed8)",
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            color: "white", fontSize: "13px", fontWeight: "700", flexShrink: 0,
-                        }}>
-                            {kurir.name?.charAt(0).toUpperCase() ?? "K"}
+                        <div style={{ position: "relative", flexShrink: 0 }}>
+                            <div style={{
+                                width: "32px", height: "32px", borderRadius: "10px",
+                                background: "linear-gradient(135deg,#2563eb,#1d4ed8)",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                color: "white", fontSize: "13px", fontWeight: "700",
+                            }}>
+                                {kurir.name?.charAt(0).toUpperCase() ?? "K"}
+                            </div>
+                            <span title={online ? "Online" : "Offline"} style={{
+                                position: "absolute", bottom: "-2px", right: "-2px",
+                                width: "10px", height: "10px", borderRadius: "50%",
+                                background: online ? "#10b981" : "#475569",
+                                border: `2px solid ${t.cardBg}`,
+                            }} />
                         </div>
 
                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -282,16 +320,173 @@ function KurirPanel({ kurirs }) {
                         </div>
 
                         <span style={{
+                            display: "inline-flex", alignItems: "center", gap: "4px",
                             fontSize: "11px", fontWeight: "700",
                             color, padding: "2px 8px", borderRadius: "20px",
                             background: color + "18", border: `1px solid ${color}30`,
                             flexShrink: 0,
                         }}>
-                            {active ? "Aktif" : "Nonaktif"}
+                            <Icon size={11} />
+                            {meta.label}
                         </span>
                     </div>
                 );
             })}
+        </div>
+    );
+}
+
+/* =========================================
+   REVENUE ANALYTICS CHART (SVG, no external deps)
+   Menampilkan revenue bulanan milik owner yang sedang login.
+   Data diharapkan dalam bentuk: [{ label: "Jan", revenue: 1200000 }, ...]
+========================================= */
+function RevenueChart({ data }) {
+    const [hoverIdx, setHoverIdx] = useState(null);
+
+    if (!data || data.length === 0) {
+        return (
+            <EmptyPlaceholder
+                icon={<BarChart3 size={32} />}
+                label="Belum ada data revenue"
+                height={240}
+            />
+        );
+    }
+
+    const width   = 640;
+    const height  = 240;
+    const padL    = 46;
+    const padR    = 12;
+    const padT    = 16;
+    const padB    = 30;
+    const chartW  = width - padL - padR;
+    const chartH  = height - padT - padB;
+
+    const maxVal   = Math.max(...data.map(d => d.revenue), 1);
+    const niceMax  = maxVal === 0 ? 1 : Math.ceil(maxVal / (maxVal < 1000000 ? 100000 : 1000000)) * (maxVal < 1000000 ? 100000 : 1000000);
+    const barGap   = 10;
+    const barW     = data.length > 0 ? (chartW / data.length) - barGap : 0;
+
+    const gridLines = 4;
+
+    return (
+        <div style={{ width: "100%" }}>
+            <svg viewBox={`0 0 ${width} ${height}`} style={{ width: "100%", height: "240px", overflow: "visible" }}>
+                {/* grid + y labels */}
+                {Array.from({ length: gridLines + 1 }).map((_, i) => {
+                    const y   = padT + (chartH / gridLines) * i;
+                    const val = niceMax - (niceMax / gridLines) * i;
+                    return (
+                        <g key={i}>
+                            <line x1={padL} y1={y} x2={width - padR} y2={y}
+                                stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
+                            <text x={padL - 8} y={y + 3} textAnchor="end"
+                                fontSize="9" fill={t.textMuted} fontFamily={FONT}>
+                                {val >= 1000000 ? `${(val / 1000000).toFixed(val % 1000000 === 0 ? 0 : 1)}jt` : `${Math.round(val / 1000)}rb`}
+                            </text>
+                        </g>
+                    );
+                })}
+
+                {/* bars */}
+                {data.map((d, i) => {
+                    const barH = niceMax > 0 ? (d.revenue / niceMax) * chartH : 0;
+                    const x    = padL + i * (barW + barGap) + barGap / 2;
+                    const y    = padT + chartH - barH;
+                    const hovered = hoverIdx === i;
+
+                    return (
+                        <g key={i}
+                           onMouseEnter={() => setHoverIdx(i)}
+                           onMouseLeave={() => setHoverIdx(null)}
+                           style={{ cursor: "default" }}
+                        >
+                            <rect
+                                x={x} y={y} width={Math.max(barW, 4)} height={Math.max(barH, 2)}
+                                rx="5" fill={hovered ? "#34d399" : "#10b981"}
+                                opacity={hovered ? 1 : 0.85}
+                                style={{ transition: "all 0.15s ease" }}
+                            />
+                            {hovered && (
+                                <text x={x + barW / 2} y={y - 8} textAnchor="middle"
+                                    fontSize="10" fontWeight="700" fill={t.textPrimary} fontFamily={FONT}>
+                                    {formatRupiah(d.revenue)}
+                                </text>
+                            )}
+                            <text x={x + barW / 2} y={height - 10} textAnchor="middle"
+                                fontSize="10" fill={t.textMuted} fontFamily={FONT}>
+                                {d.label}
+                            </text>
+                        </g>
+                    );
+                })}
+            </svg>
+        </div>
+    );
+}
+
+/* =========================================
+   LATEST TRANSACTIONS PANEL
+   Pembayaran terakhir yang DITERIMA (confirmed) oleh owner tsb,
+   diambil dari invoice_payments -> invoices -> orders (owner_id).
+========================================= */
+const TX_TYPE_LABEL = {
+    dp:        "DP",
+    pelunasan: "Pelunasan",
+    full:      "Lunas",
+};
+
+function LatestTransactionsPanel({ transactions }) {
+    if (!transactions || transactions.length === 0) {
+        return (
+            <EmptyPlaceholder
+                icon={<ShoppingCart size={28} />}
+                label="Belum ada transaksi"
+                height={180}
+            />
+        );
+    }
+
+    return (
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            {transactions.map((txItem) => (
+                <div key={txItem.id} style={{
+                    padding: "12px 14px", borderRadius: t.radius.md,
+                    background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.16)",
+                    display: "flex", alignItems: "center", gap: "12px",
+                }}>
+                    <div style={{
+                        width: "34px", height: "34px", borderRadius: "10px",
+                        background: "rgba(16,185,129,0.14)", border: "1px solid rgba(16,185,129,0.25)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        color: "#10b981", flexShrink: 0,
+                    }}>
+                        <Wallet size={15} />
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: "13px", fontWeight: "600", color: t.textPrimary, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {txItem.client_name} · {txItem.invoice_number}
+                        </div>
+                        <div style={{ fontSize: "11px", color: t.textMuted, marginTop: "2px" }}>
+                            {formatDateTime(txItem.confirmed_at)}
+                        </div>
+                    </div>
+
+                    <div style={{ textAlign: "right", flexShrink: 0 }}>
+                        <div style={{ fontSize: "13px", fontWeight: "700", color: "#10b981" }}>
+                            {formatRupiah(txItem.amount)}
+                        </div>
+                        <span style={{
+                            fontSize: "10px", fontWeight: "700", color: t.textMuted,
+                            textTransform: "uppercase", letterSpacing: "0.4px",
+                        }}>
+                            {TX_TYPE_LABEL[txItem.type] ?? txItem.type}
+                        </span>
+                    </div>
+                </div>
+            ))}
         </div>
     );
 }
@@ -305,13 +500,17 @@ export default function DashboardOwner() {
         packages:    0,
         revenue:     0,
     });
-    const [stocks, setStocks] = useState([]);
-    const [kurirs, setKurirs] = useState([]);
+    const [stocks, setStocks]             = useState([]);
+    const [kurirs, setKurirs]             = useState([]);
+    const [revenueChart, setRevenueChart] = useState([]);
+    const [transactions, setTransactions] = useState([]);
 
     useEffect(() => {
         fetchDashboard();
         fetchStocks();
         fetchKurirs();
+        fetchRevenueAnalytics();
+        fetchLatestTransactions();
     }, []);
 
     const fetchDashboard = async () => {
@@ -334,10 +533,31 @@ export default function DashboardOwner() {
         } catch (err) { console.error(err); }
     };
 
+    // GET /owner/kurirs -> backend scoped to: users where role='kurir' AND owner_id = auth owner id
     const fetchKurirs = async () => {
         try {
             const res = await axios.get("/owner/kurirs");
             setKurirs(res.data ?? []);
+        } catch (err) { console.error(err); }
+    };
+
+    // GET /owner/revenue-analytics -> expected response:
+    // [{ label: "Jan", revenue: 1250000 }, { label: "Feb", revenue: 980000 }, ...]
+    // Sum diambil dari invoices/orders milik owner yang login (status paid/delivered), dikelompokkan per bulan.
+    const fetchRevenueAnalytics = async () => {
+        try {
+            const res = await axios.get("/owner/revenue-analytics");
+            setRevenueChart(res.data ?? []);
+        } catch (err) { console.error(err); }
+    };
+
+    // GET /owner/latest-transactions -> expected response (array, terbaru dulu, limit ~5-8):
+    // [{ id, invoice_number, client_name, amount, type: "dp"|"pelunasan"|"full", confirmed_at }]
+    // Diambil dari invoice_payments (status='confirmed') JOIN invoices JOIN orders (owner_id = auth owner id)
+    const fetchLatestTransactions = async () => {
+        try {
+            const res = await axios.get("/owner/latest-transactions");
+            setTransactions(res.data ?? []);
         } catch (err) { console.error(err); }
     };
 
@@ -392,13 +612,9 @@ export default function DashboardOwner() {
                     display: "grid", gridTemplateColumns: "2fr 1fr",
                     gap: "14px", marginBottom: "14px",
                 }}>
-                    {/* Revenue chart placeholder */}
+                    {/* Revenue chart */}
                     <SectionCard title="Revenue Analytics" icon={<TrendingUp size={16} />}>
-                        <EmptyPlaceholder
-                            icon={<BarChart3 size={32} />}
-                            label="Belum ada data revenue"
-                            height={240}
-                        />
+                        <RevenueChart data={revenueChart} />
                     </SectionCard>
 
                     {/* Right column: Stock + Kurir */}
@@ -427,11 +643,7 @@ export default function DashboardOwner() {
 
                 {/* ── Latest transactions ── */}
                 <SectionCard title="Latest Transactions" icon={<ShoppingCart size={16} />}>
-                    <EmptyPlaceholder
-                        icon={<ShoppingCart size={28} />}
-                        label="Belum ada transaksi"
-                        height={180}
-                    />
+                    <LatestTransactionsPanel transactions={transactions} />
                 </SectionCard>
 
             </div>
