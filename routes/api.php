@@ -26,6 +26,7 @@ use App\Http\Controllers\Klien\GeoController;
 
 use App\Http\Controllers\Kurir\KurirOrderController;
 use App\Http\Controllers\Kurir\KurirDistribusiController;
+use App\Http\Controllers\Kurir\DistribusiLaporanController;
  
 
 use App\Http\Controllers\Api\OwnerMenuController;
@@ -350,6 +351,15 @@ Route::middleware('auth:sanctum')
         Route::get('/distribusi/rute', [KurirDistribusiController::class, 'rute']);
         Route::put('/distribusi/{id}/mulai-antar', [KurirDistribusiController::class, 'mulaiAntar']);
         Route::put('/distribusi/{id}/selesai',     [KurirDistribusiController::class, 'selesai']);
+
+        // route spesifik/statis WAJIB di atas route dinamis {id}
+        Route::get('/orders-tanpa-laporan', [KurirOrderController::class, 'tanpaLaporan']);
+        Route::get('/distribusi-tanpa-laporan', [DistribusiLaporanController::class, 'tanpaLaporan']);
+        Route::get('/distribusi_laporan', [DistribusiLaporanController::class, 'index']);
+
+        Route::get('/orders/{id}/detail-laporan', [KurirOrderController::class, 'orderDetail']);
+        Route::get('/distribusi/{id}', [DistribusiLaporanController::class, 'show']);
+        Route::post('/distribusi/{id}/laporan', [DistribusiLaporanController::class, 'store']);
     });
 
 Route::get('/klien/menus', function () {

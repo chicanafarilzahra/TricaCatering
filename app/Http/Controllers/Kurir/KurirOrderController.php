@@ -120,39 +120,72 @@ class KurirOrderController extends Controller
 
     // Simpan laporan setelah pengiriman selesai
     public function simpanLaporan(Request $request)
-    {
-        $request->validate([
-            'order_id' => 'required|exists:orders,id',
-            'customer' => 'required|string|max:255',
-            'pesanan'  => 'nullable|string|max:255',
-            'quantity' => 'nullable|integer',
-            'waktu'    => 'nullable|string|max:10',
-            'diterima' => 'required|boolean',
-            'alasan'   => 'nullable|string',
-            'photo'    => 'nullable|image|max:4096',
-        ]);
+{
+    $request->validate([
+        'order_id' => 'required|exists:orders,id',
+        'customer' => 'required|string|max:255',
+        'pesanan'  => 'nullable|string|max:255',
+        'quantity' => 'nullable|integer',
+        'waktu'    => 'nullable|string|max:10',   // jam kirim (auto)
+        'jam_tiba' => 'required|string|max:10',   // BARU
+        'diterima' => 'required|boolean',
+        'alasan'   => 'nullable|string',           // dipakai sebagai catatan kurir
+        'photo'    => 'nullable|image|max:4096',
+    ]);
 
-        $photoPath = null;
-        if ($request->hasFile('photo')) {
-            $photoPath = $request->file('photo')
-                ->store('delivery_reports', 'public');
-        }
+    $order = \App\Models\Order::where('id', $request->order_id)
+        ->where('kurir_id', $request->user()->id)
+        ->firstOrFail(); // pastikan order ini memang milik kurir yang login
 
-        $laporan = DeliveryReport::create([
-            'order_id' => $request->order_id,
-            'kurir_id' => $request->user()->id,
-            'customer' => $request->customer,
-            'pesanan'  => $request->pesanan,
-            'quantity' => $request->quantity,
-            'waktu'    => $request->waktu,
-            'diterima' => $request->diterima,
-            'alasan'   => $request->alasan,
-            'photo'    => $photoPath,
-        ]);
-
-        return response()->json([
-            'message' => 'Laporan berhasil disimpan.',
-            'data'    => $laporan,
-        ], 201);
+    $photoPath = null;
+    if ($request->hasFile('photo')) {
+        $photoPath = $request->file('photo')->store('delivery_reports', 'public');
     }
+
+    $laporan = DeliveryReport::create([
+        'order_id' => $order->id,
+        'kurir_id' => $request->user()->id,
+        'customer' => $request->customer,
+        'pesanan'  => $request->pesanan,
+        'quantity' => $request->quantity,
+        'waktu'    => $request->waktu,
+        'jam_tiba' => $request->jam_tiba,
+        'diterima' => $request->diterima,
+        'alasan'   => $request->alasan,
+        'photo'    => $photoPath,
+    ]);
+
+    return response()->json(['message' => 'Laporan berhasil disimpan.', 'data' => $laporan], 201);
 }
+
+// tambahan: buat prefill form (readonly fields) dari order yang baru selesai
+public function orderDetail(Request $request, $id)
+{
+    $order = \App\Models\Order::with('menu:id,name', 'client:id,name,alamat')
+        ->where('id', $id)
+        ->where('kurir_id', $request->user()->id)
+        ->firstOrFail();
+
+    return response()->json([
+        'id'       => $order->id,
+        'customer' => $order->client->name ?? '—',
+        'alamat'   => $order->address,
+        'pesanan'  => $order->menu->name ?? '—',
+        'quantity' => $order->quantity,
+        'jam'      => $order->jam,
+    ]);
+}
+public function tanpaLaporan(Request $request)
+{
+    $kurirId = $request->user()->id;
+
+    $orders = Order::where('kurir_id', $kurirId)
+        ->where('status', 'delivered')
+        ->whereNotIn('id', DeliveryReport::pluck('order_id'))
+        ->with('menu:id,name')
+        ->orderByDesc('updated_at')
+        ->get();
+
+    return response()->json(['data' => $orders]);
+}
+    }

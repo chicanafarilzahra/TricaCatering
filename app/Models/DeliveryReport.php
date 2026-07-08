@@ -7,9 +7,17 @@ use Illuminate\Database\Eloquent\Model;
 class DeliveryReport extends Model
 {
     protected $fillable = [
-        'order_id', 'kurir_id', 'customer', 'pesanan',
-        'quantity', 'waktu', 'diterima', 'alasan', 'photo',
-    ];
+    'order_id',
+    'kurir_id',
+    'customer',
+    'pesanan',
+    'quantity',
+    'waktu',
+    'jam_tiba',   // ← tambahkan ini kalau belum ada
+    'diterima',
+    'alasan',
+    'photo',
+];
 
     protected $casts = [
         'diterima' => 'boolean',
