@@ -242,7 +242,7 @@ export default function CouriersOwner() {
                                                     {courier.email ?? "-"}
                                                 </td>
                                                 <td style={{ padding: "12px 16px", color: C.sub }}>
-                                                    {courier.no_hp ?? courier.no_telp ?? "-"}
+                                                    {courier.phone ?? "-"}
                                                 </td>
                                                 <td style={{ padding: "12px 16px", color: C.sub }}>
                                                     {courier.nama_tempat_kurir ?? "-"}

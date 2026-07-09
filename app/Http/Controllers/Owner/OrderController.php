@@ -279,4 +279,50 @@ class OrderController extends Controller
             'order'   => $order,
         ]);
     }
+
+    /* GET /owner/deliveries — dipakai DeliveriesOwner.jsx
+     *
+     * Menampilkan semua order milik owner ini sebagai data "pengiriman",
+     * lengkap dengan nama kurir yang ditugaskan (hasil dari dispatch()
+     * round-robin) dan status yang sudah dipetakan ke bentuk yang
+     * dimengerti frontend: pending | progress | completed | cancelled.
+     */
+    public function deliveries(): JsonResponse
+    {
+        $ownerId = auth()->id();
+
+        $orders = Order::with('courier')
+            ->where('owner_id', $ownerId)
+            ->latest()
+            ->get()
+            ->map(function (Order $order) {
+                return [
+                    'id'            => $order->id,
+                    'customer_name' => $order->customer_name,
+                    'courier_name'  => $order->courier?->name,
+                    'destination'   => $order->address,
+                    'status'        => $this->mapDeliveryStatus($order->status),
+                ];
+            });
+
+        return response()->json(['data' => $orders]);
+    }
+
+    /**
+     * Petakan status enum Order ke status yang dipakai tabel pengiriman
+     * di halaman Owner (DeliveriesOwner.jsx).
+     *   - pending, confirmed, preparing -> pending   (belum dikirim)
+     *   - dispatched, on_delivery       -> progress  (sedang diantar kurir)
+     *   - delivered                     -> completed
+     *   - cancelled                     -> cancelled
+     */
+    private function mapDeliveryStatus(string $status): string
+    {
+        return match ($status) {
+            'dispatched', 'on_delivery' => 'progress',
+            'delivered'                 => 'completed',
+            'cancelled'                 => 'cancelled',
+            default                     => 'pending',
+        };
+    }
 }

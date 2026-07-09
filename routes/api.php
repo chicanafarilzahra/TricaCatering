@@ -333,19 +333,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-// Endpoint khusus kurir (panel "Jadwal Pengiriman", "Rute Hari Ini", update status & lokasi GPS)
+// Endpoint distribusi SPPG (index, rute, mulai-antar, selesai).
+// Route /orders, /rute, /orders/{id}/update-status, /orders/{id}/location,
+// /laporan_harian TIDAK didaftarkan di sini lagi — dipindah ke grup
+// KurirOrderController di bagian bawah file supaya tidak saling menimpa
+// (sebelumnya ada 2 grup prefix('kurir') dengan path yang sama persis,
+// dan grup yang didaftarkan lebih dulu selalu menang di Laravel).
 Route::middleware('auth:sanctum')
     ->prefix('kurir')
     ->group(function () {
-        Route::get('/orders', [KurirController::class, 'index']);
-        Route::get('/orders/{id}', [KurirController::class, 'show']);
-        Route::get('/rute', [KurirController::class, 'ruteHariIni']);
-        Route::put('/orders/{id}/update-status', [KurirController::class, 'updateStatus']);
-        Route::post('/orders/{id}/location', [KurirController::class, 'updateLocation']);
-
-        // ── Laporan Harian ──
-        Route::get('/laporan_harian', [LaporanHarianController::class, 'index']);
-        Route::post('/laporan_harian', [LaporanHarianController::class, 'store']);
+        Route::get('/orders/{id}', [KurirController::class, 'show']); // detail 1 order, masih dipakai kalau ada
 
         Route::get('/distribusi',      [KurirDistribusiController::class, 'index']);
         Route::get('/distribusi/rute', [KurirDistribusiController::class, 'rute']);
@@ -510,6 +507,7 @@ Route::put('/orders/{order}/approve',  [OwnerOrderController::class, 'approve'])
 Route::put('/orders/{order}/reject',   [OwnerOrderController::class, 'reject']);
 Route::put('/orders/{order}/process',  [OwnerOrderController::class, 'process']);
 Route::put('/orders/{order}/dispatch', [OwnerOrderController::class, 'dispatch']);
+Route::get('/deliveries',              [OwnerOrderController::class, 'deliveries']); // BARU — dipakai DeliveriesOwner.jsx
 
 
     Route::get('/payment-accounts', [OwnerPaymentAccountController::class, 'index']);

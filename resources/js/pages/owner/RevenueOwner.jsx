@@ -1,5 +1,12 @@
 // resources/js/pages/Owner/RevenueOwner.jsx
 // ✅ UPDATED: Konfirmasi pembayaran masuk + tombol kirim uang jasa kurir otomatis
+// 🛠️ FIX: Stat card (Pendapatan hari ini / Total terkonfirmasi / Total pembayaran
+//         confirmed) sekarang dihitung dari /owner/transactions — sumber yang
+//         sama dipakai oleh Riwayat Transaksi — bukan dari /owner/payments saja.
+//         /owner/payments hanya berisi InvoicePayment manual, sedangkan
+//         /owner/transactions juga menggabungkan invoice yang auto-approved
+//         (mis. paket harian full payment). Sebelumnya stat selalu 0 walau
+//         Riwayat Transaksi sudah menunjukkan transaksi confirmed.
 
 import { useState, useEffect } from "react";
 import axios from "axios";
@@ -351,7 +358,7 @@ function PaymentAccountsSection() {
    + Setelah pesanan dikirim, tombol kirim uang ke kurir
 ══════════════════════════════════════════════════════════ */
 
-function PaymentConfirmationSection({ onStatsUpdate }) {
+function PaymentConfirmationSection({ onPaymentsUpdate }) {
     const [payments,    setPayments]    = useState([]);
     const [loading,     setLoading]     = useState(true);
     const [tab,         setTab]         = useState("pending");
@@ -364,7 +371,7 @@ function PaymentConfirmationSection({ onStatsUpdate }) {
             const res = await axios.get("/owner/payments", { headers: { Authorization: `Bearer ${getToken()}`, Accept: "application/json" } });
             const data = Array.isArray(res.data) ? res.data : res.data?.data ?? [];
             setPayments(data);
-            if (onStatsUpdate) onStatsUpdate(data);
+            if (onPaymentsUpdate) onPaymentsUpdate(data);
         } catch (err) { console.error(err); }
         finally { setLoading(false); }
     };
@@ -633,23 +640,13 @@ function PaymentConfirmationSection({ onStatsUpdate }) {
 
 /* ══════════════════════════════════════════════════════════
    ✅ SECTION 3 — RIWAYAT TRANSAKSI (lengkap)
+   🛠️ FIX: sekarang menerima data transaksi & status loading lewat props
+   dari komponen induk (RevenueOwner), bukan fetch sendiri — supaya data
+   yang sama bisa dipakai juga untuk menghitung stat card di atas.
 ══════════════════════════════════════════════════════════ */
 
-function TransactionHistorySection() {
-    const [transactions, setTransactions] = useState([]);
-    const [loading, setLoading]           = useState(true);
-    const [filter, setFilter]             = useState("all");
-
-    useEffect(() => {
-        const load = async () => {
-            try {
-                const res = await axios.get("/owner/transactions", { headers: { Authorization: `Bearer ${getToken()}`, Accept: "application/json" } });
-                setTransactions(Array.isArray(res.data) ? res.data : res.data?.data ?? []);
-            } catch { setTransactions([]); }
-            finally { setLoading(false); }
-        };
-        load();
-    }, []);
+function TransactionHistorySection({ transactions, loading }) {
+    const [filter, setFilter] = useState("all");
 
     const filtered = filter === "all" ? transactions : transactions.filter(t => t.type === filter);
 
@@ -707,20 +704,51 @@ export default function RevenueOwner() {
         today: fmtRp(0), month: fmtRp(0), pending_count: 0, total_confirmed: 0,
     });
 
-    // Update stats dari data pembayaran yang masuk
-    const handleStatsUpdate = (payments) => {
-        const confirmed = payments.filter(p => p.status === "confirmed");
-        const pending   = payments.filter(p => p.status === "pending");
-        const today     = new Date().toDateString();
-        const todayTotal = confirmed.filter(p => new Date(p.updated_at).toDateString() === today).reduce((a, p) => a + parseFloat(p.amount || 0), 0);
-        const monthTotal = confirmed.reduce((a, p) => a + parseFloat(p.amount || 0), 0);
+    // 🛠️ FIX: /owner/transactions sekarang jadi satu-satunya sumber data untuk
+    // Riwayat Transaksi DAN untuk stat "Pendapatan hari ini" / "Total
+    // terkonfirmasi" / "Total pembayaran confirmed". Endpoint ini sudah
+    // menggabungkan InvoicePayment yang dikonfirmasi manual + invoice yang
+    // auto-approved, jadi angkanya konsisten dengan yang tampil di daftar.
+    const [transactions, setTransactions] = useState([]);
+    const [loadingTransactions, setLoadingTransactions] = useState(true);
 
-        setStats({
-            today:         fmtRp(todayTotal),
-            month:         fmtRp(monthTotal),
-            pending_count: pending.length,
-            total_confirmed: confirmed.length,
-        });
+    const loadTransactions = async () => {
+        setLoadingTransactions(true);
+        try {
+            const res = await axios.get("/owner/transactions", { headers: { Authorization: `Bearer ${getToken()}`, Accept: "application/json" } });
+            setTransactions(Array.isArray(res.data) ? res.data : res.data?.data ?? []);
+        } catch (err) {
+            console.error(err);
+            setTransactions([]);
+        } finally {
+            setLoadingTransactions(false);
+        }
+    };
+
+    useEffect(() => { loadTransactions(); }, []);
+
+    // Hitung ulang "Pendapatan hari ini", "Total terkonfirmasi", dan
+    // "Total pembayaran confirmed" setiap kali data transaksi berubah.
+    useEffect(() => {
+        const today = new Date().toDateString();
+        const todayTotal = transactions
+            .filter(t => t.confirmed_at && new Date(t.confirmed_at).toDateString() === today)
+            .reduce((a, t) => a + parseFloat(t.amount || 0), 0);
+        const monthTotal = transactions.reduce((a, t) => a + parseFloat(t.amount || 0), 0);
+
+        setStats(prev => ({
+            ...prev,
+            today:           fmtRp(todayTotal),
+            month:           fmtRp(monthTotal),
+            total_confirmed: transactions.length,
+        }));
+    }, [transactions]);
+
+    // "Menunggu konfirmasi" tetap dihitung dari /owner/payments (via
+    // PaymentConfirmationSection), karena data pending hanya ada di endpoint itu.
+    const handlePaymentsUpdate = (payments) => {
+        const pendingCount = payments.filter(p => p.status === "pending").length;
+        setStats(prev => ({ ...prev, pending_count: pendingCount }));
     };
 
     return (
@@ -776,10 +804,10 @@ export default function RevenueOwner() {
                 <PaymentAccountsSection />
 
                 {/* ✅ Konfirmasi pembayaran masuk */}
-                <PaymentConfirmationSection onStatsUpdate={handleStatsUpdate} />
+                <PaymentConfirmationSection onPaymentsUpdate={handlePaymentsUpdate} />
 
                 {/* Riwayat transaksi */}
-                <TransactionHistorySection />
+                <TransactionHistorySection transactions={transactions} loading={loadingTransactions} />
 
                 {/* Analitik */}
                 <SectionDivider label="Analitik & Laporan" />

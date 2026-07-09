@@ -128,7 +128,7 @@ function TrackingModal({ order, onClose }) {
     const s = order.status?.toLowerCase();
     const steps = [
         { key: STATUS.CONFIRMED,   icon: <CheckCircle2 size={14} />, label: "Pesanan Disetujui", desc: "Owner telah menyetujui pesanan." },
-        { key: STATUS.PREPARING,   icon: <ChefHat size={14} />,      label: "Diproses di Dapur", desc: order.kurir ? `Disiapkan. Kurir: ${order.kurir.name}.` : "Sedang disiapkan." },
+        { key: STATUS.PREPARING,   icon: <ChefHat size={14} />,      label: "Diproses di Dapur", desc: order.courier ? `Disiapkan. Kurir: ${order.courier.name}.` : "Sedang disiapkan." },
         { key: STATUS.DISPATCHED,  icon: <Truck size={14} />,        label: "Pesanan Dikirim",   desc: order.estimasi_menit ? `Estimasi tiba: ${order.estimasi_menit} menit.` : "Dalam perjalanan." },
         { key: STATUS.ON_DELIVERY, icon: <MapPin size={14} />,       label: "Dalam Perjalanan",  desc: "Kurir sedang menuju lokasi." },
         { key: STATUS.DELIVERED,   icon: <CheckCircle2 size={14} />, label: "Pesanan Selesai",   desc: "Pesanan telah diterima." },
@@ -216,9 +216,9 @@ function TrackingModal({ order, onClose }) {
                         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                             <Truck size={14} /> Estimasi: {order.estimasi_menit ?? "—"} menit
                         </div>
-                        {order.kurir && (
+                        {order.courier && (
                             <div style={{ fontSize: "12px", color: "#c4b5fd" }}>
-                                Kurir: {order.kurir.name}{order.kurir.phone ? ` · ${order.kurir.phone}` : ""}
+                                Kurir: {order.courier.name}{order.courier.phone ? ` · ${order.courier.phone}` : ""}
                             </div>
                         )}
                     </div>
@@ -535,8 +535,8 @@ export default function OrdersOwner() {
                                                 <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 700, color: "#34d399", whiteSpace: "nowrap" }}>
                                                     Rp {Number(order.total_price || 0).toLocaleString("id-ID")}
                                                 </td>
-                                                <td style={{ padding: "12px 16px", fontSize: "12px", color: order.kurir ? C.sub : C.muted }}>
-                                                    {order.kurir ? order.kurir.name : "—"}
+                                                <td style={{ padding: "12px 16px", fontSize: "12px", color: order.courier ? C.sub : C.muted }}>
+                                                    {order.courier ? order.courier.name : "—"}
                                                 </td>
 
                                                 {/* Status badge */}

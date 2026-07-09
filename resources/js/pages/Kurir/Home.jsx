@@ -35,6 +35,7 @@ function statusMeta(status) {
         case "delivered":  return { label: "Selesai",   bg: "rgba(34,197,94,0.12)",  border: "rgba(34,197,94,0.25)",  color: "#4ADE80" };
         case "on_delivery":return { label: "Dikirim",   bg: "rgba(59,130,246,0.12)", border: "rgba(59,130,246,0.28)", color: "#60A5FA" };
         case "dispatched": return { label: "Disiapkan", bg: "rgba(168,85,247,0.12)", border: "rgba(168,85,247,0.28)", color: "#C084FC" };
+        case "preparing":  return { label: "Diproses",  bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.25)", color: "#FCD34D" };
         default:           return { label: "Menunggu",  bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.25)", color: "#FCD34D" };
     }
 }
@@ -57,19 +58,35 @@ export default function KurirHome({ onLogout }) {
     const [orders, setOrders] = useState([]);
     const [user,   setUser]   = useState(null);
 
+    // Kurir SPPG punya sppg_id terisi di akunnya, kurir catering tidak.
+    // Ini menentukan sumber data mana yang dipakai — sama seperti pola
+    // yang dipakai di JadwalPengiriman.jsx & PengirimanAktif.jsx.
+    const isSppgKurir = !!user?.sppg_id;
+
     useEffect(() => {
         const stored = localStorage.getItem("user");
-        if (stored) setUser(JSON.parse(stored));
+        const parsedUser = stored ? JSON.parse(stored) : null;
+        setUser(parsedUser);
 
-        axios.get("/kurir/orders")
+        // FIX: sebelumnya selalu memanggil "/kurir/orders", sehingga kurir
+        // SPPG (yang datanya ada di tabel distribusi, bukan orders) selalu
+        // mendapat data kosong di halaman Home meskipun ada jadwal aktif.
+        const endpoint = parsedUser?.sppg_id ? "/kurir/distribusi" : "/kurir/orders";
+        axios.get(endpoint)
             .then((res) => setOrders(Array.isArray(res.data?.data) ? res.data.data : []))
             .catch((err) => { console.error(err); setOrders([]); });
     }, []);
 
     const totalPengiriman = orders.length;
     const selesai         = orders.filter((o) => o.status === "delivered").length;
-    const menunggu        = orders.filter((o) => o.status === "pending").length;
-    const totalBiaya      = orders.reduce((sum, o) => sum + getBiaya(o), 0);
+    // FIX: kurir SPPG tidak pernah punya status "pending" (statusnya
+    // preparing/dispatched/on_delivery/delivered), jadi hitung "menunggu"
+    // dari status yang belum berjalan (preparing/dispatched) supaya kartu
+    // ini tetap berarti untuk kurir SPPG, bukan selalu 0.
+    const menunggu = isSppgKurir
+        ? orders.filter((o) => o.status === "preparing" || o.status === "dispatched").length
+        : orders.filter((o) => o.status === "pending").length;
+    const totalBiaya = orders.reduce((sum, o) => sum + getBiaya(o), 0);
 
     return (
         <div style={{ position: "fixed", inset: 0, display: "flex", overflow: "hidden", background: T.bg, fontFamily: T.font }}>
@@ -116,10 +133,15 @@ export default function KurirHome({ onLogout }) {
 
                     {/* Stat Cards */}
                     <div style={{ display: "flex", gap: "14px", marginBottom: "22px" }}>
-                        <StatCard title="Total Pengiriman" value={totalPengiriman} icon={<FaTruck />}         accentColor="#3B82F6" bar="linear-gradient(90deg,#3B82F6,#6366F1)" />
-                        <StatCard title="Selesai"           value={selesai}         icon={<FaCheckCircle />}   accentColor="#22C55E" bar="linear-gradient(90deg,#22C55E,#10B981)" />
-                        <StatCard title="Menunggu"          value={menunggu}        icon={<FaClock />}         accentColor="#F59E0B" bar="linear-gradient(90deg,#F59E0B,#FBBF24)" />
-                        <StatCard title="Total Biaya"       value={`Rp ${totalBiaya.toLocaleString("id-ID")}`} icon={<FaMoneyBillWave />} accentColor="#A855F7" bar="linear-gradient(90deg,#A855F7,#6366F1)" />
+                        <StatCard title="Total Pengiriman" value={totalPengiriman} icon={<FaTruck />}       accentColor="#3B82F6" bar="linear-gradient(90deg,#3B82F6,#6366F1)" />
+                        <StatCard title="Selesai"           value={selesai}         icon={<FaCheckCircle />} accentColor="#22C55E" bar="linear-gradient(90deg,#22C55E,#10B981)" />
+                        <StatCard title="Menunggu"          value={menunggu}        icon={<FaClock />}       accentColor="#F59E0B" bar="linear-gradient(90deg,#F59E0B,#FBBF24)" />
+                        {/* FIX: courier_fee selalu 0 untuk kurir SPPG (lihat normalize()
+                            di KurirDistribusiController), jadi kartu ini disembunyikan
+                            supaya tidak menampilkan angka yang tidak berarti. */}
+                        {!isSppgKurir && (
+                            <StatCard title="Total Biaya" value={`Rp ${totalBiaya.toLocaleString("id-ID")}`} icon={<FaMoneyBillWave />} accentColor="#A855F7" bar="linear-gradient(90deg,#A855F7,#6366F1)" />
+                        )}
                     </div>
 
                     {/* Table */}
@@ -127,17 +149,19 @@ export default function KurirHome({ onLogout }) {
                         <div style={{ padding: "18px 24px", borderBottom: `0.5px solid ${T.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                             <div>
                                 <div style={{ fontSize: "15px", fontWeight: 700, color: T.text }}>Pengiriman Hari Ini</div>
-                                <div style={{ fontSize: "12px", color: T.muted, marginTop: "2px" }}>Daftar pesanan yang ditugaskan kepada Anda</div>
+                                <div style={{ fontSize: "12px", color: T.muted, marginTop: "2px" }}>
+                                    {isSppgKurir ? "Jadwal distribusi dari SPPG Anda" : "Daftar pesanan yang ditugaskan kepada Anda"}
+                                </div>
                             </div>
                             <div style={{ padding: "5px 12px", borderRadius: "8px", background: T.blueGlow, border: "0.5px solid rgba(59,130,246,0.25)", fontSize: "12px", fontWeight: 700, color: "#60A5FA" }}>
-                                {totalPengiriman} Pesanan
+                                {totalPengiriman} {isSppgKurir ? "Distribusi" : "Pesanan"}
                             </div>
                         </div>
                         <div style={{ overflowX: "auto" }}>
                             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "680px" }}>
                                 <thead>
                                     <tr>
-                                        {["No", "Klien", "Pesanan", "Biaya", "Waktu", "Status"].map((h) => (
+                                        {["No", isSppgKurir ? "Sekolah" : "Klien", "Pesanan", ...(isSppgKurir ? [] : ["Biaya"]), "Waktu", "Status"].map((h) => (
                                             <th key={h} style={{ padding: "11px 20px", textAlign: "left", fontSize: "11px", fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: ".6px", borderBottom: `0.5px solid ${T.border}`, whiteSpace: "nowrap" }}>{h}</th>
                                         ))}
                                     </tr>
@@ -145,7 +169,7 @@ export default function KurirHome({ onLogout }) {
                                 <tbody>
                                     {orders.length === 0 ? (
                                         <tr>
-                                            <td colSpan={6} style={{ padding: "56px 20px", textAlign: "center", color: T.muted, fontSize: "13px" }}>
+                                            <td colSpan={isSppgKurir ? 5 : 6} style={{ padding: "56px 20px", textAlign: "center", color: T.muted, fontSize: "13px" }}>
                                                 <div style={{ width: "48px", height: "48px", borderRadius: "14px", background: T.card, border: `0.5px solid ${T.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: T.muted, fontSize: "20px", margin: "0 auto 12px" }}><FaTruck /></div>
                                                 Belum ada pengiriman hari ini
                                             </td>
@@ -155,7 +179,7 @@ export default function KurirHome({ onLogout }) {
                                             const sm = statusMeta(o.status);
                                             const isActive = o.status === "on_delivery" || o.status === "dispatched";
                                             return (
-                                                <tr key={o.id} style={{ borderBottom: `0.5px solid rgba(255,255,255,0.03)`, transition: "background 0.15s" }}
+                                                <tr key={`${o.source || "order"}-${o.id}`} style={{ borderBottom: `0.5px solid rgba(255,255,255,0.03)`, transition: "background 0.15s" }}
                                                     onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.02)"}
                                                     onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
                                                     <td style={{ padding: "14px 20px", color: T.muted, fontSize: "13px", position: "relative" }}>
@@ -167,7 +191,9 @@ export default function KurirHome({ onLogout }) {
                                                         <div style={{ fontSize: "13px", color: T.text, fontWeight: 500 }}>{o.menu?.name || "—"}</div>
                                                         <div style={{ fontSize: "11px", color: T.muted, marginTop: "2px" }}>{o.quantity} porsi</div>
                                                     </td>
-                                                    <td style={{ padding: "14px 20px", fontSize: "13px", fontWeight: 700, color: "#34D399", whiteSpace: "nowrap" }}>Rp {getBiaya(o).toLocaleString("id-ID")}</td>
+                                                    {!isSppgKurir && (
+                                                        <td style={{ padding: "14px 20px", fontSize: "13px", fontWeight: 700, color: "#34D399", whiteSpace: "nowrap" }}>Rp {getBiaya(o).toLocaleString("id-ID")}</td>
+                                                    )}
                                                     <td style={{ padding: "14px 20px", fontSize: "13px", color: T.sub, whiteSpace: "nowrap" }}>{o.jam ? String(o.jam).substring(0, 5) : "—"}</td>
                                                     <td style={{ padding: "14px 20px" }}>
                                                         <span style={{ display: "inline-flex", alignItems: "center", padding: "4px 11px", borderRadius: "20px", fontSize: "11px", fontWeight: 700, background: sm.bg, border: `0.5px solid ${sm.border}`, color: sm.color, textTransform: "uppercase", letterSpacing: ".4px" }}>{sm.label}</span>

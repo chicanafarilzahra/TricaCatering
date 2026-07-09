@@ -4,6 +4,7 @@ import SidebarSPPG from "../../components/SidebarSPPG";
 import {
     Truck, Search, Plus, Package, UtensilsCrossed,
     Trash2, X, Check, AlertTriangle, CalendarDays, Clock, ChevronRight,
+    User,
 } from "lucide-react";
 
 /* ── Font ─────────────────────────────────────────────────────── */
@@ -213,12 +214,13 @@ export default function DistribusiSPPG() {
     const [distribusi, setDistribusi] = useState([]);
     const [sekolahs,   setSekolahs]   = useState([]);
     const [menus,      setMenus]      = useState([]);
+    const [kurirs,     setKurirs]     = useState([]);
     const [search,     setSearch]     = useState("");
     const [showModal,  setShowModal]  = useState(false);
     const [editId,     setEditId]     = useState(null);
     const [deleteId,   setDeleteId]   = useState(null);
 
-    const emptyForm = { sekolah_id: "", menu_id: "", tanggal: "", jam_distribusi: "", jumlah_porsi: "" };
+    const emptyForm = { sekolah_id: "", menu_id: "", kurir_id: "", tanggal: "", jam_distribusi: "", jumlah_porsi: "" };
     const [form, setForm] = useState(emptyForm);
 
     const token   = () => localStorage.getItem("auth_token");
@@ -228,6 +230,7 @@ export default function DistribusiSPPG() {
         fetchDistribusi();
         fetchSekolah();
         fetchMenu();
+        fetchKurir();
     }, []);
 
     const fetchDistribusi = async () => {
@@ -249,6 +252,14 @@ export default function DistribusiSPPG() {
             const res = await axios.get("/sppg/menus", { headers: headers() });
             setMenus(res.data);
         } catch (err) { console.error("fetchMenu:", err); }
+    };
+
+    const fetchKurir = async () => {
+        try {
+            // Hanya kurir yang sudah di-approve SPPG ini yang boleh dipilih untuk distribusi
+            const res = await axios.get("/sppg/kurir?status=approved", { headers: headers() });
+            setKurirs(Array.isArray(res.data) ? res.data : res.data?.data ?? []);
+        } catch (err) { console.error("fetchKurir:", err); }
     };
 
     const saveData = async (e) => {
@@ -282,6 +293,7 @@ export default function DistribusiSPPG() {
         setForm({
             sekolah_id:     item.sekolah_id    || "",
             menu_id:        item.menu_id        || "",
+            kurir_id:       item.kurir_id       || "",
             tanggal:        item.tanggal        || "",
             jam_distribusi: item.jam_distribusi || "",
             jumlah_porsi:   item.jumlah_porsi   || "",
@@ -427,7 +439,7 @@ export default function DistribusiSPPG() {
                         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", minWidth: "900px" }}>
                             <thead>
                                 <tr>
-                                    {["No", "Sekolah", "Menu", "Tanggal", "Jam", "Porsi", "Status", "Aksi"].map(h => (
+                                    {["No", "Sekolah", "Menu", "Kurir", "Tanggal", "Jam", "Porsi", "Status", "Aksi"].map(h => (
                                         <th key={h} style={{
                                             padding: "11px 18px",
                                             textAlign: ["No", "Porsi", "Aksi", "Status"].includes(h) ? "center" : "left",
@@ -442,7 +454,7 @@ export default function DistribusiSPPG() {
                             <tbody>
                                 {filtered.length === 0 ? (
                                     <tr>
-                                        <td colSpan="8" style={{ padding: "48px", textAlign: "center", color: T.muted, fontSize: "13px" }}>
+                                        <td colSpan="9" style={{ padding: "48px", textAlign: "center", color: T.muted, fontSize: "13px" }}>
                                             {search ? `Tidak ada hasil untuk "${search}"` : "Belum ada data distribusi"}
                                         </td>
                                     </tr>
@@ -471,6 +483,16 @@ export default function DistribusiSPPG() {
                                             </div>
                                         </td>
                                         <td style={{ padding: "14px 18px", color: T.sub }}>{item.menu?.nama_menu || "—"}</td>
+                                        <td style={{ padding: "14px 18px", color: T.sub }}>
+                                            {item.kurir ? (
+                                                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                                    <User size={13} strokeWidth={1.8} color={T.muted} />
+                                                    {item.kurir.name}
+                                                </div>
+                                            ) : (
+                                                <span style={{ color: T.muted, fontStyle: "italic" }}>Belum ditentukan</span>
+                                            )}
+                                        </td>
                                         <td style={{ padding: "14px 18px", color: T.sub, whiteSpace: "nowrap" }}>
                                             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                                                 <CalendarDays size={13} strokeWidth={1.8} color={T.muted} />
@@ -600,6 +622,18 @@ export default function DistribusiSPPG() {
                                 <option value="">Pilih menu</option>
                                 {menus.map(m => <option key={m.id} value={m.id}>{m.nama_menu}</option>)}
                             </select>
+
+                            <FieldLabel>Kurir</FieldLabel>
+                            <select style={selectStyle} value={form.kurir_id}
+                                onChange={e => setForm({ ...form, kurir_id: e.target.value })}>
+                                <option value="">Pilih kurir</option>
+                                {kurirs.map(k => <option key={k.id} value={k.id}>{k.name}{k.phone ? ` · ${k.phone}` : ""}</option>)}
+                            </select>
+                            {kurirs.length === 0 && (
+                                <div style={{ fontSize: "10.5px", color: T.muted, marginTop: "4px" }}>
+                                    Belum ada kurir yang disetujui di SPPG ini. Cek halaman approval kurir jika ada pendaftar baru.
+                                </div>
+                            )}
 
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
                                 <div>
