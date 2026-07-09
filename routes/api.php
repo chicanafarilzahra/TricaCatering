@@ -375,7 +375,7 @@ Route::get('/klien/menus', function () {
                 'image' => $menu->image,
  
                 'category'  => $menu->jenis_catering,
-                'min_porsi' => $menu->min_pax,
+                'min_porsi' => $menu->min_porsi,
  
                 // PENTING: dibutuhkan saat submit pesanan
                 'catering_id' => $menu->owner_id,

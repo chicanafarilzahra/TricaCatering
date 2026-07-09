@@ -280,8 +280,8 @@ export default function PesanMakan() {
 
     const COURIER_RATE_PER_KM = 5000; // Rp 5.000/km
 
-    const courierFee = useMemo(
-    () => Math.round(distanceKm * 10) / 10 * COURIER_RATE_PER_KM,
+   const courierFee = useMemo(
+    () => distanceKm * COURIER_RATE_PER_KM,
     [distanceKm]
 );
 
@@ -452,12 +452,12 @@ export default function PesanMakan() {
             (a) => a.id === payOption
         );
 
-        const courierFeeCalc = Math.ceil(distanceKm) * 7000;
+       const courierFeeCalc = courierFee;
         const totalPrice =
-            selectedType === "harian"
-                ? selectedMenu.price * Number(form.jumlah) * Number(form.durasi) +
-                  courierFeeCalc * Number(form.durasi)
-                : selectedMenu.price * Number(form.jumlah) + courierFeeCalc;
+        selectedType === "harian"
+        ? selectedMenu.price * Number(form.jumlah) * Number(form.durasi) +
+          courierFeeCalc * Number(form.durasi)
+        : selectedMenu.price * Number(form.jumlah) + courierFeeCalc;
 
         const amountPaidNow = selectedType === "harian" ? totalPrice : totalPrice * 0.5;
 
@@ -832,8 +832,15 @@ export default function PesanMakan() {
                                 <SectionLabel>Ringkasan Pesanan</SectionLabel>
                                 <InfoBox>
                                     <SummaryRow label="Harga Produk" value={`Rp ${hargaProduk.toLocaleString("id-ID")}`} yellow />
+                                    {distanceKm > 0 && (
+                                        <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8, marginTop: -4 }}>
+                                            Ongkir: {distanceKm.toFixed(2)} km × Rp {COURIER_RATE_PER_KM.toLocaleString("id-ID")}/km
+                                            {selectedType === "harian" && form.durasi ? ` × ${form.durasi} hari` : ""}
+                                            {" "}= Rp {totalCourierFee.toLocaleString("id-ID")}
+                                        </div>
+                                    )}
                                     <SummaryRow label="Biaya Kurir" value={`Rp ${totalCourierFee.toLocaleString("id-ID")}`} yellow />
-                                    <SummaryRow label="Jarak" value={distanceKm ? `${distanceKm.toFixed(1)} km` : "-"} />
+                                    <SummaryRow label="Jarak" value={distanceKm ? `${distanceKm.toFixed(2)} km` : "-"} />
                                     <SummaryRow label="Estimasi Tiba" value={durationMinute ? `${durationMinute} menit` : "-"} />
                                     <div style={styles.divider} />
                                     <div style={styles.totalRow}>
